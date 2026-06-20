@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emma - AI 영어 선생님</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-light: #818cf8;
+            --primary-dark: #4f46e5;
+            --success: #10b981;
+            --error: #ef4444;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #1e293b;
+            --text-light: #64748b;
+            --border: #e2e8f0;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        .app {
+            width: 100%;
+            max-width: 680px;
+            background: var(--card);
+            border-radius: 24px;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.25);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 92vh;
+            max-height: 820px;
+        }
+
+        /* ── Header ── */
+        .header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 18px 20px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .avatar {
+            width: 50px; height: 50px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 26px; flex-shrink: 0;
+        }
+        .teacher-info h1 { font-size: 19px; font-weight: 700; }
+        .teacher-info p  { font-size: 12px; opacity: 0.85; margin-top: 2px; }
+        .header-right { margin-left: auto; text-align: right; }
+        .level-chip {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.35);
+            border-radius: 20px;
+            padding: 4px 14px;
+            font-size: 13px; font-weight: 600;
+            display: inline-block;
+        }
+        .score-line { font-size: 12px; opacity: 0.8; margin-top: 4px; }
+        .reset-btn {
+            background: none;
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white; font-size: 11px;
+            padding: 3px 9px; border-radius: 8px;
+            cursor: pointer; margin-top: 5px;
+        }
+
+        /* ── Progress ── */
+        .progress-track { background: #ddd6fe; height: 5px; }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #a5b4fc, var(--primary));
+            transition: width 0.4s ease;
+            width: 0%;
+        }
+
+        /* ── Chat ── */
+        .chat {
+            flex: 1; overflow-y: auto;
+            padding: 20px; display: flex;
+            flex-direction: column; gap: 14px;
+            background: var(--bg);
+        }
+        .chat::-webkit-scrollbar { width: 4px; }
+        .chat::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+
+        .msg { display: flex; gap: 10px; animation: fadeUp 0.25s ease; }
+        .msg.user { flex-direction: row-reverse; }
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(8px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .msg-avatar {
+            width: 34px; height: 34px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 17px; flex-shrink: 0;
+            background: var(--primary);
+        }
+        .msg.user .msg-avatar { background: #10b981; }
+        .bubble {
+            max-width: 76%;
+            padding: 11px 15px;
+            border-radius: 18px;
+            font-size: 14.5px; line-height: 1.65;
+        }
+        .msg.teacher .bubble {
+            background: white; color: var(--text);
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+        }
+        .msg.user .bubble {
+            background: var(--primary); color: white;
+            border-bottom-right-radius: 4px;
+        }
+        .bubble.ok  { background: #f0fdf4 !important; border: 1px solid #86efac; }
+        .bubble.err { background: #fff1f2 !important; border: 1px solid #fca5a5; }
+
+        /* ── Typing ── */
+        .typing {
+            display: flex; gap: 5px;
+            padding: 12px 16px; background: white;
+            border-radius: 18px; border-bottom-left-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            width: fit-content;
+        }
+        .dot {
+            width: 8px; height: 8px;
+            background: #94a3b8; border-radius: 50%;
+            animation: bounce 1.3s infinite;
+        }
+        .dot:nth-child(2) { animation-delay: .18s; }
+        .dot:nth-child(3) { animation-delay: .36s; }
+        @keyframes bounce {
+            0%,60%,100% { transform: translateY(0); }
+            30%          { transform: translateY(-6px); }
+        }
+
+        /* ── Question card ── */
+        .q-card {
+            background: white; border-radius: 16px;
+            padding: 18px; border: 1px solid var(--border);
+            box-shadow: 0 4px 14px rgba(0,0,0,0.07);
+            animation: fadeUp .25s ease;
+        }
+        .tag {
+            display: inline-block; padding: 2px 10px;
+            border-radius: 20px; font-size: 11px;
+            font-weight: 700; letter-spacing: .5px;
+            text-transform: uppercase; margin-bottom: 10px;
+        }
+        .tag-grammar    { background: #ede9fe; color: #7c3aed; }
+        .tag-vocabulary { background: #fef3c7; color: #b45309; }
+        .tag-usage      { background: #dcfce7; color: #15803d; }
+        .q-text {
+            font-size: 15.5px; color: var(--text);
+            font-weight: 500; margin-bottom: 14px; line-height: 1.6;
+        }
+        .options {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 9px;
+        }
+        .opt {
+            padding: 11px 14px; border: 2px solid var(--border);
+            border-radius: 11px; background: white;
+            color: var(--text); font-size: 14px;
+            cursor: pointer; text-align: left;
+            font-family: inherit; transition: all .18s;
+        }
+        .opt:hover:not(:disabled) {
+            border-color: var(--primary); background: #f5f3ff;
+            transform: translateY(-1px);
+        }
+        .opt.correct { border-color: var(--success); background: #f0fdf4; color: #166534; }
+        .opt.wrong   { border-color: var(--error);   background: #fff1f2; color: #991b1b; }
+        .opt:disabled { cursor: not-allowed; }
+
+        /* ── Buttons ── */
+        .next-btn, .action-btn {
+            display: block; width: 100%;
+            padding: 13px; border: none; border-radius: 12px;
+            color: white; font-size: 15px; font-weight: 600;
+            cursor: pointer; margin-top: 10px;
+            font-family: inherit; transition: all .2s;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        }
+        .next-btn:hover, .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(99,102,241,.4);
+        }
+        .action-btn.green {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+        .action-btn.green:hover { box-shadow: 0 6px 16px rgba(16,185,129,.4); }
+
+        /* ── Summary ── */
+        .summary {
+            background: white; border-radius: 18px;
+            padding: 26px; text-align: center;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.09);
+            animation: fadeUp .3s ease;
+        }
+        .sum-emoji { font-size: 60px; margin-bottom: 12px; }
+        .sum-title { font-size: 22px; font-weight: 800; color: var(--text); margin-bottom: 6px; }
+        .sum-desc  { font-size: 14px; color: var(--text-light); margin-bottom: 22px; }
+        .stats-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 20px; }
+        .stat { background: var(--bg); border-radius: 12px; padding: 14px; }
+        .stat-n { font-size: 26px; font-weight: 800; color: var(--primary); }
+        .stat-l { font-size: 11px; color: var(--text-light); margin-top: 2px; }
+
+        /* ── Level-up toast ── */
+        .toast {
+            position: fixed; top: 20px; left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #f59e0b, #ef4444);
+            color: white; padding: 12px 24px;
+            border-radius: 24px; font-weight: 700; font-size: 15px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+            z-index: 999; animation: toast 2.8s ease forwards;
+        }
+        @keyframes toast {
+            0%   { opacity: 0; top: -60px; }
+            18%  { opacity: 1; top: 20px; }
+            80%  { opacity: 1; top: 20px; }
+            100% { opacity: 0; top: -60px; }
+        }
+
+        @media (max-width: 500px) {
+            .options { grid-template-columns: 1fr; }
+            .stats-row { grid-template-columns: repeat(3,1fr); }
+        }
+    </style>
+</head>
+<body>
+<div class="app">
+
+    <!-- Header -->
+    <div class="header">
+        <div class="avatar">👩‍🏫</div>
+        <div class="teacher-info">
+            <h1>Emma</h1>
+            <p>AI 영어 선생님 · 맞춤 학습</p>
+        </div>
+        <div class="header-right">
+            <div class="level-chip" id="levelChip">레벨 측정 중</div>
+            <div class="score-line" id="scoreLine">0 / 0 정답</div>
+            <button class="reset-btn" onclick="resetAll()">처음부터</button>
+        </div>
+    </div>
+
+    <!-- Progress bar -->
+    <div class="progress-track">
+        <div class="progress-fill" id="progressFill"></div>
+    </div>
+
+    <!-- Chat -->
+    <div class="chat" id="chat"></div>
+
+</div>
+
+<script>
+// ══════════════════════════════════════════
+//  문제 데이터베이스 (레벨 1~5, 각 12문항)
+// ══════════════════════════════════════════
+const DB = {
+    1: [
+        { tag:'grammar',    q:'Fill in the blank: I ___ a student.',                                             opts:['am','is','are','be'],               ans:'am',       exp:'"I"의 be동사는 항상 "am"입니다. I am / You are / He is' },
+        { tag:'vocabulary', q:'What is the opposite of "big"?',                                                  opts:['small','large','tall','heavy'],       ans:'small',    exp:'"Big(큰)"의 반대는 "small(작은)"이에요.' },
+        { tag:'grammar',    q:'Choose the correct sentence:',                                                    opts:['She have a cat.','She has a cat.','She is have a cat.','She are a cat.'], ans:'She has a cat.', exp:'3인칭 단수(He/She/It)는 have → has로 바뀝니다.' },
+        { tag:'vocabulary', q:'Which word means "a place where you sleep"?',                                     opts:['bedroom','kitchen','bathroom','garage'], ans:'bedroom', exp:'"Bedroom"은 침실, 잠자는 방이에요.' },
+        { tag:'grammar',    q:'Fill in the blank: There ___ two apples on the table.',                           opts:['is','am','are','be'],                 ans:'are',      exp:'복수(two apples) 앞엔 "are"를 씁니다. There is + 단수, There are + 복수' },
+        { tag:'vocabulary', q:'What do you use to write?',                                                       opts:['pen','spoon','chair','window'],        ans:'pen',      exp:'"Pen(펜)"은 글씨를 쓰는 도구예요.' },
+        { tag:'grammar',    q:'Choose the correct negative: I ___ like coffee.',                                 opts:["don't","doesn't","isn't","not"],       ans:"don't",    exp:'1인칭(I) 부정은 "don\'t + 동사원형"입니다.' },
+        { tag:'vocabulary', q:'What color is the sky on a clear day?',                                           opts:['blue','green','red','yellow'],         ans:'blue',     exp:'맑은 날 하늘은 "blue(파란색)"입니다.' },
+        { tag:'grammar',    q:'He ___ to school every day.',                                                     opts:['go','goes','going','gone'],            ans:'goes',     exp:'3인칭 단수(He) 현재형은 동사에 -s/-es를 붙입니다. go → goes' },
+        { tag:'vocabulary', q:'Which word means "very happy"?',                                                  opts:['sad','angry','joyful','tired'],        ans:'joyful',   exp:'"Joyful"은 매우 행복하고 기쁜 상태를 뜻합니다.' },
+        { tag:'grammar',    q:'Choose the correct question: Where ___ you live?',                               opts:['do','does','is','are'],                ans:'do',       exp:'"I/You/We/They" 의문문엔 "Do"를 씁니다.' },
+        { tag:'vocabulary', q:'What is "breakfast"?',                                                            opts:['Morning meal','Lunch','Dinner','Snack'], ans:'Morning meal', exp:'"Breakfast"는 아침 식사예요. Break(깨다)+fast(단식) = 단식을 깨는 첫 식사' },
+    ],
+    2: [
+        { tag:'grammar',    q:'She ___ to the store yesterday.',                                                 opts:['go','goes','went','gone'],             ans:'went',     exp:'"Yesterday"는 과거 시제. go의 과거형은 went(불규칙)' },
+        { tag:'vocabulary', q:'What does "purchase" mean?',                                                      opts:['To sell','To buy','To borrow','To steal'], ans:'To buy', exp:'"Purchase"는 buy(사다)의 격식 표현이에요.' },
+        { tag:'grammar',    q:'I want to eat ___ apple.',                                                        opts:['a','an','the','—'],                   ans:'an',       exp:'모음(a,e,i,o,u)으로 시작하는 단어 앞에는 "an"을 씁니다. an apple' },
+        { tag:'vocabulary', q:'What does "exhausted" mean?',                                                     opts:['Very happy','Very angry','Very tired','Very hungry'], ans:'Very tired', exp:'"Exhausted"는 극도로 지친 상태. tired보다 훨씬 강한 표현이에요.' },
+        { tag:'grammar',    q:'This book is ___ than that one.',                                                 opts:['more interesting','interestinger','most interesting','much interesting'], ans:'more interesting', exp:'3음절 이상 형용사 비교급은 "more + 형용사"를 씁니다.' },
+        { tag:'vocabulary', q:'What does "frequently" mean?',                                                    opts:['Sometimes','Never','Often','Rarely'],  ans:'Often',    exp:'"Frequently"는 자주, 빈번히 — often과 같은 뜻이에요.' },
+        { tag:'grammar',    q:'I have been waiting ___ two hours.',                                              opts:['since','for','during','from'],         ans:'for',      exp:'기간 앞에는 "for", 시점 앞에는 "since"를 씁니다.' },
+        { tag:'vocabulary', q:'What is a "colleague"?',                                                          opts:['Family member','Coworker','Close friend','Neighbor'], ans:'Coworker', exp:'"Colleague"는 직장 동료예요.' },
+        { tag:'grammar',    q:'The cake ___ by Mary. (passive)',                                                 opts:['was baked','baked','is bake','were baked'], ans:'was baked', exp:'수동태 = be동사 + 과거분사(p.p.). 과거이므로 was baked' },
+        { tag:'vocabulary', q:'What does "enormous" mean?',                                                      opts:['Very small','Very fast','Very large','Very cold'], ans:'Very large', exp:'"Enormous"는 거대한, 엄청나게 큰 것을 뜻해요.' },
+        { tag:'grammar',    q:'Which sentence is correct?',                                                      opts:["I've been to Japan last year.","I went to Japan last year.","I have gone to Japan last year.","I was go to Japan last year."], ans:"I went to Japan last year.", exp:'"Last year"처럼 명확한 과거 시점이 있으면 과거형을 씁니다.' },
+        { tag:'vocabulary', q:'What does "ancient" mean?',                                                       opts:['Very new','Very old','Very big','Very fast'], ans:'Very old', exp:'"Ancient"는 아주 오래된, 고대의 것을 뜻해요.' },
+    ],
+    3: [
+        { tag:'grammar',    q:'If I ___ you, I would study harder.',                                             opts:['am','was','were','be'],                ans:'were',     exp:'가정법 과거에서는 "if + 주어 + were"를 씁니다. "was" 대신 "were"가 문법적으로 정확해요.' },
+        { tag:'vocabulary', q:'What does "bite the bullet" mean?',                                               opts:['Eat quickly','Endure hardship bravely','Make a mistake','Argue with someone'], ans:'Endure hardship bravely', exp:'"Bite the bullet"은 힘든 상황을 용감하게 참아낸다는 관용어예요.' },
+        { tag:'grammar',    q:'By the time we arrived, the movie ___.',                                          opts:['already started','has already started','had already started','already starts'], ans:'had already started', exp:'과거보다 더 이전의 일 → 과거완료(had + p.p.)' },
+        { tag:'vocabulary', q:'What does "procrastinate" mean?',                                                 opts:['To do early','To delay doing','To finish quickly','To celebrate'], ans:'To delay doing', exp:'"Procrastinate"는 해야 할 일을 미루고 지연시키는 것이에요.' },
+        { tag:'grammar',    q:'The woman ___ lives next door is a doctor.',                                      opts:['which','whom','who','whose'],          ans:'who',      exp:'사람을 가리키는 관계대명사 주격은 "who"입니다.' },
+        { tag:'vocabulary', q:'What does "eloquent" mean?',                                                      opts:['Angry','Fluent and persuasive in speaking','Very quiet','Confused'], ans:'Fluent and persuasive in speaking', exp:'"Eloquent"는 말이나 글이 유창하고 설득력 있다는 뜻이에요.' },
+        { tag:'grammar',    q:'She suggested ___ to the cinema.',                                                opts:['to go','go','going','went'],           ans:'going',    exp:'"Suggest"는 동명사(V-ing)를 목적어로 취합니다.' },
+        { tag:'vocabulary', q:'What does "ambiguous" mean?',                                                     opts:['Very clear','Having multiple meanings','Completely false','Extremely long'], ans:'Having multiple meanings', exp:'"Ambiguous"는 두 가지 이상의 의미로 해석될 수 있어 불명확한 것이에요.' },
+        { tag:'grammar',    q:'She said, "I am tired." → She said that she ___.',                               opts:['is tired','was tired','were tired','had tired'], ans:'was tired', exp:'간접화법: 현재시제 → 과거시제. am → was' },
+        { tag:'vocabulary', q:'"It\'s raining cats and dogs" means:',                                            opts:['Animals falling from sky','Raining very heavily','Unpredictable weather','Light drizzle'], ans:'Raining very heavily', exp:'"Raining cats and dogs"는 비가 억수같이 쏟아진다는 관용어예요.' },
+        { tag:'usage',      q:'Which is correct? He ___ a mistake.',                                             opts:['made','did','done','make'],            ans:'made',     exp:'"Make a mistake(실수하다)"가 맞는 표현이에요. "Do a mistake"는 틀립니다.' },
+        { tag:'vocabulary', q:'What does "despite" require after it?',                                           opts:['A clause (despite that…)','A noun/noun phrase','A verb','despite of + noun'], ans:'A noun/noun phrase', exp:'"Despite" 뒤에는 명사/명사구가 옵니다. "Despite of"는 틀린 표현이에요.' },
+    ],
+    4: [
+        { tag:'grammar',    q:'She wishes she ___ more time to study.',                                          opts:['has','had','would have','will have'],  ans:'had',      exp:'"Wish + 과거형"은 현재 반대되는 소망을 나타냅니다. (실제론 시간이 없음)' },
+        { tag:'vocabulary', q:'What does "ephemeral" mean?',                                                     opts:['Lasting forever','Lasting very short time','Extremely important','Relating to history'], ans:'Lasting very short time', exp:'"Ephemeral"은 순간적이고 일시적인 것을 뜻해요. 예: ephemeral beauty' },
+        { tag:'grammar',    q:'No sooner ___ I arrived than it started to rain.',                                opts:['had','did','have','was'],              ans:'had',      exp:'"No sooner had + 주어 + p.p. + than..."은 도치 구문입니다.' },
+        { tag:'vocabulary', q:'What does "meticulous" mean?',                                                    opts:['Very careless','Very brave','Very careful about details','Very generous'], ans:'Very careful about details', exp:'"Meticulous"는 세부 사항에 매우 꼼꼼하고 신중한 것이에요.' },
+        { tag:'grammar',    q:'Hardly ___ he spoken when the phone rang.',                                       opts:['had','did','was','has'],               ans:'had',      exp:'"Hardly"가 문두에 오면 도치: Hardly had + 주어 + p.p.' },
+        { tag:'vocabulary', q:'What does "ubiquitous" mean?',                                                    opts:['Very rare','Present everywhere','Extremely expensive','Ancient'], ans:'Present everywhere', exp:'"Ubiquitous"는 어디에나 존재하는, 편재하는 것이에요.' },
+        { tag:'grammar',    q:'The report must ___ by Friday.',                                                  opts:['submit','be submitted','have submitted','submitted'], ans:'be submitted', exp:'"Must be + p.p."는 수동 의무 표현이에요.' },
+        { tag:'vocabulary', q:'What does "pragmatic" mean?',                                                     opts:['Overly idealistic','Practical and realistic','Extremely critical','Historically significant'], ans:'Practical and realistic', exp:'"Pragmatic"는 실용적이고 현실적인 접근 방식을 뜻해요.' },
+        { tag:'usage',      q:'She is very good ___ playing chess.',                                             opts:['in','for','at','with'],                ans:'at',       exp:'"Good at + 동명사/명사"는 ~을 잘한다는 뜻. be good at은 고정 표현이에요.' },
+        { tag:'vocabulary', q:'What does "exacerbate" mean?',                                                    opts:['To improve','To make worse','To explain','To ignore'], ans:'To make worse', exp:'"Exacerbate"는 상황이나 문제를 더 악화시킨다는 뜻이에요.' },
+        { tag:'grammar',    q:'The book, ___ was written in 1990, is still popular.',                           opts:['that','which','who','whom'],           ans:'which',    exp:'콤마가 있는 비제한적 관계절에서는 "which"를 씁니다.' },
+        { tag:'vocabulary', q:'What does "inevitable" mean?',                                                    opts:['Possible to avoid','Impossible to avoid','Very surprising','Completely unknown'], ans:'Impossible to avoid', exp:'"Inevitable"는 피할 수 없는, 불가피한 것이에요.' },
+    ],
+    5: [
+        { tag:'grammar',    q:'The economy ___; experts predict recovery next year.',                             opts:['is deteriorating','deteriorates','has been deteriorating','had deteriorated'], ans:'has been deteriorating', exp:'"Has been deteriorating"(현재완료진행)은 과거부터 지금까지 계속됨을 강조해요.' },
+        { tag:'vocabulary', q:'What does "sycophantic" mean?',                                                   opts:['Overly flattering to gain favor','Extremely knowledgeable','Stubbornly independent','Deeply philosophical'], ans:'Overly flattering to gain favor', exp:'"Sycophantic"는 이익을 위해 아첨하고 비굴하게 행동하는 것이에요.' },
+        { tag:'grammar',    q:'The committee recommended that he ___ the proposal.',                             opts:['withdraws','would withdraw','withdraw','withdrew'], ans:'withdraw', exp:'"Recommend that + 주어 + 동사원형" — 가정법 현재(subjunctive). 주어에 상관없이 동사원형을 씁니다.' },
+        { tag:'vocabulary', q:'What does "circumlocution" mean?',                                                opts:['Traveling in circles','Using many words when fewer would do','Circular argument','Logical reasoning'], ans:'Using many words when fewer would do', exp:'"Circumlocution"은 간단히 말할 수 있는 것을 빙 돌려 장황하게 표현하는 것이에요.' },
+        { tag:'grammar',    q:'Only after finishing his work ___.',                                              opts:['he went home.','did he go home.','he did go home.','went he home.'], ans:'did he go home.', exp:'"Only after..."가 문두에 오면 도치: did + 주어 + 동사원형' },
+        { tag:'vocabulary', q:'What does "perspicacious" mean?',                                                 opts:['Easily confused','Having sharp insight','Highly suspicious','Extremely stubborn'], ans:'Having sharp insight', exp:'"Perspicacious"는 사물의 본질을 꿰뚫는 날카로운 통찰력이 있다는 뜻이에요.' },
+        { tag:'usage',      q:'Which use of effect/affect is correct?',                                          opts:['The affect of stress is significant.','Stress can effect your health.','The effect of stress is significant.','Stress can affects your health.'], ans:'The effect of stress is significant.', exp:'"Effect"는 명사(결과), "Affect"는 동사(영향을 주다). "The effect of..."에서는 명사 effect가 맞아요.' },
+        { tag:'vocabulary', q:'What does "obfuscate" mean?',                                                     opts:['To make very clear','To make difficult to understand','To organize neatly','To argue forcefully'], ans:'To make difficult to understand', exp:'"Obfuscate"는 의도적으로 무언가를 이해하기 어렵게 만드는 것이에요.' },
+        { tag:'grammar',    q:'___ he had spoken when the phone rang. (Hardly / inversion)',                     opts:['Hardly had','Had hardly','Hardly did','Did hardly'], ans:'Hardly had', exp:'"Hardly had + 주어 + p.p." — 부정 부사 도치 구문이에요.' },
+        { tag:'vocabulary', q:'What does "equivocate" mean?',                                                    opts:['Be very direct','Use ambiguous language to avoid commitment','Speak very loudly','Agree enthusiastically'], ans:'Use ambiguous language to avoid commitment', exp:'"Equivocate"는 명확한 입장 표명을 피하기 위해 모호한 말을 쓰는 것이에요.' },
+        { tag:'usage',      q:'Most sophisticated way to disagree:',                                             opts:["You're wrong.","I beg to differ on that point.","That's not right.","No, I don't agree."], ans:"I beg to differ on that point.", exp:'"I beg to differ"는 정중하게 다른 의견을 표명하는 격식체 표현이에요.' },
+        { tag:'vocabulary', q:'What does "recalcitrant" mean?',                                                  opts:['Easily influenced','Excellent memory','Stubbornly resisting authority','Extremely generous'], ans:'Stubbornly resisting authority', exp:'"Recalcitrant"는 권위나 규칙에 완강하게 저항하는, 다루기 힘든 것이에요.' },
+    ],
+};
+
+// 배치 테스트: 각 레벨에서 2문제씩 (총 10문제)
+const PLACEMENT = [
+    { ...DB[1][0], lvl:1 }, { ...DB[1][1], lvl:1 },
+    { ...DB[2][0], lvl:2 }, { ...DB[2][1], lvl:2 },
+    { ...DB[3][0], lvl:3 }, { ...DB[3][1], lvl:3 },
+    { ...DB[4][0], lvl:4 }, { ...DB[4][1], lvl:4 },
+    { ...DB[5][0], lvl:5 }, { ...DB[5][1], lvl:5 },
+];
+
+const LEVEL_NAMES = { 1:'A1 입문', 2:'A2 초급', 3:'B1 중급', 4:'B2 상급', 5:'C1 고급' };
+
+// ══════════════════════════════════════════
+//  상태
+// ══════════════════════════════════════════
+let S = {
+    mode: 'intro',          // intro | placement | learning | summary
+    level: 3,
+    sessionCorrect: 0,
+    sessionTotal: 0,
+    totalCorrect: 0,
+    totalAnswered: 0,
+    usedIdxs: {1:[],2:[],3:[],4:[],5:[]},
+    consecutive: { ok:0, err:0 },
+    placement: { idx:0, score:0 },
+    curQ: null,
+    locked: false,
+    opts: [],               // 현재 문제의 선택지 배열 (데이터 분리)
+};
+
+(function loadSave() {
+    try {
+        const d = JSON.parse(localStorage.getItem('emma_v2') || '{}');
+        if (d.level)         S.level         = d.level;
+        if (d.totalCorrect)  S.totalCorrect  = d.totalCorrect;
+        if (d.totalAnswered) S.totalAnswered  = d.totalAnswered;
+        if (d.usedIdxs)      S.usedIdxs      = d.usedIdxs;
+    } catch(e) {}
+})();
+
+function save() {
+    localStorage.setItem('emma_v2', JSON.stringify({
+        level: S.level, totalCorrect: S.totalCorrect,
+        totalAnswered: S.totalAnswered, usedIdxs: S.usedIdxs,
+    }));
+}
+
+// ══════════════════════════════════════════
+//  UI 헬퍼
+// ══════════════════════════════════════════
+const chat  = document.getElementById('chat');
+const chip  = document.getElementById('levelChip');
+const score = document.getElementById('scoreLine');
+const pbar  = document.getElementById('progressFill');
+
+function updateHUD() {
+    chip.textContent  = S.mode === 'placement' ? '레벨 측정 중' : LEVEL_NAMES[S.level];
+    score.textContent = `${S.totalCorrect} / ${S.totalAnswered} 정답`;
+    pbar.style.width  = S.sessionTotal === 0 ? '0%' : (S.sessionTotal / 10 * 100) + '%';
+}
+
+function scroll() { setTimeout(() => { chat.scrollTop = chat.scrollHeight; }, 80); }
+
+function addMsg(html, role='teacher', extra='') {
+    const wrap = document.createElement('div');
+    wrap.className = `msg ${role}`;
+    const av = role === 'user' ? '🙋' : '👩‍🏫';
+    wrap.innerHTML = `<div class="msg-avatar">${av}</div><div class="bubble ${extra}">${html}</div>`;
+    chat.appendChild(wrap);
+    scroll();
+}
+
+function showTyping() {
+    const d = document.createElement('div');
+    d.className = 'msg teacher'; d.id = 'typing';
+    d.innerHTML = `<div class="msg-avatar">👩‍🏫</div><div class="typing"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>`;
+    chat.appendChild(d); scroll();
+}
+function hideTyping() { document.getElementById('typing')?.remove(); }
+
+function toast(msg) {
+    const t = document.createElement('div');
+    t.className = 'toast'; t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+}
+
+function later(fn, ms) { setTimeout(fn, ms); }
+
+// ══════════════════════════════════════════
+//  문제 카드
+// ══════════════════════════════════════════
+function showCard(q) {
+    S.curQ = q;
+    S.opts = [...q.opts];
+    S.locked = false;
+
+    const tagLabel = { grammar:'문법', vocabulary:'어휘', usage:'표현', reading:'독해' }[q.tag] || q.tag;
+    const card = document.createElement('div');
+    card.className = 'q-card';
+    card.id = 'qcard';
+
+    const optHtml = S.opts.map((o, i) =>
+        `<button class="opt" data-i="${i}" onclick="pick(this)">${o}</button>`
+    ).join('');
+
+    card.innerHTML = `
+        <span class="tag tag-${q.tag}">${tagLabel}</span>
+        <div class="q-text">${q.q}</div>
+        <div class="options">${optHtml}</div>
+    `;
+    chat.appendChild(card); scroll();
+}
+
+function pick(btn) {
+    if (S.locked) return;
+    S.locked = true;
+
+    const chosen = S.opts[parseInt(btn.dataset.i)];
+    const correct = chosen === S.curQ.ans;
+
+    // 버튼 표시
+    document.querySelectorAll('.opt').forEach(b => {
+        b.disabled = true;
+        if (S.opts[parseInt(b.dataset.i)] === S.curQ.ans) b.classList.add('correct');
+        else if (b === btn && !correct) b.classList.add('wrong');
+    });
+
+    addMsg(`📝 ${chosen}`, 'user');
+
+    if (S.mode === 'placement') placementAnswer(correct);
+    else learningAnswer(correct);
+}
+
+// ══════════════════════════════════════════
+//  배치 테스트
+// ══════════════════════════════════════════
+const P_MSGS = [
+    '간단한 문제부터 시작해요!', '잘하고 있어요 😊', '다음 단계로 가볼게요.',
+    '좋아요! 계속 집중해봐요.', '절반 왔어요! 💪', '거의 다 왔어요!',
+    '조금 더 어려운 문제예요.', '잘하고 있어요! 거의 끝났어요.',
+    '마지막 두 문제예요!', '마지막 문제예요!',
+];
+
+function placementAnswer(correct) {
+    if (correct) S.placement.score++;
+    showTyping();
+    later(() => {
+        hideTyping();
+        const cls = correct ? 'ok' : 'err';
+        const txt = correct
+            ? `✅ <strong>정답!</strong><br>${S.curQ.exp}`
+            : `❌ <strong>오답.</strong> 정답: <strong>"${S.curQ.ans}"</strong><br>${S.curQ.exp}`;
+        addMsg(txt, 'teacher', cls);
+
+        S.placement.idx++;
+        if (S.placement.idx >= PLACEMENT.length) {
+            later(finishPlacement, 1200);
+        } else {
+            later(() => {
+                addMsg(P_MSGS[S.placement.idx]);
+                later(() => showCard(PLACEMENT[S.placement.idx]), 500);
+            }, 1400);
+        }
+    }, 700);
+}
+
+function finishPlacement() {
+    const sc = S.placement.score;
+    S.level = sc <= 1 ? 1 : sc <= 3 ? 2 : sc <= 5 ? 3 : sc <= 7 ? 4 : 5;
+    S.mode = 'learning'; save(); updateHUD();
+
+    const msgs = {
+        1:'영어를 막 시작했군요! 기초부터 차근차근 쌓아가봐요. 🌱',
+        2:'기초가 있네요! 좀 더 다양한 표현을 배워봐요. 📖',
+        3:'중급 수준이에요! 문법과 어휘를 더 탄탄히 해봐요. 💡',
+        4:'상당히 높은 수준이에요! 고급 표현을 집중 연습해봐요. 🎯',
+        5:'정말 훌륭해요! 원어민 수준 표현들을 배워봐요. 🏆',
+    };
+    addMsg(`🎉 레벨 측정 완료! <strong>${sc}/10</strong> 정답이에요.<br>레벨: <strong>${LEVEL_NAMES[S.level]}</strong><br>${msgs[S.level]}`);
+    later(() => {
+        S.sessionCorrect = 0; S.sessionTotal = 0;
+        addMsg('이제 딱 맞는 10문제를 풀어볼게요! 시작해봐요 🚀');
+        later(nextQ, 1000);
+    }, 2000);
+}
+
+// ══════════════════════════════════════════
+//  학습 세션
+// ══════════════════════════════════════════
+const PRAISE = ['✅','🌟','👏','🎯','💡','🔥','⭐'];
+
+function learningAnswer(correct) {
+    S.sessionTotal++;
+    S.totalAnswered++;
+    if (correct) {
+        S.sessionCorrect++; S.totalCorrect++;
+        S.consecutive.ok++; S.consecutive.err = 0;
+    } else {
+        S.consecutive.ok = 0; S.consecutive.err++;
+    }
+    updateHUD(); save();
+
+    showTyping();
+    later(() => {
+        hideTyping();
+        const cls = correct ? 'ok' : 'err';
+        const em  = correct ? PRAISE[Math.floor(Math.random()*PRAISE.length)] : '💪';
+        const txt = correct
+            ? `${em} <strong>정답!</strong><br>${S.curQ.exp}`
+            : `❌ <strong>오답.</strong> 정답: <strong>"${S.curQ.ans}"</strong><br>${S.curQ.exp}`;
+        addMsg(txt, 'teacher', cls);
+
+        // 레벨 조정
+        if (S.consecutive.ok >= 4 && S.level < 5) {
+            S.level++; S.consecutive.ok = 0; save(); updateHUD();
+            toast(`🎉 레벨 업! ${LEVEL_NAMES[S.level]}으로 승급했어요!`);
+        } else if (S.consecutive.err >= 3 && S.level > 1) {
+            S.level--; S.consecutive.err = 0; save(); updateHUD();
+            toast(`📚 레벨 조정: ${LEVEL_NAMES[S.level]}으로 맞췄어요`);
+        }
+
+        if (S.sessionTotal >= 10) {
+            later(showSummary, 1400);
+        } else {
+            const btn = document.createElement('button');
+            btn.className = 'next-btn'; btn.textContent = '다음 문제 →';
+            btn.onclick = () => { btn.remove(); nextQ(); };
+            chat.appendChild(btn); scroll();
+        }
+    }, 700);
+}
+
+function getQ(lv) {
+    const pool = DB[lv];
+    const used = S.usedIdxs[lv] || [];
+    let avail = pool.map((_,i)=>i).filter(i => !used.includes(i));
+    if (!avail.length) { S.usedIdxs[lv] = []; avail = pool.map((_,i)=>i); }
+    const pick = avail[Math.floor(Math.random()*avail.length)];
+    S.usedIdxs[lv].push(pick);
+    return pool[pick];
+}
+
+function nextQ() {
+    const tr = ['좋아요! 다음 문제예요.','잘하고 있어요! 계속해봐요.','다음 문제를 풀어볼까요?','훌륭해요! 하나 더 해봐요.'];
+    addMsg(tr[Math.floor(Math.random()*tr.length)]);
+    later(() => showCard(getQ(S.level)), 400);
+}
+
+// ══════════════════════════════════════════
+//  세션 요약
+// ══════════════════════════════════════════
+function showSummary() {
+    const acc = Math.round(S.sessionCorrect / S.sessionTotal * 100);
+    const [emoji, title, desc] =
+        acc >= 90 ? ['🏆','완벽해요!','정말 훌륭한 실력이에요!'] :
+        acc >= 70 ? ['🎉','잘했어요!','조금만 더 하면 완벽해질 거예요.'] :
+        acc >= 50 ? ['💪','수고했어요!','꾸준히 하면 확실히 늘어요!'] :
+                   ['📚','계속 해봐요!','연습이 실력을 만들어요. 포기하지 마세요!'];
+
+    const div = document.createElement('div');
+    div.className = 'summary';
+    div.innerHTML = `
+        <div class="sum-emoji">${emoji}</div>
+        <div class="sum-title">${title}</div>
+        <div class="sum-desc">${desc}</div>
+        <div class="stats-row">
+            <div class="stat"><div class="stat-n">${S.sessionCorrect}/10</div><div class="stat-l">이번 정답</div></div>
+            <div class="stat"><div class="stat-n">${acc}%</div><div class="stat-l">정확도</div></div>
+            <div class="stat"><div class="stat-n">${LEVEL_NAMES[S.level].split(' ')[0]}</div><div class="stat-l">현재 레벨</div></div>
+        </div>
+        <button class="next-btn" onclick="startSession()">다음 세션 시작하기 🚀</button>
+    `;
+    chat.appendChild(div); scroll();
+    S.mode = 'summary';
+}
+
+function startSession() {
+    S.sessionCorrect = 0; S.sessionTotal = 0; S.mode = 'learning';
+    chat.innerHTML = ''; updateHUD();
+    addMsg(`새 세션 시작! 레벨: <strong>${LEVEL_NAMES[S.level]}</strong> 💪<br>10문제를 풀어봐요.`);
+    later(nextQ, 800);
+}
+
+// ══════════════════════════════════════════
+//  초기화
+// ══════════════════════════════════════════
+function resetAll() {
+    if (!confirm('모든 학습 기록을 초기화할까요?')) return;
+    localStorage.removeItem('emma_v2');
+    location.reload();
+}
+
+function init() {
+    updateHUD();
+    const returning = S.totalAnswered > 0;
+
+    if (returning) {
+        addMsg(`다시 오셨네요! 반가워요 😊<br>레벨: <strong>${LEVEL_NAMES[S.level]}</strong> · 지금까지 <strong>${S.totalAnswered}문제</strong> 중 <strong>${S.totalCorrect}개</strong> 정답`);
+        later(() => {
+            const div = document.createElement('div');
+            div.className = 'q-card'; div.style.padding = '14px';
+            div.innerHTML = `
+                <p style="margin-bottom:10px;color:var(--text);font-size:15px">무엇을 하시겠어요?</p>
+                <button class="action-btn" onclick="startSession()">현재 레벨(${LEVEL_NAMES[S.level]})로 계속 학습하기</button>
+                <button class="action-btn green" onclick="doPlacement()">레벨 다시 측정하기</button>
+            `;
+            chat.appendChild(div); scroll();
+        }, 800);
+    } else {
+        addMsg('안녕하세요! 저는 Emma예요 👩‍🏫<br>당신의 영어 실력에 딱 맞춰서 가르쳐드릴 AI 선생님이에요!');
+        later(() => {
+            addMsg('먼저 간단한 레벨 테스트로 현재 실력을 파악해볼게요. (약 3분 소요)');
+            later(() => {
+                const div = document.createElement('div');
+                div.className = 'q-card'; div.style.padding = '14px';
+                div.innerHTML = `<button class="action-btn" onclick="doPlacement()">레벨 테스트 시작하기 🚀</button>`;
+                chat.appendChild(div); scroll();
+            }, 800);
+        }, 1400);
+    }
+}
+
+function doPlacement() {
+    S.mode = 'placement'; S.placement = { idx:0, score:0 }; updateHUD();
+    chat.innerHTML = '';
+    addMsg('레벨 측정을 시작할게요! 10문제를 풀면 딱 맞는 레벨을 찾아드릴게요. 틀려도 괜찮아요 😊');
+    later(() => {
+        addMsg(P_MSGS[0]);
+        later(() => showCard(PLACEMENT[0]), 500);
+    }, 1000);
+}
+
+init();
+</script>
+</body>
+</html>
