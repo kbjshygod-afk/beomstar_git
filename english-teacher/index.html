@@ -254,7 +254,7 @@
             <div class="level-chip" id="levelChip">레벨 측정 중</div>
             <div class="score-line" id="scoreLine">0 / 0 정답</div>
             <a class="reset-btn" href="conversation-free.html" style="text-decoration:none;display:inline-block;margin-right:4px;background:rgba(255,255,255,0.18)">💬 무료 회화</a>
-            <button class="reset-btn" onclick="resetAll()">처음부터</button>
+            <button class="reset-btn" id="resetBtn">처음부터</button>
         </div>
     </div>
 
@@ -447,7 +447,7 @@ function showCard(q) {
     card.id = 'qcard';
 
     const optHtml = S.opts.map((o, i) =>
-        `<button class="opt" data-i="${i}" onclick="pick(this)">${o}</button>`
+        `<button class="opt" data-i="${i}">${o}</button>`
     ).join('');
 
     card.innerHTML = `
@@ -615,7 +615,7 @@ function showSummary() {
             <div class="stat"><div class="stat-n">${acc}%</div><div class="stat-l">정확도</div></div>
             <div class="stat"><div class="stat-n">${LEVEL_NAMES[S.level].split(' ')[0]}</div><div class="stat-l">현재 레벨</div></div>
         </div>
-        <button class="next-btn" onclick="startSession()">다음 세션 시작하기 🚀</button>
+        <button class="next-btn" data-action="startSession">다음 세션 시작하기 🚀</button>
     `;
     chat.appendChild(div); scroll();
     S.mode = 'summary';
@@ -648,8 +648,8 @@ function init() {
             div.className = 'q-card'; div.style.padding = '14px';
             div.innerHTML = `
                 <p style="margin-bottom:10px;color:var(--text);font-size:15px">무엇을 하시겠어요?</p>
-                <button class="action-btn" onclick="startSession()">현재 레벨(${LEVEL_NAMES[S.level]})로 계속 학습하기</button>
-                <button class="action-btn green" onclick="doPlacement()">레벨 다시 측정하기</button>
+                <button class="action-btn" data-action="startSession">현재 레벨(${LEVEL_NAMES[S.level]})로 계속 학습하기</button>
+                <button class="action-btn green" data-action="doPlacement">레벨 다시 측정하기</button>
             `;
             chat.appendChild(div); scroll();
         }, 800);
@@ -660,7 +660,7 @@ function init() {
             later(() => {
                 const div = document.createElement('div');
                 div.className = 'q-card'; div.style.padding = '14px';
-                div.innerHTML = `<button class="action-btn" onclick="doPlacement()">레벨 테스트 시작하기 🚀</button>`;
+                div.innerHTML = `<button class="action-btn" data-action="doPlacement">레벨 테스트 시작하기 🚀</button>`;
                 chat.appendChild(div); scroll();
             }, 800);
         }, 1400);
@@ -676,6 +676,22 @@ function doPlacement() {
         later(() => showCard(PLACEMENT[0]), 500);
     }, 1000);
 }
+
+// ══════════════════════════════════════════
+//  이벤트 위임 (인라인 onclick 대체 — 모든 환경에서 안정 동작)
+// ══════════════════════════════════════════
+document.getElementById('resetBtn').addEventListener('click', resetAll);
+
+document.addEventListener('click', (e) => {
+    const opt = e.target.closest('.opt');
+    if (opt) { pick(opt); return; }
+    const act = e.target.closest('[data-action]');
+    if (act) {
+        const a = act.dataset.action;
+        if (a === 'startSession') startSession();
+        else if (a === 'doPlacement') doPlacement();
+    }
+});
 
 init();
 </script>

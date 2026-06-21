@@ -189,7 +189,7 @@
             <li>아래 칸에 붙여넣고 시작!</li>
         </ol>
         <input type="password" id="keyInput" placeholder="sk-ant-... 키를 여기에 붙여넣기" autocomplete="off">
-        <button class="setup-btn" onclick="saveKey()">대화 시작하기 🚀</button>
+        <button class="setup-btn" id="saveKeyBtn">대화 시작하기 🚀</button>
         <div class="err-box" id="keyErr"></div>
         <div class="note">
             🔒 키는 <strong>당신의 브라우저에만</strong> 저장되며 다른 곳으로 전송되지 않습니다. AI 사용량에 따라 소량의 요금이 청구될 수 있어요(대화 한 번에 보통 몇 원 수준).
@@ -200,7 +200,7 @@
     <div class="chat" id="chat" style="display:none"></div>
     <div class="input-bar" id="inputBar" style="display:none">
         <textarea id="msgInput" rows="1" placeholder="영어로 입력해보세요..."></textarea>
-        <button class="send-btn" id="sendBtn" onclick="send()">➤</button>
+        <button class="send-btn" id="sendBtn">➤</button>
     </div>
 </div>
 
@@ -380,6 +380,10 @@ async function send() {
         msgInput.focus();
     }
 }
+
+// 버튼 이벤트 연결 (인라인 onclick 대체)
+document.getElementById('saveKeyBtn').addEventListener('click', saveKey);
+sendBtn.addEventListener('click', send);
 
 // 시작
 if (apiKey) showChat();
