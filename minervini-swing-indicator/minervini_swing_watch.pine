@@ -265,8 +265,13 @@ priceStopHit      = not na(entryRefPrice) and close < stop1
 stopTriggerCond   = barstate.isconfirmed and not stopFired and (priceStopHit or structuralStopHit)
 if stopTriggerCond
     stopFired := true
+    // 손절로 트레이드가 종료되었으므로 진입 기준가를 비워 손절/익절선·리스크 테이블이
+    // 다음 신규 진입 전까지 과거 트레이드 값으로 계속 표시되지 않게 한다.
+    entryRefPrice := na
+    entryStopRef  := na
+    activeGrade   := na
 
-nearStop1 = not na(entryRefPrice) and not stopFired and entryRefPrice != 0 and (close - stop1) / entryRefPrice < 0.02 and close > stop1
+nearStop1 = barstate.isconfirmed and not na(entryRefPrice) and not stopFired and entryRefPrice != 0 and (close - stop1) / entryRefPrice < 0.02 and close > stop1
 riskWarningCond = nearStop1 and bigBearishToday and volumeSpikeToday
 
 // ----- 2-11. 익절 계산 -----
@@ -279,9 +284,13 @@ if tp1TriggerCond
 tp2TriggerCond = barstate.isconfirmed and not na(entryRefPrice) and not tp2Fired and close >= tp2
 if tp2TriggerCond
     tp2Fired := true
+    // 2차 익절 도달로 트레이드가 종료된 것으로 간주하고 진입 기준가를 초기화한다.
+    entryRefPrice := na
+    entryStopRef  := na
+    activeGrade   := na
 
-holdCond   = not na(entryRefPrice) and not stopFired and close > ma20
-reduceCond = not na(entryRefPrice) and not stopFired and ta.crossunder(close, ma20) and bigBearishToday and volumeSpikeToday
+holdCond   = barstate.isconfirmed and not na(entryRefPrice) and not stopFired and close > ma20
+reduceCond = barstate.isconfirmed and not na(entryRefPrice) and not stopFired and ta.crossunder(close, ma20) and bigBearishToday and volumeSpikeToday
 
 // ----- 2-12. 포지션 리스크 계산(참고용) -----
 riskAmount   = accountSize * riskPctPerTrade / 100
@@ -351,7 +360,7 @@ if barstate.isconfirmed and showReduce and reduceCond
     label.new(bar_index, high, text = "REDUCE", style = label.style_label_down, color = color.new(color.orange, 0), textcolor = color.white, size = size.small)
 
 // ----- 3-7. 거래량 증가 보조 표시 -----
-plotchar(showVolumeMarker and volumeCond ? low : na, "거래량 증가", char = "▲", location = location.belowbar, color = color.new(color.aqua, 0), size = size.tiny)
+plotchar(barstate.isconfirmed and showVolumeMarker and volumeCond ? low : na, "거래량 증가", char = "▲", location = location.belowbar, color = color.new(color.aqua, 0), size = size.tiny)
 
 // ----- 3-8. 포지션 리스크 / 점수 테이블 -----
 var table riskTable = table.new(position.top_right, 2, 7, border_width = 1)

@@ -225,12 +225,14 @@ if entryTrigger and strategy.position_size == 0
     perShareLossAtEntry = close - stop1
     riskAmount = strategy.equity * riskPctPerTrade / 100
     qty = perShareLossAtEntry > 0 ? math.max(math.floor(riskAmount / perShareLossAtEntry), 1) : 1
-    strategy.entry("Long", strategy.long, qty = qty, comment = activeGrade)
+    strategy.entry("Long", strategy.long, qty = qty, comment = activeGrade + " " + str.tostring(int(math.round(setupScoreVal))))
 
-// ----- 3-2. 청산: 1차 익절(50%)/2차 익절(잔여) + 손절선, 추세·구조적 손절, REDUCE 축소 -----
+// ----- 3-2. 청산: 1차 익절(50%, 손절선1 적용)/2차 익절(잔여, 손절선2 적용) + 추세·구조적 손절, REDUCE 축소 -----
+// 1차 목표까지는 손절선1(타이트)로 방어하고, 잔여 물량은 손절선2(완화)로 여유를 주어
+// stopPct2 입력값이 실제 청산 로직에 반영되도록 한다.
 if strategy.position_size > 0 and barstate.isconfirmed
     strategy.exit("TP1", "Long", qty_percent = 50, limit = tp1, stop = stop1, comment_profit = "TAKE PROFIT 1", comment_loss = "STOP")
-    strategy.exit("TP2", "Long", qty_percent = 100, limit = tp2, stop = stop1, comment_profit = "TAKE PROFIT 2", comment_loss = "STOP")
+    strategy.exit("TP2", "Long", qty_percent = 100, limit = tp2, stop = stop2, comment_profit = "TAKE PROFIT 2", comment_loss = "STOP")
     if trendStopCond
         strategy.close("Long", comment = "TREND/구조적 STOP")
     else if reduceCond
