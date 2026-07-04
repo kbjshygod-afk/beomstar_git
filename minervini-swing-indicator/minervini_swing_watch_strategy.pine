@@ -1,0 +1,246 @@
+//@version=5
+// =============================================================================
+// Minervini Swing Watch — 백테스트 전용 strategy 버전 (매매 자동화 목적이 아닌 검증용)
+// - 신호 로직은 minervini_swing_watch.pine(indicator 버전)과 동일하다. 실거래 차트 관찰/
+//   알림에는 indicator 버전을, 과거 데이터 성과 검증에는 이 strategy 버전을 사용한다.
+// - 모든 계산은 확정봉(barstate.isconfirmed) 기준이며, 진입 주문은 신호가 확정된 다음 봉
+//   시가에 체결되는 Pine 기본 체결 방식(다음 봉 시가 체결)을 그대로 사용해 미래 데이터를
+//   사용하지 않는다(process_orders_on_close를 쓰지 않음).
+// - 계좌/수수료/슬리피지는 strategy() 선언부와 TradingView "Properties" 탭에서 조정한다.
+//
+// =====================================================================
+// [참고] 신호(진입)가 너무 많을 때 조정할 값(더 보수적으로):
+//   - strongScoreThreshold ↑(80→85 이상), weakScoreThreshold ↑(60→65~70)
+//   - vcpMinCount ↑(3→4~5), volMult ↑(1.5→2.0)
+//   - maDeviationLimitPct ↓(15→10), pullbackLimitPct 절대값 축소(-15→-10)
+//   - minTradingValue ↑(거래대금 필터 강화), maxWaitBars ↓(재돌파 대기 기간 축소)
+//   - tradeWeakSetups를 false로 하여 STRONG 등급만 백테스트
+//
+// [참고] 신호(진입)가 너무 늦을 때 조정할 값(더 민감하게):
+//   - breakoutLen ↓(20→10~15), volMult ↓(1.5→1.2~1.3)
+//   - vcpMinCount ↓(3→2), weakScoreThreshold ↓(60→50~55)
+//   - maxWaitBars ↑(재돌파를 더 오래 기다림), maDeviationLimitPct ↑(15→20)
+// =====================================================================
+strategy("Minervini Swing Watch (Backtest)", shorttitle = "MSW-BT", overlay = true,
+     initial_capital = 10000000, currency = currency.KRW,
+     default_qty_type = strategy.fixed, default_qty_value = 1,
+     commission_type = strategy.commission.percent, commission_value = 0.25,
+     slippage = 2, calc_on_every_tick = false)
+
+// #############################################################################
+// 1. 입력값 (indicator 버전과 동일한 조건 설정 입력값)
+// #############################################################################
+
+grpMA = "이동평균 설정"
+len20  = input.int(20,  "단기 이동평균(기본 20)",  minval = 2, group = grpMA)
+len60  = input.int(60,  "중기 이동평균(기본 60)",  minval = 2, group = grpMA)
+len120 = input.int(120, "장기 이동평균(기본 120)", minval = 2, group = grpMA)
+len200 = input.int(200, "초장기 이동평균(기본 200)", minval = 2, group = grpMA)
+
+grpBrk = "돌파 조건"
+breakoutLen  = input.int(20, "돌파 기준 기간(최근 N일 고가/박스권 상단, 기본 20)", minval = 5, group = grpBrk)
+nearHighLen  = input.int(60, "고점 근접 기준 기간(기본 60)", minval = 10, group = grpBrk)
+pullbackLimitPct = input.float(-15.0, "고점 대비 허용 낙폭 %(기본 -15%)", maxval = 0.0, group = grpBrk)
+
+grpVol = "거래량 조건"
+volLen  = input.int(20, "거래량 평균 기간(기본 20)", minval = 5, group = grpVol)
+volMult = input.float(1.5, "거래량 증가 배수(기본 1.5)", minval = 1.0, step = 0.1, group = grpVol)
+
+grpVCP = "VCP(변동성 축소) 조건"
+atrLen            = input.int(14, "ATR 기간(기본 14)", minval = 3, group = grpVCP)
+atrContractionLen = input.int(10, "ATR 축소 비교 기간(기본 10)", minval = 3, group = grpVCP)
+vcpMinCount       = input.int(3, "VCP 세부조건 중 최소 충족 개수(1~5, 기본 3)", minval = 1, maxval = 5, group = grpVCP)
+
+grpHeat = "과열 제외 조건"
+dailyOverheatPct   = input.float(12.0, "당일 과열 상승률 %(기본 12%)", minval = 1.0, group = grpHeat)
+fiveDayOverheatPct = input.float(20.0, "최근 5일 과열 상승률 %(기본 20%)", minval = 1.0, group = grpHeat)
+maDeviationLimitPct= input.float(15.0, "20일선 이격도 제한 %(기본 15%)", minval = 1.0, group = grpHeat)
+
+grpMkt = "시장 국면 필터"
+useMarketFilter = input.bool(true, "시장 필터 사용", group = grpMkt)
+benchmarkSymbol = input.symbol("KRX:KOSPI", "벤치마크 심볼(기본 KOSPI, 자유 변경 가능)", group = grpMkt)
+
+grpValue = "거래대금 필터(한국장)"
+useValueFilter  = input.bool(true, "거래대금 필터 사용", group = grpValue)
+minTradingValue = input.float(3000000000, "최소 거래대금(원, 종가×거래량, 기본 30억)", minval = 0.0, group = grpValue)
+
+grpScore = "점수화(100점 만점) 설정"
+strongScoreThreshold = input.int(80, "STRONG BUY WATCH 최소 점수(기본 80)", minval = 0, maxval = 100, group = grpScore)
+weakScoreThreshold   = input.int(60, "WEAK BUY WATCH 최소 점수(기본 60, 미만은 신호 없음)", minval = 0, maxval = 100, group = grpScore)
+
+grpEntry = "진입 확인(다음 봉 재돌파) 설정"
+maxWaitBars = input.int(10, "진입 확인 최대 대기 봉수(기본 10)", minval = 1, group = grpEntry)
+
+grpExit = "손절 / 익절 설정"
+stopPct1 = input.float(-5.0,  "손절선 1 %(기본 -5%)", maxval = 0.0, group = grpExit)
+stopPct2 = input.float(-8.0,  "손절선 2 %(기본 -8%, 2차 익절 구간의 보조 손절로 사용)", maxval = 0.0, group = grpExit)
+tpPct1   = input.float(10.0,  "익절선 1 %(기본 +10%, 포지션의 50% 청산)", minval = 0.0, group = grpExit)
+tpPct2   = input.float(20.0,  "익절선 2 %(기본 +20%, 잔여 포지션 청산)", minval = 0.0, group = grpExit)
+
+grpRisk = "포지션 리스크 계산"
+riskPctPerTrade = input.float(1.0, "1회 거래 허용 손실률 %(기본 1%, strategy.equity 기준)", minval = 0.1, group = grpRisk)
+
+grpBT = "백테스트 전용 설정"
+tradeWeakSetups = input.bool(true, "WEAK BUY WATCH 등급도 진입에 포함", group = grpBT)
+
+// #############################################################################
+// 2. 조건 계산부 — indicator 버전과 동일한 로직
+// #############################################################################
+
+// ----- 2-1. 상승추세 조건 -----
+ma20  = ta.sma(close, len20)
+ma60  = ta.sma(close, len60)
+ma120 = ta.sma(close, len120)
+ma200 = ta.sma(close, len200)
+ma200Rising = ta.rising(ma200, 1)                                    // 200일선 상승 = 가산점(점수 항목에 반영)
+
+// ----- 2-2. 상대강도 / 시장 국면 필터 -----
+[benchClose, benchMA20] = request.security(benchmarkSymbol, timeframe.period, [close, ta.sma(close, len20)], lookahead = barmerge.lookahead_off)
+marketOK   = not useMarketFilter or (benchClose > benchMA20)
+marketWeak = useMarketFilter and not marketOK
+
+// ----- 2-3. 돌파 조건 -----
+priorHigh = ta.highest(high[1], breakoutLen)                          // 당일 바를 제외한 과거 고가(박스권 상단)
+breakoutCond = ta.crossover(close, priorHigh)                          // 확정봉 종가 기준 돌파
+
+// ----- 2-4. 거래량 조건 -----
+volMA20 = ta.sma(volume, volLen)
+volumeCond = volume > volMA20 * volMult
+breakoutNoVolume = breakoutCond and volume < volMA20
+
+// ----- 2-5. VCP / 변동성 축소 조건 -----
+atrVal        = ta.atr(atrLen)
+atrRecentAvg  = ta.sma(atrVal, atrContractionLen)
+atrPriorAvg   = atrRecentAvg[atrContractionLen]
+vcpAtrDown    = atrRecentAvg < atrPriorAvg
+
+rangeRecent10 = ta.highest(high, 10) - ta.lowest(low, 10)
+rangePrior10  = rangeRecent10[10]
+vcpRangeDown  = rangeRecent10 < rangePrior10
+
+recentVolAvg10 = ta.sma(volume, 10)
+vcpVolDown     = recentVolAvg10 < volMA20
+
+localHigh20     = ta.highest(high, 20)
+drawdownLocal   = (close - localHigh20) / localHigh20 * 100
+vcpNotOverextended = drawdownLocal > -10.0
+
+highest60  = ta.highest(high, nearHighLen)
+drawdown60 = (close - highest60) / highest60 * 100
+vcpNearHigh = drawdown60 > pullbackLimitPct
+
+vcpConditionCount = (vcpAtrDown ? 1 : 0) + (vcpRangeDown ? 1 : 0) + (vcpVolDown ? 1 : 0) + (vcpNotOverextended ? 1 : 0) + (vcpNearHigh ? 1 : 0)
+vcpPass = vcpConditionCount >= vcpMinCount
+
+// ----- 2-6. 과열 / 제외 조건 -----
+dailyReturnPct  = (close - close[1]) / close[1] * 100
+fiveDayReturnPct = (close - close[5]) / close[5] * 100
+maDeviationPct  = (close - ma20) / ma20 * 100
+
+bigBullishPrev = (close[1] - open[1]) / open[1] * 100 > 3.0
+upperWick      = high - math.max(close, open)
+bodyToday      = math.abs(close - open)
+longUpperWick  = upperWick > bodyToday * 1.0
+weakCloseToday = close < (high + low) / 2
+longWickWeakSignal = bigBullishPrev and longUpperWick and weakCloseToday
+
+heatDailyReturn = dailyReturnPct >= dailyOverheatPct
+heatFiveDayReturn = fiveDayReturnPct >= fiveDayOverheatPct
+heatMADeviation = maDeviationPct > maDeviationLimitPct
+heatBelowMA20  = close < ma20
+heatMACross    = ma20 < ma60
+
+overheatCond = heatDailyReturn or heatFiveDayReturn or heatMADeviation or breakoutNoVolume or heatBelowMA20 or heatMACross or longWickWeakSignal
+
+// ----- 2-7. 거래대금 필터(한국장 유동성) -----
+tradingValue = close * volume
+liquidityOK  = not useValueFilter or tradingValue >= minTradingValue
+valueRatio   = useValueFilter and minTradingValue > 0 ? tradingValue / minTradingValue : 999.0
+
+// ----- 2-8. 조건 점수화 (100점 만점) -----
+trendScore = (close > ma20 ? 8 : 0) + (ma20 > ma60 ? 8 : 0) + (ma60 > ma120 ? 8 : 0) + (close > ma200 ? 6 : 0) + (ma200Rising ? 5 : 0)
+volumeScoreValue = volumeCond ? 20 : (volume >= volMA20 ? 10 : 0)
+vcpScoreValue     = vcpConditionCount * 5
+marketScoreValue  = not useMarketFilter ? 10 : (marketOK ? 10 : 0)
+liquidityScoreValue = not useValueFilter ? 10 : (valueRatio >= 3 ? 10 : valueRatio >= 1.5 ? 7 : valueRatio >= 1 ? 4 : 0)
+totalScore = trendScore + volumeScoreValue + vcpScoreValue + marketScoreValue + liquidityScoreValue
+
+// ----- 2-9. 설정(SETUP) 등록 및 진입 확인(ENTRY) 상태 머신 (indicator 버전과 동일) -----
+var float setupHigh      = na
+var float setupPriorHigh = na
+var float setupScoreVal  = na
+var string setupGrade    = na
+var bool  entryPending   = false
+var int   waitBarsCount  = 0
+
+var float entryRefPrice = na
+var float entryStopRef  = na
+var string activeGrade  = na
+
+setupHardBlocked = overheatCond or marketWeak or not liquidityOK or not vcpPass
+newSetup = barstate.isconfirmed and breakoutCond and not setupHardBlocked and totalScore >= weakScoreThreshold
+
+entryConfirmedThisBar = false
+
+if newSetup
+    setupHigh      := high
+    setupPriorHigh := priorHigh
+    setupScoreVal  := totalScore
+    setupGrade     := totalScore >= strongScoreThreshold ? "STRONG" : "WEAK"
+    entryPending   := true
+    waitBarsCount  := 0
+else if entryPending and barstate.isconfirmed
+    if ta.crossover(close, setupHigh) and not overheatCond
+        entryPending    := false
+        entryRefPrice   := close
+        entryStopRef    := setupPriorHigh
+        activeGrade     := setupGrade
+        entryConfirmedThisBar := true
+    else
+        waitBarsCount += 1
+        if close < ma20 or waitBarsCount > maxWaitBars
+            entryPending := false
+
+entryTriggerStrong = entryConfirmedThisBar and activeGrade == "STRONG"
+entryTriggerWeak   = entryConfirmedThisBar and activeGrade == "WEAK"
+entryTrigger = entryTriggerStrong or (tradeWeakSetups and entryTriggerWeak)
+
+// ----- 2-10. 손절/익절 계산(진입 기준가는 strategy.entry 체결가가 아닌, 신호 확정봉 종가 기준) -----
+stop1 = entryRefPrice * (1 + stopPct1 / 100)
+stop2 = entryRefPrice * (1 + stopPct2 / 100)
+tp1   = entryRefPrice * (1 + tpPct1 / 100)
+tp2   = entryRefPrice * (1 + tpPct2 / 100)
+
+bigBearishToday  = close < open and (open - close) / open * 100 > 3.0
+volumeSpikeToday = volume > volMA20 * volMult
+reduceCond = strategy.position_size > 0 and ta.crossunder(close, ma20) and bigBearishToday and volumeSpikeToday
+trendStopCond = strategy.position_size > 0 and barstate.isconfirmed and (close < ma20 or (not na(entryStopRef) and close < entryStopRef))
+
+// #############################################################################
+// 3. 주문 실행부 (Order Execution) — 시각화/조건 계산과 분리
+// #############################################################################
+
+// ----- 3-1. 진입: 신호 확정봉 종가 기준 손절폭으로 리스크 비례 수량을 계산해 다음 봉 시가에 진입 -----
+if entryTrigger and strategy.position_size == 0
+    perShareLossAtEntry = close - stop1
+    riskAmount = strategy.equity * riskPctPerTrade / 100
+    qty = perShareLossAtEntry > 0 ? math.max(math.floor(riskAmount / perShareLossAtEntry), 1) : 1
+    strategy.entry("Long", strategy.long, qty = qty, comment = activeGrade)
+
+// ----- 3-2. 청산: 1차 익절(50%)/2차 익절(잔여) + 손절선, 추세·구조적 손절, REDUCE 축소 -----
+if strategy.position_size > 0 and barstate.isconfirmed
+    strategy.exit("TP1", "Long", qty_percent = 50, limit = tp1, stop = stop1, comment_profit = "TAKE PROFIT 1", comment_loss = "STOP")
+    strategy.exit("TP2", "Long", qty_percent = 100, limit = tp2, stop = stop1, comment_profit = "TAKE PROFIT 2", comment_loss = "STOP")
+    if trendStopCond
+        strategy.close("Long", comment = "TREND/구조적 STOP")
+    else if reduceCond
+        strategy.close("Long", qty_percent = 50, comment = "REDUCE")
+
+// ----- 3-3. 참고용 시각화(이동평균선, 진입 시점 손절/익절선) -----
+plot(ma20,  "MA20",  color = color.new(color.orange, 0), linewidth = 1)
+plot(ma60,  "MA60",  color = color.new(color.blue, 0),   linewidth = 1)
+plot(ma120, "MA120", color = color.new(color.purple, 0), linewidth = 1)
+plot(ma200, "MA200", color = color.new(color.gray, 0),   linewidth = 2)
+plot(strategy.position_size > 0 ? stop1 : na, "손절선 1", color = color.new(color.red, 0),   style = plot.style_linebr)
+plot(strategy.position_size > 0 ? tp1   : na, "익절선 1", color = color.new(color.green, 0), style = plot.style_linebr)
+plot(strategy.position_size > 0 ? tp2   : na, "익절선 2", color = color.new(color.green, 40), style = plot.style_linebr)
