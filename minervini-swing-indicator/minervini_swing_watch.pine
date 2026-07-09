@@ -70,8 +70,8 @@ minTradingValue = input.float(3000000000, "최소 거래대금(원, 종가×거�
 
 // --- 점수화(스코어링) 설정 ---
 grpScore = "점수화(100점 만점) 설정"
-strongScoreThreshold = input.int(80, "STRONG BUY WATCH 최소 점수(기본 80)", minval = 0, maxval = 100, group = grpScore)
-weakScoreThreshold   = input.int(60, "WEAK BUY WATCH 최소 점수(기본 60, 미만은 신호 없음)", minval = 0, maxval = 100, group = grpScore)
+strongScoreThreshold = input.int(80, "STRONG BUY WATCH 최소 점수(기본 80)", minval = 0, maxval = 100, group = grpScore, tooltip = "WEAK 최소 점수보다 크거나 같게 설정하세요. 더 낮게 설정하면 WEAK 등급이 나오지 않습니다.")
+weakScoreThreshold   = input.int(60, "WEAK BUY WATCH 최소 점수(기본 60, 미만은 신호 없음)", minval = 0, maxval = 100, group = grpScore, tooltip = "STRONG 최소 점수보다 작거나 같게 설정하세요.")
 
 // --- 진입 확인(재돌파) 설정 ---
 grpEntry = "진입 확인(다음 봉 재돌파) 설정"
@@ -219,14 +219,32 @@ var bool  tp2Fired  = false
 var bool  stopFired = false
 
 setupHardBlocked = overheatCond or marketWeak or not liquidityOK or not vcpPass
-newSetup = barstate.isconfirmed and breakoutCond and not setupHardBlocked and totalScore >= weakScoreThreshold
+// 이미 확인된 진입(entryRefPrice)이 활성 상태(STOP/TAKE PROFIT 2로 종료 전)이면 새 SETUP을
+// 등록하지 않는다. 한 번에 하나의 후보만 추적해, 진행 중인 트레이드의 기준값이
+// 관련 없는 새 돌파로 덮어써지는 것을 방지한다.
+newSetup = barstate.isconfirmed and breakoutCond and not setupHardBlocked and totalScore >= weakScoreThreshold and na(entryRefPrice)
 
 // 노이즈 감소용: "돌파 + 점수 조건은 충족했지만" 특정 하드 필터 하나 때문에 막힌 경우만 경고 표시
 wouldBeCandidate = barstate.isconfirmed and breakoutCond and totalScore >= weakScoreThreshold
 
 entryConfirmedThisBar = false   // 이번 확정봉에 진입 확인이 발생했는지(라벨용, 매 봉 재계산)
 
-if newSetup
+// 대기 중이던 SETUP의 진입 확인(재돌파)을 새 SETUP 등록보다 항상 먼저 평가한다.
+// 이렇게 하지 않으면, 같은 확정봉에 "대기 중이던 설정일 고가 재돌파"와 "새로운 N일 고가 돌파"가
+// 동시에 성립하는 드문 경우 새 SETUP이 먼저 처리되면서 이미 대기 중이던 진입 확인이 사라질 수 있다.
+entryConfirmedNow = entryPending and barstate.isconfirmed and ta.crossover(close, setupHigh) and not overheatCond
+
+if entryConfirmedNow
+    // 진입 확인: 다음 봉의 전일(=설정일) 고가 돌파, 또는 눌림 후 동일 레벨 재돌파 모두 crossover로 포착
+    entryPending    := false
+    entryRefPrice   := close
+    entryStopRef    := setupPriorHigh
+    activeGrade     := setupGrade
+    tp1Fired  := false
+    tp2Fired  := false
+    stopFired := false
+    entryConfirmedThisBar := true
+else if newSetup
     setupHigh      := high
     setupPriorHigh := priorHigh
     setupScoreVal  := totalScore
@@ -234,21 +252,10 @@ if newSetup
     entryPending   := true
     waitBarsCount  := 0
 else if entryPending and barstate.isconfirmed
-    if ta.crossover(close, setupHigh) and not overheatCond
-        // 진입 확인: 다음 봉의 전일(=설정일) 고가 돌파, 또는 눌림 후 동일 레벨 재돌파 모두 crossover로 포착
-        entryPending    := false
-        entryRefPrice   := close
-        entryStopRef    := setupPriorHigh
-        activeGrade     := setupGrade
-        tp1Fired  := false
-        tp2Fired  := false
-        stopFired := false
-        entryConfirmedThisBar := true
-    else
-        waitBarsCount += 1
-        if close < ma20 or waitBarsCount > maxWaitBars
-            // 추세 이탈 또는 대기 시간 초과 시 설정을 조용히 무효화(재추격 매수 방지)
-            entryPending := false
+    waitBarsCount += 1
+    if close < ma20 or waitBarsCount > maxWaitBars
+        // 추세 이탈 또는 대기 시간 초과 시 설정을 조용히 무효화(재추격 매수 방지)
+        entryPending := false
 
 entryTriggerStrong = entryConfirmedThisBar and activeGrade == "STRONG"
 entryTriggerWeak   = entryConfirmedThisBar and activeGrade == "WEAK"

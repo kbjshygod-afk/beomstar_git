@@ -65,8 +65,8 @@ useValueFilter  = input.bool(true, "거래대금 필터 사용", group = grpValu
 minTradingValue = input.float(3000000000, "최소 거래대금(원, 종가×거래량, 기본 30억)", minval = 0.0, group = grpValue)
 
 grpScore = "점수화(100점 만점) 설정"
-strongScoreThreshold = input.int(80, "STRONG BUY WATCH 최소 점수(기본 80)", minval = 0, maxval = 100, group = grpScore)
-weakScoreThreshold   = input.int(60, "WEAK BUY WATCH 최소 점수(기본 60, 미만은 신호 없음)", minval = 0, maxval = 100, group = grpScore)
+strongScoreThreshold = input.int(80, "STRONG BUY WATCH 최소 점수(기본 80)", minval = 0, maxval = 100, group = grpScore, tooltip = "WEAK 최소 점수보다 크거나 같게 설정하세요. 더 낮게 설정하면 WEAK 등급이 나오지 않습니다.")
+weakScoreThreshold   = input.int(60, "WEAK BUY WATCH 최소 점수(기본 60, 미만은 신호 없음)", minval = 0, maxval = 100, group = grpScore, tooltip = "STRONG 최소 점수보다 작거나 같게 설정하세요.")
 
 grpEntry = "진입 확인(다음 봉 재돌파) 설정"
 maxWaitBars = input.int(10, "진입 확인 최대 대기 봉수(기본 10)", minval = 1, group = grpEntry)
@@ -178,11 +178,22 @@ var float entryStopRef  = na
 var string activeGrade  = na
 
 setupHardBlocked = overheatCond or marketWeak or not liquidityOK or not vcpPass
-newSetup = barstate.isconfirmed and breakoutCond and not setupHardBlocked and totalScore >= weakScoreThreshold
+// 이미 보유 중인 포지션이 있으면 새 SETUP을 등록하지 않는다. 한 번에 하나의 포지션만
+// 추적해, 보유 중 발생한 무관한 새 돌파가 대기 상태를 덮어써 이전 신호를 잃는 것을 막는다.
+newSetup = barstate.isconfirmed and breakoutCond and not setupHardBlocked and totalScore >= weakScoreThreshold and strategy.position_size == 0
 
 entryConfirmedThisBar = false
 
-if newSetup
+// 대기 중이던 SETUP의 진입 확인(재돌파)을 새 SETUP 등록보다 항상 먼저 평가한다(indicator 버전과 동일 이유).
+entryConfirmedNow = entryPending and barstate.isconfirmed and ta.crossover(close, setupHigh) and not overheatCond
+
+if entryConfirmedNow
+    entryPending    := false
+    entryRefPrice   := close
+    entryStopRef    := setupPriorHigh
+    activeGrade     := setupGrade
+    entryConfirmedThisBar := true
+else if newSetup
     setupHigh      := high
     setupPriorHigh := priorHigh
     setupScoreVal  := totalScore
@@ -190,16 +201,9 @@ if newSetup
     entryPending   := true
     waitBarsCount  := 0
 else if entryPending and barstate.isconfirmed
-    if ta.crossover(close, setupHigh) and not overheatCond
-        entryPending    := false
-        entryRefPrice   := close
-        entryStopRef    := setupPriorHigh
-        activeGrade     := setupGrade
-        entryConfirmedThisBar := true
-    else
-        waitBarsCount += 1
-        if close < ma20 or waitBarsCount > maxWaitBars
-            entryPending := false
+    waitBarsCount += 1
+    if close < ma20 or waitBarsCount > maxWaitBars
+        entryPending := false
 
 entryTriggerStrong = entryConfirmedThisBar and activeGrade == "STRONG"
 entryTriggerWeak   = entryConfirmedThisBar and activeGrade == "WEAK"
