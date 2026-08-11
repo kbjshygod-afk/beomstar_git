@@ -488,6 +488,149 @@ table.key-table tr.checked td.en { color: var(--success); }
   padding: 0;
 }
 
+/* ---------- 말하기 도전 (음성 인식) ---------- */
+.mic-btn {
+  flex: 0 0 auto;
+  border: 1px solid var(--boss);
+  background: rgba(249, 115, 22, 0.16);
+  color: #ffedd5;
+  border-radius: 10px;
+  width: 38px; height: 38px;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 0;
+}
+.repeat-card.passed { border-color: var(--success); background: rgba(34, 197, 94, 0.12); }
+.repeat-card .pass-mark {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--success);
+}
+
+.boss-score {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #fed7aa;
+}
+
+/* 모달 */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(2, 6, 23, 0.82);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 16px;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom));
+}
+.modal.hidden { display: none; }
+.modal-card {
+  width: 100%;
+  max-width: 460px;
+  background: var(--card);
+  border: 1px solid var(--boss);
+  border-radius: 18px;
+  padding: 16px;
+  max-height: 88vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.modal-title { font-size: 15px; font-weight: 800; color: var(--boss); }
+.modal-close {
+  border: 1px solid var(--card-line);
+  background: transparent;
+  color: var(--text-dim);
+  border-radius: 10px;
+  width: 34px; height: 34px;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 0;
+}
+.mic-hint { font-size: 13px; color: var(--text-dim); margin-bottom: 10px; }
+.mic-target {
+  border: 1px solid var(--card-line);
+  background: #0f1c33;
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+.mic-target-en { font-size: 19px; font-weight: 800; word-break: keep-all; }
+.mic-target-en.hidden-text { filter: blur(7px); user-select: none; }
+.mic-target-ko { font-size: 13px; color: var(--text-dim); margin-top: 4px; }
+
+.mic-stage { text-align: center; padding: 6px 0 12px; }
+.mic-circle {
+  width: 84px; height: 84px;
+  margin: 0 auto 10px;
+  border-radius: 50%;
+  border: 2px solid var(--card-line);
+  background: #0f1c33;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 34px;
+}
+.mic-circle.listening {
+  border-color: var(--boss);
+  background: rgba(249, 115, 22, 0.18);
+  animation: micPulse 1.2s ease-in-out infinite;
+}
+@keyframes micPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.5); }
+  50% { box-shadow: 0 0 0 14px rgba(249, 115, 22, 0); }
+}
+.mic-state-text { font-size: 13px; color: var(--text-dim); min-height: 20px; }
+.mic-interim { font-size: 15px; color: var(--accent); min-height: 24px; margin-top: 4px; word-break: keep-all; }
+
+/* 결과 */
+.score-big { font-size: 34px; font-weight: 900; line-height: 1.1; }
+.score-big.pass { color: var(--success); }
+.score-big.fail { color: var(--warn); }
+.score-bar {
+  height: 10px;
+  background: #0b1324;
+  border: 1px solid var(--card-line);
+  border-radius: 99px;
+  overflow: hidden;
+  margin: 8px 0 12px;
+}
+.score-bar-fill { height: 100%; width: 0%; border-radius: 99px; transition: width 0.4s ease; }
+.score-bar-fill.pass { background: linear-gradient(90deg, var(--success), #4ade80); }
+.score-bar-fill.fail { background: linear-gradient(90deg, var(--warn), #fbbf24); }
+
+.diff-label { font-size: 11px; color: var(--text-dim); margin-bottom: 5px; letter-spacing: 0.4px; }
+.diff-words { margin-bottom: 12px; line-height: 2.1; }
+.diff-word {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  margin-right: 4px;
+  border: 1px solid transparent;
+}
+.diff-word.ok { background: rgba(34, 197, 94, 0.16); color: #86efac; border-color: rgba(34,197,94,0.5); }
+.diff-word.miss { background: rgba(248, 113, 113, 0.14); color: #fca5a5; border-color: rgba(248,113,113,0.5); }
+.heard-box {
+  background: #0f1c33;
+  border: 1px solid var(--card-line);
+  border-radius: 10px;
+  padding: 9px 11px;
+  font-size: 13px;
+  color: var(--text-dim);
+  margin-bottom: 12px;
+  word-break: keep-all;
+}
+.heard-box .heard-text { color: var(--text); font-weight: 600; }
+
 /* ---------- 안내 / 기타 ---------- */
 .tip-list { margin: 0; padding-left: 18px; font-size: 13px; color: var(--text-dim); }
 .tip-list li { margin-bottom: 6px; }
@@ -601,11 +744,13 @@ table.key-table tr.checked td.en { color: var(--success); }
     <div class="boss-label">BOSS SENTENCE</div>
     <div class="boss-en hidden-text" id="bossEn">-</div>
     <div class="boss-ko" id="bossKo">-</div>
+    <div class="boss-score" id="bossScore"></div>
     <div class="btn-row" style="margin-top:10px">
       <button class="btn btn-sm btn-boss" data-action="toggle-boss" id="bossToggleBtn">👁 영어 보기</button>
       <button class="btn btn-sm btn-boss" data-action="speak-boss">🔊 듣기</button>
       <button class="btn btn-sm btn-ghost" data-action="copy-boss">📋 복사</button>
     </div>
+    <button class="btn btn-boss" style="width:100%;margin-top:8px" data-action="challenge-boss">🎤 말하기 도전 (음성 채점)</button>
   </div>
 </section>
 
@@ -613,7 +758,10 @@ table.key-table tr.checked td.en { color: var(--success); }
 <section class="card">
   <h2 class="card-title">Quest Stage <span class="sub">완료하면 XP 획득</span></h2>
   <div class="stage-list" id="stageList"></div>
-  <div class="notice" id="stageHint">Stage 3은 아래 <b>핵심 문장 5개</b>를 모두 체크하면 자동으로 클리어됩니다.</div>
+  <div class="notice" id="stageHint">
+    Stage 3은 아래 <b>핵심 문장 5개</b>를 모두 체크하면 자동으로 클리어됩니다.<br />
+    Boss Mission은 위의 <b>🎤 말하기 도전</b>으로 발음을 채점받거나, 이 버튼으로 직접 클리어할 수 있어요.
+  </div>
 </section>
 
 <!-- ================= 음성 ================= -->
@@ -681,6 +829,41 @@ table.key-table tr.checked td.en { color: var(--success); }
   <button class="btn btn-danger" style="width:100%" data-action="reset">전체 학습 기록 초기화</button>
   <p class="footer-note">기록은 이 브라우저(localStorage)에만 저장됩니다.</p>
 </section>
+
+<!-- ================= 말하기 도전 모달 ================= -->
+<div class="modal hidden" id="micModal" role="dialog" aria-modal="true">
+  <div class="modal-card">
+    <div class="modal-head">
+      <span class="modal-title" id="micModalTitle">🎤 말하기 도전</span>
+      <button class="modal-close" data-action="close-mic" aria-label="닫기">✕</button>
+    </div>
+
+    <p class="mic-hint" id="micHint">준비되면 시작을 누르고, 문장을 소리 내어 말하세요.</p>
+
+    <div class="mic-target">
+      <div class="mic-target-en" id="micTargetEn">-</div>
+      <div class="mic-target-ko" id="micTargetKo">-</div>
+    </div>
+
+    <!-- 준비 / 듣는 중 -->
+    <div id="micStage" class="mic-stage">
+      <div class="mic-circle" id="micCircle">🎤</div>
+      <div class="mic-state-text" id="micStateText">준비됐어요.</div>
+      <div class="mic-interim" id="micInterim"></div>
+    </div>
+
+    <!-- 결과 -->
+    <div id="micResult" style="display:none">
+      <div class="score-big" id="scoreBig">0%</div>
+      <div class="score-bar"><div class="score-bar-fill" id="scoreBarFill"></div></div>
+      <div class="diff-label">문장 비교 (초록 = 잘 말한 단어)</div>
+      <div class="diff-words" id="diffWords"></div>
+      <div class="heard-box">들린 문장: <span class="heard-text" id="heardText">-</span></div>
+    </div>
+
+    <div class="btn-row" id="micActions"></div>
+  </div>
+</div>
 
 <div id="toast"></div>
 
@@ -1145,7 +1328,13 @@ var STORAGE_KEY = "daily-english-quest-v1";
 
 /** 하루(Day 콘텐츠) 하나의 기본 진행 상태 */
 function createDefaultDayProgress() {
-  return { s1: false, s2: false, s3: false, boss: false, checks: [false, false, false, false, false], visited: false };
+  return {
+    s1: false, s2: false, s3: false, boss: false,
+    checks: [false, false, false, false, false],       // 핵심 문장 연습 체크
+    repeatPassed: [false, false, false, false, false], // 반복 문장 음성 통과 여부
+    bossScore: 0,                                      // 보스 문장 최고 발음 점수(%)
+    visited: false
+  };
 }
 
 /** 앱 전체의 기본 상태 */
@@ -1186,8 +1375,13 @@ function loadState() {
           fresh.s3 = saved.s3 === true;
           fresh.boss = saved.boss === true;
           fresh.visited = saved.visited === true;
+          fresh.bossScore = toSafeNumber(saved.bossScore, 0);
           if (Object.prototype.toString.call(saved.checks) === "[object Array]") {
             for (var c = 0; c < 5; c++) { fresh.checks[c] = saved.checks[c] === true; }
+          }
+          // repeatPassed는 나중에 추가된 항목이라, 예전 저장값에는 없을 수 있다.
+          if (Object.prototype.toString.call(saved.repeatPassed) === "[object Array]") {
+            for (var r = 0; r < 5; r++) { fresh.repeatPassed[r] = saved.repeatPassed[r] === true; }
           }
         }
         loaded.days[id] = fresh;
@@ -1395,6 +1589,7 @@ function selectDay(dayId) {
   progress.visited = true; // Stage 1이 In Progress로 바뀐다
   isBossRevealed = false;  // Day를 바꾸면 보스 문장은 다시 가린다
   stopSpeaking();
+  closeMicChallenge();
   saveState();
   render();
   window.scrollTo({ top: 0, behavior: "smooth" });
@@ -1488,6 +1683,328 @@ function speakCurrentScript() {
 }
 
 /* =========================================================
+   6-2. 말하기 채점 (Web Speech Recognition)
+   - 내가 말한 문장을 인식해서 목표 문장과 비교하고 점수를 낸다.
+   - 초급자 기준이라 넉넉하게 채점한다(70% 이상이면 통과).
+   ========================================================= */
+var SpeechRecognitionClass = window.SpeechRecognition || window.webkitSpeechRecognition || null;
+var recognitionAvailable = (SpeechRecognitionClass !== null);
+var PASS_SCORE = 70;         // 통과 기준 점수
+var LISTEN_LIMIT_MS = 10000; // 안전용 자동 종료 시간
+
+/* 발음이 비슷해서 인식기가 자주 헷갈리는 단어들 (같은 단어로 인정) */
+var SOUND_ALIKE_GROUPS = [
+  ["to", "two", "too"], ["for", "four"], ["your", "youre"], ["its", "it"],
+  ["i", "ai", "eye"], ["a", "uh"], ["are", "our"], ["there", "their", "theyre"],
+  ["okay", "ok"], ["hi", "high"], ["one", "won"], ["by", "buy", "bye"],
+  ["know", "no"], ["here", "hear"], ["thank", "thanks"]
+];
+
+/** 채점용으로 문장을 단순하게 만든다 (소문자, 기호 제거) */
+function normalizeForScore(text) {
+  return String(text || "")
+    .toLowerCase()
+    .replace(/[.,!?;:"()‘’“”]/g, " ")
+    .replace(/'/g, "")
+    .replace(/\s+/g, " ")
+    .replace(/^\s|\s$/g, "");
+}
+
+function toWords(text) {
+  var cleaned = normalizeForScore(text);
+  return cleaned ? cleaned.split(" ") : [];
+}
+
+/** 두 단어가 사실상 같은 소리인지 */
+function isSameSound(a, b) {
+  if (a === b) { return true; }
+  for (var i = 0; i < SOUND_ALIKE_GROUPS.length; i++) {
+    var group = SOUND_ALIKE_GROUPS[i];
+    if (indexOfIn(group, a) >= 0 && indexOfIn(group, b) >= 0) { return true; }
+  }
+  // 긴 단어는 철자 하나 정도 차이는 맞은 것으로 본다 (인식 오차 보정)
+  if (a.length >= 4 && b.length >= 4 && editDistance(a, b) <= 1) { return true; }
+  return false;
+}
+
+function indexOfIn(list, value) {
+  for (var i = 0; i < list.length; i++) { if (list[i] === value) { return i; } }
+  return -1;
+}
+
+/** 두 단어의 철자 차이 (Levenshtein) */
+function editDistance(a, b) {
+  var prev = [], cur = [], i, j;
+  for (j = 0; j <= b.length; j++) { prev[j] = j; }
+  for (i = 1; i <= a.length; i++) {
+    cur[0] = i;
+    for (j = 1; j <= b.length; j++) {
+      var cost = (a.charAt(i - 1) === b.charAt(j - 1)) ? 0 : 1;
+      cur[j] = Math.min(cur[j - 1] + 1, prev[j] + 1, prev[j - 1] + cost);
+    }
+    for (j = 0; j <= b.length; j++) { prev[j] = cur[j]; }
+  }
+  return prev[b.length];
+}
+
+/**
+ * 목표 문장과 말한 문장을 비교한다.
+ * 순서를 지키면서 단어를 하나씩 맞춰 보고, 맞은 비율을 점수로 낸다.
+ * 반환: { score: 0~100, words: [{ word, ok }] }
+ */
+function scoreSpeech(targetText, saidText) {
+  var targetWords = toWords(targetText);
+  var saidWords = toWords(saidText);
+  var result = [];
+  var matched = 0;
+  var searchFrom = 0;
+
+  for (var i = 0; i < targetWords.length; i++) {
+    var found = -1;
+    // 순서가 조금 밀려도 찾을 수 있게 앞뒤로 조금 여유를 둔다.
+    for (var j = searchFrom; j < saidWords.length && j <= searchFrom + 3; j++) {
+      if (isSameSound(targetWords[i], saidWords[j])) { found = j; break; }
+    }
+    if (found >= 0) {
+      matched++;
+      searchFrom = found + 1;
+      result.push({ word: targetWords[i], ok: true });
+    } else {
+      result.push({ word: targetWords[i], ok: false });
+    }
+  }
+
+  var score = targetWords.length ? Math.round((matched / targetWords.length) * 100) : 0;
+  return { score: score, words: result };
+}
+
+/* ---------- 말하기 도전 진행 상태 ---------- */
+var micSession = null;      // { target, ko, hideTarget, mode, index }
+var recognition = null;     // 현재 동작 중인 인식기
+var listenTimer = null;
+var isListening = false;
+
+/**
+ * 말하기 도전 창을 연다.
+ * mode: "boss"(보스 문장) | "repeat"(반복 연습 문장)
+ */
+function openMicChallenge(config) {
+  if (!recognitionAvailable) {
+    showToast("이 브라우저에서는 음성 인식을 지원하지 않습니다. 버튼으로 클리어할 수 있어요.");
+    return;
+  }
+  stopSpeaking(); // 읽어주는 음성이 마이크에 들어가지 않도록 먼저 멈춘다
+
+  micSession = config;
+  document.getElementById("micModalTitle").textContent =
+    (config.mode === "boss") ? "🔥 BOSS 말하기 도전" : "🎤 따라 말하기";
+  var targetEl = document.getElementById("micTargetEn");
+  targetEl.textContent = config.target;
+  if (config.hideTarget) { targetEl.classList.add("hidden-text"); }
+  else { targetEl.classList.remove("hidden-text"); }
+  document.getElementById("micTargetKo").textContent = config.ko || "";
+
+  showMicReady("준비됐어요. 시작을 누르세요.");
+  document.getElementById("micModal").classList.remove("hidden");
+}
+
+/** 준비 화면 */
+function showMicReady(message) {
+  if (micSession) {
+    document.getElementById("micHint").textContent = (micSession.mode === "boss")
+      ? "영어 문장은 가려져 있어요. 뜻만 보고 말해 보세요."
+      : "문장을 보면서 또박또박 따라 말해 보세요.";
+  }
+  document.getElementById("micStage").style.display = "";
+  document.getElementById("micResult").style.display = "none";
+  document.getElementById("micCircle").classList.remove("listening");
+  document.getElementById("micStateText").textContent = message;
+  document.getElementById("micInterim").textContent = "";
+  document.getElementById("micActions").innerHTML =
+    '<button class="btn btn-boss" data-action="mic-start">🎤 시작</button>'
+    + '<button class="btn btn-ghost" data-action="close-mic">닫기</button>';
+}
+
+/** 듣는 중 화면 */
+function showMicListening() {
+  document.getElementById("micStage").style.display = "";
+  document.getElementById("micResult").style.display = "none";
+  document.getElementById("micCircle").classList.add("listening");
+  document.getElementById("micStateText").textContent = "듣고 있어요... 지금 말하세요!";
+  document.getElementById("micInterim").textContent = "";
+  document.getElementById("micActions").innerHTML =
+    '<button class="btn btn-ghost" data-action="mic-stop">■ 멈추기</button>';
+}
+
+/** 마이크 시작 */
+function startListening() {
+  if (!recognitionAvailable || !micSession) { return; }
+  if (isListening) { return; }
+
+  try {
+    recognition = new SpeechRecognitionClass();
+  } catch (err) {
+    showMicReady("음성 인식을 시작할 수 없어요.");
+    showToast("음성 인식을 시작할 수 없습니다. 버튼으로 클리어해 주세요.");
+    return;
+  }
+
+  recognition.lang = "en-US";
+  recognition.interimResults = true;
+  recognition.continuous = false;
+  recognition.maxAlternatives = 3;
+
+  var finalText = "";
+  isListening = true;
+  showMicListening();
+
+  recognition.onresult = function (event) {
+    var interim = "";
+    for (var i = event.resultIndex; i < event.results.length; i++) {
+      var res = event.results[i];
+      if (res.isFinal) {
+        // 여러 후보 중 점수가 가장 높은 것을 고른다.
+        var best = res[0].transcript;
+        var bestScore = scoreSpeech(micSession.target, best).score;
+        for (var k = 1; k < res.length; k++) {
+          var s = scoreSpeech(micSession.target, res[k].transcript).score;
+          if (s > bestScore) { bestScore = s; best = res[k].transcript; }
+        }
+        finalText += " " + best;
+      } else {
+        interim += res[0].transcript;
+      }
+    }
+    document.getElementById("micInterim").textContent = interim || finalText;
+  };
+
+  recognition.onerror = function (event) {
+    finishListening();
+    var code = event && event.error ? event.error : "";
+    if (code === "not-allowed" || code === "service-not-allowed") {
+      showMicReady("마이크 권한이 필요해요.");
+      showToast("마이크 사용을 허용해 주세요. (파일로 열면 막힐 수 있어요)");
+    } else if (code === "no-speech") {
+      showMicReady("소리가 안 들렸어요. 다시 해볼까요?");
+    } else if (code === "aborted") {
+      showMicReady("준비됐어요. 시작을 누르세요.");
+    } else {
+      showMicReady("인식에 실패했어요. 다시 시도해 주세요.");
+    }
+  };
+
+  recognition.onend = function () {
+    finishListening();
+    var said = finalText.replace(/^\s|\s$/g, "");
+    if (said) { showMicResult(said); }
+    else if (document.getElementById("micResult").style.display === "none") {
+      showMicReady("소리가 안 들렸어요. 다시 해볼까요?");
+    }
+  };
+
+  try {
+    recognition.start();
+  } catch (err) {
+    finishListening();
+    showMicReady("이미 듣고 있어요. 잠시 후 다시 시도해 주세요.");
+    return;
+  }
+
+  // 너무 오래 켜져 있지 않도록 안전 타이머
+  listenTimer = window.setTimeout(function () { stopListening(); }, LISTEN_LIMIT_MS);
+}
+
+function stopListening() {
+  if (recognition) {
+    try { recognition.stop(); } catch (err) { /* 무시 */ }
+  }
+}
+
+function finishListening() {
+  isListening = false;
+  if (listenTimer) { window.clearTimeout(listenTimer); listenTimer = null; }
+  var circle = document.getElementById("micCircle");
+  if (circle) { circle.classList.remove("listening"); }
+}
+
+/** 채점 결과 화면 */
+function showMicResult(saidText) {
+  if (!micSession) { return; }
+  var judged = scoreSpeech(micSession.target, saidText);
+  var passed = judged.score >= PASS_SCORE;
+
+  // 결과가 보이면 목표 문장도 보여 준다 (보스도 도전 후에는 공개)
+  document.getElementById("micTargetEn").classList.remove("hidden-text");
+
+  document.getElementById("micStage").style.display = "none";
+  document.getElementById("micResult").style.display = "";
+
+  var big = document.getElementById("scoreBig");
+  big.textContent = judged.score + "%";
+  big.className = "score-big " + (passed ? "pass" : "fail");
+
+  var fill = document.getElementById("scoreBarFill");
+  fill.className = "score-bar-fill " + (passed ? "pass" : "fail");
+  fill.style.width = judged.score + "%";
+
+  var diffHtml = "";
+  for (var i = 0; i < judged.words.length; i++) {
+    diffHtml += '<span class="diff-word ' + (judged.words[i].ok ? "ok" : "miss") + '">'
+      + escapeHtml(judged.words[i].word) + "</span>";
+  }
+  document.getElementById("diffWords").innerHTML = diffHtml;
+  document.getElementById("heardText").textContent = saidText;
+
+  saveMicScore(judged.score, passed);
+
+  var actions = "";
+  var hintEl = document.getElementById("micHint");
+  if (micSession.mode === "boss") {
+    var bossAlreadyCleared = getDayProgress(state.selectedDay).boss === true;
+    if (passed && !bossAlreadyCleared) {
+      hintEl.textContent = "통과! 아래 버튼으로 보스를 클리어하세요.";
+      actions += '<button class="btn btn-boss" data-action="mic-clear-boss">🔥 보스 클리어 +20 XP</button>';
+    } else if (passed) {
+      hintEl.textContent = "통과! 이 보스는 이미 클리어했어요. 연습은 계속할 수 있어요.";
+    } else {
+      hintEl.textContent = PASS_SCORE + "% 이상이면 통과예요. 듣고 다시 도전해 보세요.";
+    }
+    actions += '<button class="btn btn-ghost" data-action="mic-retry">🎤 다시 도전</button>';
+    actions += '<button class="btn btn-ghost" data-action="close-mic">닫기</button>';
+  } else {
+    hintEl.textContent = passed
+      ? "좋아요! 통과했어요. 한 번 더 말해 봐도 좋아요."
+      : "빨간 단어를 🔊로 다시 듣고 따라 해보세요.";
+    actions += '<button class="btn btn-ghost" data-action="mic-retry">🎤 다시</button>';
+    actions += '<button class="btn btn-accent" data-action="close-mic">완료</button>';
+  }
+  document.getElementById("micActions").innerHTML = actions;
+
+  if (passed) { showToast("좋아요! " + judged.score + "% 통과!"); }
+  else { showToast(judged.score + "% · 빨간 단어를 다시 들어 보세요."); }
+}
+
+/** 점수를 기록에 남긴다 (보스는 최고 점수, 반복 문장은 통과 여부) */
+function saveMicScore(score, passed) {
+  var progress = getDayProgress(state.selectedDay);
+  if (micSession.mode === "boss") {
+    if (score > progress.bossScore) { progress.bossScore = score; }
+  } else if (passed && typeof micSession.index === "number") {
+    progress.repeatPassed[micSession.index] = true;
+  }
+  saveState();
+  render();
+}
+
+/** 도전 창 닫기 */
+function closeMicChallenge() {
+  stopListening();
+  finishListening();
+  micSession = null;
+  document.getElementById("micModal").classList.add("hidden");
+}
+
+/* =========================================================
    7. 렌더링
    ========================================================= */
 var isBossRevealed = false;   // 보스 문장 보기/숨기기
@@ -1570,6 +2087,18 @@ function renderQuestCard() {
   else { bossEl.classList.add("hidden-text"); }
   document.getElementById("bossKo").textContent = day.bossSentence.ko;
   document.getElementById("bossToggleBtn").textContent = isBossRevealed ? "🙈 영어 숨기기" : "👁 영어 보기";
+
+  // 발음 최고 점수 (도전한 적이 있을 때만 표시)
+  var progress = getDayProgress(day.id);
+  var scoreEl = document.getElementById("bossScore");
+  if (progress.bossScore > 0) {
+    scoreEl.textContent = "🎤 최고 발음 점수 " + progress.bossScore + "%"
+      + (progress.bossScore >= PASS_SCORE ? " · 통과" : " · " + PASS_SCORE + "% 이상이면 통과");
+  } else {
+    scoreEl.textContent = recognitionAvailable
+      ? "🎤 말하기 도전으로 발음을 채점할 수 있어요."
+      : "이 브라우저는 음성 인식을 지원하지 않아 버튼으로 클리어합니다.";
+  }
 }
 
 /** 스테이지 버튼 4개 */
@@ -1659,13 +2188,20 @@ function renderRepeatCards() {
   var list = document.getElementById("repeatList");
   var html = "";
 
+  var progress = getDayProgress(day.id);
+
   for (var i = 0; i < day.repeatSentences.length; i++) {
     var item = day.repeatSentences[i];
-    html += '<div class="repeat-card">'
-      + '<span class="num">' + (i + 1) + "</span>"
+    var passed = progress.repeatPassed[i] === true;
+    html += '<div class="repeat-card' + (passed ? " passed" : "") + '">'
+      + '<span class="num">' + (passed ? "✔" : (i + 1)) + "</span>"
       + '<span class="text"><span class="repeat-en">' + escapeHtml(item.en) + "</span>"
-      + '<span class="repeat-ko">' + escapeHtml(item.ko) + "</span></span>"
-      + '<button class="speak-btn" data-action="speak-line" data-text="' + escapeHtml(item.en) + '" aria-label="읽기">🔊</button>'
+      + '<span class="repeat-ko">' + escapeHtml(item.ko)
+      + (passed ? ' <span class="pass-mark">· 통과</span>' : "") + "</span></span>"
+      + '<button class="speak-btn" data-action="speak-line" data-text="' + escapeHtml(item.en) + '" aria-label="문장 듣기">🔊</button>'
+      + (recognitionAvailable
+          ? '<button class="mic-btn" data-action="challenge-repeat" data-index="' + i + '" aria-label="따라 말하기">🎤</button>'
+          : "")
       + "</div>";
   }
   list.innerHTML = html;
@@ -1791,6 +2327,48 @@ function handleClick(event) {
 
   } else if (action === "reset") {
     resetAll();
+
+  /* ---------- 말하기 도전 ---------- */
+  } else if (action === "challenge-boss") {
+    openMicChallenge({
+      mode: "boss",
+      target: day.bossSentence.en,
+      ko: day.bossSentence.ko,
+      hideTarget: true // 보스는 안 보고 말하는 단계
+    });
+
+  } else if (action === "challenge-repeat") {
+    var repeatIndex = Number(el.getAttribute("data-index"));
+    var repeatItem = day.repeatSentences[repeatIndex];
+    if (repeatItem) {
+      openMicChallenge({
+        mode: "repeat",
+        index: repeatIndex,
+        target: repeatItem.en,
+        ko: repeatItem.ko,
+        hideTarget: false
+      });
+    }
+
+  } else if (action === "mic-start") {
+    startListening();
+
+  } else if (action === "mic-stop") {
+    stopListening();
+
+  } else if (action === "mic-retry") {
+    // 보스는 다시 도전할 때 문장을 다시 가린다.
+    if (micSession && micSession.hideTarget) {
+      document.getElementById("micTargetEn").classList.add("hidden-text");
+    }
+    showMicReady("준비됐어요. 시작을 누르세요.");
+
+  } else if (action === "mic-clear-boss") {
+    closeMicChallenge();
+    clearStage(state.selectedDay, "boss");
+
+  } else if (action === "close-mic") {
+    closeMicChallenge();
   }
 }
 
@@ -1806,7 +2384,7 @@ function init() {
 
   // 다른 화면으로 이동하면 음성을 멈춘다 (모바일에서 계속 읽는 것 방지)
   document.addEventListener("visibilitychange", function () {
-    if (document.hidden) { stopSpeaking(); }
+    if (document.hidden) { stopSpeaking(); stopListening(); }
   });
 
   render();
