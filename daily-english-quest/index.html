@@ -1,0 +1,1823 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#0f172a" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<title>Daily English Quest</title>
+<style>
+/* =========================================================
+   Daily English Quest - 스타일 (모바일 우선)
+   배경 #0f172a / 카드 #1e293b / 강조 #38bdf8
+   성공 #22c55e / 경고 #facc15 / 보스 #f97316
+   ========================================================= */
+:root {
+  --bg: #0f172a;
+  --bg-soft: #16213c;
+  --card: #1e293b;
+  --card-line: #334155;
+  --accent: #38bdf8;
+  --success: #22c55e;
+  --warn: #facc15;
+  --boss: #f97316;
+  --text: #e2e8f0;
+  --text-dim: #94a3b8;
+  --radius: 16px;
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard",
+               "Malgun Gothic", "Segoe UI", Roboto, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  padding: 0 14px calc(40px + env(safe-area-inset-bottom));
+  max-width: 640px;
+  margin: 0 auto;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* ---------- 상단 헤더 ---------- */
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: linear-gradient(180deg, #0f172a 78%, rgba(15, 23, 42, 0.85) 100%);
+  padding: 14px 0 10px;
+  margin-bottom: 4px;
+}
+
+.app-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.app-title .logo-mark {
+  display: inline-flex;
+  width: 28px; height: 28px;
+  align-items: center; justify-content: center;
+  border-radius: 9px;
+  background: linear-gradient(140deg, var(--accent), #6366f1);
+  color: #0b1220;
+  font-size: 15px;
+  font-weight: 900;
+}
+.app-subtitle {
+  margin: 2px 0 0 36px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+/* 상태 표시(현재 Day / XP / Level / Streak) */
+.stat-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin-top: 10px;
+}
+.stat-box {
+  background: var(--card);
+  border: 1px solid var(--card-line);
+  border-radius: 12px;
+  padding: 7px 4px;
+  text-align: center;
+  min-width: 0;
+}
+.stat-label {
+  display: block;
+  font-size: 10px;
+  color: var(--text-dim);
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+.stat-value {
+  display: block;
+  font-size: 15px;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.stat-value.accent { color: var(--accent); }
+.stat-value.warn { color: var(--warn); }
+.stat-value.success { color: var(--success); }
+
+/* XP 바 */
+.xp-bar-wrap { margin-top: 8px; }
+.xp-bar-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+}
+.xp-bar {
+  height: 10px;
+  background: #0b1324;
+  border: 1px solid var(--card-line);
+  border-radius: 99px;
+  overflow: hidden;
+}
+.xp-bar-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--accent), #818cf8);
+  transition: width 0.35s ease;
+}
+
+/* ---------- 공통 카드 ---------- */
+.card {
+  background: var(--card);
+  border: 1px solid var(--card-line);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-bottom: 14px;
+}
+.card-title {
+  margin: 0 0 10px;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--accent);
+  letter-spacing: 0.3px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.card-title .sub {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
+/* ---------- Day 선택 ---------- */
+.day-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+.day-btn {
+  appearance: none;
+  border: 1px solid var(--card-line);
+  background: #16233c;
+  color: var(--text);
+  border-radius: 12px;
+  padding: 10px 2px 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  position: relative;
+  min-height: 52px;
+  line-height: 1.25;
+}
+.day-btn .day-state {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+.day-btn.selected {
+  border-color: var(--accent);
+  background: rgba(56, 189, 248, 0.16);
+  color: #e0f2fe;
+}
+.day-btn.done { border-color: var(--success); }
+.day-btn.done .day-state { color: var(--success); }
+
+/* ---------- 오늘의 퀘스트 ---------- */
+.quest-topic {
+  font-size: 18px;
+  font-weight: 800;
+  margin: 0 0 2px;
+}
+.quest-topic-ko {
+  font-size: 13px;
+  color: var(--text-dim);
+  margin: 0 0 10px;
+}
+.quest-line {
+  display: flex;
+  gap: 8px;
+  font-size: 14px;
+  padding: 7px 0;
+  border-top: 1px dashed var(--card-line);
+}
+.quest-line .k {
+  flex: 0 0 66px;
+  color: var(--text-dim);
+  font-size: 12px;
+  padding-top: 2px;
+}
+.quest-line .v { flex: 1; }
+
+.today-badge {
+  display: inline-block;
+  background: rgba(34, 197, 94, 0.16);
+  border: 1px solid var(--success);
+  color: var(--success);
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 9px;
+  border-radius: 99px;
+}
+
+/* 완료율 */
+.rate-wrap { margin-top: 12px; }
+.rate-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+}
+.rate-bar {
+  height: 8px;
+  background: #0b1324;
+  border-radius: 99px;
+  overflow: hidden;
+  border: 1px solid var(--card-line);
+}
+.rate-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--success), #4ade80);
+  border-radius: 99px;
+  transition: width 0.35s ease;
+}
+
+/* ---------- 보스 문장 ---------- */
+.boss-box {
+  margin-top: 12px;
+  border: 1px solid var(--boss);
+  background: rgba(249, 115, 22, 0.12);
+  border-radius: 12px;
+  padding: 12px;
+}
+.boss-label {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--boss);
+  letter-spacing: 0.6px;
+  margin-bottom: 6px;
+}
+.boss-en {
+  font-size: 19px;
+  font-weight: 800;
+  line-height: 1.4;
+  word-break: keep-all;
+}
+.boss-en.hidden-text {
+  filter: blur(7px);
+  user-select: none;
+}
+.boss-ko {
+  font-size: 13px;
+  color: #fed7aa;
+  margin-top: 4px;
+}
+
+/* ---------- 버튼 ---------- */
+.btn {
+  appearance: none;
+  border: 1px solid var(--card-line);
+  background: #22304d;
+  color: var(--text);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  min-height: 46px;
+}
+.btn:active { transform: scale(0.985); }
+.btn-sm {
+  padding: 7px 10px;
+  font-size: 12px;
+  min-height: 34px;
+  border-radius: 10px;
+}
+.btn-accent { background: rgba(56, 189, 248, 0.16); border-color: var(--accent); color: #e0f2fe; }
+.btn-boss { background: rgba(249, 115, 22, 0.18); border-color: var(--boss); color: #ffedd5; }
+.btn-ghost { background: transparent; }
+.btn-danger { background: rgba(248, 113, 113, 0.12); border-color: #f87171; color: #fecaca; }
+.btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn-row .btn { flex: 1 1 30%; }
+
+/* ---------- 스테이지 ---------- */
+.stage-list { display: grid; gap: 10px; }
+.stage-btn {
+  appearance: none;
+  width: 100%;
+  text-align: left;
+  border: 1px solid var(--card-line);
+  background: #1b2942;
+  color: var(--text);
+  border-radius: 14px;
+  padding: 12px 14px;
+  cursor: pointer;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 62px;
+}
+.stage-btn .stage-icon {
+  flex: 0 0 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: #0f1c33;
+  border: 1px solid var(--card-line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+.stage-btn .stage-main { display: block; flex: 1; min-width: 0; }
+.stage-name { display: block; font-size: 15px; font-weight: 800; word-break: keep-all; }
+.stage-desc { display: block; font-size: 12px; color: var(--text-dim); word-break: keep-all; }
+.stage-right { display: block; text-align: right; flex: 0 0 auto; }
+.stage-xp { font-size: 12px; font-weight: 800; color: var(--warn); }
+.stage-status {
+  display: inline-block;
+  margin-top: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 99px;
+  border: 1px solid var(--card-line);
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+.stage-status.progress { color: var(--warn); border-color: var(--warn); }
+.stage-status.cleared { color: var(--success); border-color: var(--success); }
+
+.stage-btn.cleared {
+  background: rgba(34, 197, 94, 0.14);
+  border-color: var(--success);
+}
+.stage-btn.cleared .stage-icon { border-color: var(--success); color: var(--success); }
+.stage-btn.boss { border-color: var(--boss); background: rgba(249, 115, 22, 0.13); }
+.stage-btn.boss .stage-icon { border-color: var(--boss); color: var(--boss); }
+.stage-btn.boss.cleared { background: rgba(34, 197, 94, 0.16); border-color: var(--success); }
+
+/* ---------- 스크립트 ---------- */
+.script-part { margin-bottom: 14px; }
+.script-part-title {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--accent);
+  letter-spacing: 0.4px;
+  margin-bottom: 4px;
+}
+.script-line {
+  font-size: 16px;
+  line-height: 1.9;
+  padding: 1px 0;
+  word-break: keep-all;
+}
+.script-line.dialog { color: #cbd5e1; }
+.script-body.collapsed {
+  max-height: 240px;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(180deg, #000 60%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 60%, transparent 100%);
+}
+
+/* ---------- 핵심 문장 표 ---------- */
+.table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+table.key-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+table.key-table col.c-en { width: 48%; }
+table.key-table col.c-ko { width: 34%; }
+table.key-table col.c-chk { width: 18%; }
+table.key-table th, table.key-table td {
+  border-bottom: 1px solid var(--card-line);
+  padding: 9px 6px;
+  text-align: left;
+  vertical-align: top;
+}
+table.key-table th {
+  font-size: 11px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  font-weight: 700;
+}
+table.key-table td.en { font-weight: 700; word-break: keep-all; }
+.mini-speak {
+  border: 1px solid var(--card-line);
+  background: #0f1c33;
+  color: var(--accent);
+  border-radius: 8px;
+  width: 26px; height: 26px;
+  font-size: 12px;
+  padding: 0;
+  cursor: pointer;
+  vertical-align: middle;
+  margin-right: 5px;
+}
+table.key-table td.ko { color: var(--text-dim); word-break: keep-all; }
+table.key-table td.chk { text-align: center; }
+table.key-table tr.checked td.en { color: var(--success); }
+.check-box {
+  width: 30px; height: 30px;
+  border-radius: 9px;
+  border: 1px solid var(--card-line);
+  background: #0f1c33;
+  color: var(--text-dim);
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+}
+.check-box.on { border-color: var(--success); color: var(--success); background: rgba(34,197,94,0.16); }
+
+/* ---------- 반복 연습 카드 ---------- */
+.repeat-list { display: grid; gap: 10px; }
+.repeat-card {
+  border: 1px solid var(--card-line);
+  background: #182742;
+  border-radius: 12px;
+  padding: 11px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.repeat-card .num {
+  flex: 0 0 26px; height: 26px;
+  border-radius: 8px;
+  background: rgba(56,189,248,0.15);
+  color: var(--accent);
+  font-size: 12px; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+}
+.repeat-card .text { flex: 1; min-width: 0; }
+.repeat-en { display: block; font-size: 16px; font-weight: 700; word-break: keep-all; }
+.repeat-ko { display: block; font-size: 12px; color: var(--text-dim); }
+.speak-btn {
+  flex: 0 0 auto;
+  border: 1px solid var(--card-line);
+  background: #0f1c33;
+  color: var(--accent);
+  border-radius: 10px;
+  width: 38px; height: 38px;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 0;
+}
+
+/* ---------- 안내 / 기타 ---------- */
+.tip-list { margin: 0; padding-left: 18px; font-size: 13px; color: var(--text-dim); }
+.tip-list li { margin-bottom: 6px; }
+.notice {
+  font-size: 12px;
+  color: var(--warn);
+  background: rgba(250, 204, 21, 0.1);
+  border: 1px solid rgba(250, 204, 21, 0.4);
+  border-radius: 10px;
+  padding: 8px 10px;
+  margin-top: 10px;
+}
+.notice.hidden { display: none; }
+
+.footer-note {
+  text-align: center;
+  font-size: 11px;
+  color: #64748b;
+  margin: 18px 0 6px;
+}
+
+/* 토스트 */
+#toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(22px + env(safe-area-inset-bottom));
+  transform: translateX(-50%) translateY(20px);
+  background: #0b1324;
+  border: 1px solid var(--accent);
+  color: var(--text);
+  padding: 10px 16px;
+  border-radius: 99px;
+  font-size: 13px;
+  font-weight: 700;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  z-index: 50;
+  max-width: 90vw;
+  text-align: center;
+}
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* 조금 넓은 화면 보정 */
+@media (min-width: 420px) {
+  .day-grid { grid-template-columns: repeat(7, 1fr); }
+  .stat-value { font-size: 16px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ================= 상단 헤더 ================= -->
+<header class="app-header">
+  <h1 class="app-title"><span class="logo-mark">Q</span> Daily English Quest</h1>
+  <p class="app-subtitle">하루 15분, 듣고 따라 말하는 영어 퀘스트</p>
+
+  <div class="stat-row">
+    <div class="stat-box">
+      <span class="stat-label">Day</span>
+      <span class="stat-value accent" id="statDay">1</span>
+    </div>
+    <div class="stat-box">
+      <span class="stat-label">XP</span>
+      <span class="stat-value warn" id="statXp">0</span>
+    </div>
+    <div class="stat-box">
+      <span class="stat-label">Level</span>
+      <span class="stat-value" id="statLevel">Lv.1</span>
+    </div>
+    <div class="stat-box">
+      <span class="stat-label">Streak</span>
+      <span class="stat-value success" id="statStreak">0일</span>
+    </div>
+  </div>
+
+  <div class="xp-bar-wrap">
+    <div class="xp-bar-info">
+      <span id="levelName">Lv.1 Beginner</span>
+      <span id="levelProgressText">0 / 100 XP</span>
+    </div>
+    <div class="xp-bar"><div class="xp-bar-fill" id="xpBarFill"></div></div>
+  </div>
+</header>
+
+<!-- ================= Day 선택 ================= -->
+<section class="card">
+  <h2 class="card-title">Day 선택 <span class="sub">주제별 7일 과정</span></h2>
+  <div class="day-grid" id="dayGrid"></div>
+</section>
+
+<!-- ================= 오늘의 퀘스트 ================= -->
+<section class="card">
+  <h2 class="card-title">오늘의 퀘스트 <span class="sub" id="todayBadgeSlot"></span></h2>
+  <p class="quest-topic" id="questTitle">-</p>
+  <p class="quest-topic-ko" id="questTopic">-</p>
+
+  <div class="quest-line"><span class="k">오늘 목표</span><span class="v" id="questGoal">-</span></div>
+  <div class="quest-line"><span class="k">학습 시간</span><span class="v">약 15분 (4단계)</span></div>
+  <div class="quest-line"><span class="k">최대 보상</span><span class="v">55 XP</span></div>
+
+  <div class="rate-wrap">
+    <div class="rate-info">
+      <span>오늘 완료율</span>
+      <span id="rateText">0% (0 / 55 XP)</span>
+    </div>
+    <div class="rate-bar"><div class="rate-bar-fill" id="rateBarFill"></div></div>
+  </div>
+
+  <div class="boss-box">
+    <div class="boss-label">BOSS SENTENCE</div>
+    <div class="boss-en hidden-text" id="bossEn">-</div>
+    <div class="boss-ko" id="bossKo">-</div>
+    <div class="btn-row" style="margin-top:10px">
+      <button class="btn btn-sm btn-boss" data-action="toggle-boss" id="bossToggleBtn">👁 영어 보기</button>
+      <button class="btn btn-sm btn-boss" data-action="speak-boss">🔊 듣기</button>
+      <button class="btn btn-sm btn-ghost" data-action="copy-boss">📋 복사</button>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 스테이지 ================= -->
+<section class="card">
+  <h2 class="card-title">Quest Stage <span class="sub">완료하면 XP 획득</span></h2>
+  <div class="stage-list" id="stageList"></div>
+  <div class="notice" id="stageHint">Stage 3은 아래 <b>핵심 문장 5개</b>를 모두 체크하면 자동으로 클리어됩니다.</div>
+</section>
+
+<!-- ================= 음성 ================= -->
+<section class="card">
+  <h2 class="card-title">Listening <span class="sub">느린 속도 · en-US</span></h2>
+  <div class="btn-row">
+    <button class="btn btn-accent" data-action="speak-script">▶︎ Read Script</button>
+    <button class="btn btn-accent" data-action="speak-boss">▶︎ Read Boss</button>
+    <button class="btn btn-ghost" data-action="stop-speak">■ Stop</button>
+  </div>
+  <div class="notice hidden" id="speechNotice">이 브라우저에서는 음성 읽기를 지원하지 않습니다.</div>
+</section>
+
+<!-- ================= 스크립트 ================= -->
+<section class="card">
+  <h2 class="card-title">
+    Listening Script
+    <button class="btn btn-sm btn-ghost" data-action="toggle-script" id="scriptToggleBtn">접기</button>
+  </h2>
+  <div class="script-body" id="scriptBody"></div>
+</section>
+
+<!-- ================= 핵심 문장 ================= -->
+<section class="card">
+  <h2 class="card-title">
+    Key Sentences
+    <button class="btn btn-sm btn-ghost" data-action="copy-keys">📋 전체 복사</button>
+  </h2>
+  <div class="table-scroll">
+    <table class="key-table">
+      <colgroup><col class="c-en" /><col class="c-ko" /><col class="c-chk" /></colgroup>
+      <thead>
+        <tr><th>English</th><th>Korean</th><th style="text-align:center">Check</th></tr>
+      </thead>
+      <tbody id="keyTableBody"></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ================= 반복 연습 ================= -->
+<section class="card">
+  <h2 class="card-title">Repeat Practice <span class="sub">3번씩 따라 말하기</span></h2>
+  <div class="repeat-list" id="repeatList"></div>
+</section>
+
+<!-- ================= 다음 행동 ================= -->
+<section class="card">
+  <h2 class="card-title">Next Actions <span class="sub">오늘 실제로 써보기</span></h2>
+  <ul class="tip-list" id="nextActionList"></ul>
+</section>
+
+<!-- ================= 운영 규칙 ================= -->
+<section class="card">
+  <h2 class="card-title">학습 운영 규칙</h2>
+  <ul class="tip-list">
+    <li>하루 목표는 만점이 아니라 Boss Mission 클리어입니다.</li>
+    <li>놓친 날이 있어도 벌점은 없습니다. 다시 오늘부터 시작하세요.</li>
+    <li>안 들리면 실패가 아닙니다. 보면서 듣고 다시 말하면 됩니다.</li>
+  </ul>
+</section>
+
+<!-- ================= 초기화 ================= -->
+<section class="card">
+  <h2 class="card-title">기록 관리</h2>
+  <button class="btn btn-danger" style="width:100%" data-action="reset">전체 학습 기록 초기화</button>
+  <p class="footer-note">기록은 이 브라우저(localStorage)에만 저장됩니다.</p>
+</section>
+
+<div id="toast"></div>
+
+<script>
+"use strict";
+
+/* =========================================================
+   1. 학습 콘텐츠 데이터 (7일치, 주제 중복 없음)
+   - 문장은 3~8단어 위주의 쉬운 생활 영어
+   - 한국어 해석은 핵심 문장 / 반복 문장에만 제공
+   ========================================================= */
+var DAY_CONTENTS = [
+  /* ------------------------- Day 1 ------------------------- */
+  {
+    id: 1,
+    title: "Getting Ready for Work",
+    topic: "아침에 일어나 출근 준비하기",
+    goal: "아침 루틴을 영어로 말하기",
+    script: [
+      { part: "Part 1", label: "Wake Up", lines: [
+        "The alarm rings.", "It is seven o'clock.", "I open my eyes.",
+        "I am still sleepy.", "I get up slowly." ] },
+      { part: "Part 2", label: "Wash Up", lines: [
+        "I go to the bathroom.", "I wash my face.", "I brush my teeth.",
+        "The water is cold.", "Now I feel awake." ] },
+      { part: "Part 3", label: "Get Dressed", lines: [
+        "I open my closet.", "I pick a blue shirt.", "I put on my pants.",
+        "I wear black socks.", "I look okay today." ] },
+      { part: "Part 4", label: "Breakfast", lines: [
+        "I make some toast.", "I drink warm milk.", "Breakfast is very quick.",
+        "I eat in five minutes." ] },
+      { part: "Part 5", label: "Small Talk at Home", lines: [
+        "A: Good morning. Did you sleep well?", "B: Not really. I woke up late.",
+        "A: Do you want coffee?", "B: Yes, please. Just a little." ] },
+      { part: "Part 6", label: "Check the Weather", lines: [
+        "I look at my phone.", "It is cloudy today.", "It may rain later.",
+        "I take my umbrella." ] },
+      { part: "Part 7", label: "Pack the Bag", lines: [
+        "I put my laptop in.", "I need my charger too.", "Where are my keys?",
+        "Oh, they are on the table." ] },
+      { part: "Part 8", label: "Leaving Home", lines: [
+        "I put on my shoes.", "I lock the door.", "I am ready to go.",
+        "See you tonight!" ] },
+      { part: "Part 9", label: "On the Way", lines: [
+        "I walk to the bus stop.", "The bus comes at eight.",
+        "I listen to music.", "The road is busy today." ] },
+      { part: "Part 10", label: "Say It Again", lines: [
+        "I get up at seven.", "I am still sleepy.", "It may rain later.",
+        "I am ready to go.", "See you tonight!" ] }
+    ],
+    repeatSentences: [
+      { en: "I get up at seven.", ko: "나는 7시에 일어나요." },
+      { en: "I brush my teeth.", ko: "이를 닦아요." },
+      { en: "It is cloudy today.", ko: "오늘은 흐려요." },
+      { en: "I lock the door.", ko: "문을 잠가요." },
+      { en: "See you tonight!", ko: "저녁에 봐요!" }
+    ],
+    keySentences: [
+      { en: "I get up at seven.", ko: "나는 7시에 일어나요." },
+      { en: "I am still sleepy.", ko: "아직 졸려요." },
+      { en: "It may rain later.", ko: "이따가 비가 올 수도 있어요." },
+      { en: "I am ready to go.", ko: "나갈 준비가 됐어요." },
+      { en: "See you tonight!", ko: "저녁에 봐요!" }
+    ],
+    bossSentence: { en: "I am ready to go.", ko: "나갈 준비가 됐어요." },
+    nextActions: [
+      "내일 아침 눈을 뜨면 \"I get up at seven.\"이라고 소리 내어 말해 보세요.",
+      "집을 나서기 직전에 \"I am ready to go.\"라고 말해 보세요.",
+      "날씨를 보고 \"It may rain later.\"라고 혼잣말해 보세요."
+    ]
+  },
+
+  /* ------------------------- Day 2 ------------------------- */
+  {
+    id: 2,
+    title: "Buying Coffee",
+    topic: "카페에서 커피 주문하기",
+    goal: "커피를 끝까지 영어로 주문하기",
+    script: [
+      { part: "Part 1", label: "Walking to the Cafe", lines: [
+        "The cafe is near my office.", "I go there every morning.",
+        "I need coffee to wake up.", "The door is open." ] },
+      { part: "Part 2", label: "In Line", lines: [
+        "There are three people.", "I wait in line.",
+        "I read the menu.", "I know what I want." ] },
+      { part: "Part 3", label: "Ordering", lines: [
+        "A: Hi. What can I get you?", "B: An iced americano, please.",
+        "A: What size?", "B: A large one, please." ] },
+      { part: "Part 4", label: "Hot or Iced", lines: [
+        "A: Hot or iced?", "B: Iced, please.",
+        "A: Anything else?", "B: No, that is all." ] },
+      { part: "Part 5", label: "Paying", lines: [
+        "A: That is five dollars.", "B: Can I pay by card?",
+        "A: Sure. Right here.", "B: Thank you." ] },
+      { part: "Part 6", label: "Waiting", lines: [
+        "I wait near the counter.", "The shop smells nice.",
+        "I hear the coffee machine.", "It takes two minutes." ] },
+      { part: "Part 7", label: "Getting the Cup", lines: [
+        "A: Iced americano for Jun!", "B: That is me. Thank you.",
+        "A: Have a nice day.", "B: You too." ] },
+      { part: "Part 8", label: "A Small Problem", lines: [
+        "A: Excuse me. This is hot.", "B: Oh, sorry! I will fix it.",
+        "A: Thank you so much.", "B: One moment, please." ] },
+      { part: "Part 9", label: "Take Out", lines: [
+        "A: For here or to go?", "B: To go, please.",
+        "I put on the lid.", "I walk to my office." ] },
+      { part: "Part 10", label: "Say It Again", lines: [
+        "An iced americano, please.", "A large one, please.",
+        "Can I pay by card?", "No, that is all.", "To go, please." ] }
+    ],
+    repeatSentences: [
+      { en: "One coffee, please.", ko: "커피 한 잔 주세요." },
+      { en: "Hot or iced?", ko: "뜨거운 거요, 아이스요?" },
+      { en: "That is all.", ko: "그게 다예요." },
+      { en: "Thank you. You too.", ko: "감사합니다. 당신도요." },
+      { en: "To go, please.", ko: "가져갈게요." }
+    ],
+    keySentences: [
+      { en: "An iced americano, please.", ko: "아이스 아메리카노 하나 주세요." },
+      { en: "A large one, please.", ko: "큰 걸로 주세요." },
+      { en: "Can I pay by card?", ko: "카드로 계산해도 될까요?" },
+      { en: "No, that is all.", ko: "아니요, 그게 다예요." },
+      { en: "To go, please.", ko: "가져갈게요." }
+    ],
+    bossSentence: { en: "An iced americano, please.", ko: "아이스 아메리카노 하나 주세요." },
+    nextActions: [
+      "오늘 카페에 가면 마음속으로 영어 주문을 먼저 만들어 보세요.",
+      "\"Can I pay by card?\"를 세 번 말해 보세요.",
+      "거울을 보고 주문 대화를 처음부터 끝까지 혼자 해보세요."
+    ]
+  },
+
+  /* ------------------------- Day 3 ------------------------- */
+  {
+    id: 3,
+    title: "Grocery Shopping",
+    topic: "마트에서 장보기",
+    goal: "물건 위치와 가격을 영어로 묻기",
+    script: [
+      { part: "Part 1", label: "Making a List", lines: [
+        "I need some food.", "I write a short list.",
+        "Milk, eggs, and bread.", "I also need fruit." ] },
+      { part: "Part 2", label: "At the Store", lines: [
+        "The store is very big.", "I take a cart.",
+        "It is quiet today.", "I start with fruit." ] },
+      { part: "Part 3", label: "Fruit", lines: [
+        "The apples look fresh.", "I need two apples.",
+        "I also take bananas.", "I put them in the cart." ] },
+      { part: "Part 4", label: "Milk", lines: [
+        "A: Excuse me. Where is the milk?", "B: It is in aisle five.",
+        "A: Thank you very much.", "B: No problem." ] },
+      { part: "Part 5", label: "Eggs", lines: [
+        "A: Do you have eggs?", "B: Yes, right over there.",
+        "A: Are they fresh?", "B: Yes, they came today." ] },
+      { part: "Part 6", label: "Price", lines: [
+        "A: How much is this?", "B: It is four dollars.",
+        "A: That is a good price.", "B: It is on sale today." ] },
+      { part: "Part 7", label: "Meat and Snacks", lines: [
+        "I look at the chicken.", "I take one small pack.",
+        "I also take some snacks.", "My cart is almost full." ] },
+      { part: "Part 8", label: "Checkout", lines: [
+        "I wait in line again.", "A: Do you have a card?",
+        "B: Yes, here it is.", "A: Thank you. Have a good day." ] },
+      { part: "Part 9", label: "Bags", lines: [
+        "A: I need a bag, please.", "B: Sure. One or two?",
+        "A: Two, please. It is heavy.", "B: Here you go." ] },
+      { part: "Part 10", label: "Say It Again", lines: [
+        "I need two apples.", "Where is the milk?", "Do you have eggs?",
+        "How much is this?", "I need a bag, please." ] }
+    ],
+    repeatSentences: [
+      { en: "I need two apples.", ko: "사과 두 개 필요해요." },
+      { en: "It is in aisle five.", ko: "5번 통로에 있어요." },
+      { en: "It is on sale today.", ko: "오늘 세일 중이에요." },
+      { en: "Two, please.", ko: "두 개 주세요." },
+      { en: "Here you go.", ko: "여기 있어요." }
+    ],
+    keySentences: [
+      { en: "Where is the milk?", ko: "우유는 어디에 있어요?" },
+      { en: "Do you have eggs?", ko: "계란 있어요?" },
+      { en: "How much is this?", ko: "이거 얼마예요?" },
+      { en: "I need two apples.", ko: "사과 두 개 필요해요." },
+      { en: "I need a bag, please.", ko: "봉투 하나 주세요." }
+    ],
+    bossSentence: { en: "Where is the milk?", ko: "우유는 어디에 있어요?" },
+    nextActions: [
+      "집에 있는 물건 5개를 영어로 말해 보세요.",
+      "\"How much is this?\"를 물건을 가리키며 말해 보세요.",
+      "장보기 목록을 영어 단어로 적어 보세요."
+    ]
+  },
+
+  /* ------------------------- Day 4 ------------------------- */
+  {
+    id: 4,
+    title: "Ordering Delivery",
+    topic: "배달 음식 주문하기",
+    goal: "전화로 음식 주문 끝내기",
+    script: [
+      { part: "Part 1", label: "Hungry Night", lines: [
+        "It is eight o'clock.", "I am very hungry.",
+        "I do not want to cook.", "Let's order some food." ] },
+      { part: "Part 2", label: "Choosing Food", lines: [
+        "I open the food app.", "Pizza or chicken?",
+        "I want pizza tonight.", "The photos look so good." ] },
+      { part: "Part 3", label: "Calling the Shop", lines: [
+        "A: Hello, Sunny Pizza.", "B: Hi. I want to order food.",
+        "A: Sure. What would you like?", "B: Can I order a pizza?" ] },
+      { part: "Part 4", label: "The Menu", lines: [
+        "A: What size do you want?", "B: A medium one, please.",
+        "A: Any drinks?", "B: One cola, please." ] },
+      { part: "Part 5", label: "Spicy or Not", lines: [
+        "A: Do you like spicy food?", "B: Not too spicy, please.",
+        "A: Okay, no problem.", "B: Thank you." ] },
+      { part: "Part 6", label: "The Address", lines: [
+        "A: What is your address?", "B: Twelve Green Street, room 301.",
+        "A: Is that a house?", "B: No, an apartment." ] },
+      { part: "Part 7", label: "The Time", lines: [
+        "A: How long does it take?", "B: About thirty minutes.",
+        "A: That is fine.", "B: Thank you for waiting." ] },
+      { part: "Part 8", label: "Delivery Note", lines: [
+        "I write a short note.", "Please leave it at the door.",
+        "Please do not ring the bell.", "The baby is sleeping." ] },
+      { part: "Part 9", label: "The Food Arrives", lines: [
+        "My phone rings once.", "The food is at the door.",
+        "The box is still warm.", "It smells so good." ] },
+      { part: "Part 10", label: "Say It Again", lines: [
+        "I want to order food.", "Can I order a pizza?",
+        "Not too spicy, please.", "How long does it take?",
+        "Please leave it at the door." ] }
+    ],
+    repeatSentences: [
+      { en: "I am very hungry.", ko: "너무 배고파요." },
+      { en: "A medium one, please.", ko: "중간 크기로 주세요." },
+      { en: "One cola, please.", ko: "콜라 하나 주세요." },
+      { en: "About thirty minutes.", ko: "30분쯤 걸려요." },
+      { en: "It smells so good.", ko: "냄새가 정말 좋아요." }
+    ],
+    keySentences: [
+      { en: "I want to order food.", ko: "음식을 주문하고 싶어요." },
+      { en: "Can I order a pizza?", ko: "피자 하나 주문할 수 있을까요?" },
+      { en: "Not too spicy, please.", ko: "너무 맵지 않게 해주세요." },
+      { en: "How long does it take?", ko: "얼마나 걸려요?" },
+      { en: "Please leave it at the door.", ko: "문 앞에 놓아 주세요." }
+    ],
+    bossSentence: { en: "Can I order a pizza?", ko: "피자 하나 주문할 수 있을까요?" },
+    nextActions: [
+      "좋아하는 음식 3개를 영어로 말해 보세요.",
+      "배달 앱을 보며 \"I want to order food.\"라고 말해 보세요.",
+      "\"How long does it take?\"를 천천히 세 번 말해 보세요."
+    ]
+  },
+
+  /* ------------------------- Day 5 ------------------------- */
+  {
+    id: 5,
+    title: "At the Subway Station",
+    topic: "지하철 타기",
+    goal: "길과 노선을 영어로 묻기",
+    script: [
+      { part: "Part 1", label: "Going Out", lines: [
+        "I need to go downtown.", "The subway is fast.",
+        "The station is close.", "I walk for five minutes." ] },
+      { part: "Part 2", label: "Buying a Card", lines: [
+        "A: One card, please.", "B: That is four dollars.",
+        "A: Can I add ten dollars?", "B: Sure. Tap it here." ] },
+      { part: "Part 3", label: "Finding the Line", lines: [
+        "There are many signs.", "A: Excuse me. Where is line two?",
+        "B: Go down these stairs.", "A: Thank you!" ] },
+      { part: "Part 4", label: "On the Platform", lines: [
+        "The platform is full.", "I stand behind the line.",
+        "The train comes soon.", "I hear the announcement." ] },
+      { part: "Part 5", label: "Asking a Question", lines: [
+        "A: Does this train go to City Hall?", "B: No, take the other side.",
+        "A: Oh, thank you!", "B: You are welcome." ] },
+      { part: "Part 6", label: "Getting On", lines: [
+        "The doors open slowly.", "People get off first.",
+        "Then I get on.", "I find a seat." ] },
+      { part: "Part 7", label: "Transfer", lines: [
+        "A: I need to transfer.", "B: Change at Green Park.",
+        "A: Is it far?", "B: Only two stops." ] },
+      { part: "Part 8", label: "Getting Off", lines: [
+        "This is my stop.", "Excuse me, I get off here.",
+        "I move to the door.", "The doors open again." ] },
+      { part: "Part 9", label: "Finding the Exit", lines: [
+        "A: Which exit should I take?", "B: Take exit four.",
+        "A: Thank you so much.", "B: Have a good day." ] },
+      { part: "Part 10", label: "Say It Again", lines: [
+        "Where is line two?", "Does this train go to City Hall?",
+        "I need to transfer.", "Excuse me, I get off here.",
+        "Which exit should I take?" ] }
+    ],
+    repeatSentences: [
+      { en: "Where is line two?", ko: "2호선은 어디예요?" },
+      { en: "Is it far?", ko: "멀어요?" },
+      { en: "Only two stops.", ko: "두 정거장만요." },
+      { en: "Take exit four.", ko: "4번 출구로 나가세요." },
+      { en: "Excuse me.", ko: "실례합니다." }
+    ],
+    keySentences: [
+      { en: "Where is line two?", ko: "2호선은 어디예요?" },
+      { en: "Does this train go to City Hall?", ko: "이 열차 시청에 가나요?" },
+      { en: "I need to transfer.", ko: "갈아타야 해요." },
+      { en: "Excuse me, I get off here.", ko: "실례합니다, 여기서 내려요." },
+      { en: "Which exit should I take?", ko: "몇 번 출구로 나가야 해요?" }
+    ],
+    bossSentence: { en: "Does this train go to City Hall?", ko: "이 열차 시청에 가나요?" },
+    nextActions: [
+      "지하철 노선도를 보며 역 이름을 영어로 읽어 보세요.",
+      "\"Excuse me, I get off here.\"를 세 번 말해 보세요.",
+      "다음에 지하철을 탈 때 속으로 오늘 문장을 말해 보세요."
+    ]
+  },
+
+  /* ------------------------- Day 6 ------------------------- */
+  {
+    id: 6,
+    title: "Visiting a Pharmacy",
+    topic: "약국에서 약 사기",
+    goal: "아픈 곳과 복용법을 영어로 말하기",
+    script: [
+      { part: "Part 1", label: "Feeling Sick", lines: [
+        "I do not feel good.", "My head hurts.",
+        "My nose is running.", "I need some medicine." ] },
+      { part: "Part 2", label: "Going to the Pharmacy", lines: [
+        "The pharmacy is on the corner.", "It is open until nine.",
+        "I walk there slowly.", "It is bright inside." ] },
+      { part: "Part 3", label: "Saying the Problem", lines: [
+        "A: Hello. How can I help you?", "B: I have a headache.",
+        "A: When did it start?", "B: This morning." ] },
+      { part: "Part 4", label: "More Symptoms", lines: [
+        "A: Do you have a fever?", "B: A little. And a cough.",
+        "A: I see. Any sore throat?", "B: Yes, a small one." ] },
+      { part: "Part 5", label: "Asking for Medicine", lines: [
+        "B: I need some cold medicine.", "A: Okay. Try this one.",
+        "B: Is it strong?", "A: No, it is gentle." ] },
+      { part: "Part 6", label: "How to Take It", lines: [
+        "A: Take one pill.", "B: How many times a day?",
+        "A: Three times a day.", "B: Okay, thank you." ] },
+      { part: "Part 7", label: "After Meals", lines: [
+        "B: Do I take it after meals?", "A: Yes, after you eat.",
+        "B: And before bed?", "A: One more time is fine." ] },
+      { part: "Part 8", label: "For Children", lines: [
+        "B: Is it okay for children?", "A: No, this is for adults.",
+        "B: Do you have one for kids?", "A: Yes, this syrup." ] },
+      { part: "Part 9", label: "Paying and Leaving", lines: [
+        "A: That is nine dollars.", "B: Here you go.",
+        "A: Get well soon.", "B: Thank you very much." ] },
+      { part: "Part 10", label: "Say It Again", lines: [
+        "I have a headache.", "I need some cold medicine.",
+        "How many times a day?", "Do I take it after meals?",
+        "Is it okay for children?" ] }
+    ],
+    repeatSentences: [
+      { en: "My head hurts.", ko: "머리가 아파요." },
+      { en: "I have a cough.", ko: "기침이 나요." },
+      { en: "Three times a day.", ko: "하루에 세 번이요." },
+      { en: "After you eat.", ko: "식사 후에요." },
+      { en: "Get well soon.", ko: "빨리 나으세요." }
+    ],
+    keySentences: [
+      { en: "I have a headache.", ko: "머리가 아파요." },
+      { en: "I need some cold medicine.", ko: "감기약이 필요해요." },
+      { en: "How many times a day?", ko: "하루에 몇 번 먹어요?" },
+      { en: "Do I take it after meals?", ko: "식후에 먹나요?" },
+      { en: "Is it okay for children?", ko: "아이가 먹어도 되나요?" }
+    ],
+    bossSentence: { en: "I need some cold medicine.", ko: "감기약이 필요해요." },
+    nextActions: [
+      "몸이 아픈 곳을 영어로 3개 말해 보세요.",
+      "\"I have a headache.\"를 다른 단어로 바꿔 말해 보세요.",
+      "약봉지를 보며 \"Three times a day.\"라고 말해 보세요."
+    ]
+  },
+
+  /* ------------------------- Day 7 ------------------------- */
+  {
+    id: 7,
+    title: "Calling Customer Service",
+    topic: "고객센터에 문의하기",
+    goal: "문제를 설명하고 다시 말해 달라고 하기",
+    script: [
+      { part: "Part 1", label: "A Problem", lines: [
+        "My internet stopped working.", "I checked the cable.",
+        "It is still not working.", "I need help." ] },
+      { part: "Part 2", label: "Finding the Number", lines: [
+        "I open the website.", "I find the phone number.",
+        "I call customer service.", "I wait for a minute." ] },
+      { part: "Part 3", label: "The First Question", lines: [
+        "A: Hello. How can I help you?", "B: My internet is not working.",
+        "A: I am sorry to hear that.", "B: Can you check it for me?" ] },
+      { part: "Part 4", label: "My Information", lines: [
+        "A: May I have your name?", "B: My name is Jun Kim.",
+        "A: And your phone number?", "B: Let me say it slowly." ] },
+      { part: "Part 5", label: "Slow English", lines: [
+        "A: Please hold for one minute.", "B: Sorry, could you say that again?",
+        "B: Please speak slowly.", "A: Sure. Please wait one minute." ] },
+      { part: "Part 6", label: "Another Problem", lines: [
+        "B: I have a problem with my order.", "A: What did you order?",
+        "B: A blue chair.", "A: When did it arrive?" ] },
+      { part: "Part 7", label: "Explaining", lines: [
+        "B: It arrived yesterday.", "B: But the color is wrong.",
+        "A: I understand.", "B: Can I change it?" ] },
+      { part: "Part 8", label: "The Fix", lines: [
+        "A: We will send a new one.", "B: Thank you so much.",
+        "A: You will get it Friday.", "B: That is great." ] },
+      { part: "Part 9", label: "A Visit", lines: [
+        "B: When can someone come?", "A: Tomorrow at two.",
+        "B: I am home after five.", "A: Okay, five is fine." ] },
+      { part: "Part 10", label: "Say It Again", lines: [
+        "My internet is not working.", "Can you check it for me?",
+        "Could you say that again?", "I have a problem with my order.",
+        "When can someone come?" ] }
+    ],
+    repeatSentences: [
+      { en: "I need help.", ko: "도움이 필요해요." },
+      { en: "Please speak slowly.", ko: "천천히 말씀해 주세요." },
+      { en: "The color is wrong.", ko: "색이 잘못 왔어요." },
+      { en: "Can I change it?", ko: "바꿀 수 있을까요?" },
+      { en: "Thank you for your help.", ko: "도와주셔서 감사합니다." }
+    ],
+    keySentences: [
+      { en: "My internet is not working.", ko: "인터넷이 안 돼요." },
+      { en: "Can you check it for me?", ko: "확인해 주실 수 있나요?" },
+      { en: "Could you say that again?", ko: "다시 한번 말씀해 주시겠어요?" },
+      { en: "I have a problem with my order.", ko: "주문에 문제가 있어요." },
+      { en: "When can someone come?", ko: "언제 방문해 주실 수 있어요?" }
+    ],
+    bossSentence: { en: "Could you say that again?", ko: "다시 한번 말씀해 주시겠어요?" },
+    nextActions: [
+      "\"Could you say that again?\"을 다섯 번 말해 보세요.",
+      "최근에 겪은 문제 하나를 짧은 영어로 말해 보세요.",
+      "7일 과정을 마쳤습니다. Day 1부터 다시 한 바퀴 돌아 보세요."
+    ]
+  }
+];
+
+/* =========================================================
+   2. 게임 설정 (스테이지 / 레벨)
+   ========================================================= */
+var STAGES = [
+  { key: "s1",   icon: "🎧", name: "Stage 1. Blind Listening", desc: "화면을 보지 않고 듣기", xp: 10 },
+  { key: "s2",   icon: "📖", name: "Stage 2. Read & Listen",   desc: "스크립트를 보며 듣기",   xp: 10 },
+  { key: "s3",   icon: "🗣", name: "Stage 3. Repeat Practice", desc: "핵심 문장 5개 따라 말하기", xp: 15 },
+  { key: "boss", icon: "🔥", name: "Boss Mission",             desc: "보스 문장을 안 보고 말하기", xp: 20 }
+];
+
+var MAX_DAILY_XP = 55; // 10 + 10 + 15 + 20
+
+var LEVELS = [
+  { level: 1, name: "Beginner",     min: 0,   max: 100 },
+  { level: 2, name: "Speaker",      min: 101, max: 250 },
+  { level: 3, name: "Daily Talker", min: 251, max: 500 },
+  { level: 4, name: "Survivor",     min: 501, max: 800 },
+  { level: 5, name: "Real Talker",  min: 801, max: Infinity }
+];
+
+/* =========================================================
+   3. 저장 / 불러오기 (localStorage)
+   ========================================================= */
+var STORAGE_KEY = "daily-english-quest-v1";
+
+/** 하루(Day 콘텐츠) 하나의 기본 진행 상태 */
+function createDefaultDayProgress() {
+  return { s1: false, s2: false, s3: false, boss: false, checks: [false, false, false, false, false], visited: false };
+}
+
+/** 앱 전체의 기본 상태 */
+function createDefaultState() {
+  return {
+    totalXp: 0,        // 누적 XP
+    streak: 0,         // 연속 학습일
+    lastBossDate: null,// 마지막으로 보스를 깬 날짜 (YYYY-MM-DD)
+    selectedDay: 1,    // 현재 보고 있는 Day
+    days: {}           // { "1": {s1, s2, s3, boss, checks[], visited} }
+  };
+}
+
+var state = createDefaultState();
+
+/** localStorage에서 상태를 읽어와 기본값과 합친다 (값이 깨져 있어도 에러 없이 동작) */
+function loadState() {
+  var loaded = createDefaultState();
+  try {
+    var raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) { return loaded; }
+    var parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") { return loaded; }
+
+    loaded.totalXp = toSafeNumber(parsed.totalXp, 0);
+    loaded.streak = toSafeNumber(parsed.streak, 0);
+    loaded.lastBossDate = typeof parsed.lastBossDate === "string" ? parsed.lastBossDate : null;
+    loaded.selectedDay = clampDayId(parsed.selectedDay);
+
+    if (parsed.days && typeof parsed.days === "object") {
+      for (var i = 0; i < DAY_CONTENTS.length; i++) {
+        var id = String(DAY_CONTENTS[i].id);
+        var saved = parsed.days[id];
+        var fresh = createDefaultDayProgress();
+        if (saved && typeof saved === "object") {
+          fresh.s1 = saved.s1 === true;
+          fresh.s2 = saved.s2 === true;
+          fresh.s3 = saved.s3 === true;
+          fresh.boss = saved.boss === true;
+          fresh.visited = saved.visited === true;
+          if (Object.prototype.toString.call(saved.checks) === "[object Array]") {
+            for (var c = 0; c < 5; c++) { fresh.checks[c] = saved.checks[c] === true; }
+          }
+        }
+        loaded.days[id] = fresh;
+      }
+    }
+  } catch (err) {
+    // 저장된 값이 손상된 경우에도 앱은 기본값으로 계속 동작한다.
+    return createDefaultState();
+  }
+  return loaded;
+}
+
+/** 현재 상태를 localStorage에 저장 (사파리 비공개 모드 등에서 실패해도 앱은 계속 동작) */
+function saveState() {
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch (err) {
+    showToast("저장 공간을 사용할 수 없어요. 기록이 유지되지 않습니다.");
+  }
+}
+
+/** 특정 Day의 진행 상태를 얻는다 (없으면 만들어 준다) */
+function getDayProgress(dayId) {
+  var id = String(dayId);
+  if (!state.days[id]) { state.days[id] = createDefaultDayProgress(); }
+  return state.days[id];
+}
+
+function toSafeNumber(value, fallback) {
+  var n = Number(value);
+  return (typeof value !== "undefined" && value !== null && !isNaN(n) && n >= 0) ? n : fallback;
+}
+
+function clampDayId(value) {
+  var n = Number(value);
+  if (isNaN(n)) { return 1; }
+  if (n < 1) { return 1; }
+  if (n > DAY_CONTENTS.length) { return DAY_CONTENTS.length; }
+  return Math.floor(n);
+}
+
+/* =========================================================
+   4. 날짜 유틸 (Streak 계산용)
+   ========================================================= */
+function pad2(n) { return n < 10 ? "0" + n : String(n); }
+
+/** 오늘 날짜를 YYYY-MM-DD 문자열로 (사용자 기기의 로컬 시간 기준) */
+function getDateKey(dateObj) {
+  return dateObj.getFullYear() + "-" + pad2(dateObj.getMonth() + 1) + "-" + pad2(dateObj.getDate());
+}
+function getTodayKey() { return getDateKey(new Date()); }
+function getYesterdayKey() {
+  var d = new Date();
+  d.setDate(d.getDate() - 1);
+  return getDateKey(d);
+}
+
+/* =========================================================
+   5. 게임 로직 (XP / 레벨 / 스테이지 / 스트릭)
+   ========================================================= */
+
+/** 누적 XP로 레벨 정보를 찾는다 */
+function getLevelInfo(totalXp) {
+  for (var i = 0; i < LEVELS.length; i++) {
+    if (totalXp >= LEVELS[i].min && totalXp <= LEVELS[i].max) { return LEVELS[i]; }
+  }
+  return LEVELS[LEVELS.length - 1];
+}
+
+/** 현재 레벨 구간 안에서의 진행률(0~100) */
+function getLevelProgress(totalXp) {
+  var info = getLevelInfo(totalXp);
+  if (info.max === Infinity) {
+    return { percent: 100, current: totalXp, target: totalXp };
+  }
+  var span = info.max - info.min + 1;
+  var current = totalXp - info.min + 1;
+  var percent = Math.max(0, Math.min(100, Math.round((current / span) * 100)));
+  return { percent: percent, current: totalXp, target: info.max };
+}
+
+/** 오늘(선택한 Day)에서 획득한 XP */
+function getDayEarnedXp(dayId) {
+  var p = getDayProgress(dayId);
+  var sum = 0;
+  for (var i = 0; i < STAGES.length; i++) {
+    if (p[STAGES[i].key]) { sum += STAGES[i].xp; }
+  }
+  return sum;
+}
+
+/** 스테이지 상태: Cleared / In Progress / Not Started */
+function getStageStatus(dayId, stageKey) {
+  var p = getDayProgress(dayId);
+  if (p[stageKey]) { return "Cleared"; }
+
+  if (stageKey === "s1") { return p.visited ? "In Progress" : "Not Started"; }
+  if (stageKey === "s2") { return p.s1 ? "In Progress" : "Not Started"; }
+  if (stageKey === "s3") {
+    if (p.s2) { return "In Progress"; }
+    return hasAnyCheck(p) ? "In Progress" : "Not Started";
+  }
+  if (stageKey === "boss") { return p.s3 ? "In Progress" : "Not Started"; }
+  return "Not Started";
+}
+
+function hasAnyCheck(progress) {
+  for (var i = 0; i < progress.checks.length; i++) {
+    if (progress.checks[i]) { return true; }
+  }
+  return false;
+}
+
+function isAllChecked(progress) {
+  for (var i = 0; i < progress.checks.length; i++) {
+    if (!progress.checks[i]) { return false; }
+  }
+  return true;
+}
+
+/**
+ * 스테이지를 클리어 처리한다.
+ * 이미 클리어된 스테이지는 XP를 다시 주지 않는다(중복 지급 방지).
+ */
+function clearStage(dayId, stageKey) {
+  var progress = getDayProgress(dayId);
+  var stage = findStage(stageKey);
+  if (!stage) { return; }
+
+  if (progress[stageKey]) {
+    showToast("이미 클리어한 단계예요. XP는 한 번만 지급됩니다.");
+    return;
+  }
+
+  // Stage 3는 핵심 문장 5개를 모두 체크해야 클리어된다.
+  if (stageKey === "s3" && !isAllChecked(progress)) {
+    showToast("핵심 문장 5개를 모두 체크하면 클리어됩니다.");
+    render();
+    return;
+  }
+
+  progress[stageKey] = true;
+  state.totalXp += stage.xp;
+
+  if (stageKey === "boss") {
+    updateStreakOnBossClear();
+    showToast("🔥 BOSS CLEAR! +" + stage.xp + " XP · 오늘 학습 완료!");
+  } else {
+    showToast(stage.name + " 클리어! +" + stage.xp + " XP");
+  }
+
+  saveState();
+  render();
+}
+
+/** 보스 클리어 시 연속 학습일 갱신 (하루에 한 번만 증가) */
+function updateStreakOnBossClear() {
+  var today = getTodayKey();
+  if (state.lastBossDate === today) { return; } // 오늘 이미 반영됨
+  if (state.lastBossDate === getYesterdayKey()) {
+    state.streak = state.streak + 1;
+  } else {
+    state.streak = 1; // 처음이거나 하루 이상 쉼 -> 다시 1일부터
+  }
+  state.lastBossDate = today;
+}
+
+function findStage(stageKey) {
+  for (var i = 0; i < STAGES.length; i++) {
+    if (STAGES[i].key === stageKey) { return STAGES[i]; }
+  }
+  return null;
+}
+
+/** 핵심 문장 체크 토글 -> 5개가 모두 체크되면 Stage 3 자동 클리어 */
+function toggleKeyCheck(index) {
+  var progress = getDayProgress(state.selectedDay);
+  progress.checks[index] = !progress.checks[index];
+
+  if (isAllChecked(progress) && !progress.s3) {
+    clearStage(state.selectedDay, "s3");
+    return;
+  }
+  saveState();
+  render();
+}
+
+/** 오늘(달력 기준) 보스를 깼는지 */
+function isTodayCompleted() {
+  return state.lastBossDate === getTodayKey();
+}
+
+/** Day 콘텐츠 찾기 */
+function getDayContent(dayId) {
+  for (var i = 0; i < DAY_CONTENTS.length; i++) {
+    if (DAY_CONTENTS[i].id === dayId) { return DAY_CONTENTS[i]; }
+  }
+  return DAY_CONTENTS[0];
+}
+
+/** Day 선택 */
+function selectDay(dayId) {
+  state.selectedDay = clampDayId(dayId);
+  var progress = getDayProgress(state.selectedDay);
+  progress.visited = true; // Stage 1이 In Progress로 바뀐다
+  isBossRevealed = false;  // Day를 바꾸면 보스 문장은 다시 가린다
+  stopSpeaking();
+  saveState();
+  render();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+/** 전체 기록 초기화 */
+function resetAll() {
+  var ok = window.confirm("모든 학습 기록(XP, 레벨, 연속일, 체크)이 사라집니다. 정말 초기화할까요?");
+  if (!ok) { return; }
+  try { window.localStorage.removeItem(STORAGE_KEY); } catch (err) { /* 무시 */ }
+  state = createDefaultState();
+  isBossRevealed = false;
+  stopSpeaking();
+  selectDay(1);
+  showToast("기록을 초기화했습니다. 다시 시작해요!");
+}
+
+/* =========================================================
+   6. 음성 (Web Speech API)
+   ========================================================= */
+var speechAvailable = ("speechSynthesis" in window) && (typeof window.SpeechSynthesisUtterance === "function");
+var englishVoice = null;
+var SPEECH_RATE = 0.75; // 초급자용 느린 속도
+
+function initSpeech() {
+  if (!speechAvailable) {
+    var notice = document.getElementById("speechNotice");
+    if (notice) { notice.classList.remove("hidden"); }
+    return;
+  }
+  pickEnglishVoice();
+  // iOS/크롬은 음성 목록을 늦게 불러오는 경우가 있다.
+  if (typeof window.speechSynthesis.onvoiceschanged !== "undefined") {
+    window.speechSynthesis.onvoiceschanged = pickEnglishVoice;
+  }
+}
+
+function pickEnglishVoice() {
+  try {
+    var voices = window.speechSynthesis.getVoices() || [];
+    var i;
+    for (i = 0; i < voices.length; i++) {
+      if (voices[i].lang === "en-US" && /Samantha|Google US English|Alex/i.test(voices[i].name)) {
+        englishVoice = voices[i]; return;
+      }
+    }
+    for (i = 0; i < voices.length; i++) {
+      if (voices[i].lang === "en-US") { englishVoice = voices[i]; return; }
+    }
+    for (i = 0; i < voices.length; i++) {
+      if (String(voices[i].lang).indexOf("en") === 0) { englishVoice = voices[i]; return; }
+    }
+  } catch (err) { /* 음성 목록을 못 읽어도 기본 음성으로 재생 */ }
+}
+
+/** 문장 배열을 한 줄씩 천천히 읽는다 */
+function speakLines(lines) {
+  if (!speechAvailable) {
+    showToast("이 브라우저에서는 음성 읽기를 지원하지 않습니다.");
+    return;
+  }
+  stopSpeaking();
+  for (var i = 0; i < lines.length; i++) {
+    var text = String(lines[i]).replace(/^[AB]:\s*/, ""); // "A:", "B:" 표시는 읽지 않는다
+    if (!text) { continue; }
+    var utter = new window.SpeechSynthesisUtterance(text);
+    utter.lang = "en-US";
+    utter.rate = SPEECH_RATE;
+    utter.pitch = 1;
+    if (englishVoice) { utter.voice = englishVoice; }
+    window.speechSynthesis.speak(utter);
+  }
+}
+
+function speakOne(text) { speakLines([text]); }
+
+function stopSpeaking() {
+  if (!speechAvailable) { return; }
+  try { window.speechSynthesis.cancel(); } catch (err) { /* 무시 */ }
+}
+
+/** 현재 Day의 스크립트 전체 읽기 */
+function speakCurrentScript() {
+  var day = getDayContent(state.selectedDay);
+  var lines = [];
+  for (var i = 0; i < day.script.length; i++) {
+    lines = lines.concat(day.script[i].lines);
+  }
+  speakLines(lines);
+  showToast("스크립트를 읽습니다. 눈을 감고 들어 보세요.");
+}
+
+/* =========================================================
+   7. 렌더링
+   ========================================================= */
+var isBossRevealed = false;   // 보스 문장 보기/숨기기
+var isScriptCollapsed = false; // 스크립트 접기/펼치기
+
+function escapeHtml(text) {
+  return String(text)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
+function render() {
+  renderHeader();
+  renderDayGrid();
+  renderQuestCard();
+  renderStages();
+  renderScript();
+  renderKeyTable();
+  renderRepeatCards();
+  renderNextActions();
+}
+
+/** 상단 상태 + XP 바 */
+function renderHeader() {
+  var levelInfo = getLevelInfo(state.totalXp);
+  var progress = getLevelProgress(state.totalXp);
+
+  document.getElementById("statDay").textContent = String(state.selectedDay);
+  document.getElementById("statXp").textContent = String(state.totalXp);
+  document.getElementById("statLevel").textContent = "Lv." + levelInfo.level;
+  document.getElementById("statStreak").textContent = state.streak + "일";
+  document.getElementById("levelName").textContent = "Lv." + levelInfo.level + " " + levelInfo.name;
+  document.getElementById("levelProgressText").textContent =
+    (levelInfo.max === Infinity)
+      ? (state.totalXp + " XP · MAX")
+      : (state.totalXp + " / " + levelInfo.max + " XP");
+  document.getElementById("xpBarFill").style.width = progress.percent + "%";
+}
+
+/** Day 1~7 버튼 (완료 표시 포함) */
+function renderDayGrid() {
+  var grid = document.getElementById("dayGrid");
+  var html = "";
+  for (var i = 0; i < DAY_CONTENTS.length; i++) {
+    var day = DAY_CONTENTS[i];
+    var p = getDayProgress(day.id);
+    var earned = getDayEarnedXp(day.id);
+    var isDone = (p.s1 && p.s2 && p.s3 && p.boss);
+    var stateText = isDone ? "✔ 완료" : (earned > 0 ? earned + "XP" : "-");
+    var cls = "day-btn";
+    if (day.id === state.selectedDay) { cls += " selected"; }
+    if (isDone) { cls += " done"; }
+    html += '<button class="' + cls + '" data-action="select-day" data-day="' + day.id + '">'
+          + "Day " + day.id + '<span class="day-state">' + stateText + "</span></button>";
+  }
+  grid.innerHTML = html;
+}
+
+/** 오늘의 퀘스트 카드 */
+function renderQuestCard() {
+  var day = getDayContent(state.selectedDay);
+
+  document.getElementById("questTitle").textContent = "Day " + day.id + ". " + day.title;
+  document.getElementById("questTopic").textContent = day.topic;
+  document.getElementById("questGoal").textContent = day.goal;
+
+  document.getElementById("todayBadgeSlot").innerHTML =
+    isTodayCompleted() ? '<span class="today-badge">오늘 완료 ✔</span>' : "";
+
+  // 완료율 (오늘 얻은 XP / 55)
+  var earned = getDayEarnedXp(day.id);
+  var percent = Math.round((earned / MAX_DAILY_XP) * 100);
+  document.getElementById("rateText").textContent = percent + "% (" + earned + " / " + MAX_DAILY_XP + " XP)";
+  document.getElementById("rateBarFill").style.width = percent + "%";
+
+  // 보스 문장
+  var bossEl = document.getElementById("bossEn");
+  bossEl.textContent = day.bossSentence.en;
+  if (isBossRevealed) { bossEl.classList.remove("hidden-text"); }
+  else { bossEl.classList.add("hidden-text"); }
+  document.getElementById("bossKo").textContent = day.bossSentence.ko;
+  document.getElementById("bossToggleBtn").textContent = isBossRevealed ? "🙈 영어 숨기기" : "👁 영어 보기";
+}
+
+/** 스테이지 버튼 4개 */
+function renderStages() {
+  var list = document.getElementById("stageList");
+  var day = getDayContent(state.selectedDay);
+  var progress = getDayProgress(day.id);
+  var html = "";
+
+  for (var i = 0; i < STAGES.length; i++) {
+    var stage = STAGES[i];
+    var status = getStageStatus(day.id, stage.key);
+    var cleared = progress[stage.key] === true;
+
+    var btnCls = "stage-btn";
+    if (stage.key === "boss") { btnCls += " boss"; }
+    if (cleared) { btnCls += " cleared"; }
+
+    var statusCls = "stage-status";
+    if (status === "Cleared") { statusCls += " cleared"; }
+    else if (status === "In Progress") { statusCls += " progress"; }
+
+    html += '<button class="' + btnCls + '" data-action="clear-stage" data-stage="' + stage.key + '">'
+      + '<span class="stage-icon">' + (cleared ? "✔" : stage.icon) + "</span>"
+      + '<span class="stage-main">'
+      + '<span class="stage-name">' + escapeHtml(stage.name) + "</span>"
+      + '<span class="stage-desc">' + escapeHtml(stage.desc) + "</span>"
+      + "</span>"
+      + '<span class="stage-right">'
+      + '<span class="stage-xp">+' + stage.xp + " XP</span><br />"
+      + '<span class="' + statusCls + '">' + status + "</span>"
+      + "</span>"
+      + "</button>";
+  }
+  list.innerHTML = html;
+}
+
+/** 스크립트 (Part 1 ~ Part 10) */
+function renderScript() {
+  var day = getDayContent(state.selectedDay);
+  var body = document.getElementById("scriptBody");
+  var html = "";
+
+  for (var i = 0; i < day.script.length; i++) {
+    var block = day.script[i];
+    html += '<div class="script-part">';
+    html += '<div class="script-part-title">' + escapeHtml(block.part) + " · " + escapeHtml(block.label) + "</div>";
+    for (var j = 0; j < block.lines.length; j++) {
+      var line = block.lines[j];
+      var isDialog = /^[AB]:/.test(line);
+      html += '<div class="script-line' + (isDialog ? " dialog" : "") + '">' + escapeHtml(line) + "</div>";
+    }
+    html += "</div>";
+  }
+  body.innerHTML = html;
+
+  if (isScriptCollapsed) { body.classList.add("collapsed"); }
+  else { body.classList.remove("collapsed"); }
+  document.getElementById("scriptToggleBtn").textContent = isScriptCollapsed ? "펼치기" : "접기";
+}
+
+/** 핵심 문장 표 (English / Korean / Practice Check) */
+function renderKeyTable() {
+  var day = getDayContent(state.selectedDay);
+  var progress = getDayProgress(day.id);
+  var tbody = document.getElementById("keyTableBody");
+  var html = "";
+
+  for (var i = 0; i < day.keySentences.length; i++) {
+    var item = day.keySentences[i];
+    var on = progress.checks[i] === true;
+    html += "<tr" + (on ? ' class="checked"' : "") + ">"
+      + '<td class="en"><button class="mini-speak" data-action="speak-line" '
+      + 'data-text="' + escapeHtml(item.en) + '" aria-label="문장 듣기">🔊</button>'
+      + escapeHtml(item.en) + "</td>"
+      + '<td class="ko">' + escapeHtml(item.ko) + "</td>"
+      + '<td class="chk"><button class="check-box' + (on ? " on" : "") + '" '
+      + 'data-action="toggle-check" data-index="' + i + '" aria-label="연습 체크">' + (on ? "✔" : "") + "</button></td>"
+      + "</tr>";
+  }
+  tbody.innerHTML = html;
+}
+
+/** 반복 연습 카드 */
+function renderRepeatCards() {
+  var day = getDayContent(state.selectedDay);
+  var list = document.getElementById("repeatList");
+  var html = "";
+
+  for (var i = 0; i < day.repeatSentences.length; i++) {
+    var item = day.repeatSentences[i];
+    html += '<div class="repeat-card">'
+      + '<span class="num">' + (i + 1) + "</span>"
+      + '<span class="text"><span class="repeat-en">' + escapeHtml(item.en) + "</span>"
+      + '<span class="repeat-ko">' + escapeHtml(item.ko) + "</span></span>"
+      + '<button class="speak-btn" data-action="speak-line" data-text="' + escapeHtml(item.en) + '" aria-label="읽기">🔊</button>'
+      + "</div>";
+  }
+  list.innerHTML = html;
+}
+
+/** 다음 행동 */
+function renderNextActions() {
+  var day = getDayContent(state.selectedDay);
+  var ul = document.getElementById("nextActionList");
+  var html = "";
+  for (var i = 0; i < day.nextActions.length; i++) {
+    html += "<li>" + escapeHtml(day.nextActions[i]) + "</li>";
+  }
+  ul.innerHTML = html;
+}
+
+/* =========================================================
+   8. 보조 기능 (토스트 / 복사)
+   ========================================================= */
+var toastTimer = null;
+
+function showToast(message) {
+  var el = document.getElementById("toast");
+  if (!el) { return; }
+  el.textContent = message;
+  el.classList.add("show");
+  if (toastTimer) { window.clearTimeout(toastTimer); }
+  toastTimer = window.setTimeout(function () { el.classList.remove("show"); }, 2200);
+}
+
+/** 클립보드 복사 (iOS 사파리 대비 fallback 포함) */
+function copyText(text) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(
+      function () { showToast("복사했어요!"); },
+      function () { copyTextFallback(text); }
+    );
+  } else {
+    copyTextFallback(text);
+  }
+}
+
+function copyTextFallback(text) {
+  try {
+    var area = document.createElement("textarea");
+    area.value = text;
+    area.setAttribute("readonly", "readonly");
+    area.style.position = "fixed";
+    area.style.top = "-1000px";
+    document.body.appendChild(area);
+    area.select();
+    area.setSelectionRange(0, area.value.length);
+    document.execCommand("copy");
+    document.body.removeChild(area);
+    showToast("복사했어요!");
+  } catch (err) {
+    showToast("복사를 지원하지 않는 브라우저예요.");
+  }
+}
+
+function copyKeySentences() {
+  var day = getDayContent(state.selectedDay);
+  var lines = ["[Daily English Quest] Day " + day.id + ". " + day.title];
+  for (var i = 0; i < day.keySentences.length; i++) {
+    lines.push((i + 1) + ". " + day.keySentences[i].en + "  /  " + day.keySentences[i].ko);
+  }
+  lines.push("BOSS: " + day.bossSentence.en + "  /  " + day.bossSentence.ko);
+  copyText(lines.join("\n"));
+}
+
+/* =========================================================
+   9. 이벤트 처리 (이벤트 위임 - 버튼이 다시 그려져도 동작)
+   ========================================================= */
+function handleClick(event) {
+  var target = event.target;
+  var el = null;
+
+  // 클릭한 지점에서 위로 올라가며 data-action 을 가진 요소를 찾는다.
+  while (target && target !== document.body) {
+    if (target.getAttribute && target.getAttribute("data-action")) { el = target; break; }
+    target = target.parentNode;
+  }
+  if (!el) { return; }
+
+  var action = el.getAttribute("data-action");
+  var day = getDayContent(state.selectedDay);
+
+  if (action === "select-day") {
+    selectDay(Number(el.getAttribute("data-day")));
+
+  } else if (action === "clear-stage") {
+    clearStage(state.selectedDay, el.getAttribute("data-stage"));
+
+  } else if (action === "toggle-check") {
+    toggleKeyCheck(Number(el.getAttribute("data-index")));
+
+  } else if (action === "toggle-boss") {
+    isBossRevealed = !isBossRevealed;
+    renderQuestCard();
+
+  } else if (action === "speak-boss") {
+    speakOne(day.bossSentence.en);
+
+  } else if (action === "speak-script") {
+    speakCurrentScript();
+
+  } else if (action === "speak-line") {
+    speakOne(el.getAttribute("data-text"));
+
+  } else if (action === "stop-speak") {
+    stopSpeaking();
+    showToast("음성을 멈췄어요.");
+
+  } else if (action === "copy-boss") {
+    copyText(day.bossSentence.en + " / " + day.bossSentence.ko);
+
+  } else if (action === "copy-keys") {
+    copyKeySentences();
+
+  } else if (action === "toggle-script") {
+    isScriptCollapsed = !isScriptCollapsed;
+    renderScript();
+
+  } else if (action === "reset") {
+    resetAll();
+  }
+}
+
+/* =========================================================
+   10. 시작
+   ========================================================= */
+function init() {
+  state = loadState();
+  getDayProgress(state.selectedDay).visited = true;
+
+  initSpeech();
+  document.addEventListener("click", handleClick, false);
+
+  // 다른 화면으로 이동하면 음성을 멈춘다 (모바일에서 계속 읽는 것 방지)
+  document.addEventListener("visibilitychange", function () {
+    if (document.hidden) { stopSpeaking(); }
+  });
+
+  render();
+  saveState();
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", init);
+} else {
+  init();
+}
+</script>
+</body>
+</html>

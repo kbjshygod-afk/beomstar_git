@@ -13,7 +13,8 @@
 beomstar_git/
 ├── README.md          # 프로젝트 설명서 (지금 이 파일)
 ├── english-teacher/   # Emma - AI 영어 선생님 (HTML 앱)
-└── chinese-teacher/   # 니하오 중국어 - 왕초보 기초 회화 앱 (HTML 앱)
+├── chinese-teacher/   # 니하오 중국어 - 왕초보 기초 회화 앱 (HTML 앱)
+└── daily-english-quest/  # Daily English Quest - 하루 15분 영어 회화 게임 (HTML 앱)
 ```
 
 ## 시작하기
@@ -31,3 +32,14 @@ beomstar_git/
 - **성조 훈련소**: 성조 도표와 듣고 맞히기 게임
 - **복습함(SRS)**: 통과한 레슨의 단어를 간격 반복 방식으로 자동 복습
 - **진도 저장**: 브라우저(localStorage)에 자동 저장, 연속 학습 기록
+
+### Daily English Quest (daily-english-quest)
+
+영어 초급자가 하루 15분씩 듣기와 따라 말하기를 게임처럼 이어가는 앱입니다.
+
+- **하루 4단계**: Blind Listening(10XP) → Read & Listen(10XP) → Repeat Practice(15XP) → Boss Mission(20XP), 하루 최대 55XP
+- **7일 콘텐츠**: 출근 준비 / 커피 주문 / 장보기 / 배달 주문 / 지하철 / 약국 / 고객센터 (주제 중복 없음)
+- **게임 요소**: 누적 XP, Lv.1~Lv.5, 연속 학습일(Streak), 스테이지 상태, 오늘 완료율
+- **듣기**: 브라우저 내장 음성(Web Speech API)으로 스크립트·문장을 느린 속도로 읽어 줌
+- **저장**: 브라우저(localStorage)에 자동 저장, XP 중복 지급 방지
+- **모바일 우선**: iPhone Safari 등 모바일에서 한 손으로 쓰기 좋은 다크 RPG 스타일 UI
