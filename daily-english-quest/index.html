@@ -631,6 +631,61 @@ table.key-table tr.checked td.en { color: var(--success); }
 }
 .heard-box .heard-text { color: var(--text); font-weight: 600; }
 
+/* ---------- 백업 · 복원 ---------- */
+.modal-card.accent { border-color: var(--accent); }
+.modal-title.accent { color: var(--accent); }
+
+.backup-summary {
+  font-size: 12px;
+  color: var(--text-dim);
+  background: #0f1c33;
+  border: 1px solid var(--card-line);
+  border-radius: 10px;
+  padding: 8px 11px;
+  margin: 0 0 14px;
+}
+.backup-section { margin-bottom: 4px; }
+.backup-title {
+  margin: 0 0 6px;
+  font-size: 14px;
+  font-weight: 800;
+}
+.backup-divider {
+  height: 1px;
+  background: var(--card-line);
+  margin: 16px 0;
+}
+.backup-area {
+  width: 100%;
+  background: #0b1324;
+  border: 1px solid var(--card-line);
+  border-radius: 10px;
+  color: var(--text-dim);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11px;
+  line-height: 1.5;
+  padding: 9px 10px;
+  resize: vertical;
+}
+.backup-area:focus { outline: none; border-color: var(--accent); color: var(--text); }
+/* 파일 선택 버튼은 라벨로 대신 보여 준다 */
+#backupFile { display: none; }
+.backup-file-label {
+  display: block;
+  width: 100%;
+  text-align: center;
+  margin-bottom: 8px;
+  line-height: 22px;
+}
+.restore-msg {
+  font-size: 12px;
+  margin-top: 8px;
+  min-height: 18px;
+  color: var(--text-dim);
+}
+.restore-msg.ok { color: var(--success); }
+.restore-msg.warn { color: var(--warn); }
+
 /* ---------- 안내 / 기타 ---------- */
 .tip-list { margin: 0; padding-left: 18px; font-size: 13px; color: var(--text-dim); }
 .tip-list li { margin-bottom: 6px; }
@@ -826,9 +881,48 @@ table.key-table tr.checked td.en { color: var(--success); }
 <!-- ================= 초기화 ================= -->
 <section class="card">
   <h2 class="card-title">기록 관리</h2>
-  <button class="btn btn-danger" style="width:100%" data-action="reset">전체 학습 기록 초기화</button>
-  <p class="footer-note">기록은 이 브라우저(localStorage)에만 저장됩니다.</p>
+  <button class="btn btn-accent" style="width:100%" data-action="open-backup">💾 기록 백업 · 복원</button>
+  <button class="btn btn-danger" style="width:100%;margin-top:8px" data-action="reset">전체 학습 기록 초기화</button>
+  <p class="footer-note">
+    기록은 이 브라우저(localStorage)에만 저장됩니다.<br />
+    브라우저 데이터를 지우면 사라지니 가끔 백업해 두세요.
+  </p>
 </section>
+
+<!-- ================= 백업 · 복원 모달 ================= -->
+<div class="modal hidden" id="backupModal" role="dialog" aria-modal="true">
+  <div class="modal-card accent">
+    <div class="modal-head">
+      <span class="modal-title accent">💾 기록 백업 · 복원</span>
+      <button class="modal-close" data-action="close-backup" aria-label="닫기">✕</button>
+    </div>
+
+    <p class="backup-summary" id="backupSummary">-</p>
+
+    <div class="backup-section">
+      <h3 class="backup-title">1. 백업하기</h3>
+      <p class="mic-hint">파일로 저장하거나, 아래 백업 코드를 복사해 메모장·메신저 등에 보관하세요.</p>
+      <textarea class="backup-area" id="backupText" readonly rows="4" aria-label="백업 코드"></textarea>
+      <div class="btn-row" style="margin-top:8px">
+        <button class="btn btn-accent" data-action="backup-download">💾 파일로 저장</button>
+        <button class="btn btn-ghost" data-action="backup-copy">📋 코드 복사</button>
+      </div>
+    </div>
+
+    <div class="backup-divider"></div>
+
+    <div class="backup-section">
+      <h3 class="backup-title">2. 복원하기</h3>
+      <p class="mic-hint">백업 파일을 고르거나 백업 코드를 붙여넣고 복원을 누르세요. 지금 기록은 덮어써집니다.</p>
+      <label class="btn btn-ghost backup-file-label" for="backupFile">📂 백업 파일 선택</label>
+      <input type="file" id="backupFile" accept=".json,application/json" />
+      <textarea class="backup-area" id="restoreText" rows="4"
+        placeholder="여기에 백업 코드를 붙여넣으세요" aria-label="복원할 백업 코드"></textarea>
+      <div class="restore-msg" id="restoreMsg"></div>
+      <button class="btn btn-accent" style="width:100%;margin-top:8px" data-action="backup-restore">↩︎ 복원하기</button>
+    </div>
+  </div>
+</div>
 
 <!-- ================= 말하기 도전 모달 ================= -->
 <div class="modal hidden" id="micModal" role="dialog" aria-modal="true">
@@ -1352,46 +1446,57 @@ var state = createDefaultState();
 
 /** localStorage에서 상태를 읽어와 기본값과 합친다 (값이 깨져 있어도 에러 없이 동작) */
 function loadState() {
-  var loaded = createDefaultState();
   try {
     var raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) { return loaded; }
-    var parsed = JSON.parse(raw);
-    if (!parsed || typeof parsed !== "object") { return loaded; }
-
-    loaded.totalXp = toSafeNumber(parsed.totalXp, 0);
-    loaded.streak = toSafeNumber(parsed.streak, 0);
-    loaded.lastBossDate = typeof parsed.lastBossDate === "string" ? parsed.lastBossDate : null;
-    loaded.selectedDay = clampDayId(parsed.selectedDay);
-
-    if (parsed.days && typeof parsed.days === "object") {
-      for (var i = 0; i < DAY_CONTENTS.length; i++) {
-        var id = String(DAY_CONTENTS[i].id);
-        var saved = parsed.days[id];
-        var fresh = createDefaultDayProgress();
-        if (saved && typeof saved === "object") {
-          fresh.s1 = saved.s1 === true;
-          fresh.s2 = saved.s2 === true;
-          fresh.s3 = saved.s3 === true;
-          fresh.boss = saved.boss === true;
-          fresh.visited = saved.visited === true;
-          fresh.bossScore = toSafeNumber(saved.bossScore, 0);
-          if (Object.prototype.toString.call(saved.checks) === "[object Array]") {
-            for (var c = 0; c < 5; c++) { fresh.checks[c] = saved.checks[c] === true; }
-          }
-          // repeatPassed는 나중에 추가된 항목이라, 예전 저장값에는 없을 수 있다.
-          if (Object.prototype.toString.call(saved.repeatPassed) === "[object Array]") {
-            for (var r = 0; r < 5; r++) { fresh.repeatPassed[r] = saved.repeatPassed[r] === true; }
-          }
-        }
-        loaded.days[id] = fresh;
-      }
-    }
+    if (!raw) { return createDefaultState(); }
+    return normalizeState(JSON.parse(raw));
   } catch (err) {
     // 저장된 값이 손상된 경우에도 앱은 기본값으로 계속 동작한다.
     return createDefaultState();
   }
-  return loaded;
+}
+
+/**
+ * 바깥에서 들어온 값(localStorage, 백업 파일)을 앱이 쓰는 형태로 정리한다.
+ * 모르는 값이나 빠진 값은 전부 기본값으로 채우므로, 이상한 데이터가 들어와도 앱이 깨지지 않는다.
+ */
+function normalizeState(parsed) {
+  var clean = createDefaultState();
+  if (!parsed || typeof parsed !== "object") { return clean; }
+
+  clean.totalXp = toSafeNumber(parsed.totalXp, 0);
+  clean.streak = toSafeNumber(parsed.streak, 0);
+  clean.lastBossDate = isDateKey(parsed.lastBossDate) ? parsed.lastBossDate : null;
+  clean.selectedDay = clampDayId(parsed.selectedDay);
+
+  var savedDays = (parsed.days && typeof parsed.days === "object") ? parsed.days : {};
+  for (var i = 0; i < DAY_CONTENTS.length; i++) {
+    var id = String(DAY_CONTENTS[i].id);
+    var saved = savedDays[id];
+    var fresh = createDefaultDayProgress();
+    if (saved && typeof saved === "object") {
+      fresh.s1 = saved.s1 === true;
+      fresh.s2 = saved.s2 === true;
+      fresh.s3 = saved.s3 === true;
+      fresh.boss = saved.boss === true;
+      fresh.visited = saved.visited === true;
+      fresh.bossScore = Math.min(100, toSafeNumber(saved.bossScore, 0));
+      if (Object.prototype.toString.call(saved.checks) === "[object Array]") {
+        for (var c = 0; c < 5; c++) { fresh.checks[c] = saved.checks[c] === true; }
+      }
+      // repeatPassed는 나중에 추가된 항목이라, 예전 저장값에는 없을 수 있다.
+      if (Object.prototype.toString.call(saved.repeatPassed) === "[object Array]") {
+        for (var r = 0; r < 5; r++) { fresh.repeatPassed[r] = saved.repeatPassed[r] === true; }
+      }
+    }
+    clean.days[id] = fresh;
+  }
+  return clean;
+}
+
+/** "YYYY-MM-DD" 모양인지 확인 */
+function isDateKey(value) {
+  return typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value);
 }
 
 /** 현재 상태를 localStorage에 저장 (사파리 비공개 모드 등에서 실패해도 앱은 계속 동작) */
@@ -1590,6 +1695,7 @@ function selectDay(dayId) {
   isBossRevealed = false;  // Day를 바꾸면 보스 문장은 다시 가린다
   stopSpeaking();
   closeMicChallenge();
+  closeBackupModal();
   saveState();
   render();
   window.scrollTo({ top: 0, behavior: "smooth" });
@@ -1597,7 +1703,11 @@ function selectDay(dayId) {
 
 /** 전체 기록 초기화 */
 function resetAll() {
-  var ok = window.confirm("모든 학습 기록(XP, 레벨, 연속일, 체크)이 사라집니다. 정말 초기화할까요?");
+  var ok = window.confirm(
+    "모든 학습 기록(XP, 레벨, 연속일, 체크)이 사라집니다.\n"
+    + "되돌릴 수 없으니, 필요하면 먼저 '기록 백업'을 해주세요.\n\n"
+    + "정말 초기화할까요?"
+  );
   if (!ok) { return; }
   try { window.localStorage.removeItem(STORAGE_KEY); } catch (err) { /* 무시 */ }
   state = createDefaultState();
@@ -1680,6 +1790,172 @@ function speakCurrentScript() {
   }
   speakLines(lines);
   showToast("스크립트를 읽습니다. 눈을 감고 들어 보세요.");
+}
+
+/* =========================================================
+   6-1. 기록 백업 / 복원
+   - localStorage는 브라우저 데이터를 지우면 사라진다.
+   - 그래서 기록을 JSON 파일이나 텍스트(백업 코드)로 빼두고 다시 넣을 수 있게 한다.
+   ========================================================= */
+var BACKUP_APP_ID = "daily-english-quest";
+var BACKUP_FORMAT_VERSION = 1;
+
+/** 백업 파일에 담을 내용 */
+function buildBackupObject() {
+  return {
+    app: BACKUP_APP_ID,
+    formatVersion: BACKUP_FORMAT_VERSION,
+    exportedAt: new Date().toISOString(),
+    summary: {
+      totalXp: state.totalXp,
+      level: getLevelInfo(state.totalXp).level,
+      streak: state.streak,
+      clearedDays: countClearedDays()
+    },
+    data: state
+  };
+}
+
+function getBackupText() {
+  return JSON.stringify(buildBackupObject(), null, 2);
+}
+
+/** 4단계를 모두 끝낸 Day가 몇 개인지 */
+function countClearedDays() {
+  var count = 0;
+  for (var i = 0; i < DAY_CONTENTS.length; i++) {
+    var p = getDayProgress(DAY_CONTENTS[i].id);
+    if (p.s1 && p.s2 && p.s3 && p.boss) { count++; }
+  }
+  return count;
+}
+
+/** 백업 파일 이름: daily-english-quest-backup-2026-08-12.json */
+function getBackupFileName() {
+  return "daily-english-quest-backup-" + getTodayKey() + ".json";
+}
+
+/** 백업 창 열기 */
+function openBackupModal() {
+  document.getElementById("backupText").value = getBackupText();
+  document.getElementById("restoreText").value = "";
+  setRestoreMessage("", "");
+  document.getElementById("backupSummary").textContent =
+    "지금 기록: " + state.totalXp + " XP · Lv." + getLevelInfo(state.totalXp).level
+    + " · 연속 " + state.streak + "일 · 완료한 Day " + countClearedDays() + "개";
+  document.getElementById("backupModal").classList.remove("hidden");
+}
+
+function closeBackupModal() {
+  document.getElementById("backupModal").classList.add("hidden");
+}
+
+/** 백업을 파일로 내려받기 */
+function downloadBackup() {
+  var text = getBackupText();
+  try {
+    var blob = new Blob([text], { type: "application/json" });
+    var url = window.URL.createObjectURL(blob);
+    var link = document.createElement("a");
+    link.href = url;
+    link.download = getBackupFileName();
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    // 브라우저가 파일을 다 읽을 시간을 준 뒤 정리한다.
+    window.setTimeout(function () { window.URL.revokeObjectURL(url); }, 1000);
+    showToast("백업 파일을 저장했어요.");
+  } catch (err) {
+    showToast("파일 저장이 안 되면 '코드 복사'를 사용해 주세요.");
+  }
+}
+
+/** 복원 결과 안내 문구 */
+function setRestoreMessage(message, kind) {
+  var el = document.getElementById("restoreMsg");
+  el.textContent = message;
+  el.className = "restore-msg" + (kind ? " " + kind : "");
+}
+
+/**
+ * 백업 텍스트로 기록을 되돌린다.
+ * 형식이 맞는지 확인하고, 덮어쓰기 전에 무엇이 들어오는지 보여 준 뒤 확인을 받는다.
+ */
+function restoreFromText(text) {
+  var raw = String(text || "").replace(/^\s+|\s+$/g, "");
+  if (!raw) {
+    setRestoreMessage("백업 코드를 붙여넣거나 백업 파일을 선택해 주세요.", "warn");
+    return;
+  }
+
+  var parsed;
+  try {
+    parsed = JSON.parse(raw);
+  } catch (err) {
+    setRestoreMessage("백업 코드를 읽을 수 없어요. 내용이 잘리지 않았는지 확인해 주세요.", "warn");
+    return;
+  }
+
+  if (!parsed || typeof parsed !== "object") {
+    setRestoreMessage("백업 코드 형식이 아니에요.", "warn");
+    return;
+  }
+  if (parsed.app && parsed.app !== BACKUP_APP_ID) {
+    setRestoreMessage("이 앱의 백업이 아니에요.", "warn");
+    return;
+  }
+
+  // { app, data: {...} } 형태와 상태만 담긴 형태를 모두 받아 준다.
+  var payload = (parsed.data && typeof parsed.data === "object") ? parsed.data : parsed;
+  if (typeof payload.totalXp === "undefined" && typeof payload.days === "undefined") {
+    setRestoreMessage("학습 기록이 들어 있지 않은 파일이에요.", "warn");
+    return;
+  }
+
+  var restored = normalizeState(payload);
+  var savedAt = (typeof parsed.exportedAt === "string") ? parsed.exportedAt.slice(0, 10) : "날짜 모름";
+  var ok = window.confirm(
+    "이 백업으로 되돌릴까요?\n\n"
+    + "백업 내용: " + restored.totalXp + " XP · Lv." + getLevelInfo(restored.totalXp).level
+    + " · 연속 " + restored.streak + "일\n"
+    + "백업 날짜: " + savedAt + "\n\n"
+    + "지금 기록(" + state.totalXp + " XP)은 사라집니다."
+  );
+  if (!ok) {
+    setRestoreMessage("복원을 취소했어요.", "");
+    return;
+  }
+
+  state = restored;
+  getDayProgress(state.selectedDay).visited = true;
+  saveState();
+  closeBackupModal();
+  render();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+  showToast("기록을 되돌렸어요! " + state.totalXp + " XP");
+}
+
+/** 백업 파일을 골랐을 때 */
+function handleBackupFileChange(event) {
+  var input = event.target;
+  var file = (input.files && input.files.length) ? input.files[0] : null;
+  if (!file) { return; }
+
+  if (typeof window.FileReader !== "function") {
+    setRestoreMessage("이 브라우저는 파일 읽기를 지원하지 않아요. 백업 코드를 붙여넣어 주세요.", "warn");
+    return;
+  }
+
+  var reader = new window.FileReader();
+  reader.onload = function () {
+    document.getElementById("restoreText").value = String(reader.result || "");
+    setRestoreMessage("파일을 읽었어요. '복원하기'를 누르세요.", "ok");
+  };
+  reader.onerror = function () {
+    setRestoreMessage("파일을 읽지 못했어요.", "warn");
+  };
+  reader.readAsText(file);
+  input.value = ""; // 같은 파일을 다시 골라도 동작하도록 초기화
 }
 
 /* =========================================================
@@ -2328,6 +2604,22 @@ function handleClick(event) {
   } else if (action === "reset") {
     resetAll();
 
+  /* ---------- 백업 · 복원 ---------- */
+  } else if (action === "open-backup") {
+    openBackupModal();
+
+  } else if (action === "close-backup") {
+    closeBackupModal();
+
+  } else if (action === "backup-download") {
+    downloadBackup();
+
+  } else if (action === "backup-copy") {
+    copyText(getBackupText());
+
+  } else if (action === "backup-restore") {
+    restoreFromText(document.getElementById("restoreText").value);
+
   /* ---------- 말하기 도전 ---------- */
   } else if (action === "challenge-boss") {
     openMicChallenge({
@@ -2381,6 +2673,12 @@ function init() {
 
   initSpeech();
   document.addEventListener("click", handleClick, false);
+
+  // 백업 파일 선택은 클릭이 아니라 change 이벤트로 받는다.
+  var backupFileInput = document.getElementById("backupFile");
+  if (backupFileInput) {
+    backupFileInput.addEventListener("change", handleBackupFileChange, false);
+  }
 
   // 다른 화면으로 이동하면 음성을 멈춘다 (모바일에서 계속 읽는 것 방지)
   document.addEventListener("visibilitychange", function () {
