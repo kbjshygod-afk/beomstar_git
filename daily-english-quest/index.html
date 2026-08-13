@@ -764,6 +764,29 @@ table.key-table tr.checked td.en { color: var(--success); }
 }
 .week-best { color: var(--warn); font-weight: 700; }
 
+/* ---------- 매일 알림 ---------- */
+.reminder-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+.reminder-label { font-size: 13px; color: var(--text-dim); flex: 0 0 auto; }
+.reminder-input {
+  flex: 1;
+  min-width: 0;
+  background: #0f1c33;
+  border: 1px solid var(--card-line);
+  border-radius: 10px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  padding: 9px 10px;
+  min-height: 44px;
+}
+.reminder-input:focus { outline: none; border-color: var(--accent); }
+
 /* ---------- 백업 · 복원 ---------- */
 .modal-card.accent { border-color: var(--accent); }
 .modal-title.accent { color: var(--accent); }
@@ -1038,6 +1061,26 @@ table.key-table tr.checked td.en { color: var(--success); }
     <li>놓친 날이 있어도 벌점은 없습니다. 다시 오늘부터 시작하세요.</li>
     <li>안 들리면 실패가 아닙니다. 보면서 듣고 다시 말하면 됩니다.</li>
   </ul>
+</section>
+
+<!-- ================= 매일 알림 ================= -->
+<section class="card">
+  <h2 class="card-title">매일 알림 <span class="sub" id="reminderSummary">-</span></h2>
+  <p class="mic-hint">
+    웹앱은 꺼져 있는 동안 스스로 알림을 보낼 수 없어요.
+    대신 휴대폰 <b>캘린더에 매일 반복 일정</b>을 넣어 알림을 받습니다.
+  </p>
+  <div class="reminder-row">
+    <label class="reminder-label" for="reminderTime">알림 시간</label>
+    <input type="time" id="reminderTime" class="reminder-input" value="21:00" />
+  </div>
+  <button class="btn btn-accent" style="width:100%;margin-top:10px" data-action="download-reminder">
+    📅 캘린더에 매일 알림 추가
+  </button>
+  <div class="notice">
+    받은 파일을 열면 캘린더 앱이 뜹니다. <b>추가</b>를 누르면 매일 같은 시간에 알림이 옵니다.<br />
+    아이폰에서는 Safari로 열어야 캘린더 앱으로 바로 넘어갑니다.
+  </div>
 </section>
 
 <!-- ================= 초기화 ================= -->
@@ -3012,7 +3055,8 @@ function createDefaultState() {
     selectedDay: 1,    // 현재 보고 있는 Day
     days: {},          // { "1": {s1, s2, s3, boss, checks[], visited} }
     srs: createDefaultSrs(), // 복습함
-    history: {}        // 날짜별 활동 { "2026-08-12": {xp, stages, reviews, boss} }
+    history: {},       // 날짜별 활동 { "2026-08-12": {xp, stages, reviews, boss} }
+    reminderTime: "21:00" // 캘린더 알림에 쓸 시간
   };
 }
 
@@ -3083,7 +3127,16 @@ function normalizeState(parsed) {
 
   clean.srs = normalizeSrs(parsed.srs);
   clean.history = normalizeHistory(parsed.history);
+  clean.reminderTime = isTimeString(parsed.reminderTime) ? parsed.reminderTime : "21:00";
   return clean;
+}
+
+/** "HH:MM" 형식이고 실제로 있는 시각인지 */
+function isTimeString(value) {
+  if (typeof value !== "string" || !/^\d{2}:\d{2}$/.test(value)) { return false; }
+  var hour = Number(value.slice(0, 2));
+  var minute = Number(value.slice(3, 5));
+  return hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59;
 }
 
 /** 날짜별 활동 기록 정리 (날짜 형식이 아니거나 값이 이상하면 버린다) */
@@ -3744,6 +3797,97 @@ function getWeekComment(summary) {
 }
 
 /* =========================================================
+   6-0-3. 매일 알림 (캘린더 파일)
+   - 웹앱은 꺼져 있는 동안 스스로 알림을 띄울 수 없다.
+     (그러려면 서버와 서비스워커가 필요한데, 이 앱은 파일 하나로 돌아간다.)
+   - 대신 휴대폰 캘린더에 "매일 반복 일정"을 넣어 주는 .ics 파일을 만든다.
+     캘린더 앱이 대신 알림을 띄워 주므로 앱을 안 열어도 동작한다.
+   ========================================================= */
+
+/** 캘린더 파일에 쓰는 시간 형식 (20260813T210000) */
+function toIcsLocalStamp(dateObj) {
+  return dateObj.getFullYear()
+    + pad2(dateObj.getMonth() + 1) + pad2(dateObj.getDate())
+    + "T" + pad2(dateObj.getHours()) + pad2(dateObj.getMinutes()) + "00";
+}
+
+/** 캘린더 파일에 쓰는 UTC 시각 (20260813T120000Z) */
+function toIcsUtcStamp(dateObj) {
+  return dateObj.getUTCFullYear()
+    + pad2(dateObj.getUTCMonth() + 1) + pad2(dateObj.getUTCDate())
+    + "T" + pad2(dateObj.getUTCHours()) + pad2(dateObj.getUTCMinutes())
+    + pad2(dateObj.getUTCSeconds()) + "Z";
+}
+
+/** 알림 시작일: 오늘 그 시각이 아직 안 지났으면 오늘, 지났으면 내일 */
+function getReminderStartDate(timeString) {
+  var hour = Number(timeString.slice(0, 2));
+  var minute = Number(timeString.slice(3, 5));
+  var now = new Date();
+  var start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hour, minute, 0);
+  if (start.getTime() <= now.getTime()) { start.setDate(start.getDate() + 1); }
+  return start;
+}
+
+/** 매일 반복되는 캘린더 일정 파일(.ics) 내용을 만든다 */
+function buildReminderIcs(timeString) {
+  var start = getReminderStartDate(timeString);
+  var stamp = toIcsUtcStamp(new Date());
+  // 시간대 표시 없이 적으면 어느 지역에 있든 그 지역의 그 시각에 울린다.
+  var lines = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//Daily English Quest//Reminder//KO",
+    "CALSCALE:GREGORIAN",
+    "METHOD:PUBLISH",
+    "BEGIN:VEVENT",
+    "UID:daily-english-quest-" + stamp + "@local",
+    "DTSTAMP:" + stamp,
+    "DTSTART:" + toIcsLocalStamp(start),
+    "DURATION:PT15M",
+    "RRULE:FREQ=DAILY",
+    "SUMMARY:Daily English Quest - 오늘의 15분",
+    "DESCRIPTION:Boss Mission 하나만 클리어하면 오늘 완료입니다.",
+    "BEGIN:VALARM",
+    "ACTION:DISPLAY",
+    "TRIGGER:PT0M",
+    "DESCRIPTION:영어 15분 할 시간이에요",
+    "END:VALARM",
+    "END:VEVENT",
+    "END:VCALENDAR"
+  ];
+  return lines.join("\r\n") + "\r\n"; // 캘린더 형식은 줄바꿈이 CRLF다
+}
+
+/** 알림 시간을 저장한다 */
+function setReminderTime(timeString) {
+  if (!isTimeString(timeString)) { return; }
+  state.reminderTime = timeString;
+  saveState();
+  renderReminder();
+}
+
+/** 캘린더 파일 내려받기 */
+function downloadReminderIcs() {
+  var time = isTimeString(state.reminderTime) ? state.reminderTime : "21:00";
+  var text = buildReminderIcs(time);
+  try {
+    var blob = new Blob([text], { type: "text/calendar;charset=utf-8" });
+    var url = window.URL.createObjectURL(blob);
+    var link = document.createElement("a");
+    link.href = url;
+    link.download = "daily-english-quest-alarm.ics";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.setTimeout(function () { window.URL.revokeObjectURL(url); }, 1000);
+    showToast("캘린더 파일을 만들었어요. 열어서 '추가'를 누르세요.");
+  } catch (err) {
+    showToast("이 브라우저에서는 파일을 만들 수 없어요.");
+  }
+}
+
+/* =========================================================
    6-1. 기록 백업 / 복원
    - localStorage는 브라우저 데이터를 지우면 사라진다.
    - 그래서 기록을 JSON 파일이나 텍스트(백업 코드)로 빼두고 다시 넣을 수 있게 한다.
@@ -4304,6 +4448,7 @@ function render() {
   renderStages();
   renderReviewBox();
   renderWeeklyReport();
+  renderReminder();
   renderScript();
   renderKeyTable();
   renderRepeatCards();
@@ -4541,6 +4686,19 @@ function renderWeeklyReport() {
       + summary.bestDay.entry.xp + "XP</span>";
   }
   document.getElementById("weekComment").innerHTML = comment;
+}
+
+/** 매일 알림 설정 */
+function renderReminder() {
+  var time = isTimeString(state.reminderTime) ? state.reminderTime : "21:00";
+  var input = document.getElementById("reminderTime");
+  // 사용자가 입력 중일 때 값을 덮어쓰지 않는다.
+  if (input && document.activeElement !== input) { input.value = time; }
+
+  var start = getReminderStartDate(time);
+  var isToday = (getDateKey(start) === getTodayKey());
+  document.getElementById("reminderSummary").textContent =
+    "매일 " + time + " · " + (isToday ? "오늘부터" : "내일부터");
 }
 
 /** 스크립트 (Part 1 ~ Part 10) */
@@ -4811,6 +4969,10 @@ function handleClick(event) {
 
   } else if (action === "review-quit") {
     finishReviewSession();
+
+  /* ---------- 매일 알림 ---------- */
+  } else if (action === "download-reminder") {
+    downloadReminderIcs();
   }
 }
 
@@ -4829,6 +4991,14 @@ function init() {
   var backupFileInput = document.getElementById("backupFile");
   if (backupFileInput) {
     backupFileInput.addEventListener("change", handleBackupFileChange, false);
+  }
+
+  // 알림 시간 입력도 change 이벤트로 받는다.
+  var reminderInput = document.getElementById("reminderTime");
+  if (reminderInput) {
+    reminderInput.addEventListener("change", function (event) {
+      setReminderTime(event.target.value);
+    }, false);
   }
 
   // 다른 화면으로 이동하면 음성을 멈춘다 (모바일에서 계속 읽는 것 방지)
