@@ -705,6 +705,65 @@ table.key-table tr.checked td.en { color: var(--success); }
 }
 .review-preview-empty { font-size: 13px; color: var(--text-dim); margin-top: 8px; }
 
+/* ---------- 주간 리포트 ---------- */
+.week-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 5px;
+  height: 96px;
+}
+.week-col {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 3px;
+}
+.week-bar-value { font-size: 9px; color: var(--text-dim); line-height: 1; }
+.week-bar {
+  width: 100%;
+  min-height: 4px;
+  border-radius: 5px 5px 3px 3px;
+  background: #16233c;
+  border: 1px solid var(--card-line);
+}
+.week-bar.some { background: linear-gradient(180deg, var(--accent), #0ea5e9); border-color: transparent; }
+.week-bar.full { background: linear-gradient(180deg, #4ade80, var(--success)); border-color: transparent; }
+.week-day {
+  font-size: 10px;
+  color: var(--text-dim);
+  line-height: 1.2;
+  text-align: center;
+}
+.week-day.today { color: var(--accent); font-weight: 800; }
+.week-day .week-date { display: block; font-size: 9px; opacity: 0.7; }
+
+.week-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-top: 12px;
+}
+.week-stat {
+  background: #0f1c33;
+  border: 1px solid var(--card-line);
+  border-radius: 10px;
+  padding: 8px 4px;
+  text-align: center;
+}
+.week-stat .ws-num { display: block; font-size: 17px; font-weight: 800; color: var(--accent); }
+.week-stat .ws-label { display: block; font-size: 10px; color: var(--text-dim); margin-top: 1px; }
+.week-comment {
+  font-size: 13px;
+  color: var(--text-dim);
+  margin: 12px 0 0;
+  word-break: keep-all;
+}
+.week-best { color: var(--warn); font-weight: 700; }
+
 /* ---------- 백업 · 복원 ---------- */
 .modal-card.accent { border-color: var(--accent); }
 .modal-title.accent { color: var(--accent); }
@@ -912,6 +971,14 @@ table.key-table tr.checked td.en { color: var(--success); }
     Stage 3을 끝내면 핵심 문장이 복습함에 들어가고, 다음 날부터 다시 나옵니다.
     말하기에서 막힌 문장은 오늘 안에 다시 나옵니다.
   </div>
+</section>
+
+<!-- ================= 주간 리포트 ================= -->
+<section class="card">
+  <h2 class="card-title">주간 리포트 <span class="sub">최근 7일</span></h2>
+  <div class="week-chart" id="weekChart"></div>
+  <div class="week-stats" id="weekStats"></div>
+  <p class="week-comment" id="weekComment">-</p>
 </section>
 
 <!-- ================= 음성 ================= -->
@@ -2944,8 +3011,14 @@ function createDefaultState() {
     lastBossDate: null,// 마지막으로 보스를 깬 날짜 (YYYY-MM-DD)
     selectedDay: 1,    // 현재 보고 있는 Day
     days: {},          // { "1": {s1, s2, s3, boss, checks[], visited} }
-    srs: createDefaultSrs() // 복습함
+    srs: createDefaultSrs(), // 복습함
+    history: {}        // 날짜별 활동 { "2026-08-12": {xp, stages, reviews, boss} }
   };
+}
+
+/** 하루치 활동 기록의 기본값 */
+function createDefaultHistoryEntry() {
+  return { xp: 0, stages: 0, reviews: 0, boss: 0 };
 }
 
 /** 복습함(간격 반복)의 기본 상태 */
@@ -3009,6 +3082,26 @@ function normalizeState(parsed) {
   }
 
   clean.srs = normalizeSrs(parsed.srs);
+  clean.history = normalizeHistory(parsed.history);
+  return clean;
+}
+
+/** 날짜별 활동 기록 정리 (날짜 형식이 아니거나 값이 이상하면 버린다) */
+function normalizeHistory(saved) {
+  var clean = {};
+  if (!saved || typeof saved !== "object") { return clean; }
+  for (var dateKey in saved) {
+    if (!Object.prototype.hasOwnProperty.call(saved, dateKey)) { continue; }
+    if (!isDateKey(dateKey)) { continue; }
+    var entry = saved[dateKey];
+    if (!entry || typeof entry !== "object") { continue; }
+    clean[dateKey] = {
+      xp: toSafeNumber(entry.xp, 0),
+      stages: toSafeNumber(entry.stages, 0),
+      reviews: toSafeNumber(entry.reviews, 0),
+      boss: toSafeNumber(entry.boss, 0)
+    };
+  }
   return clean;
 }
 
@@ -3051,9 +3144,12 @@ function normalizeSrs(saved) {
   return clean;
 }
 
-/** "YYYY-MM-DD" 모양인지 확인 */
+/** 실제로 존재하는 "YYYY-MM-DD" 날짜인지 확인 (2026-13-99 같은 값을 걸러낸다) */
 function isDateKey(value) {
-  return typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value);
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) { return false; }
+  var parts = value.split("-");
+  var d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+  return !isNaN(d.getTime()) && getDateKey(d) === value;
 }
 
 /** 현재 상태를 localStorage에 저장 (사파리 비공개 모드 등에서 실패해도 앱은 계속 동작) */
@@ -3187,6 +3283,7 @@ function clearStage(dayId, stageKey) {
 
   progress[stageKey] = true;
   state.totalXp += stage.xp;
+  recordStageClear(stage.xp, stageKey === "boss"); // 주간 리포트용 기록
 
   if (stageKey === "boss") {
     updateStreakOnBossClear();
@@ -3483,6 +3580,7 @@ function gradeCard(cardId, remembered) {
   }
   state.srs.reviewedToday = state.srs.reviewedToday + 1;
   state.srs.totalReviews = state.srs.totalReviews + 1;
+  recordReview(); // 주간 리포트용 기록
 }
 
 /** 오늘 복습한 횟수 (날짜가 지났으면 0) */
@@ -3552,6 +3650,97 @@ function finishReviewSession() {
   reviewScore = { remembered: 0, forgot: 0 };
   saveState();
   render();
+}
+
+/* =========================================================
+   6-0-2. 주간 리포트 (날짜별 활동 기록)
+   - "며칠 했는지"가 눈에 보여야 계속하게 된다.
+   - 기록은 최근 60일치만 남긴다.
+   ========================================================= */
+var HISTORY_KEEP_DAYS = 60;
+var WEEKDAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
+
+/** 그날의 기록을 얻는다 (없으면 만든다) */
+function getHistoryEntry(dateKey) {
+  if (!state.history[dateKey]) {
+    state.history[dateKey] = createDefaultHistoryEntry();
+  }
+  return state.history[dateKey];
+}
+
+/** 스테이지를 클리어할 때마다 오늘 기록에 더한다 */
+function recordStageClear(xp, isBoss) {
+  var entry = getHistoryEntry(getTodayKey());
+  entry.xp = entry.xp + xp;
+  entry.stages = entry.stages + 1;
+  if (isBoss) { entry.boss = entry.boss + 1; }
+  pruneHistory();
+}
+
+/** 복습 한 문장을 오늘 기록에 더한다 */
+function recordReview() {
+  var entry = getHistoryEntry(getTodayKey());
+  entry.reviews = entry.reviews + 1;
+  pruneHistory();
+}
+
+/** 오래된 기록은 지운다 (YYYY-MM-DD는 문자열 비교로도 날짜 순서가 맞다) */
+function pruneHistory() {
+  var cutoff = addDaysToDateKey(getTodayKey(), -HISTORY_KEEP_DAYS);
+  for (var dateKey in state.history) {
+    if (!Object.prototype.hasOwnProperty.call(state.history, dateKey)) { continue; }
+    if (dateKey < cutoff) { delete state.history[dateKey]; }
+  }
+}
+
+/** 최근 7일(오늘 포함)의 기록을 오래된 날부터 순서대로 */
+function getRecentWeek() {
+  var today = new Date();
+  var week = [];
+  for (var back = 6; back >= 0; back--) {
+    var d = new Date(today.getFullYear(), today.getMonth(), today.getDate() - back);
+    var dateKey = getDateKey(d);
+    var saved = state.history[dateKey];
+    week.push({
+      dateKey: dateKey,
+      label: WEEKDAY_LABELS[d.getDay()],
+      dayNumber: d.getDate(),
+      isToday: (back === 0),
+      entry: saved ? saved : createDefaultHistoryEntry()
+    });
+  }
+  return week;
+}
+
+/** 최근 7일 요약 */
+function getWeekSummary() {
+  var week = getRecentWeek();
+  var summary = {
+    activeDays: 0, totalXp: 0, totalReviews: 0, bossDays: 0,
+    bestDay: null, hasAnyRecord: false
+  };
+  for (var i = 0; i < week.length; i++) {
+    var e = week[i].entry;
+    summary.totalXp += e.xp;
+    summary.totalReviews += e.reviews;
+    if (e.xp > 0 || e.reviews > 0) { summary.activeDays++; summary.hasAnyRecord = true; }
+    if (e.boss > 0) { summary.bossDays++; }
+    if (!summary.bestDay || e.xp > summary.bestDay.entry.xp) { summary.bestDay = week[i]; }
+  }
+  if (summary.bestDay && summary.bestDay.entry.xp === 0) { summary.bestDay = null; }
+  return summary;
+}
+
+/** 이번 주 성적에 맞는 한마디 */
+function getWeekComment(summary) {
+  if (!summary.hasAnyRecord) {
+    return "이번 주 기록이 아직 없어요. 오늘 Boss Mission 하나면 시작입니다.";
+  }
+  if (summary.bossDays >= 6) { return "이번 주 거의 매일 보스를 잡았어요. 대단합니다."; }
+  if (summary.bossDays >= 4) { return "이번 주 " + summary.bossDays + "일이나 끝냈어요. 아주 좋은 흐름이에요."; }
+  if (summary.bossDays >= 2) { return "이번 주 " + summary.bossDays + "일 완료. 한 번만 더 하면 습관이 됩니다."; }
+  if (summary.bossDays === 1) { return "이번 주 한 번 끝냈어요. 오늘 한 번 더 해볼까요?"; }
+  return "보스는 아직이지만 문장은 만졌어요. 오늘 하나만 끝내 보세요.";
 }
 
 /* =========================================================
@@ -4114,6 +4303,7 @@ function render() {
   renderQuestCard();
   renderStages();
   renderReviewBox();
+  renderWeeklyReport();
   renderScript();
   renderKeyTable();
   renderRepeatCards();
@@ -4308,6 +4498,49 @@ function renderReviewBox() {
     : "🔁 복습 시작";
   startBtn.disabled = (dueIds.length === 0);
   startBtn.style.opacity = dueIds.length ? "1" : "0.5";
+}
+
+/** 주간 리포트 (최근 7일 막대 그래프 + 요약) */
+function renderWeeklyReport() {
+  var week = getRecentWeek();
+  var summary = getWeekSummary();
+  var chartHtml = "";
+
+  for (var i = 0; i < week.length; i++) {
+    var dayData = week[i];
+    var xp = dayData.entry.xp;
+    // 막대 높이: 하루 최대 55XP를 100%로 본다. 그래프 영역은 60px.
+    var ratio = Math.min(1, xp / MAX_DAILY_XP);
+    var height = Math.round(6 + ratio * 54);
+    var barClass = "week-bar";
+    if (xp >= MAX_DAILY_XP) { barClass += " full"; }
+    else if (xp > 0) { barClass += " some"; }
+
+    chartHtml += '<div class="week-col">'
+      + '<span class="week-bar-value">' + (xp > 0 ? xp : "") + "</span>"
+      + '<div class="' + barClass + '" style="height:' + height + 'px"></div>'
+      + '<span class="week-day' + (dayData.isToday ? " today" : "") + '">'
+      + escapeHtml(dayData.label)
+      + '<span class="week-date">' + dayData.dayNumber + "</span></span>"
+      + "</div>";
+  }
+  document.getElementById("weekChart").innerHTML = chartHtml;
+
+  document.getElementById("weekStats").innerHTML =
+    '<div class="week-stat"><span class="ws-num">' + summary.activeDays + "</span>"
+    + '<span class="ws-label">학습한 날</span></div>'
+    + '<div class="week-stat"><span class="ws-num">' + summary.totalXp + "</span>"
+    + '<span class="ws-label">획득 XP</span></div>'
+    + '<div class="week-stat"><span class="ws-num">' + summary.totalReviews + "</span>"
+    + '<span class="ws-label">복습한 문장</span></div>';
+
+  var comment = getWeekComment(summary);
+  if (summary.bestDay) {
+    comment += ' <span class="week-best">가장 잘한 날: '
+      + escapeHtml(summary.bestDay.label) + "요일 "
+      + summary.bestDay.entry.xp + "XP</span>";
+  }
+  document.getElementById("weekComment").innerHTML = comment;
 }
 
 /** 스크립트 (Part 1 ~ Part 10) */
