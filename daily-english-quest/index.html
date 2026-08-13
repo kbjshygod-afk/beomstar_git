@@ -352,6 +352,7 @@ body {
 .btn-danger { background: rgba(248, 113, 113, 0.12); border-color: #f87171; color: #fecaca; }
 .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
 .btn-row .btn { flex: 1 1 30%; }
+.btn-row .btn.full { flex: 1 1 100%; } /* 줄을 혼자 차지하는 보조 버튼 */
 
 /* ---------- 스테이지 ---------- */
 .stage-list { display: grid; gap: 10px; }
@@ -664,6 +665,46 @@ table.key-table tr.checked td.en { color: var(--success); }
 }
 .heard-box .heard-text { color: var(--text); font-weight: 600; }
 
+/* ---------- 복습함 ---------- */
+.review-box {
+  border: 1px solid var(--card-line);
+  background: #0f1c33;
+  border-radius: 12px;
+  padding: 12px;
+}
+.review-count {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.review-due-num {
+  font-size: 30px;
+  font-weight: 900;
+  color: var(--accent);
+  line-height: 1;
+}
+.review-due-num.zero { color: var(--text-dim); }
+.review-due-label { font-size: 13px; color: var(--text-dim); }
+.review-preview { margin-top: 10px; }
+.review-preview-item {
+  font-size: 13px;
+  color: var(--text-dim);
+  padding: 5px 0;
+  border-top: 1px dashed var(--card-line);
+  word-break: keep-all;
+}
+.review-preview-item .rp-day {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--accent);
+  border: 1px solid var(--card-line);
+  border-radius: 6px;
+  padding: 1px 5px;
+  margin-right: 6px;
+}
+.review-preview-empty { font-size: 13px; color: var(--text-dim); margin-top: 8px; }
+
 /* ---------- 백업 · 복원 ---------- */
 .modal-card.accent { border-color: var(--accent); }
 .modal-title.accent { color: var(--accent); }
@@ -851,6 +892,25 @@ table.key-table tr.checked td.en { color: var(--success); }
   <div class="notice" id="stageHint">
     Stage 3은 아래 <b>핵심 문장 5개</b>를 모두 체크하면 자동으로 클리어됩니다.<br />
     Boss Mission은 위의 <b>🎤 말하기 도전</b>으로 발음을 채점받거나, 이 버튼으로 직접 클리어할 수 있어요.
+  </div>
+</section>
+
+<!-- ================= 복습함 ================= -->
+<section class="card">
+  <h2 class="card-title">복습함 <span class="sub" id="srsSummary">-</span></h2>
+  <div class="review-box" id="reviewBox">
+    <div class="review-count">
+      <span class="review-due-num" id="reviewDueNum">0</span>
+      <span class="review-due-label">오늘 복습할 문장</span>
+    </div>
+    <div class="review-preview" id="reviewPreview"></div>
+  </div>
+  <button class="btn btn-accent" style="width:100%;margin-top:10px" data-action="start-review" id="reviewStartBtn">
+    🔁 복습 시작
+  </button>
+  <div class="notice" id="reviewHint">
+    Stage 3을 끝내면 핵심 문장이 복습함에 들어가고, 다음 날부터 다시 나옵니다.
+    말하기에서 막힌 문장은 오늘 안에 다시 나옵니다.
   </div>
 </section>
 
@@ -2883,7 +2943,18 @@ function createDefaultState() {
     streak: 0,         // 연속 학습일
     lastBossDate: null,// 마지막으로 보스를 깬 날짜 (YYYY-MM-DD)
     selectedDay: 1,    // 현재 보고 있는 Day
-    days: {}           // { "1": {s1, s2, s3, boss, checks[], visited} }
+    days: {},          // { "1": {s1, s2, s3, boss, checks[], visited} }
+    srs: createDefaultSrs() // 복습함
+  };
+}
+
+/** 복습함(간격 반복)의 기본 상태 */
+function createDefaultSrs() {
+  return {
+    cards: {},          // { "3-key-1": {dayId, type, index, box, due, mastered} }
+    totalReviews: 0,    // 지금까지 복습한 총 횟수
+    lastReviewDate: null,
+    reviewedToday: 0    // 오늘 복습한 문장 수
   };
 }
 
@@ -2935,6 +3006,47 @@ function normalizeState(parsed) {
       }
     }
     clean.days[id] = fresh;
+  }
+
+  clean.srs = normalizeSrs(parsed.srs);
+  return clean;
+}
+
+/** 복습함 데이터 정리 (형식이 이상한 카드는 버린다) */
+function normalizeSrs(saved) {
+  var clean = createDefaultSrs();
+  if (!saved || typeof saved !== "object") { return clean; }
+
+  clean.totalReviews = toSafeNumber(saved.totalReviews, 0);
+  clean.lastReviewDate = isDateKey(saved.lastReviewDate) ? saved.lastReviewDate : null;
+  clean.reviewedToday = toSafeNumber(saved.reviewedToday, 0);
+
+  if (saved.cards && typeof saved.cards === "object") {
+    for (var key in saved.cards) {
+      if (!Object.prototype.hasOwnProperty.call(saved.cards, key)) { continue; }
+      var card = saved.cards[key];
+      if (!card || typeof card !== "object") { continue; }
+
+      var dayId = Math.floor(toSafeNumber(card.dayId, 0));
+      var type = (card.type === "key" || card.type === "repeat") ? card.type : null;
+      var index = Math.floor(toSafeNumber(card.index, -1));
+      // 없는 Day나 없는 문장을 가리키는 카드는 버린다.
+      if (!type || dayId < 1 || dayId > DAY_CONTENTS.length || index < 0 || index > 4) { continue; }
+
+      var box = Math.floor(toSafeNumber(card.box, 1));
+      if (box < 1) { box = 1; }
+      if (box > MAX_SRS_BOX) { box = MAX_SRS_BOX; }
+
+      var id = makeCardId(dayId, type, index);
+      clean.cards[id] = {
+        dayId: dayId,
+        type: type,
+        index: index,
+        box: box,
+        due: isDateKey(card.due) ? card.due : getTodayKey(),
+        mastered: card.mastered === true
+      };
+    }
   }
   return clean;
 }
@@ -3079,6 +3191,11 @@ function clearStage(dayId, stageKey) {
   if (stageKey === "boss") {
     updateStreakOnBossClear();
     showToast("🔥 BOSS CLEAR! +" + stage.xp + " XP · 오늘 학습 완료!");
+  } else if (stageKey === "s3") {
+    // 따라 말한 핵심 문장은 복습함에 넣어 두었다가 내일부터 다시 만난다.
+    var added = addDayKeySentencesToReview(dayId);
+    showToast(stage.name + " 클리어! +" + stage.xp + " XP"
+      + (added > 0 ? " · 핵심 문장 " + added + "개가 복습함에 들어갔어요" : ""));
   } else {
     showToast(stage.name + " 클리어! +" + stage.xp + " XP");
   }
@@ -3236,6 +3353,205 @@ function speakCurrentScript() {
   }
   speakLines(lines);
   showToast("스크립트를 읽습니다. 눈을 감고 들어 보세요.");
+}
+
+/* =========================================================
+   6-0. 복습함 (SRS · 간격 반복)
+   - 배운 문장을 하루 뒤, 이틀 뒤, 나흘 뒤... 점점 긴 간격으로 다시 만난다.
+   - 기억나면 다음 상자로, 막히면 1번 상자로 돌아간다(Leitner 방식).
+   ========================================================= */
+var MAX_SRS_BOX = 5;
+/* 상자별 다음 복습까지의 간격(일). 0번은 쓰지 않는다. */
+var SRS_INTERVALS = [0, 1, 2, 4, 7, 14];
+var REVIEW_SESSION_LIMIT = 20; // 한 번에 너무 많이 나오면 지치므로 제한
+
+function makeCardId(dayId, type, index) {
+  return dayId + "-" + type + "-" + index;
+}
+
+/** 날짜 문자열에 며칠을 더한다 */
+function addDaysToDateKey(dateKey, days) {
+  var parts = String(dateKey).split("-");
+  var d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+  if (isNaN(d.getTime())) { d = new Date(); }
+  d.setDate(d.getDate() + days);
+  return getDateKey(d);
+}
+
+/** 카드가 가리키는 실제 문장을 찾는다 (없으면 null) */
+function getCardSentence(card) {
+  var day = getDayContent(card.dayId);
+  var list = (card.type === "key") ? day.keySentences : day.repeatSentences;
+  var item = list[card.index];
+  if (!item) { return null; }
+  return { en: item.en, ko: item.ko, dayId: day.id, dayTitle: day.title };
+}
+
+/** 오늘 복습할 카드 목록 (급한 것부터) */
+function getDueCards() {
+  var today = getTodayKey();
+  var due = [];
+  for (var id in state.srs.cards) {
+    if (!Object.prototype.hasOwnProperty.call(state.srs.cards, id)) { continue; }
+    var card = state.srs.cards[id];
+    if (card.mastered) { continue; }
+    if (card.due <= today) { due.push(id); }
+  }
+  // 어려운 문장(상자가 낮은 것)부터, 같으면 Day 순서대로
+  due.sort(function (a, b) {
+    var ca = state.srs.cards[a], cb = state.srs.cards[b];
+    if (ca.box !== cb.box) { return ca.box - cb.box; }
+    return ca.dayId - cb.dayId;
+  });
+  return due;
+}
+
+/** 복습함 전체 통계 */
+function getSrsStats() {
+  var total = 0, mastered = 0;
+  for (var id in state.srs.cards) {
+    if (!Object.prototype.hasOwnProperty.call(state.srs.cards, id)) { continue; }
+    total++;
+    if (state.srs.cards[id].mastered) { mastered++; }
+  }
+  return { total: total, mastered: mastered, due: getDueCards().length };
+}
+
+/**
+ * Stage 3을 끝내면 그 Day의 핵심 문장 5개가 복습함에 들어간다.
+ * 이미 있는 카드는 건드리지 않는다(진도를 되돌리지 않기 위해).
+ */
+function addDayKeySentencesToReview(dayId) {
+  var day = getDayContent(dayId);
+  var tomorrow = addDaysToDateKey(getTodayKey(), 1);
+  var added = 0;
+  for (var i = 0; i < day.keySentences.length; i++) {
+    var id = makeCardId(dayId, "key", i);
+    if (state.srs.cards[id]) { continue; }
+    state.srs.cards[id] = {
+      dayId: dayId, type: "key", index: i,
+      box: 1, due: tomorrow, mastered: false
+    };
+    added++;
+  }
+  return added;
+}
+
+/**
+ * 말하기에서 막힌 문장은 약한 문장으로 표시한다.
+ * 1번 상자로 되돌리고 오늘 다시 만나게 한다.
+ */
+function markSentenceWeak(dayId, type, index) {
+  if (index < 0 || index > 4) { return; }
+  var id = makeCardId(dayId, type, index);
+  state.srs.cards[id] = {
+    dayId: dayId, type: type, index: index,
+    box: 1, due: getTodayKey(), mastered: false
+  };
+}
+
+/** 보스 문장이 핵심 문장 중 몇 번째인지 */
+function getBossKeyIndex(day) {
+  for (var i = 0; i < day.keySentences.length; i++) {
+    if (day.keySentences[i].en === day.bossSentence.en) { return i; }
+  }
+  return -1;
+}
+
+/** 복습 채점: 기억났으면 다음 상자로, 막혔으면 1번 상자로 */
+function gradeCard(cardId, remembered) {
+  var card = state.srs.cards[cardId];
+  if (!card) { return; }
+  var today = getTodayKey();
+
+  if (remembered) {
+    if (card.box >= MAX_SRS_BOX) {
+      card.mastered = true; // 마지막 상자까지 통과하면 졸업
+    } else {
+      card.box = card.box + 1;
+      card.due = addDaysToDateKey(today, SRS_INTERVALS[card.box]);
+    }
+  } else {
+    card.box = 1;
+    card.due = today; // 오늘 안에 다시 만난다
+  }
+
+  // 오늘 복습 횟수 (날짜가 바뀌면 0부터 다시)
+  if (state.srs.lastReviewDate !== today) {
+    state.srs.lastReviewDate = today;
+    state.srs.reviewedToday = 0;
+  }
+  state.srs.reviewedToday = state.srs.reviewedToday + 1;
+  state.srs.totalReviews = state.srs.totalReviews + 1;
+}
+
+/** 오늘 복습한 횟수 (날짜가 지났으면 0) */
+function getReviewedToday() {
+  return (state.srs.lastReviewDate === getTodayKey()) ? state.srs.reviewedToday : 0;
+}
+
+/* ---------- 복습 세션 진행 ---------- */
+var reviewQueue = [];
+var reviewIndex = 0;
+var reviewScore = { remembered: 0, forgot: 0 };
+
+function startReviewSession() {
+  var due = getDueCards();
+  if (!due.length) {
+    showToast("오늘 복습할 문장이 없어요. 잘하고 있어요!");
+    return;
+  }
+  reviewQueue = due.slice(0, REVIEW_SESSION_LIMIT);
+  reviewIndex = 0;
+  reviewScore = { remembered: 0, forgot: 0 };
+  openCurrentReviewCard();
+}
+
+function openCurrentReviewCard() {
+  if (reviewIndex >= reviewQueue.length) { finishReviewSession(); return; }
+
+  var cardId = reviewQueue[reviewIndex];
+  var card = state.srs.cards[cardId];
+  var sentence = card ? getCardSentence(card) : null;
+  if (!sentence) { // 카드가 이상하면 건너뛴다
+    reviewIndex++;
+    openCurrentReviewCard();
+    return;
+  }
+
+  openMicChallenge({
+    mode: "review",
+    cardId: cardId,
+    target: sentence.en,
+    ko: sentence.ko,
+    dayLabel: "Day " + sentence.dayId,
+    hideTarget: true // 뜻만 보고 영어를 떠올리는 것이 복습의 핵심
+  });
+}
+
+/** 복습 카드 하나를 채점하고 다음으로 넘어간다 */
+function gradeCurrentReviewCard(remembered) {
+  var cardId = reviewQueue[reviewIndex];
+  gradeCard(cardId, remembered);
+  if (remembered) { reviewScore.remembered++; } else { reviewScore.forgot++; }
+
+  saveState();
+  render();
+
+  reviewIndex++;
+  openCurrentReviewCard();
+}
+
+function finishReviewSession() {
+  var done = reviewScore.remembered + reviewScore.forgot;
+  var remembered = reviewScore.remembered;
+  closeMicChallenge(); // 여기서 복습 대기열도 함께 정리된다
+  if (done > 0) {
+    showToast("복습 완료! " + done + "개 중 " + remembered + "개 기억났어요.");
+  }
+  reviewScore = { remembered: 0, forgot: 0 };
+  saveState();
+  render();
 }
 
 /* =========================================================
@@ -3512,15 +3828,20 @@ var isListening = false;
  * mode: "boss"(보스 문장) | "repeat"(반복 연습 문장)
  */
 function openMicChallenge(config) {
-  if (!recognitionAvailable) {
+  // 복습은 음성 인식이 없어도 (눈으로 떠올리고 스스로 채점하는 방식으로) 할 수 있다.
+  if (config.mode !== "review" && !recognitionAvailable) {
     showToast("이 브라우저에서는 음성 인식을 지원하지 않습니다. 버튼으로 클리어할 수 있어요.");
     return;
   }
   stopSpeaking(); // 읽어주는 음성이 마이크에 들어가지 않도록 먼저 멈춘다
 
   micSession = config;
-  document.getElementById("micModalTitle").textContent =
-    (config.mode === "boss") ? "🔥 BOSS 말하기 도전" : "🎤 따라 말하기";
+  var title = "🎤 따라 말하기";
+  if (config.mode === "boss") { title = "🔥 BOSS 말하기 도전"; }
+  else if (config.mode === "review") {
+    title = "🔁 복습 " + (reviewIndex + 1) + " / " + reviewQueue.length;
+  }
+  document.getElementById("micModalTitle").textContent = title;
   var targetEl = document.getElementById("micTargetEn");
   targetEl.textContent = config.target;
   if (config.hideTarget) { targetEl.classList.add("hidden-text"); }
@@ -3533,19 +3854,48 @@ function openMicChallenge(config) {
 
 /** 준비 화면 */
 function showMicReady(message) {
+  var mode = micSession ? micSession.mode : "repeat";
   if (micSession) {
-    document.getElementById("micHint").textContent = (micSession.mode === "boss")
-      ? "영어 문장은 가려져 있어요. 뜻만 보고 말해 보세요."
-      : "문장을 보면서 또박또박 따라 말해 보세요.";
+    var hint = "문장을 보면서 또박또박 따라 말해 보세요.";
+    if (mode === "boss") { hint = "영어 문장은 가려져 있어요. 뜻만 보고 말해 보세요."; }
+    else if (mode === "review") {
+      hint = micSession.dayLabel + "에서 배운 문장이에요. 뜻을 보고 영어를 떠올려 보세요.";
+    }
+    document.getElementById("micHint").textContent = hint;
   }
   document.getElementById("micStage").style.display = "";
   document.getElementById("micResult").style.display = "none";
   document.getElementById("micCircle").classList.remove("listening");
   document.getElementById("micStateText").textContent = message;
   document.getElementById("micInterim").textContent = "";
-  document.getElementById("micActions").innerHTML =
-    '<button class="btn btn-boss" data-action="mic-start">🎤 시작</button>'
-    + '<button class="btn btn-ghost" data-action="close-mic">닫기</button>';
+
+  var actions = "";
+  if (recognitionAvailable) {
+    actions += '<button class="btn btn-boss" data-action="mic-start">🎤 시작</button>';
+  }
+  if (mode === "review") {
+    // 복습에서는 말하기 없이 "정답 보기"로도 진행할 수 있다.
+    actions += '<button class="btn btn-accent" data-action="review-reveal">👁 정답 보기</button>';
+    actions += '<button class="btn btn-ghost full" data-action="review-quit">그만하기</button>';
+  } else {
+    actions += '<button class="btn btn-ghost" data-action="close-mic">닫기</button>';
+  }
+  document.getElementById("micActions").innerHTML = actions;
+}
+
+/** 복습에서 정답(영어)을 보여 주고 스스로 채점하게 한다 */
+function showReviewAnswer() {
+  document.getElementById("micTargetEn").classList.remove("hidden-text");
+  document.getElementById("micHint").textContent = "떠올린 문장과 같았나요? 솔직하게 눌러 주세요.";
+  document.getElementById("micStage").style.display = "none";
+  document.getElementById("micResult").style.display = "none";
+  document.getElementById("micActions").innerHTML = getReviewGradeButtons();
+}
+
+/** 복습 채점 버튼 (기억났어요 / 다시 볼래요) */
+function getReviewGradeButtons() {
+  return '<button class="btn btn-accent" data-action="review-grade" data-ok="1">✅ 기억났어요</button>'
+    + '<button class="btn btn-ghost" data-action="review-grade" data-ok="0">🔁 다시 볼래요</button>';
 }
 
 /** 듣는 중 화면 */
@@ -3682,7 +4032,13 @@ function showMicResult(saidText) {
 
   var actions = "";
   var hintEl = document.getElementById("micHint");
-  if (micSession.mode === "boss") {
+  if (micSession.mode === "review") {
+    hintEl.textContent = passed
+      ? "잘했어요! 기억났으면 다음으로 넘어가세요."
+      : "괜찮아요. 다시 볼래요를 누르면 오늘 안에 또 만나요.";
+    actions = getReviewGradeButtons();
+
+  } else if (micSession.mode === "boss") {
     var bossAlreadyCleared = getDayProgress(state.selectedDay).boss === true;
     if (passed && !bossAlreadyCleared) {
       hintEl.textContent = "통과! 아래 버튼으로 보스를 클리어하세요.";
@@ -3707,23 +4063,35 @@ function showMicResult(saidText) {
   else { showToast(judged.score + "% · 빨간 단어를 다시 들어 보세요."); }
 }
 
-/** 점수를 기록에 남긴다 (보스는 최고 점수, 반복 문장은 통과 여부) */
+/**
+ * 점수를 기록에 남긴다 (보스는 최고 점수, 반복 문장은 통과 여부).
+ * 막힌 문장은 복습함에 약한 문장으로 넣는다.
+ * 복습 모드는 여기서 처리하지 않고 gradeCurrentReviewCard에서 채점한다.
+ */
 function saveMicScore(score, passed) {
+  if (micSession.mode === "review") { return; }
+
+  var day = getDayContent(state.selectedDay);
   var progress = getDayProgress(state.selectedDay);
+
   if (micSession.mode === "boss") {
     if (score > progress.bossScore) { progress.bossScore = score; }
-  } else if (passed && typeof micSession.index === "number") {
-    progress.repeatPassed[micSession.index] = true;
+    if (!passed) { markSentenceWeak(day.id, "key", getBossKeyIndex(day)); }
+  } else if (typeof micSession.index === "number") {
+    if (passed) { progress.repeatPassed[micSession.index] = true; }
+    else { markSentenceWeak(day.id, "repeat", micSession.index); }
   }
   saveState();
   render();
 }
 
-/** 도전 창 닫기 */
+/** 도전 창 닫기 (진행 중이던 복습 세션도 함께 정리한다) */
 function closeMicChallenge() {
   stopListening();
   finishListening();
   micSession = null;
+  reviewQueue = [];
+  reviewIndex = 0;
   document.getElementById("micModal").classList.add("hidden");
 }
 
@@ -3745,6 +4113,7 @@ function render() {
   renderDayGrid();
   renderQuestCard();
   renderStages();
+  renderReviewBox();
   renderScript();
   renderKeyTable();
   renderRepeatCards();
@@ -3887,6 +4256,58 @@ function renderStages() {
       + "</button>";
   }
   list.innerHTML = html;
+}
+
+/** 복습함 카드 */
+function renderReviewBox() {
+  var stats = getSrsStats();
+  var dueIds = getDueCards();
+
+  var summary = "";
+  if (stats.total === 0) {
+    summary = "아직 비어 있어요";
+  } else {
+    summary = "모은 문장 " + stats.total + "개";
+    if (stats.mastered > 0) { summary += " · 졸업 " + stats.mastered + "개"; }
+    var doneToday = getReviewedToday();
+    if (doneToday > 0) { summary += " · 오늘 " + doneToday + "개 복습"; }
+  }
+  document.getElementById("srsSummary").textContent = summary;
+
+  var numEl = document.getElementById("reviewDueNum");
+  numEl.textContent = String(stats.due);
+  if (stats.due === 0) { numEl.classList.add("zero"); }
+  else { numEl.classList.remove("zero"); }
+
+  // 오늘 복습할 문장 미리보기 (뜻만 보여 준다. 영어는 복습할 때 떠올려야 하므로)
+  var previewHtml = "";
+  var previewCount = Math.min(3, dueIds.length);
+  for (var i = 0; i < previewCount; i++) {
+    var card = state.srs.cards[dueIds[i]];
+    var sentence = getCardSentence(card);
+    if (!sentence) { continue; }
+    previewHtml += '<div class="review-preview-item">'
+      + '<span class="rp-day">Day ' + sentence.dayId + "</span>"
+      + escapeHtml(sentence.ko) + "</div>";
+  }
+  if (dueIds.length > previewCount) {
+    previewHtml += '<div class="review-preview-item">외 ' + (dueIds.length - previewCount) + "개</div>";
+  }
+  if (!dueIds.length) {
+    previewHtml = '<div class="review-preview-empty">'
+      + (stats.total === 0
+          ? "Stage 3을 완료하면 핵심 문장이 여기에 쌓입니다."
+          : "오늘은 다 했어요. 내일 또 만나요!")
+      + "</div>";
+  }
+  document.getElementById("reviewPreview").innerHTML = previewHtml;
+
+  var startBtn = document.getElementById("reviewStartBtn");
+  startBtn.textContent = dueIds.length
+    ? ("🔁 복습 시작 (" + Math.min(dueIds.length, REVIEW_SESSION_LIMIT) + "개)")
+    : "🔁 복습 시작";
+  startBtn.disabled = (dueIds.length === 0);
+  startBtn.style.opacity = dueIds.length ? "1" : "0.5";
 }
 
 /** 스크립트 (Part 1 ~ Part 10) */
@@ -4143,6 +4564,20 @@ function handleClick(event) {
 
   } else if (action === "close-mic") {
     closeMicChallenge();
+
+  /* ---------- 복습 ---------- */
+  } else if (action === "start-review") {
+    startReviewSession();
+
+  } else if (action === "review-reveal") {
+    stopListening();
+    showReviewAnswer();
+
+  } else if (action === "review-grade") {
+    gradeCurrentReviewCard(el.getAttribute("data-ok") === "1");
+
+  } else if (action === "review-quit") {
+    finishReviewSession();
   }
 }
 
