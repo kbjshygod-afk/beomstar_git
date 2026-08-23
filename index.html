@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#0f172a" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<title>beomstar 학습 앱</title>
+<style>
+/* =========================================================
+   앱 목록 페이지
+   daily-english-quest와 같은 색 토큰을 씁니다.
+   ========================================================= */
+:root {
+  --bg: #0f172a;
+  --card: #1e293b;
+  --card-line: #334155;
+  --accent: #38bdf8;
+  --text: #e2e8f0;
+  --text-dim: #94a3b8;
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard",
+               "Malgun Gothic", "Segoe UI", Roboto, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  padding: 28px 16px calc(48px + env(safe-area-inset-bottom));
+  max-width: 640px;
+  margin: 0 auto;
+  -webkit-text-size-adjust: 100%;
+}
+
+header { margin-bottom: 22px; }
+
+h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+}
+
+.subtitle {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.app-list { display: grid; gap: 12px; }
+
+/* 카드 전체가 링크 */
+a.app-card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  background: var(--card);
+  border: 1px solid var(--card-line);
+  border-radius: 16px;
+  padding: 16px;
+  transition: border-color 0.15s ease, transform 0.1s ease;
+}
+a.app-card:hover { border-color: var(--accent); }
+a.app-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+a.app-card:active { transform: scale(0.99); }
+
+.app-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.app-icon {
+  flex: 0 0 40px;
+  height: 40px;
+  border-radius: 11px;
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid var(--card-line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+
+.app-name {
+  font-size: 17px;
+  font-weight: 800;
+  word-break: keep-all;
+}
+
+.app-desc {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: var(--text-dim);
+  word-break: keep-all;
+}
+
+.app-tags {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.tag {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  border: 1px solid var(--card-line);
+  border-radius: 99px;
+  padding: 2px 9px;
+}
+
+footer {
+  margin-top: 26px;
+  font-size: 12px;
+  color: #64748b;
+  text-align: center;
+  line-height: 1.7;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>beomstar 학습 앱</h1>
+  <p class="subtitle">설치 없이 브라우저에서 바로 쓰는 앱입니다. 기록은 사용하는 기기에만 저장됩니다.</p>
+</header>
+
+<main class="app-list">
+
+  <a class="app-card" href="daily-english-quest/">
+    <span class="app-head">
+      <span class="app-icon">⚔️</span>
+      <span class="app-name">Daily English Quest</span>
+    </span>
+    <p class="app-desc">
+      하루 15분, 듣고 따라 말하는 영어 회화. 30일 과정을 퀘스트처럼 진행하고
+      말한 문장을 점수로 채점받습니다.
+    </p>
+    <span class="app-tags">
+      <span class="tag">영어 회화</span>
+      <span class="tag">30일</span>
+      <span class="tag">말하기 채점</span>
+      <span class="tag">복습함</span>
+    </span>
+  </a>
+
+  <a class="app-card" href="chinese-teacher/">
+    <span class="app-head">
+      <span class="app-icon">🀄</span>
+      <span class="app-name">니하오 중국어</span>
+    </span>
+    <p class="app-desc">
+      왕초보를 위한 중국어 기초 회화. 발음부터 실전 여행 회화까지
+      6단계 29레슨으로 이어집니다.
+    </p>
+    <span class="app-tags">
+      <span class="tag">중국어</span>
+      <span class="tag">29레슨</span>
+      <span class="tag">성조 훈련</span>
+      <span class="tag">복습함</span>
+    </span>
+  </a>
+
+  <a class="app-card" href="spanish-teacher/">
+    <span class="app-head">
+      <span class="app-icon">🇪🇸</span>
+      <span class="app-name">올라 스페인어</span>
+    </span>
+    <p class="app-desc">
+      왕초보를 위한 스페인어 기초 회화. 알파벳과 강세부터 실전 여행 회화까지
+      6단계 29레슨으로 이어집니다.
+    </p>
+    <span class="app-tags">
+      <span class="tag">스페인어</span>
+      <span class="tag">29레슨</span>
+      <span class="tag">동사 변화</span>
+      <span class="tag">복습함</span>
+    </span>
+  </a>
+
+  <a class="app-card" href="english-teacher/">
+    <span class="app-head">
+      <span class="app-icon">💬</span>
+      <span class="app-name">Emma</span>
+    </span>
+    <p class="app-desc">
+      AI 영어 선생님과 나누는 자유 대화 연습입니다.
+    </p>
+    <span class="app-tags">
+      <span class="tag">영어 회화</span>
+      <span class="tag">자유 대화</span>
+    </span>
+  </a>
+
+</main>
+
+<footer>
+  학습 기록은 각자 브라우저에만 저장되며 서버로 전송되지 않습니다.<br />
+  홈 화면에 추가하면 앱처럼 전체 화면으로 쓸 수 있습니다.
+</footer>
+
+</body>
+</html>
