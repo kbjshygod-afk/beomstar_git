@@ -3869,6 +3869,10 @@ function setReminderTime(timeString) {
 
 /** 캘린더 파일 내려받기 */
 function downloadReminderIcs() {
+  if (isEmbedded()) {
+    showToast("미리보기에서는 파일 저장이 막혀 있어요. 앱을 새 탭에서 열어 주세요.");
+    return;
+  }
   var time = isTimeString(state.reminderTime) ? state.reminderTime : "21:00";
   var text = buildReminderIcs(time);
   try {
@@ -3945,8 +3949,20 @@ function closeBackupModal() {
   document.getElementById("backupModal").classList.add("hidden");
 }
 
+/**
+ * 이 페이지가 다른 페이지 안에 끼워져(iframe) 열렸는지.
+ * 미리보기 화면 안에서는 파일 저장이 막히는 경우가 많아서, 그때는 다른 방법을 안내한다.
+ */
+function isEmbedded() {
+  try { return window.self !== window.top; } catch (err) { return true; }
+}
+
 /** 백업을 파일로 내려받기 */
 function downloadBackup() {
+  if (isEmbedded()) {
+    showToast("미리보기에서는 파일 저장이 막혀 있어요. 아래 '코드 복사'를 사용하세요.");
+    return;
+  }
   var text = getBackupText();
   try {
     var blob = new Blob([text], { type: "application/json" });
