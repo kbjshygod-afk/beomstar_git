@@ -99,6 +99,12 @@ window.ES_DATA = {
        "ko": "안녕히 가세요!",
        "koPron": "아디오스",
        "note": "헤어질 때 쓰는 기본 인사예요."
+      },
+      {
+       "es": "Sí, por favor.",
+       "ko": "네, 부탁해요.",
+       "koPron": "씨 뽀르 파보르",
+       "note": "무언가를 권유받았을 때 쓰는 짧고 정중한 대답이에요."
       }
      ],
      "dialogue": {
@@ -110,7 +116,7 @@ window.ES_DATA = {
         "name": "수진",
         "es": "¡Hola, Lucía!",
         "ko": "안녕, 루시아!",
-        "koPron": "올라 루시아"
+        "koPron": "올라 루씨아"
        },
        {
         "speaker": "B",
@@ -129,9 +135,9 @@ window.ES_DATA = {
        {
         "speaker": "B",
         "name": "루시아",
-        "es": "Sí. El agua.",
-        "ko": "응, 여기 물.",
-        "koPron": "씨 엘 아구아"
+        "es": "Sí. Aquí tienes el agua.",
+        "ko": "응, 여기 물이야.",
+        "koPron": "씨 아끼 띠에네스 엘 아구아"
        },
        {
         "speaker": "A",
@@ -401,7 +407,7 @@ window.ES_DATA = {
       {
        "es": "Ella es Lucía.",
        "ko": "그녀는 루시아예요.",
-       "koPron": "에야 에스 루시아",
+       "koPron": "에야 에스 루씨아",
        "note": "es는 '~이에요'라는 뜻이에요. 사람을 소개할 때 써요."
       },
       {
@@ -625,7 +631,7 @@ window.ES_DATA = {
        "q": "paella를 읽을 때 가장 자연스러운 독음은?",
        "choices": [
         "파엘라",
-        "패라",
+        "파에라",
         "빠엘라",
         "빠에야"
        ],
@@ -698,7 +704,7 @@ window.ES_DATA = {
       {
        "es": "el perro",
        "ko": "개, 강아지",
-       "koPron": "엘 뻬로"
+       "koPron": "엘 뻬르로"
       },
       {
        "es": "caro",
@@ -708,7 +714,7 @@ window.ES_DATA = {
       {
        "es": "el carro",
        "ko": "수레(중남미에서는 자동차)",
-       "koPron": "엘 까로"
+       "koPron": "엘 까르로"
       }
      ],
      "keySentences": [
@@ -725,21 +731,22 @@ window.ES_DATA = {
        "note": "muchas(많은)를 붙이면 더 큰 감사 표현이 돼요."
       },
       {
-       "es": "¿Qué es?",
+       "es": "¿Qué es esto?",
        "ko": "이건 뭐예요?",
-       "koPron": "께 에스",
+       "koPron": "께 에스 에스또",
        "note": "qu는 'ㄲ' 소리! 궁금한 것을 가리키며 물어보세요."
       },
       {
        "es": "Queso, por favor.",
        "ko": "치즈 주세요.",
-       "koPron": "께소 뽀르 파보르"
+       "koPron": "께소 뽀르 파보르",
+       "note": "가게에서 원하는 것 + por favor면 주문 끝이에요."
       },
       {
        "es": "El jamón es caro.",
        "ko": "하몬은 비싸요.",
        "koPron": "엘 하몬 에스 까로",
-       "note": "caro(비싼)에 r가 하나면 '까로', rr면 혀를 굴려요."
+       "note": "r가 하나인 caro는 가볍게 '까로', rr인 carro는 혀를 굴려 '까르로'예요."
       }
      ],
      "dialogue": {
@@ -784,9 +791,9 @@ window.ES_DATA = {
        {
         "speaker": "B",
         "name": "점원",
-        "es": "No, no.",
+        "es": "No, no es caro.",
         "ko": "아니요, 안 비싸요.",
-        "koPron": "노 노"
+        "koPron": "노 노 에스 까로"
        },
        {
         "speaker": "A",
@@ -849,7 +856,7 @@ window.ES_DATA = {
       },
       {
        "title": "qu는 ㄲ, r와 rr는 다른 소리",
-       "explain": "que·qui의 qu는 u 소리 없이 'ㄲ'로만 읽어요(qué=께, queso=께소). r는 한 번만 가볍게 튕기는 'ㄹ'이고, rr는 혀끝을 드르르 떨며 굴리는 소리예요. pero(하지만)와 perro(개)처럼 r 하나 차이로 뜻이 완전히 달라져요!",
+       "explain": "que·qui의 qu는 u 소리 없이 'ㄲ'로만 읽어요(qué=께, queso=께소). r는 한 번만 가볍게 튕기는 'ㄹ'이고, rr는 혀끝을 드르르 떨며 굴리는 소리예요. pero(뻬로, 하지만)와 perro(뻬르로, 개)처럼 r 하나 차이로 뜻이 완전히 달라져요!",
        "examples": [
         {
          "es": "el queso",
@@ -864,14 +871,14 @@ window.ES_DATA = {
         {
          "es": "el perro",
          "ko": "개",
-         "koPron": "엘 뻬로"
+         "koPron": "엘 뻬르로"
         }
        ]
       }
      ],
      "tips": [
       "rr 굴리기 연습법: ① 혀끝을 윗니 뒤 잇몸에 가볍게 대고 힘을 뺀 뒤, 숨을 세게 내쉬어 혀가 저절로 떨리게 하세요. ② 잘 안 되면 '드르르', '따르릉'을 빠르게 반복하며 혀 떠는 감각을 익히세요. ③ 'ㄷ+ㄹ'를 붙여 '뻬드로→뻬로'처럼 점점 줄여 가면 어느 순간 굴러가요. 혀에 힘을 주면 오히려 안 되니, 힘 빼기가 핵심!",
-      "pero(하지만)와 perro(개)는 한 끗 차이예요. '뻬로 하나(r)면 하지만, 두 개(rr)면 멍멍이'라고 외워 두세요.",
+      "pero(하지만)와 perro(개)는 한 끗 차이예요. r가 하나면 가볍게 '뻬로(하지만)', rr면 혀를 굴려 '뻬르로(멍멍이)'라고 외워 두세요.",
       "번데기 발음이 어렵다면 중남미식으로 그냥 'ㅅ'로 발음해도 전혀 문제없어요. gracias를 '그라시아스'라고 해도 다 통합니다.",
       "j의 'ㅎ'는 한국어 'ㅎ'보다 목 깊은 곳에서 그르렁거리듯 세게 내는 소리예요. 겨울에 손을 '하-' 하고 데울 때보다 목을 더 긁는 느낌으로!"
      ],
@@ -912,7 +919,7 @@ window.ES_DATA = {
         "el queso"
        ],
        "answer": 0,
-       "explain": "rr가 들어간 el perro(뻬로, 혀 굴림)가 '개'예요. r 하나인 pero는 '하지만'이라는 뜻이죠."
+       "explain": "rr가 들어간 el perro(뻬르로, 혀 굴림)가 '개'예요. r 하나인 pero(뻬로)는 '하지만'이라는 뜻이죠."
       },
       {
        "type": "listen",
@@ -1044,7 +1051,12 @@ window.ES_DATA = {
       {
        "es": "el corazón",
        "ko": "심장, 마음",
-       "koPron": "엘 꼬라손"
+       "koPron": "엘 꼬라쏜"
+      },
+      {
+       "es": "bien",
+       "ko": "잘, 좋게",
+       "koPron": "비엔"
       },
       {
        "es": "y",
@@ -1199,7 +1211,7 @@ window.ES_DATA = {
      "tips": [
       "강세 3규칙 암기법: '모음·n·s는 뒤에서 둘째, 다른 자음은 마지막, 악센트 부호는 무조건 거기!' 세 줄만 외우면 어떤 단어든 읽을 수 있어요.",
       "¿…?와 ¡…!는 문장이 시작되기 전에 '지금부터 질문이야/감탄이야'라고 미리 알려 주는 표지판이에요. 의문문은 문장 끝을 살짝 올려 읽고, 평서문은 내려 읽으세요.",
-      "강세를 틀리면 뜻이 달라지기도 해요. papá(빠빠)는 '아빠', papa(빠빠)는 '감자'! 강세 위치가 단어의 신분증인 셈이죠.",
+      "강세를 틀리면 뜻이 달라지기도 해요. 뒤를 세게 읽는 papá(빠빠↗)는 '아빠', 앞을 세게 읽는 papa(빠↗빠)는 '교황'! 강세 위치가 단어의 신분증인 셈이죠.",
       "단어를 외울 때 강세 음절에서 손뼉을 치거나 고개를 끄덕이며 소리 내 보세요. 몸으로 익힌 강세는 잘 잊히지 않아요."
      ],
      "culture": "스페인 사람들은 아침을 카페 콘 레체(café con leche, 우유를 넣은 커피)와 함께 시작하고, 바에 서서 후딱 마시고 나가는 경우도 많아요. 뒤집힌 물음표 ¿는 1754년 스페인 왕립 학술원(RAE)이 도입한 스페인어만의 독특한 표기예요. 문장이 아무리 길어도 처음부터 '이건 질문!'이라고 알려 주는 친절한 장치랍니다.",
@@ -1425,8 +1437,8 @@ window.ES_DATA = {
       }
      ],
      "dialogue": {
-      "title": "아침 인사, 저녁 인사",
-      "situation": "수진이 아침 등굣길에, 그리고 저녁에 다시 카를로스를 만나 인사를 나눠요.",
+      "title": "아침 인사, 오후 인사",
+      "situation": "수진이 아침 등굣길에, 그리고 오후에 다시 카를로스를 만나 인사를 나눠요.",
       "turns": [
        {
         "speaker": "A",
@@ -1453,14 +1465,14 @@ window.ES_DATA = {
         "speaker": "B",
         "name": "카를로스",
         "es": "Muy bien, gracias.",
-        "ko": "나도 아주 잘 지내, 고마워.",
+        "ko": "아주 잘 지내, 고마워.",
         "koPron": "무이 비엔 그라씨아스"
        },
        {
         "speaker": "A",
         "name": "수진",
         "es": "¡Buenas tardes, Carlos!",
-        "ko": "(저녁에 다시 만나) 안녕, 카를로스!",
+        "ko": "(오후에 다시 만나) 안녕, 카를로스!",
         "koPron": "부에나스 따르데스 까를로스"
        },
        {
@@ -1556,7 +1568,7 @@ window.ES_DATA = {
      "quiz": [
       {
        "type": "choice",
-       "q": "아침에 만났을 때 하는 인사로 알맞은 것은?",
+       "q": "아침~정오에 쓰는 '시간대 인사'로 알맞은 것은?",
        "choices": [
         "Buenas tardes",
         "Buenas noches",
@@ -1564,7 +1576,7 @@ window.ES_DATA = {
         "¿Qué tal?"
        ],
        "answer": 2,
-       "explain": "아침~정오에는 buenos días(부에노스 디아스)를 써요. tardes는 오후, noches는 밤 인사예요."
+       "explain": "아침~정오에는 buenos días(부에노스 디아스)를 써요. tardes는 오후, noches는 밤 인사이고, ¿Qué tal?은 시간과 상관없는 안부 인사예요."
       },
       {
        "type": "choice",
@@ -1689,7 +1701,7 @@ window.ES_DATA = {
       },
       {
        "es": "por favor",
-       "ko": "부탁해요, 제발",
+       "ko": "부탁해요, ~해 주세요",
        "koPron": "뽀르 파보르"
       },
       {
@@ -1720,7 +1732,7 @@ window.ES_DATA = {
       {
        "es": "sí",
        "ko": "네",
-       "koPron": "시"
+       "koPron": "씨"
       },
       {
        "es": "no",
@@ -1801,7 +1813,7 @@ window.ES_DATA = {
         "name": "직원",
         "es": "Sí. ¡Un café!",
         "ko": "네. 커피 한 잔이요!",
-        "koPron": "시 운 까페"
+        "koPron": "씨 운 까페"
        },
        {
         "speaker": "A",
@@ -1821,7 +1833,7 @@ window.ES_DATA = {
         "speaker": "A",
         "name": "수진",
         "es": "¡Ay, lo siento!",
-        "ko": "(커피를 살짝 쏟으며) 앗, 정말 미안해요!",
+        "ko": "(커피를 살짝 쏟으며) 앗, 미안해요!",
         "koPron": "아이 로 시엔또"
        },
        {
@@ -1920,7 +1932,7 @@ window.ES_DATA = {
         "No pasa nada."
        ],
        "answer": 3,
-       "explain": "사과를 받아줄 때는 No pasa nada(괜찮아요)라고 해요. ¡No te preocupes!(걱정하지 마요!)도 좋아요."
+       "explain": "사과를 받아줄 때는 No pasa nada(괜찮아요)라고 해요. ¡No te preocupes!(걱정하지 마세요!)도 좋아요."
       },
       {
        "type": "listen",
@@ -2650,6 +2662,11 @@ window.ES_DATA = {
        "koPron": "아스따 마냐나"
       },
       {
+       "es": "adiós",
+       "ko": "안녕히 가세요, 잘 가",
+       "koPron": "아디오스"
+      },
+      {
        "es": "la clase",
        "ko": "수업, 교실",
        "koPron": "라 끌라세"
@@ -2686,12 +2703,14 @@ window.ES_DATA = {
       {
        "es": "Mucho gusto.",
        "ko": "만나서 반갑습니다.",
-       "koPron": "무초 구스또"
+       "koPron": "무초 구스또",
+       "note": "남녀 구분 없이 쓸 수 있는 첫인사예요. Encantado/Encantada로 바꿔 말해도 좋아요."
       },
       {
        "es": "Muchas gracias.",
        "ko": "정말 고맙습니다.",
-       "koPron": "무차스 그라씨아스"
+       "koPron": "무차스 그라씨아스",
+       "note": "대답은 De nada.(천만에요)로 받아 주세요."
       },
       {
        "es": "Muy bien también.",
@@ -2702,7 +2721,8 @@ window.ES_DATA = {
       {
        "es": "¡Hasta mañana! ¡Nos vemos!",
        "ko": "내일 봐요! 또 봐요!",
-       "koPron": "아스따 마냐나 노스 베모스"
+       "koPron": "아스따 마냐나 노스 베모스",
+       "note": "작별 인사는 이렇게 두 개를 이어 말하는 것이 자연스러워요."
       }
      ],
      "dialogue": {
@@ -2720,7 +2740,7 @@ window.ES_DATA = {
         "speaker": "A",
         "name": "수진",
         "es": "¡Hola! ¡Buenos días!",
-        "ko": "안녕하세요! 좋은 아침이에요!",
+        "ko": "안녕! 좋은 아침이야!",
         "koPron": "올라 부에노스 디아스"
        },
        {
@@ -2734,7 +2754,7 @@ window.ES_DATA = {
         "speaker": "A",
         "name": "수진",
         "es": "Me llamo Sujin. Soy coreana. Mucho gusto.",
-        "ko": "제 이름은 수진이에요. 한국 사람이에요. 만나서 반가워요.",
+        "ko": "내 이름은 수진이야. 나는 한국 사람이야. 만나서 반가워.",
         "koPron": "메 야모 수진 소이 꼬레아나 무초 구스또"
        },
        {
@@ -2748,7 +2768,7 @@ window.ES_DATA = {
         "speaker": "A",
         "name": "수진",
         "es": "Muchas gracias, Carlos.",
-        "ko": "정말 고마워요, 카를로스.",
+        "ko": "정말 고마워, 카를로스.",
         "koPron": "무차스 그라씨아스 까를로스"
        },
        {
@@ -2762,7 +2782,7 @@ window.ES_DATA = {
         "speaker": "A",
         "name": "수진",
         "es": "Muy bien, gracias. ¿Y tú?",
-        "ko": "아주 잘 지내요, 고마워요. 너는요?",
+        "ko": "아주 잘 지내, 고마워. 너는?",
         "koPron": "무이 비엔 그라씨아스 이 뚜"
        },
        {
@@ -2776,7 +2796,7 @@ window.ES_DATA = {
         "speaker": "A",
         "name": "수진",
         "es": "¡Hasta mañana! ¡Que tengas un buen día!",
-        "ko": "내일 봐요! 좋은 하루 보내요!",
+        "ko": "내일 봐! 좋은 하루 보내!",
         "koPron": "아스따 마냐나 께 뗑가스 운 부엔 디아"
        }
       ]
@@ -2967,7 +2987,7 @@ window.ES_DATA = {
   {
    "unitId": 2,
    "title": "숫자와 시간",
-   "subtitle": "숫자만 알아도 절반은 산다",
+   "subtitle": "숫자만 알아도 절반은 통해요",
    "icon": "🔢",
    "lessons": [
     {
@@ -3031,9 +3051,9 @@ window.ES_DATA = {
        "koPron": "디에쓰"
       },
       {
-       "es": "cien",
-       "ko": "100 (백)",
-       "koPron": "씨엔"
+       "es": "veinte",
+       "ko": "20 (스물)",
+       "koPron": "베인떼"
       }
      ],
      "keySentences": [
@@ -3473,9 +3493,9 @@ window.ES_DATA = {
        {
         "speaker": "A",
         "name": "수진",
-        "es": "¡Muy bien! Hasta el sábado.",
+        "es": "¡Vale! Hasta el sábado.",
         "ko": "알겠어요! 토요일에 봐요.",
-        "koPron": "무이 비엔 아스따 엘 사바도"
+        "koPron": "발레 아스따 엘 사바도"
        }
       ]
      },
@@ -3779,16 +3799,16 @@ window.ES_DATA = {
        {
         "speaker": "B",
         "name": "카를로스",
-        "es": "No, no. Son las nueve y cuarto.",
-        "ko": "아니다, 아니에요. 지금 9시 15분이에요.",
-        "koPron": "노 노 손 라스 누에베 이 꾸아르또"
+        "es": "¡Ah, no! Son las nueve y cuarto.",
+        "ko": "아, 아니에요! 지금은 9시 15분이에요.",
+        "koPron": "아 노 손 라스 누에베 이 꾸아르또"
        },
        {
         "speaker": "A",
         "name": "수진",
-        "es": "¿Las nueve y cuarto? ¡Muy bien!",
-        "ko": "9시 15분이라고요? 다행이다!",
-        "koPron": "라스 누에베 이 꾸아르또 무이 비엔"
+        "es": "¿Las nueve y cuarto? ¡Menos mal!",
+        "ko": "9시 15분이라고요? 다행이에요!",
+        "koPron": "라스 누에베 이 꾸아르또 메노스 말"
        },
        {
         "speaker": "B",
@@ -4114,9 +4134,9 @@ window.ES_DATA = {
        {
         "speaker": "A",
         "name": "수진",
-        "es": "¡Muy bien! Quiero esta camiseta. ¿Cuánto es?",
+        "es": "¡Vale! Quiero esta camiseta. ¿Cuánto es?",
         "ko": "좋아요! 이 티셔츠로 할게요. 얼마예요?",
-        "koPron": "무이 비엔 끼에로 에스따 까미세따 꾸안또 에스"
+        "koPron": "발레 끼에로 에스따 까미세따 꾸안또 에스"
        },
        {
         "speaker": "B",
@@ -4128,9 +4148,9 @@ window.ES_DATA = {
        {
         "speaker": "A",
         "name": "수진",
-        "es": "Aquí tiene. ¿Tiene cambio?",
-        "ko": "여기요. 잔돈 있으세요?",
-        "koPron": "아끼 띠에네 띠에네 깜비오"
+        "es": "Aquí tiene veinte euros. ¿Tiene cambio?",
+        "ko": "여기 20유로요. 잔돈 있으세요?",
+        "koPron": "아끼 띠에네 베인떼 에우로스 띠에네 깜비오"
        },
        {
         "speaker": "B",
@@ -4206,7 +4226,7 @@ window.ES_DATA = {
      "tips": [
       "형용사도 명사의 성에 맞춰요: el bolso barato(싼 가방), la camiseta barata(싼 티셔츠).",
       "1유로는 100 céntimos예요. 가격표의 1,50 €는 un euro con cincuenta(운 에우로 꼰 씬꾸엔따)라고 읽어요. 스페인은 소수점 대신 쉼표를 쓴답니다!",
-      "점원이 ¿Algo más?(알고 마스, 더 필요한 것 있으세요?)라고 물으면 No, gracias.(아니요, 괜찮아요)라고 답하면 돼요.",
+      "점원이 ¿Algo más?(알고 마스, 더 필요한 것 있으세요?)라고 물으면 No, gracias.(아니요, 괜찮아요)라고 답하면 돼요. 반대로 '좋아요, 알겠어요'는 ¡Vale!(발레) 한마디면 충분해요. 스페인에서 하루에도 수십 번 듣는 말이랍니다.",
       "중남미 여러 나라에서는 유로 대신 peso(뻬소) 등을 써요. 가격 묻는 표현은 어디서나 똑같이 통해요."
      ],
      "culture": "스페인은 2002년부터 유로(euro)를 사용해요. 그리고 전통적인 작은 상점들은 시에스타(siesta) 문화 때문에 오후 2시부터 5시까지 문을 닫았다가 저녁에 다시 여는 곳이 많아요. 쇼핑 계획을 세울 때는 오전이나 저녁 시간을 노리는 게 안전하답니다. 물론 대형 마트나 백화점은 하루 종일 열어요!",
@@ -4725,6 +4745,11 @@ window.ES_DATA = {
        "es": "el país",
        "ko": "나라",
        "koPron": "엘 빠이스"
+      },
+      {
+       "es": "la ciudad",
+       "ko": "도시",
+       "koPron": "라 씨우닫"
       }
      ],
      "keySentences": [
@@ -4882,7 +4907,7 @@ window.ES_DATA = {
       }
      ],
      "tips": [
-      "España의 ñ는 '니'가 아니라 '냐'처럼 발음해요. '에스빠냐'라고 콧소리를 살려 주세요.",
+      "ñ는 '니'와 뒤 모음을 한 번에 붙여 읽는 소리예요. España는 '에스빠니아'가 아니라 '에스빠냐', año는 '아니오'가 아니라 '아뇨'처럼 콧소리를 살려 한 번에 발음하세요.",
       "스페인어에서 국적 형용사는 항상 소문자로 써요. Corea는 대문자, coreano는 소문자!",
       "¿Eres español?처럼 의문문은 어순을 바꾸지 않아도 돼요. 문장 끝을 올려 읽는 것만으로 질문이 됩니다."
      ],
@@ -5124,7 +5149,7 @@ window.ES_DATA = {
         "speaker": "A",
         "name": "수진",
         "es": "Yo soy estudiante. Estudio español.",
-        "ko": "저는 학생이에요. 스페인어를 공부하고 있어요.",
+        "ko": "저는 학생이에요. 스페인어를 공부해요.",
         "koPron": "요 소이 에스뚜디안떼 에스뚜디오 에스빠뇰"
        },
        {
@@ -5367,7 +5392,7 @@ window.ES_DATA = {
       {
        "es": "usted",
        "ko": "당신 (존칭)",
-       "koPron": "우스뗃"
+       "koPron": "우스뗏"
       },
       {
        "es": "veinte",
@@ -5426,7 +5451,7 @@ window.ES_DATA = {
       {
        "es": "¿Cuántos años tiene usted?",
        "ko": "나이가 어떻게 되세요?",
-       "koPron": "꾸안또스 아뇨스 띠에네 우스뗃",
+       "koPron": "꾸안또스 아뇨스 띠에네 우스뗏",
        "note": "usted(당신)에게는 동사를 3인칭 tiene로 써요. 어른께 묻는 정중한 표현이에요."
       },
       {
@@ -5476,7 +5501,7 @@ window.ES_DATA = {
         "speaker": "A",
         "name": "수진",
         "es": "¿Sí? ¿Y tu profesor? ¿Cuántos años tiene?",
-        "ko": "그래요? 그럼 당신 선생님은요? 몇 살이세요?",
+        "ko": "그래요? 그럼 선생님은요? 몇 살이세요?",
         "koPron": "씨 이 뚜 쁘로페소르 꾸안또스 아뇨스 띠에네"
        },
        {
@@ -5497,7 +5522,7 @@ window.ES_DATA = {
         "speaker": "B",
         "name": "카를로스",
         "es": "Sí, es joven y muy bueno.",
-        "ko": "네, 젊고 아주 좋은 분이에요.",
+        "ko": "네, 젊으시고 아주 좋은 선생님이세요.",
         "koPron": "씨 에스 호벤 이 무이 부에노"
        }
       ]
@@ -5526,7 +5551,7 @@ window.ES_DATA = {
       },
       {
        "title": "tener 동사의 현재형 변화",
-       "explain": "tener는 자주 쓰는 불규칙 동사예요. tengo(나), tienes(너), tiene(그/그녀/당신), tenemos(우리), tenéis(너희), tienen(그들)으로 변해요. '나'일 때만 tengo로 특이하게 변하고, 나머지는 e가 ie로 바뀌는 모양이에요. 나이뿐 아니라 무언가를 '가지고 있다'고 말할 때 늘 쓰니 통째로 외워 두세요.",
+       "explain": "tener는 자주 쓰는 불규칙 동사예요. tengo(나), tienes(너), tiene(그/그녀/당신), tenemos(우리), tenéis(너희), tienen(그들)으로 변해요. '나'일 때만 tengo로 특이하게 변하고, tienes·tiene·tienen은 e가 ie로 바뀌어요. tenemos와 tenéis는 e가 그대로랍니다. 나이뿐 아니라 무언가를 '가지고 있다'고 말할 때 늘 쓰니 통째로 외워 두세요.",
        "examples": [
         {
          "es": "Tengo veinticinco años.",
@@ -5723,6 +5748,11 @@ window.ES_DATA = {
        "es": "menor",
        "ko": "손아래의, 나이가 더 어린",
        "koPron": "메노르"
+      },
+      {
+       "es": "el hijo / la hija",
+       "ko": "아들 / 딸",
+       "koPron": "엘 이호 / 라 이하"
       }
      ],
      "keySentences": [
@@ -5781,7 +5811,7 @@ window.ES_DATA = {
         "speaker": "A",
         "name": "수진",
         "es": "¿Tienes hermanos mayores?",
-        "ko": "오빠가 있어요?",
+        "ko": "손위 형제가 있어요?",
         "koPron": "띠에네스 에르마노스 마요레스"
        },
        {
@@ -6141,7 +6171,7 @@ window.ES_DATA = {
         "speaker": "A",
         "name": "수진",
         "es": "Tiene veinte años. También es estudiante.",
-        "ko": "스무 살이에요. 그 애도 학생이에요.",
+        "ko": "스무 살이에요. 동생도 학생이에요.",
         "koPron": "띠에네 베인떼 아뇨스 땀비엔 에스 에스뚜디안떼"
        },
        {
@@ -6343,31 +6373,16 @@ window.ES_DATA = {
     {
      "id": "u4l1",
      "title": "뭐 먹을래요?",
-     "goal": "querer 동사로 먹고 싶은 것과 마시고 싶은 것을 말할 수 있어요.",
+     "goal": "querer 동사로 먹고 싶은 것, 마시고 싶은 것을 말하고 상대방에게 물어볼 수 있어요.",
      "words": [
       {
-       "es": "querer",
-       "ko": "원하다, ~하고 싶다",
-       "koPron": "께레르"
-      },
-      {
-       "es": "comer",
-       "ko": "먹다",
-       "koPron": "꼬메르"
-      },
-      {
-       "es": "beber",
-       "ko": "마시다",
-       "koPron": "베베르"
-      },
-      {
        "es": "la paella",
-       "ko": "빠에야(스페인식 쌀 요리)",
+       "ko": "빠에야 (스페인 쌀 요리)",
        "koPron": "라 빠에야"
       },
       {
        "es": "la tortilla",
-       "ko": "또르띠야(스페인식 감자 오믈렛)",
+       "ko": "또르띠야 (감자 오믈렛)",
        "koPron": "라 또르띠야"
       },
       {
@@ -6382,7 +6397,7 @@ window.ES_DATA = {
       },
       {
        "es": "el vino",
-       "ko": "와인, 포도주",
+       "ko": "와인",
        "koPron": "엘 비노"
       },
       {
@@ -6392,16 +6407,41 @@ window.ES_DATA = {
       },
       {
        "es": "el café con leche",
-       "ko": "카페 콘 레체(밀크커피)",
+       "ko": "카페 콘 레체 (우유 넣은 커피)",
        "koPron": "엘 까페 꼰 레체"
+      },
+      {
+       "es": "el zumo",
+       "ko": "주스",
+       "koPron": "엘 쑤모"
+      },
+      {
+       "es": "comer",
+       "ko": "먹다",
+       "koPron": "꼬메르"
+      },
+      {
+       "es": "beber",
+       "ko": "마시다",
+       "koPron": "베베르"
+      },
+      {
+       "es": "querer",
+       "ko": "원하다, ~하고 싶다",
+       "koPron": "께레르"
+      },
+      {
+       "es": "vale",
+       "ko": "좋아요, 알겠어요",
+       "koPron": "발레"
       }
      ],
      "keySentences": [
       {
        "es": "¿Qué quieres comer?",
-       "ko": "뭐 먹을래요?",
+       "ko": "뭐 먹고 싶어요?",
        "koPron": "께 끼에레스 꼬메르",
-       "note": "친구 사이에서 편하게 쓰는 tú(너) 형태예요."
+       "note": "친구 사이에 쓰는 말이에요. 존댓말은 ¿Qué quiere comer?"
       },
       {
        "es": "Quiero comer paella.",
@@ -6415,254 +6455,286 @@ window.ES_DATA = {
       },
       {
        "es": "Quiero un café con leche.",
-       "ko": "저는 카페 콘 레체 한 잔 마시고 싶어요.",
+       "ko": "카페 콘 레체 한 잔 마시고 싶어요.",
        "koPron": "끼에로 운 까페 꼰 레체"
       },
       {
-       "es": "Quiero agua, por favor.",
-       "ko": "물 좀 주세요.",
-       "koPron": "끼에로 아구아 뽀르 파보르",
-       "note": "Quiero 뒤에 원하는 것만 붙이면 어디서든 통해요."
+       "es": "¿Quieres una cerveza?",
+       "ko": "맥주 한 잔 할래요?",
+       "koPron": "끼에레스 우나 쎄르베싸"
+      },
+      {
+       "es": "Yo también quiero pan.",
+       "ko": "저도 빵을 먹고 싶어요.",
+       "koPron": "요 땀비엔 끼에로 빤",
+       "note": "también(~도)은 유닛 1에서 배운 표현이에요."
       }
      ],
      "dialogue": {
-      "title": "점심 메뉴 정하기",
-      "situation": "수진과 루시아가 점심으로 무엇을 먹고 마실지 이야기해요.",
+      "title": "오늘 점심 뭐 먹지?",
+      "situation": "수진과 카를로스가 점심에 무엇을 먹고 마실지 정하고 있어요.",
       "turns": [
        {
         "speaker": "A",
         "name": "수진",
-        "es": "¡Hola, Lucía! ¿Qué tal?",
-        "ko": "안녕, 루시아! 잘 지내?",
-        "koPron": "올라 루씨아 께 딸"
+        "es": "¡Hola, Carlos! ¿Qué tal?",
+        "ko": "안녕, 카를로스! 잘 지내?",
+        "koPron": "올라 까를로스 께 딸"
        },
        {
         "speaker": "B",
-        "name": "루시아",
-        "es": "¡Muy bien! Sujin, ¿qué quieres comer?",
-        "ko": "아주 좋아! 수진, 뭐 먹을래?",
-        "koPron": "무이 비엔 수진 께 끼에레스 꼬메르"
+        "name": "카를로스",
+        "es": "Muy bien, gracias. ¿Qué quieres comer hoy?",
+        "ko": "아주 잘 지내, 고마워. 오늘 뭐 먹고 싶어?",
+        "koPron": "무이 비엔 그라씨아스 께 끼에레스 꼬메르 오이"
        },
        {
         "speaker": "A",
         "name": "수진",
         "es": "Quiero comer paella. ¿Y tú?",
-        "ko": "나는 빠에야 먹고 싶어. 너는?",
+        "ko": "나는 빠에야가 먹고 싶어. 너는?",
         "koPron": "끼에로 꼬메르 빠에야 이 뚜"
        },
        {
         "speaker": "B",
-        "name": "루시아",
-        "es": "Yo quiero tortilla.",
-        "ko": "나는 또르띠야 먹을래.",
-        "koPron": "요 끼에로 또르띠야"
+        "name": "카를로스",
+        "es": "Yo quiero una tortilla y pan.",
+        "ko": "나는 또르띠야하고 빵.",
+        "koPron": "요 끼에로 우나 또르띠야 이 빤"
        },
        {
         "speaker": "A",
         "name": "수진",
-        "es": "¿Qué quieres beber?",
-        "ko": "뭐 마실래?",
-        "koPron": "께 끼에레스 베베르"
+        "es": "¿Y qué quieres beber?",
+        "ko": "그럼 뭐 마실래?",
+        "koPron": "이 께 끼에레스 베베르"
        },
        {
         "speaker": "B",
-        "name": "루시아",
-        "es": "Quiero una cerveza. ¿Y tú?",
-        "ko": "나는 맥주 한 잔. 너는?",
-        "koPron": "끼에로 우나 쎄르베싸 이 뚜"
+        "name": "카를로스",
+        "es": "Quiero una cerveza. ¿Tú también?",
+        "ko": "나는 맥주. 너도?",
+        "koPron": "끼에로 우나 쎄르베싸 뚜 땀비엔"
        },
        {
         "speaker": "A",
         "name": "수진",
-        "es": "Yo quiero un café con leche.",
-        "ko": "나는 카페 콘 레체 마실래.",
-        "koPron": "요 끼에로 운 까페 꼰 레체"
+        "es": "No, gracias. Yo quiero agua y un café con leche.",
+        "ko": "아니, 괜찮아. 나는 물이랑 카페 콘 레체.",
+        "koPron": "노 그라씨아스 요 끼에로 아구아 이 운 까페 꼰 레체"
        },
        {
         "speaker": "B",
-        "name": "루시아",
-        "es": "¡Muy bien! ¡Vamos!",
-        "ko": "좋아! 가자!",
-        "koPron": "무이 비엔 바모스"
+        "name": "카를로스",
+        "es": "¡Vale, perfecto!",
+        "ko": "좋아, 완벽해!",
+        "koPron": "발레 뻬르펙또"
        }
       ]
      },
      "grammar": [
       {
-       "title": "querer 동사: 원해요, ~하고 싶어요",
-       "explain": "querer는 '원하다'라는 뜻이에요. 주어에 따라 모양이 바뀌어요. yo(나)는 quiero, tú(너)는 quieres, él/ella/usted(그/그녀/당신)는 quiere. 한국어의 '~할래요/~하고 싶어요'에 딱 맞는 만능 동사예요.",
+       "title": "querer 동사: ~을 원해요, ~하고 싶어요",
+       "explain": "querer는 한국어의 '~하고 싶다', '~ 주세요'에 해당하는 아주 유용한 동사예요. 말하는 사람에 따라 quiero(나는), quieres(너는), quiere(그·그녀·당신은)로 모양이 바뀌어요. 뒤에는 명사(un café)를 그대로 붙여도 되고, 동사원형(comer, beber)을 붙여도 됩니다.",
        "examples": [
         {
-         "es": "Quiero agua.",
-         "ko": "저는 물을 원해요(물 주세요).",
-         "koPron": "끼에로 아구아"
+         "es": "Quiero un café.",
+         "ko": "저는 커피 한 잔 주세요.",
+         "koPron": "끼에로 운 까페"
         },
         {
          "es": "¿Quieres pan?",
-         "ko": "빵 먹을래요?",
+         "ko": "빵 먹을래?",
          "koPron": "끼에레스 빤"
         },
         {
-         "es": "Lucía quiere vino.",
-         "ko": "루시아는 와인을 원해요.",
-         "koPron": "루씨아 끼에레 비노"
+         "es": "Carlos quiere una cerveza.",
+         "ko": "카를로스는 맥주를 원해요.",
+         "koPron": "까를로스 끼에레 우나 쎄르베싸"
         }
        ]
       },
       {
-       "title": "querer + 명사 / querer + 동사원형",
-       "explain": "Quiero 뒤에는 명사를 바로 붙여도 되고(Quiero pan = 빵 주세요), 동사원형을 붙이면 '~하고 싶어요'가 돼요(Quiero comer = 먹고 싶어요). 두 가지 패턴만 알면 원하는 걸 뭐든 말할 수 있어요.",
+       "title": "comer(먹다)와 beber(마시다)는 꼭 구분!",
+       "explain": "한국어는 '물을 먹다', '약을 먹다'처럼 '먹다'를 넓게 쓰지만, 스페인어는 씹는 것은 comer, 마시는 것은 beber로 확실히 나눠요. 물·커피·맥주·와인은 언제나 beber입니다.",
        "examples": [
         {
-         "es": "Quiero comer tortilla.",
-         "ko": "또르띠야를 먹고 싶어요.",
-         "koPron": "끼에로 꼬메르 또르띠야"
-        },
-        {
-         "es": "Quiero beber cerveza.",
-         "ko": "맥주를 마시고 싶어요.",
-         "koPron": "끼에로 베베르 쎄르베싸"
-        }
-       ]
-      },
-      {
-       "title": "comer(먹다) vs beber(마시다)",
-       "explain": "한국어처럼 스페인어도 먹는 것과 마시는 것을 구분해요. 음식은 comer, 음료는 beber와 함께 써요. 헷갈리면 'ㅂ'으로 시작하는 beber가 '마시다(음료)'라고 기억해 보세요.",
-       "examples": [
-        {
-         "es": "Quiero comer pan.",
-         "ko": "빵을 먹고 싶어요.",
-         "koPron": "끼에로 꼬메르 빤"
+         "es": "Quiero comer paella.",
+         "ko": "빠에야를 먹고 싶어요.",
+         "koPron": "끼에로 꼬메르 빠에야"
         },
         {
          "es": "Quiero beber agua.",
          "ko": "물을 마시고 싶어요.",
          "koPron": "끼에로 베베르 아구아"
+        },
+        {
+         "es": "¿Qué quieres beber?",
+         "ko": "뭐 마실래요?",
+         "koPron": "께 끼에레스 베베르"
+        }
+       ]
+      },
+      {
+       "title": "'하나'를 말할 때: un / una",
+       "explain": "남성 명사 앞에는 un, 여성 명사 앞에는 una를 붙여 '~ 하나'를 나타내요. 주문할 때 이 한 글자 차이가 아주 자주 나옵니다.",
+       "examples": [
+        {
+         "es": "un café con leche",
+         "ko": "카페 콘 레체 한 잔",
+         "koPron": "운 까페 꼰 레체"
+        },
+        {
+         "es": "una cerveza",
+         "ko": "맥주 한 잔",
+         "koPron": "우나 쎄르베싸"
+        },
+        {
+         "es": "una tortilla y un vino",
+         "ko": "또르띠야 하나와 와인 한 잔",
+         "koPron": "우나 또르띠야 이 운 비노"
         }
        ]
       }
      ],
      "tips": [
-      "que, qui에서 u는 소리가 나지 않아요. quiero는 '꾸이에로'가 아니라 '끼에로'로 읽어요.",
-      "주문할 때 Quiero... 뒤에 por favor(뽀르 파보르)를 붙이면 훨씬 공손하게 들려요.",
-      "agua는 사실 여성명사지만, 발음이 편하도록 el agua라고 써요. 예외로 그냥 외워 두세요."
+      "quiero는 '끼에로'로 읽어요. qu 뒤의 u는 소리가 나지 않아서 que는 '께', qui는 '끼'가 됩니다.",
+      "cerveza의 ce와 za는 스페인에서 혀끝을 살짝 무는 '쓰' 소리예요(쎄르베싸). 중남미에서는 '세르베사'처럼 들립니다.",
+      "agua는 여성 명사인데 관사는 el을 써요(el agua, un agua). a 소리가 겹쳐 발음이 불편하기 때문이에요.",
+      "문장 끝에 por favor만 붙이면 바로 공손한 주문이 돼요: Un café, por favor."
      ],
-     "culture": "빠에야(paella)는 스페인 동부 발렌시아 지방에서 시작된 쌀 요리로, 원조는 해산물이 아니라 닭고기와 토끼고기를 넣은 것이에요. 또 tortilla는 스페인에서는 감자를 넣은 두툼한 오믈렛이지만, 멕시코 등 중남미에서는 옥수수 전병을 뜻해요. 같은 단어라도 나라에 따라 전혀 다른 음식이 나올 수 있으니 재미있죠?",
+     "culture": "스페인 사람들은 점심(la comida)을 오후 2~3시에, 저녁(la cena)을 밤 9시 이후에 먹어요. 아침에는 바에서 café con leche 한 잔에 빵을 곁들이는 게 가장 흔한 풍경이에요. 주스는 스페인에서 el zumo라고 하지만 중남미에서는 el jugo(엘 후고)라고 합니다. 식당에서 agua를 시키면 보통 생수(agua mineral)가 나와요.",
      "quiz": [
       {
        "type": "choice",
-       "q": "'마시다'를 뜻하는 스페인어는?",
+       "q": "'저는 빠에야를 먹고 싶어요'를 스페인어로 하면?",
        "choices": [
-        "comer",
-        "beber",
-        "querer",
-        "hablar"
-       ],
-       "answer": 1,
-       "explain": "beber(베베르)가 '마시다'예요. comer는 '먹다', querer는 '원하다'입니다."
-      },
-      {
-       "type": "choice",
-       "q": "'나는 빠에야를 먹고 싶어요'를 바르게 말한 것은?",
-       "choices": [
-        "Quiero beber paella.",
         "Quieres comer paella.",
+        "¿Qué quieres comer?",
         "Quiero comer paella.",
-        "Quiere comer pan."
+        "Quiero beber paella."
        ],
        "answer": 2,
-       "explain": "'나'가 주어이므로 quiero, 음식을 먹는 것이므로 comer를 써서 Quiero comer paella가 맞아요."
+       "explain": "'나는'은 quiero, '먹다'는 comer예요. quieres는 '너는', beber는 '마시다'라서 답이 될 수 없어요."
       },
       {
        "type": "choice",
-       "q": "빈칸에 알맞은 것은? Tú ___ un café. (너는 커피를 원해)",
+       "q": "'마시다'를 뜻하는 동사는 무엇일까요?",
+       "choices": [
+        "beber",
+        "comer",
+        "querer",
+        "trabajar"
+       ],
+       "answer": 0,
+       "explain": "beber가 '마시다'예요. comer는 먹다, querer는 원하다, trabajar는 일하다입니다."
+      },
+      {
+       "type": "choice",
+       "q": "빈칸에 알맞은 것은? ¿Qué ____ comer? (너 뭐 먹고 싶어?)",
        "choices": [
         "quiero",
         "quiere",
-        "querer",
+        "quieren",
         "quieres"
        ],
        "answer": 3,
-       "explain": "주어가 tú(너)일 때는 quieres를 써요. quiero는 '나', quiere는 '그/그녀'입니다."
+       "explain": "상대방(너)에게 묻고 있으니 quieres예요. quiero는 나, quiere는 그·당신 형태입니다."
       },
       {
        "type": "choice",
-       "q": "'와인'을 관사와 함께 바르게 쓴 것은?",
+       "q": "커피에 우유를 넣은 스페인식 커피를 뭐라고 할까요?",
        "choices": [
-        "el vino",
-        "la vino",
-        "el vina",
-        "la vina"
-       ],
-       "answer": 0,
-       "explain": "vino는 남성명사라서 el vino(엘 비노)라고 해요. -o로 끝나는 명사는 대부분 남성이에요."
-      },
-      {
-       "type": "listen",
-       "q": "들리는 문장의 뜻으로 알맞은 것은?",
-       "es": "¿Qué quieres beber?",
-       "choices": [
-        "뭐 먹을래요?",
-        "뭐 마실래요?",
-        "뭐 하고 싶어요?",
-        "어디에 갈래요?"
+        "el zumo",
+        "el café con leche",
+        "la cerveza",
+        "el vino"
        ],
        "answer": 1,
-       "explain": "beber(마시다)가 들렸으니 '뭐 마실래요?'예요. comer가 들리면 '뭐 먹을래요?'입니다."
+       "explain": "leche는 우유예요. café con leche는 '우유를 넣은 커피'라는 뜻입니다."
       },
       {
        "type": "listen",
        "q": "들리는 문장의 뜻으로 알맞은 것은?",
        "es": "Quiero un café con leche.",
        "choices": [
-        "맥주 한 잔 주세요.",
-        "물 좀 주세요.",
-        "카페 콘 레체 한 잔 주세요.",
-        "와인 한 잔 주세요."
+        "맥주 한 잔 주세요",
+        "카페 콘 레체 한 잔 주세요",
+        "물 한 잔 주세요",
+        "빵을 먹고 싶어요"
        ],
-       "answer": 2,
-       "explain": "café con leche(까페 꼰 레체)는 우유를 넣은 커피, 즉 밀크커피예요."
+       "answer": 1,
+       "explain": "Quiero + un café con leche = '카페 콘 레체 한 잔 주세요(마시고 싶어요)'입니다."
+      },
+      {
+       "type": "listen",
+       "q": "들리는 문장의 뜻으로 알맞은 것은?",
+       "es": "¿Qué quieres beber?",
+       "choices": [
+        "뭐 먹고 싶어요?",
+        "이름이 뭐예요?",
+        "지금 몇 시예요?",
+        "뭐 마시고 싶어요?"
+       ],
+       "answer": 3,
+       "explain": "beber는 '마시다'예요. comer(먹다)와 헷갈리지 않게 주의하세요."
+      },
+      {
+       "type": "listen",
+       "q": "들리는 문장의 뜻으로 알맞은 것은?",
+       "es": "No quiero vino.",
+       "choices": [
+        "와인은 원하지 않아요",
+        "와인을 원해요",
+        "물을 원해요",
+        "맥주를 원해요"
+       ],
+       "answer": 0,
+       "explain": "동사 앞에 no만 붙이면 부정문이 돼요. No quiero = '원하지 않아요'입니다."
       },
       {
        "type": "arrange",
-       "q": "'뭐 먹을래요?'가 되도록 단어를 순서대로 배열하세요",
+       "q": "'저는 물을 마시고 싶어요'가 되도록 단어를 순서대로 배열하세요",
+       "tokens": [
+        "Quiero",
+        "beber",
+        "agua"
+       ],
+       "koPron": "끼에로 베베르 아구아",
+       "explain": "Quiero(원해요) + 동사원형(beber) + 명사(agua) 순서예요. 마시는 것이므로 comer가 아니라 beber를 씁니다."
+      },
+      {
+       "type": "arrange",
+       "q": "'뭐 먹고 싶어요?'가 되도록 단어를 순서대로 배열하세요",
        "tokens": [
         "¿Qué",
         "quieres",
         "comer?"
        ],
        "koPron": "께 끼에레스 꼬메르",
-       "explain": "의문사 ¿Qué(무엇) 뒤에 동사 quieres, 그리고 동사원형 comer 순서예요."
-      },
-      {
-       "type": "arrange",
-       "q": "'카페 콘 레체 한 잔 주세요'가 되도록 단어를 순서대로 배열하세요",
-       "tokens": [
-        "Quiero",
-        "un",
-        "café",
-        "con",
-        "leche"
-       ],
-       "koPron": "끼에로 운 까페 꼰 레체",
-       "explain": "Quiero + un(하나의) + café con leche 순서예요. 음료 하나를 시킬 땐 un/una를 붙여요."
+       "explain": "의문사 Qué(무엇) + quieres(너는 원해) + comer(먹다) 순서예요. 물음표는 앞뒤로 ¿ ? 둘 다 씁니다."
       }
      ]
     },
     {
      "id": "u4l2",
      "title": "식당에서 주문하기",
-     "goal": "스페인 식당에서 메뉴판을 받고 주문하고 계산까지 할 수 있어요.",
+     "goal": "식당에서 메뉴판을 받고, 추천을 묻고, 주문하고, 계산서까지 달라고 할 수 있어요.",
      "words": [
       {
-       "es": "el camarero",
-       "ko": "웨이터, (남자) 종업원",
-       "koPron": "엘 까마레로"
+       "es": "el camarero / la camarera",
+       "ko": "종업원 (남자 / 여자)",
+       "koPron": "엘 까마레로 / 라 까마레라"
       },
       {
        "es": "la carta",
        "ko": "메뉴판",
        "koPron": "라 까르따"
+      },
+      {
+       "es": "el menú",
+       "ko": "오늘의 세트 메뉴",
+       "koPron": "엘 메누"
       },
       {
        "es": "la cuenta",
@@ -6671,23 +6743,23 @@ window.ES_DATA = {
       },
       {
        "es": "la caña",
-       "ko": "생맥주 (작은 잔)",
+       "ko": "생맥주 한 잔 (작은 잔)",
        "koPron": "라 까냐"
       },
       {
        "es": "las tapas",
-       "ko": "따빠스(작은 접시 요리)",
+       "ko": "따빠스 (작은 안주 요리)",
        "koPron": "라스 따빠스"
       },
       {
-       "es": "el plato",
-       "ko": "요리, 접시",
-       "koPron": "엘 쁠라또"
+       "es": "la ensalada",
+       "ko": "샐러드",
+       "koPron": "라 엔살라다"
       },
       {
-       "es": "el euro",
-       "ko": "유로(화폐)",
-       "koPron": "엘 에우로"
+       "es": "el postre",
+       "ko": "후식, 디저트",
+       "koPron": "엘 뽀스뜨레"
       },
       {
        "es": "rico",
@@ -6705,27 +6777,23 @@ window.ES_DATA = {
        "koPron": "레꼬멘다르"
       },
       {
-       "es": "aquí tiene",
-       "ko": "여기 있습니다",
-       "koPron": "아끼 띠에네"
-      },
-      {
        "es": "para mí",
-       "ko": "저는 ~로 할게요, 제 몫으로는",
+       "ko": "저는 ~로 할게요 (저를 위해)",
        "koPron": "빠라 미"
       }
      ],
      "keySentences": [
       {
-       "es": "La carta, por favor.",
-       "ko": "메뉴판 좀 주세요.",
-       "koPron": "라 까르따 뽀르 파보르"
+       "es": "¡Camarero! La carta, por favor.",
+       "ko": "여기요! 메뉴판 좀 주세요.",
+       "koPron": "까마레로 라 까르따 뽀르 파보르",
+       "note": "여자 종업원이면 ¡Camarera! 라고 불러요."
       },
       {
        "es": "¿Qué me recomienda?",
        "ko": "뭘 추천해 주시겠어요?",
        "koPron": "께 메 레꼬미엔다",
-       "note": "점원에게는 공손한 usted 형태를 써요."
+       "note": "처음 간 식당에서 쓰면 반응이 아주 좋은 한마디예요."
       },
       {
        "es": "Para mí, la paella.",
@@ -6738,9 +6806,9 @@ window.ES_DATA = {
        "koPron": "우나 까냐 뽀르 파보르"
       },
       {
-       "es": "Está muy bueno.",
-       "ko": "아주 맛있어요.",
-       "koPron": "에스따 무이 부에노"
+       "es": "¡Qué rico! Está muy bueno.",
+       "ko": "와, 맛있다! 정말 맛있어요.",
+       "koPron": "께 리꼬 에스따 무이 부에노"
       },
       {
        "es": "La cuenta, por favor.",
@@ -6749,232 +6817,277 @@ window.ES_DATA = {
       }
      ],
      "dialogue": {
-      "title": "식당에서",
-      "situation": "수진이 스페인 식당에서 점원에게 음식을 주문하고 계산까지 해요.",
+      "title": "마드리드의 식당에서",
+      "situation": "수진과 카를로스가 식당에서 메뉴판을 받아 주문하고, 음식을 맛본 뒤 계산서를 부탁해요.",
       "turns": [
        {
         "speaker": "A",
         "name": "수진",
         "es": "¡Camarero! La carta, por favor.",
-        "ko": "저기요! 메뉴판 좀 주세요.",
+        "ko": "여기요! 메뉴판 좀 주세요.",
         "koPron": "까마레로 라 까르따 뽀르 파보르"
        },
        {
-        "speaker": "B",
-        "name": "점원",
-        "es": "Aquí tiene.",
-        "ko": "여기 있습니다.",
-        "koPron": "아끼 띠에네"
+        "speaker": "C",
+        "name": "종업원",
+        "es": "Aquí tiene la carta.",
+        "ko": "여기 메뉴판 있습니다.",
+        "koPron": "아끼 띠에네 라 까르따"
        },
        {
         "speaker": "A",
         "name": "수진",
-        "es": "¿Qué me recomienda?",
-        "ko": "뭘 추천해 주시겠어요?",
-        "koPron": "께 메 레꼬미엔다"
+        "es": "Gracias. ¿Qué me recomienda?",
+        "ko": "감사합니다. 뭘 추천해 주시겠어요?",
+        "koPron": "그라씨아스 께 메 레꼬미엔다"
        },
        {
-        "speaker": "B",
-        "name": "점원",
-        "es": "La paella está muy buena.",
-        "ko": "빠에야가 아주 맛있습니다.",
-        "koPron": "라 빠에야 에스따 무이 부에나"
-       },
-       {
-        "speaker": "A",
-        "name": "수진",
-        "es": "Para mí, la paella. Y una caña, por favor.",
-        "ko": "저는 빠에야로 할게요. 그리고 생맥주 한 잔 주세요.",
-        "koPron": "빠라 미 라 빠에야 이 우나 까냐 뽀르 파보르"
-       },
-       {
-        "speaker": "B",
-        "name": "점원",
-        "es": "Muy bien.",
-        "ko": "알겠습니다.",
-        "koPron": "무이 비엔"
+        "speaker": "C",
+        "name": "종업원",
+        "es": "La paella está muy buena hoy.",
+        "ko": "오늘은 빠에야가 아주 맛있습니다.",
+        "koPron": "라 빠에야 에스따 무이 부에나 오이"
        },
        {
         "speaker": "A",
         "name": "수진",
-        "es": "¡Qué rico! Está muy bueno.",
-        "ko": "우와, 진짜 맛있어요! 아주 맛있네요.",
-        "koPron": "께 리꼬 에스따 무이 부에노"
+        "es": "Vale. Para mí, la paella.",
+        "ko": "좋아요. 저는 빠에야로 할게요.",
+        "koPron": "발레 빠라 미 라 빠에야"
        },
        {
         "speaker": "B",
-        "name": "점원",
-        "es": "¡Gracias!",
-        "ko": "감사합니다!",
-        "koPron": "그라씨아스"
+        "name": "카를로스",
+        "es": "Y para mí, una ensalada y unas tapas.",
+        "ko": "저는 샐러드하고 따빠스 좀 주세요.",
+        "koPron": "이 빠라 미 우나 엔살라다 이 우나스 따빠스"
+       },
+       {
+        "speaker": "C",
+        "name": "종업원",
+        "es": "¿Y para beber?",
+        "ko": "마실 것은요?",
+        "koPron": "이 빠라 베베르"
+       },
+       {
+        "speaker": "B",
+        "name": "카를로스",
+        "es": "Una caña, por favor. Y para Sujin, un agua.",
+        "ko": "생맥주 한 잔 주세요. 그리고 수진은 물이요.",
+        "koPron": "우나 까냐 뽀르 파보르 이 빠라 수진 운 아구아"
        },
        {
         "speaker": "A",
         "name": "수진",
-        "es": "La cuenta, por favor.",
-        "ko": "계산서 주세요.",
-        "koPron": "라 꾸엔따 뽀르 파보르"
+        "es": "¡Qué rico! La paella está muy buena.",
+        "ko": "와, 맛있다! 빠에야 정말 맛있어.",
+        "koPron": "께 리꼬 라 빠에야 에스따 무이 부에나"
        },
        {
         "speaker": "B",
-        "name": "점원",
-        "es": "Aquí tiene. Son diez euros.",
-        "ko": "여기 있습니다. 10유로입니다.",
-        "koPron": "아끼 띠에네 손 디에스 에우로스"
+        "name": "카를로스",
+        "es": "Sí. ¡Camarero, la cuenta, por favor!",
+        "ko": "그러게. 여기요, 계산서 주세요!",
+        "koPron": "씨 까마레로 라 꾸엔따 뽀르 파보르"
        }
       ]
      },
      "grammar": [
       {
-       "title": "Para mí: 저는 ~로 할게요",
-       "explain": "주문할 때 가장 쉬운 마법의 표현이에요. Para mí(내 몫으로는) 뒤에 원하는 메뉴만 붙이면 끝! 동사 변화를 몰라도 완벽한 주문이 돼요.",
+       "title": "Para mí, ... — 저는 ~로 할게요",
+       "explain": "주문할 때는 동사 없이 Para mí(저를 위해) 뒤에 음식 이름만 붙이면 끝이에요. 한국어로 '저는 빠에야요'라고 말하는 것과 똑같은 느낌이라 왕초보에게 가장 편한 주문법입니다. 상대에게 물을 때는 ¿Y para ti?(너는?)라고 해요.",
        "examples": [
         {
-         "es": "Para mí, la tortilla.",
-         "ko": "저는 또르띠야로 할게요.",
-         "koPron": "빠라 미 라 또르띠야"
+         "es": "Para mí, la paella.",
+         "ko": "저는 빠에야로 할게요.",
+         "koPron": "빠라 미 라 빠에야"
         },
         {
          "es": "Para mí, una caña.",
-         "ko": "저는 생맥주 한 잔이요.",
+         "ko": "저는 생맥주로 할게요.",
          "koPron": "빠라 미 우나 까냐"
+        },
+        {
+         "es": "¿Y para ti?",
+         "ko": "너는?",
+         "koPron": "이 빠라 띠"
         }
        ]
       },
       {
-       "title": "estar + 맛 형용사: 지금 먹어 보니 맛있어요",
-       "explain": "음식을 먹어 보고 '(지금) 맛있다!'라고 말할 때는 estar 동사를 써서 Está rico, Está bueno라고 해요. 형용사는 음식의 성에 맞춰요. paella처럼 여성명사면 buena(부에나), pan처럼 남성명사면 bueno(부에노)가 돼요.",
+       "title": "estar + 맛 형용사: Está rico / Está bueno",
+       "explain": "음식이 지금 맛있다고 말할 때는 ser가 아니라 estar를 써요. '지금 이 접시의 상태'를 말하기 때문이에요. 형용사는 음식의 성에 맞춰 바뀝니다: la paella(여성)면 buena, el pan(남성)이면 bueno.",
        "examples": [
         {
-         "es": "Está rico.",
-         "ko": "맛있어요.",
-         "koPron": "에스따 리꼬"
-        },
-        {
-         "es": "El pan está muy bueno.",
-         "ko": "빵이 아주 맛있어요.",
-         "koPron": "엘 빤 에스따 무이 부에노"
+         "es": "Está muy bueno.",
+         "ko": "아주 맛있어요.",
+         "koPron": "에스따 무이 부에노"
         },
         {
          "es": "La paella está muy buena.",
          "ko": "빠에야가 아주 맛있어요.",
          "koPron": "라 빠에야 에스따 무이 부에나"
+        },
+        {
+         "es": "La ensalada está rica.",
+         "ko": "샐러드가 맛있어요.",
+         "koPron": "라 엔살라다 에스따 리까"
+        }
+       ]
+      },
+      {
+       "title": "¡Qué + 형용사! — 정말 ~하다!",
+       "explain": "감탄할 때는 Qué 뒤에 형용사만 붙이면 돼요. 식탁에서 가장 많이 나오는 감탄사가 바로 ¡Qué rico!(정말 맛있다!)입니다.",
+       "examples": [
+        {
+         "es": "¡Qué rico!",
+         "ko": "정말 맛있다!",
+         "koPron": "께 리꼬"
+        },
+        {
+         "es": "¡Qué bien!",
+         "ko": "정말 좋다!",
+         "koPron": "께 비엔"
+        },
+        {
+         "es": "¡Qué caro!",
+         "ko": "정말 비싸다!",
+         "koPron": "께 까로"
         }
        ]
       }
      ],
      "tips": [
-      "caña(까냐)는 작은 잔에 나오는 생맥주예요. 스페인 사람들은 큰 잔보다 시원한 까냐를 여러 번 시켜 마셔요.",
-      "종업원을 부를 때 ¡Camarero! 대신 ¡Perdona!(뻬르도나, 실례합니다)라고 하거나 눈을 마주치고 손을 살짝 드는 것도 자연스러워요.",
-      "¡Qué rico!(께 리꼬)처럼 ¡Qué + 형용사!는 '정말 ~하다!'라는 감탄 표현이에요. ¡Qué bueno!도 같은 패턴이죠."
+      "메뉴판은 el menú가 아니라 la carta예요! el menú는 보통 전채·메인·후식이 함께 나오는 menú del día(오늘의 세트)를 뜻합니다.",
+      "caña의 ñ는 '냐' 소리예요(까냐). 작은 생맥주 잔을 뜻하고, 큰 잔은 una jarra(우나 하라)라고 해요.",
+      "종업원을 부를 때는 손을 살짝 들고 Perdona(뻬르도나) 또는 ¡Camarero, por favor!라고 하면 자연스러워요.",
+      "Para mí 하나만 외워도 주문 걱정 끝! 음식 이름만 바꿔 넣으면 됩니다."
      ],
-     "culture": "스페인의 바(bar)는 술집이라기보다 아침 커피부터 저녁 술 한잔까지 해결하는 동네 사랑방이에요. 바에서 음료를 시키면 따빠스(tapas)라는 작은 안주 접시가 함께 나오는 곳도 많고, 여러 바를 옮겨 다니며 따빠스를 즐기는 것을 'ir de tapas'라고 해요. 팁은 의무가 아니라서 잔돈을 조금 남기는 정도면 충분해요. 참고로 중남미에서는 종업원을 camarero 대신 mesero(메세로)라고 불러요.",
+     "culture": "스페인의 바(bar)는 술집이라기보다 온 동네 사람이 드나드는 카페 겸 식당이에요. 음료를 시키면 작은 안주인 따빠(tapa)가 함께 나오는데, 그라나다나 레온에서는 아직도 공짜로 주는 곳이 많아요. 점심때는 전채·메인·후식에 음료까지 포함된 menú del día를 10~15유로 정도에 먹을 수 있습니다. 팁은 의무가 아니라서 잔돈을 조금 남기는 정도면 충분하고, 남기지 않아도 전혀 실례가 아니에요.",
      "quiz": [
       {
        "type": "choice",
-       "q": "메뉴판을 달라고 할 때 하는 말은?",
+       "q": "식당에 앉아서 메뉴판을 달라고 할 때 하는 말은?",
        "choices": [
         "La cuenta, por favor.",
         "La carta, por favor.",
-        "Una caña, por favor.",
-        "El plato, por favor."
-       ],
-       "answer": 1,
-       "explain": "메뉴판은 la carta(라 까르따)예요. la cuenta는 계산서이니 헷갈리지 마세요."
-      },
-      {
-       "type": "choice",
-       "q": "'저는 빠에야로 할게요'를 바르게 말한 것은?",
-       "choices": [
         "Para mí, la paella.",
-        "Por favor paella yo.",
-        "Mí paella es.",
-        "Yo es la paella."
-       ],
-       "answer": 0,
-       "explain": "주문할 때는 Para mí(빠라 미) 뒤에 메뉴 이름만 붙이면 돼요."
-      },
-      {
-       "type": "choice",
-       "q": "음식이 맛있을 때 하는 감탄 표현은?",
-       "choices": [
-        "¡Hasta luego!",
-        "¡Lo siento!",
-        "¡Qué rico!",
-        "¡Buenos días!"
-       ],
-       "answer": 2,
-       "explain": "¡Qué rico!(께 리꼬)는 '정말 맛있다!'라는 감탄이에요. 나머지는 인사와 사과 표현이죠."
-      },
-      {
-       "type": "choice",
-       "q": "점원에게 추천 메뉴를 물어볼 때 하는 말은?",
-       "choices": [
-        "¿Cómo está usted?",
-        "¿Qué me recomienda?",
-        "¿Qué quieres beber?",
-        "¿Dónde está la carta?"
+        "¿Qué me recomienda?"
        ],
        "answer": 1,
-       "explain": "¿Qué me recomienda?(께 메 레꼬미엔다)는 '뭘 추천해 주시겠어요?'라는 뜻이에요."
+       "explain": "메뉴판은 la carta예요. la cuenta는 계산서라서 다 먹은 뒤에 씁니다."
       },
       {
-       "type": "listen",
-       "q": "들리는 문장의 뜻으로 알맞은 것은?",
-       "es": "La cuenta, por favor.",
+       "type": "choice",
+       "q": "'저는 빠에야로 할게요'라는 뜻의 주문 표현은?",
        "choices": [
-        "메뉴판 주세요.",
-        "물 주세요.",
-        "계산서 주세요.",
-        "생맥주 주세요."
+        "Para ti, la paella.",
+        "Quiero la cuenta.",
+        "Para mí, la paella.",
+        "La carta, por favor."
        ],
        "answer": 2,
-       "explain": "la cuenta(라 꾸엔따)는 계산서예요. 식사를 마치면 이 한마디로 계산을 부탁할 수 있어요."
+       "explain": "mí는 '나', ti는 '너'예요. 내 주문이니까 Para mí입니다."
       },
       {
-       "type": "listen",
-       "q": "들리는 문장의 뜻으로 알맞은 것은?",
-       "es": "Está muy bueno.",
+       "type": "choice",
+       "q": "식사를 마치고 계산할 때 하는 말은?",
        "choices": [
-        "아주 비싸요.",
-        "아주 나빠요.",
-        "아주 커요.",
-        "아주 맛있어요."
+        "Una caña, por favor.",
+        "La carta, por favor.",
+        "¿Qué me recomienda?",
+        "La cuenta, por favor."
        ],
        "answer": 3,
-       "explain": "estar + bueno는 '(먹어 보니) 맛있다'예요. muy가 붙어 '아주 맛있어요'가 됩니다."
+       "explain": "la cuenta가 계산서예요. la carta(메뉴판)와 철자가 비슷하니 조심하세요."
+      },
+      {
+       "type": "choice",
+       "q": "지금 먹고 있는 음식이 맛있다고 할 때 빈칸에 알맞은 것은? La paella ____ muy buena.",
+       "choices": [
+        "es",
+        "está",
+        "hay",
+        "tiene"
+       ],
+       "answer": 1,
+       "explain": "지금 이 음식의 맛(상태)을 말하므로 estar를 써서 está muy buena라고 해요."
+      },
+      {
+       "type": "listen",
+       "q": "들리는 문장의 뜻으로 알맞은 것은?",
+       "es": "¿Qué me recomienda?",
+       "choices": [
+        "뭘 추천해 주시겠어요?",
+        "계산서 주세요",
+        "메뉴판 주세요",
+        "정말 맛있어요"
+       ],
+       "answer": 0,
+       "explain": "recomendar는 '추천하다'예요. 식당에서 메뉴를 고르기 어려울 때 쓰는 표현입니다."
+      },
+      {
+       "type": "listen",
+       "q": "들리는 문장의 뜻으로 알맞은 것은?",
+       "es": "Una caña, por favor.",
+       "choices": [
+        "물 한 잔 주세요",
+        "와인 한 잔 주세요",
+        "생맥주 한 잔 주세요",
+        "커피 한 잔 주세요"
+       ],
+       "answer": 2,
+       "explain": "caña는 작은 잔에 담긴 생맥주예요. 스페인 바에서 가장 많이 주문하는 음료입니다."
+      },
+      {
+       "type": "listen",
+       "q": "들리는 문장의 뜻으로 알맞은 것은?",
+       "es": "¡Qué rico!",
+       "choices": [
+        "정말 비싸다!",
+        "정말 맛있다!",
+        "정말 잘됐다!",
+        "정말 멀다!"
+       ],
+       "answer": 1,
+       "explain": "rico는 '맛있는'이에요. ¡Qué rico!는 음식을 먹으며 하는 대표 감탄입니다."
       },
       {
        "type": "arrange",
-       "q": "'생맥주 한 잔 주세요'가 되도록 단어를 순서대로 배열하세요",
+       "q": "'계산서 주세요'가 되도록 단어를 순서대로 배열하세요",
        "tokens": [
-        "Una",
-        "caña,",
+        "La",
+        "cuenta,",
         "por",
         "favor"
        ],
-       "koPron": "우나 까냐 뽀르 파보르",
-       "explain": "원하는 것 + por favor 패턴이에요. caña는 여성명사라 una를 써요."
+       "koPron": "라 꾸엔따 뽀르 파보르",
+       "explain": "원하는 것(La cuenta) 뒤에 por favor를 붙이면 공손한 요청이 돼요."
       },
       {
        "type": "arrange",
-       "q": "'저는 또르띠야로 할게요'가 되도록 단어를 순서대로 배열하세요",
+       "q": "'저는 빠에야로 할게요'가 되도록 단어를 순서대로 배열하세요",
        "tokens": [
         "Para",
         "mí,",
         "la",
-        "tortilla"
+        "paella"
        ],
-       "koPron": "빠라 미 라 또르띠야",
-       "explain": "Para mí 뒤에 관사와 함께 메뉴 이름을 붙이면 완벽한 주문 문장이 돼요."
+       "koPron": "빠라 미 라 빠에야",
+       "explain": "Para mí(저는) + 음식 이름 순서예요. 동사를 몰라도 주문할 수 있는 마법의 표현입니다."
       }
      ]
     },
     {
      "id": "u4l3",
      "title": "취미 말하기",
-     "goal": "gustar 동사로 좋아하는 것과 싫어하는 것을 말할 수 있어요.",
+     "goal": "gustar를 써서 좋아하는 것과 싫어하는 취미를 말하고 상대의 취미를 물어볼 수 있어요.",
      "words": [
+      {
+       "es": "gustar",
+       "ko": "마음에 들다, 좋아하다",
+       "koPron": "구스따르"
+      },
       {
        "es": "hacer",
        "ko": "하다",
@@ -6986,24 +7099,9 @@ window.ES_DATA = {
        "koPron": "베르"
       },
       {
-       "es": "la película",
-       "ko": "영화",
-       "koPron": "라 뻴리꿀라"
-      },
-      {
        "es": "escuchar",
        "ko": "듣다",
        "koPron": "에스꾸차르"
-      },
-      {
-       "es": "la música",
-       "ko": "음악",
-       "koPron": "라 무시까"
-      },
-      {
-       "es": "jugar al fútbol",
-       "ko": "축구를 하다",
-       "koPron": "후가르 알 풋볼"
       },
       {
        "es": "leer",
@@ -7021,16 +7119,37 @@ window.ES_DATA = {
        "koPron": "꼬씨나르"
       },
       {
-       "es": "bailar",
-       "ko": "춤추다",
-       "koPron": "바일라르"
+       "es": "jugar",
+       "ko": "(운동·게임을) 하다, 놀다",
+       "koPron": "후가르"
+      },
+      {
+       "es": "la película",
+       "ko": "영화",
+       "koPron": "라 뻴리꿀라"
+      },
+      {
+       "es": "la música",
+       "ko": "음악",
+       "koPron": "라 무시까"
+      },
+      {
+       "es": "el fútbol",
+       "ko": "축구",
+       "koPron": "엘 푸뜨볼"
+      },
+      {
+       "es": "el tiempo libre",
+       "ko": "여가 시간",
+       "koPron": "엘 띠엠뽀 리브레"
       }
      ],
      "keySentences": [
       {
        "es": "¿Qué te gusta hacer?",
        "ko": "뭐 하는 걸 좋아해요?",
-       "koPron": "께 떼 구스따 아쎄르"
+       "koPron": "께 떼 구스따 아쎄르",
+       "note": "취미를 묻는 가장 기본 질문이에요."
       },
       {
        "es": "Me gusta ver películas.",
@@ -7043,89 +7162,114 @@ window.ES_DATA = {
        "koPron": "메 구스따 에스꾸차르 무시까"
       },
       {
-       "es": "No me gusta cocinar.",
-       "ko": "저는 요리하는 걸 안 좋아해요.",
-       "koPron": "노 메 구스따 꼬씨나르",
-       "note": "me gusta 앞에 No만 붙이면 부정이 돼요."
+       "es": "Me gusta jugar al fútbol.",
+       "ko": "저는 축구하는 걸 좋아해요.",
+       "koPron": "메 구스따 후가르 알 푸뜨볼"
       },
       {
-       "es": "Me encanta viajar.",
-       "ko": "저는 여행을 정말 좋아해요.",
+       "es": "No me gusta cocinar.",
+       "ko": "저는 요리하는 걸 안 좋아해요.",
+       "koPron": "노 메 구스따 꼬씨나르"
+      },
+      {
+       "es": "¡Me encanta viajar!",
+       "ko": "저는 여행하는 걸 정말 좋아해요!",
        "koPron": "메 엔깐따 비아하르",
-       "note": "gustar보다 훨씬 강한 '정말 좋아해요!'예요."
+       "note": "encantar는 gustar보다 더 강한 '완전 좋아!'예요."
       }
      ],
      "dialogue": {
-      "title": "취미 이야기",
-      "situation": "수진과 카를로스가 서로 좋아하는 것을 묻고 답해요.",
+      "title": "우리 취미가 뭐야?",
+      "situation": "수진과 루시아가 여가 시간에 무엇을 하며 지내는지 이야기해요.",
       "turns": [
        {
-        "speaker": "A",
-        "name": "수진",
-        "es": "Carlos, ¿qué te gusta hacer?",
-        "ko": "카를로스, 뭐 하는 걸 좋아해?",
-        "koPron": "까를로스 께 떼 구스따 아쎄르"
-       },
-       {
         "speaker": "B",
-        "name": "카를로스",
-        "es": "Me gusta jugar al fútbol. ¿Y a ti?",
-        "ko": "나는 축구 하는 걸 좋아해. 너는?",
-        "koPron": "메 구스따 후가르 알 풋볼 이 아 띠"
+        "name": "루시아",
+        "es": "Sujin, ¿qué te gusta hacer en tu tiempo libre?",
+        "ko": "수진, 여가 시간에 뭐 하는 거 좋아해?",
+        "koPron": "수진 께 떼 구스따 아쎄르 엔 뚜 띠엠뽀 리브레"
        },
        {
         "speaker": "A",
         "name": "수진",
-        "es": "Me gusta ver películas. Y me encanta viajar.",
-        "ko": "나는 영화 보는 걸 좋아해. 그리고 여행을 정말 좋아해.",
-        "koPron": "메 구스따 베르 뻴리꿀라스 이 메 엔깐따 비아하르"
+        "es": "Me gusta ver películas y escuchar música. ¿Y a ti?",
+        "ko": "나는 영화 보고 음악 듣는 걸 좋아해. 너는?",
+        "koPron": "메 구스따 베르 뻴리꿀라스 이 에스꾸차르 무시까 이 아 띠"
        },
        {
         "speaker": "B",
-        "name": "카를로스",
-        "es": "¡Qué bien! ¿Te gusta cocinar?",
-        "ko": "멋지다! 요리하는 건 좋아해?",
-        "koPron": "께 비엔 떼 구스따 꼬씨나르"
+        "name": "루시아",
+        "es": "A mí me gusta leer y jugar al fútbol.",
+        "ko": "나는 책 읽는 거랑 축구하는 걸 좋아해.",
+        "koPron": "아 미 메 구스따 레에르 이 후가르 알 푸뜨볼"
        },
        {
         "speaker": "A",
         "name": "수진",
-        "es": "No, no me gusta cocinar. Me gusta comer.",
-        "ko": "아니, 요리하는 건 안 좋아해. 먹는 걸 좋아하지.",
-        "koPron": "노 노 메 구스따 꼬씨나르 메 구스따 꼬메르"
+        "es": "¿Te gusta cocinar?",
+        "ko": "요리하는 것도 좋아해?",
+        "koPron": "떼 구스따 꼬씨나르"
        },
        {
         "speaker": "B",
-        "name": "카를로스",
-        "es": "¡Ja, ja! A mí también.",
-        "ko": "하하! 나도 그래.",
-        "koPron": "하 하 아 미 땀비엔"
+        "name": "루시아",
+        "es": "No, no me gusta cocinar. ¡Pero me encanta comer!",
+        "ko": "아니, 요리는 안 좋아해. 그런데 먹는 건 정말 좋아해!",
+        "koPron": "노 노 메 구스따 꼬씨나르 뻬로 메 엔깐따 꼬메르"
        },
        {
         "speaker": "A",
         "name": "수진",
-        "es": "¿Te gusta escuchar música?",
-        "ko": "음악 듣는 건 좋아해?",
-        "koPron": "떼 구스따 에스꾸차르 무시까"
+        "es": "¡A mí también! Y me encanta viajar.",
+        "ko": "나도! 그리고 나는 여행하는 걸 정말 좋아해.",
+        "koPron": "아 미 땀비엔 이 메 엔깐따 비아하르"
        },
        {
         "speaker": "B",
-        "name": "카를로스",
-        "es": "Sí, me encanta la música española.",
-        "ko": "응, 스페인 음악을 정말 좋아해.",
-        "koPron": "씨 메 엔깐따 라 무시까 에스빠뇰라"
+        "name": "루시아",
+        "es": "¿Te gustan las películas españolas?",
+        "ko": "스페인 영화 좋아해?",
+        "koPron": "떼 구스딴 라스 뻴리꿀라스 에스빠뇰라스"
+       },
+       {
+        "speaker": "A",
+        "name": "수진",
+        "es": "Sí, me gustan mucho.",
+        "ko": "응, 정말 좋아해.",
+        "koPron": "씨 메 구스딴 무초"
        }
       ]
      },
      "grammar": [
       {
-       "title": "gustar 구조: '~가 좋다'",
-       "explain": "Me gusta는 직역하면 '~가 나에게 즐거움을 준다'인데, 한국어의 '~가 좋다'와 구조가 똑같아요! '나는 음악이 좋아요'처럼 좋아하는 대상이 문장의 주인공이 돼요. 그래서 대상이 단수이거나 동사원형이면 Me gusta, 복수 명사면 Me gustan(메 구스딴)으로 바뀌어요.",
+       "title": "gustar는 '나는 ~를 좋아한다'가 아니라 '나에게 ~가 좋다'",
+       "explain": "Me gusta el café는 직역하면 '나에게 커피가 좋다'예요. 즉 좋아하는 대상이 주어랍니다. 한국어에도 '나는 커피가 좋아'라는 말이 있죠? 구조가 똑같아서 오히려 우리에게는 익숙한 문형이에요.",
        "examples": [
+        {
+         "es": "Me gusta el café.",
+         "ko": "저는 커피가 좋아요.",
+         "koPron": "메 구스따 엘 까페"
+        },
         {
          "es": "Me gusta la música.",
          "ko": "저는 음악이 좋아요.",
          "koPron": "메 구스따 라 무시까"
+        },
+        {
+         "es": "¿Te gusta el fútbol?",
+         "ko": "축구 좋아해요?",
+         "koPron": "떼 구스따 엘 푸뜨볼"
+        }
+       ]
+      },
+      {
+       "title": "gusta와 gustan 골라 쓰기",
+       "explain": "좋아하는 대상이 하나(단수 명사)이거나 동사원형이면 gusta, 여러 개(복수 명사)이면 gustan을 써요. 동사원형은 아무리 여러 개를 나열해도 gusta 그대로예요.",
+       "examples": [
+        {
+         "es": "Me gusta la paella.",
+         "ko": "저는 빠에야가 좋아요.",
+         "koPron": "메 구스따 라 빠에야"
         },
         {
          "es": "Me gusta viajar.",
@@ -7134,160 +7278,160 @@ window.ES_DATA = {
         },
         {
          "es": "Me gustan las películas.",
-         "ko": "저는 영화들이 좋아요.",
+         "ko": "저는 영화가 좋아요.",
          "koPron": "메 구스딴 라스 뻴리꿀라스"
         }
        ]
       },
       {
-       "title": "me / te / le: 누가 좋아하는지 표시",
-       "explain": "좋아하는 사람은 gusta 앞의 작은 단어로 표시해요. me(나에게), te(너에게), le(그/그녀/당신에게). '너는?'이라고 되물을 때는 ¿Y a ti?(이 아 띠)라고 해요.",
+       "title": "me / te / le — 누구에게 좋은지 정하기",
+       "explain": "gusta 앞의 작은 단어가 '누구에게'를 알려줘요. me는 나에게, te는 너에게, le는 그·그녀·당신에게예요. 강조하고 싶으면 앞에 a mí, a ti, a Carlos를 덧붙입니다.",
        "examples": [
+        {
+         "es": "Me gusta cocinar.",
+         "ko": "저는 요리하는 게 좋아요.",
+         "koPron": "메 구스따 꼬씨나르"
+        },
         {
          "es": "¿Te gusta leer?",
          "ko": "책 읽는 거 좋아해요?",
          "koPron": "떼 구스따 레에르"
         },
         {
-         "es": "Le gusta bailar.",
-         "ko": "그(그녀)는 춤추는 걸 좋아해요.",
-         "koPron": "레 구스따 바일라르"
-        },
-        {
-         "es": "¿Y a ti?",
-         "ko": "너는? (너는 어때?)",
-         "koPron": "이 아 띠"
-        }
-       ]
-      },
-      {
-       "title": "No me gusta / Me encanta: 싫어요와 완전 좋아요",
-       "explain": "부정은 앞에 No만 붙이면 끝! No me gusta(안 좋아해요). 반대로 '정말 정말 좋아해요'는 gustar 대신 encantar를 써서 Me encanta라고 해요. encanta에는 이미 '정말'이 들어 있어서 muy를 붙이지 않아요.",
-       "examples": [
-        {
-         "es": "No me gusta cocinar.",
-         "ko": "요리하는 걸 안 좋아해요.",
-         "koPron": "노 메 구스따 꼬씨나르"
-        },
-        {
-         "es": "Me encanta el fútbol.",
-         "ko": "저는 축구를 정말 좋아해요.",
-         "koPron": "메 엔깐따 엘 풋볼"
+         "es": "A Carlos le gusta el fútbol.",
+         "ko": "카를로스는 축구를 좋아해요.",
+         "koPron": "아 까를로스 레 구스따 엘 푸뜨볼"
         }
        ]
       }
      ],
      "tips": [
-      "'나는 좋아한다'라고 해서 Yo gusto라고 하면 안 돼요! 좋아하는 대상이 주어이므로 항상 Me gusta로 시작하세요.",
-      "취미를 물어볼 때는 ¿Qué te gusta hacer? 한 문장이면 충분해요. 대답은 Me gusta + 동사원형 패턴으로!",
-      "jugar 뒤에 스포츠가 오면 al을 붙여요. jugar al fútbol(축구하다), jugar al tenis(테니스 치다)."
+      "gustar 문장은 '나에게 ~가 좋다'로 바꿔 생각하면 절대 헷갈리지 않아요. 그래서 상대의 Me gusta…에 맞장구칠 때는 Yo también이 아니라 A mí también(아 미 땀비엔)이라고 합니다.",
+      "운동 이름 앞에는 jugar a + 정관사를 써요. a + el이 합쳐져 jugar al fútbol이 됩니다.",
+      "película는 '리'에 강세가 있어요(뻴리꿀라). í 위의 악센트 부호를 빠뜨리지 마세요.",
+      "Me encanta는 Me gusta mucho보다 강한 '완전 좋아!'예요. 반대로 No me encanta는 거의 쓰지 않고, 싫을 때는 No me gusta라고 합니다."
      ],
-     "culture": "스페인에서 축구는 거의 종교에 가까운 국민 스포츠예요. 레알 마드리드와 FC 바르셀로나의 맞대결은 '엘 끌라시꼬(El Clásico)'라고 부르는데, 경기 날이면 온 나라가 들썩여요. 처음 만난 스페인 사람과도 좋아하는 팀 이야기를 꺼내면 금방 친해질 수 있답니다.",
+     "culture": "스페인에서 취미를 물으면 열에 아홉은 축구 이야기가 나와요. 레알 마드리드와 FC 바르셀로나의 경기는 엘 끌라시꼬(El Clásico)라고 부르는데, 그날 저녁이면 동네 바가 사람들로 가득 찹니다. 주말에는 친구들과 바에서 축구를 보며 caña 한 잔 하는 것이 국민 여가예요. 중남미에서도 축구 사랑은 뜨겁지만, 도미니카공화국이나 베네수엘라처럼 야구(el béisbol)를 더 좋아하는 나라도 있어요.",
      "quiz": [
       {
        "type": "choice",
-       "q": "'저는 영화 보는 걸 좋아해요'를 바르게 말한 것은?",
+       "q": "'저는 영화 보는 걸 좋아해요'를 바르게 쓴 것은?",
        "choices": [
-        "Me gusta ver películas.",
-        "Yo gusto ver películas.",
         "Me gustan ver películas.",
-        "Me gusta veo películas."
-       ],
-       "answer": 0,
-       "explain": "gusta 뒤에 동사원형 ver를 붙여요. 동사원형이 오면 항상 단수형 gusta를 씁니다."
-      },
-      {
-       "type": "choice",
-       "q": "빈칸에 알맞은 것은? Me ___ las películas españolas.",
-       "choices": [
-        "gusta",
-        "gusto",
-        "gustan",
-        "gustas"
-       ],
-       "answer": 2,
-       "explain": "las películas는 복수 명사이므로 gustan을 써요. 좋아하는 대상이 복수면 동사도 복수형!"
-      },
-      {
-       "type": "choice",
-       "q": "'그는 축구 하는 걸 좋아해요'를 바르게 말한 것은?",
-       "choices": [
-        "Me gusta jugar al fútbol.",
-        "Te gusta jugar al fútbol.",
-        "Se gusta jugar al fútbol.",
-        "Le gusta jugar al fútbol."
-       ],
-       "answer": 3,
-       "explain": "'그'가 좋아하는 것이므로 le를 써요. me는 나, te는 너입니다."
-      },
-      {
-       "type": "choice",
-       "q": "'Me encanta viajar.'의 뜻은?",
-       "choices": [
-        "여행을 안 좋아해요.",
-        "여행을 정말 좋아해요.",
-        "여행하고 싶어요.",
-        "여행 중이에요."
+        "Me gusta ver películas.",
+        "Te gusta ver películas.",
+        "Yo gusto ver películas."
        ],
        "answer": 1,
-       "explain": "encantar는 gustar보다 강한 표현으로 '정말 좋아하다'라는 뜻이에요."
+       "explain": "동사원형(ver)이 오면 언제나 gusta예요. Te gusta는 '너는'이라는 뜻이라 답이 아닙니다."
+      },
+      {
+       "type": "choice",
+       "q": "빈칸에 알맞은 것은? Me ____ las películas españolas. (저는 스페인 영화를 좋아해요)",
+       "choices": [
+        "gusta",
+        "gustan",
+        "gusto",
+        "gustas"
+       ],
+       "answer": 1,
+       "explain": "las películas는 복수 명사라서 gustan을 써요."
+      },
+      {
+       "type": "choice",
+       "q": "'저는 요리하는 걸 안 좋아해요'를 바르게 쓴 것은?",
+       "choices": [
+        "No me gusta cocinar.",
+        "Me gusta cocinar.",
+        "No me gustan cocinar.",
+        "No te gusta cocinar."
+       ],
+       "answer": 0,
+       "explain": "부정은 me 앞에 no를 붙여요. 동사원형이므로 gusta가 맞습니다."
+      },
+      {
+       "type": "choice",
+       "q": "'축구를 하다'에 해당하는 표현은?",
+       "choices": [
+        "ver películas",
+        "escuchar música",
+        "leer",
+        "jugar al fútbol"
+       ],
+       "answer": 3,
+       "explain": "운동은 jugar a + 정관사예요. a + el이 줄어 jugar al fútbol이 됩니다."
       },
       {
        "type": "listen",
        "q": "들리는 문장의 뜻으로 알맞은 것은?",
        "es": "¿Qué te gusta hacer?",
        "choices": [
-        "뭐 먹고 싶어요?",
-        "지금 뭐 해요?",
         "뭐 하는 걸 좋아해요?",
-        "어디 가는 걸 좋아해요?"
+        "뭐 먹고 싶어요?",
+        "무슨 일 하세요?",
+        "이름이 뭐예요?"
        ],
-       "answer": 2,
-       "explain": "te gusta(네가 좋아하는) + hacer(하다), 즉 '뭐 하는 걸 좋아해요?'라고 취미를 묻는 질문이에요."
+       "answer": 0,
+       "explain": "hacer는 '하다'예요. 취미를 묻는 대표 질문입니다."
       },
       {
        "type": "listen",
        "q": "들리는 문장의 뜻으로 알맞은 것은?",
-       "es": "No me gusta cocinar.",
+       "es": "Me encanta viajar.",
        "choices": [
-        "요리하는 걸 좋아해요.",
-        "요리하는 걸 안 좋아해요.",
-        "요리를 정말 좋아해요.",
-        "요리를 하고 있어요."
+        "여행을 안 좋아해요",
+        "요리하는 걸 정말 좋아해요",
+        "여행하는 걸 정말 좋아해요",
+        "여행을 가고 싶어요"
+       ],
+       "answer": 2,
+       "explain": "encantar는 gustar보다 강한 표현이에요. '여행하는 걸 정말 좋아해요'입니다."
+      },
+      {
+       "type": "listen",
+       "q": "들리는 문장의 뜻으로 알맞은 것은?",
+       "es": "Me gusta escuchar música.",
+       "choices": [
+        "영화 보는 걸 좋아해요",
+        "음악 듣는 걸 좋아해요",
+        "책 읽는 걸 좋아해요",
+        "요리하는 걸 좋아해요"
        ],
        "answer": 1,
-       "explain": "문장 맨 앞의 No가 들렸다면 부정문! '요리하는 걸 안 좋아해요'라는 뜻이에요."
+       "explain": "escuchar는 듣다, música는 음악이에요."
       },
       {
        "type": "arrange",
-       "q": "'저는 음악 듣는 걸 좋아해요'가 되도록 단어를 순서대로 배열하세요",
+       "q": "'저는 축구하는 걸 좋아해요'가 되도록 단어를 순서대로 배열하세요",
        "tokens": [
         "Me",
         "gusta",
-        "escuchar",
-        "música"
+        "jugar",
+        "al",
+        "fútbol"
        ],
-       "koPron": "메 구스따 에스꾸차르 무시까",
-       "explain": "Me gusta + 동사원형(escuchar) + 대상(música) 순서예요."
+       "koPron": "메 구스따 후가르 알 푸뜨볼",
+       "explain": "Me gusta + 동사원형(jugar) + al fútbol 순서예요."
       },
       {
        "type": "arrange",
-       "q": "'뭐 하는 걸 좋아해요?'가 되도록 단어를 순서대로 배열하세요",
+       "q": "'저는 스페인 영화를 좋아해요'가 되도록 단어를 순서대로 배열하세요",
        "tokens": [
-        "¿Qué",
-        "te",
-        "gusta",
-        "hacer?"
+        "Me",
+        "gustan",
+        "las",
+        "películas",
+        "españolas"
        ],
-       "koPron": "께 떼 구스따 아쎄르",
-       "explain": "의문사 ¿Qué 뒤에 te gusta, 마지막에 동사원형 hacer가 와요."
+       "koPron": "메 구스딴 라스 뻴리꿀라스 에스빠뇰라스",
+       "explain": "좋아하는 대상이 복수(las películas)라서 gustan을 써요. 형용사 españolas도 복수로 맞춰 줍니다."
       }
      ]
     },
     {
      "id": "u4l4",
      "title": "여기가 어디예요?",
-     "goal": "장소의 위치를 묻고, 방향 표현을 듣고 이해할 수 있어요.",
+     "goal": "화장실이나 지하철역이 어디인지 묻고, 오른쪽·왼쪽·직진 같은 길 안내를 알아들을 수 있어요.",
      "words": [
       {
        "es": "el baño",
@@ -7305,9 +7449,14 @@ window.ES_DATA = {
        "koPron": "라 파르마씨아"
       },
       {
-       "es": "el supermercado",
-       "ko": "슈퍼마켓",
-       "koPron": "엘 수뻬르메르까도"
+       "es": "el banco",
+       "ko": "은행",
+       "koPron": "엘 반꼬"
+      },
+      {
+       "es": "la calle",
+       "ko": "길, 거리",
+       "koPron": "라 까예"
       },
       {
        "es": "la derecha",
@@ -7317,7 +7466,7 @@ window.ES_DATA = {
       {
        "es": "la izquierda",
        "ko": "왼쪽",
-       "koPron": "라 이스끼에르다"
+       "koPron": "라 이쓰끼에르다"
       },
       {
        "es": "todo recto",
@@ -7340,16 +7489,17 @@ window.ES_DATA = {
        "koPron": "알 라도 데"
       },
       {
-       "es": "hay",
-       "ko": "~이 있다",
-       "koPron": "아이"
+       "es": "aquí",
+       "ko": "여기",
+       "koPron": "아끼"
       }
      ],
      "keySentences": [
       {
        "es": "¿Dónde está el baño?",
-       "ko": "화장실이 어디에 있어요?",
-       "koPron": "돈데 에스따 엘 바뇨"
+       "ko": "화장실이 어디예요?",
+       "koPron": "돈데 에스따 엘 바뇨",
+       "note": "식당·카페에서 가장 많이 쓰는 질문이에요."
       },
       {
        "es": "¿Dónde está la estación de metro?",
@@ -7362,9 +7512,9 @@ window.ES_DATA = {
        "koPron": "에스따 아 라 데레차"
       },
       {
-       "es": "Todo recto.",
-       "ko": "쭉 직진하세요.",
-       "koPron": "또도 렉또"
+       "es": "Todo recto y a la izquierda.",
+       "ko": "쭉 직진하다가 왼쪽이에요.",
+       "koPron": "또도 렉또 이 아 라 이쓰끼에르다"
       },
       {
        "es": "¿Hay una farmacia por aquí?",
@@ -7372,93 +7522,105 @@ window.ES_DATA = {
        "koPron": "아이 우나 파르마씨아 뽀르 아끼"
       },
       {
-       "es": "Está cerca de aquí.",
-       "ko": "여기서 가까워요.",
-       "koPron": "에스따 쎄르까 데 아끼"
+       "es": "Está muy cerca, al lado del banco.",
+       "ko": "아주 가까워요, 은행 바로 옆이에요.",
+       "koPron": "에스따 무이 쎄르까 알 라도 델 반꼬"
       }
      ],
      "dialogue": {
-      "title": "길 묻기",
-      "situation": "수진이 길에서 행인에게 지하철역 가는 길을 물어봐요.",
+      "title": "길에서 약국 찾기",
+      "situation": "수진이 길에서 지나가는 사람에게 약국과 지하철역 위치를 물어봐요.",
       "turns": [
        {
         "speaker": "A",
         "name": "수진",
-        "es": "Perdón, ¿dónde está la estación de metro?",
-        "ko": "실례합니다, 지하철역이 어디에 있어요?",
-        "koPron": "뻬르돈 돈데 에스따 라 에스따씨온 데 메뜨로"
+        "es": "¡Perdón! ¿Hay una farmacia por aquí?",
+        "ko": "실례합니다! 이 근처에 약국이 있나요?",
+        "koPron": "뻬르돈 아이 우나 파르마씨아 뽀르 아끼"
        },
        {
         "speaker": "B",
         "name": "행인",
-        "es": "Todo recto y a la derecha.",
-        "ko": "쭉 직진하다가 오른쪽이에요.",
-        "koPron": "또도 렉또 이 아 라 데레차"
+        "es": "Sí, hay una farmacia en esta calle.",
+        "ko": "네, 이 길에 약국이 하나 있어요.",
+        "koPron": "씨 아이 우나 파르마씨아 엔 에스따 까예"
        },
        {
         "speaker": "A",
         "name": "수진",
         "es": "¿Está cerca?",
-        "ko": "가까워요?",
+        "ko": "가까운가요?",
         "koPron": "에스따 쎄르까"
        },
        {
         "speaker": "B",
         "name": "행인",
-        "es": "Sí, está muy cerca. Está al lado de la farmacia.",
-        "ko": "네, 아주 가까워요. 약국 옆에 있어요.",
-        "koPron": "씨 에스따 무이 쎄르까 에스따 알 라도 데 라 파르마씨아"
+        "es": "Sí, está muy cerca. Todo recto y a la derecha.",
+        "ko": "네, 아주 가까워요. 쭉 직진하다가 오른쪽이에요.",
+        "koPron": "씨 에스따 무이 쎄르까 또도 렉또 이 아 라 데레차"
        },
        {
         "speaker": "A",
         "name": "수진",
-        "es": "¿Hay un supermercado por aquí?",
-        "ko": "이 근처에 슈퍼마켓도 있나요?",
-        "koPron": "아이 운 수뻬르메르까도 뽀르 아끼"
+        "es": "Muchas gracias. ¿Y dónde está la estación de metro?",
+        "ko": "정말 감사합니다. 그런데 지하철역은 어디예요?",
+        "koPron": "무차스 그라씨아스 이 돈데 에스따 라 에스따씨온 데 메뜨로"
        },
        {
         "speaker": "B",
         "name": "행인",
-        "es": "Sí, hay uno a la izquierda.",
-        "ko": "네, 왼쪽에 하나 있어요.",
-        "koPron": "씨 아이 우노 아 라 이스끼에르다"
+        "es": "Está al lado del banco, a la izquierda.",
+        "ko": "은행 옆에, 왼쪽에 있어요.",
+        "koPron": "에스따 알 라도 델 반꼬 아 라 이쓰끼에르다"
        },
        {
         "speaker": "A",
         "name": "수진",
-        "es": "¡Muchas gracias!",
-        "ko": "정말 감사합니다!",
-        "koPron": "무차스 그라씨아스"
+        "es": "¿Está lejos?",
+        "ko": "먼가요?",
+        "koPron": "에스따 레호스"
        },
        {
         "speaker": "B",
         "name": "행인",
-        "es": "¡De nada! ¡Adiós!",
-        "ko": "천만에요! 안녕히 가세요!",
-        "koPron": "데 나다 아디오스"
+        "es": "No, no está lejos. Está muy cerca de aquí.",
+        "ko": "아니요, 멀지 않아요. 여기서 아주 가까워요.",
+        "koPron": "노 노 에스따 레호스 에스따 무이 쎄르까 데 아끼"
+       },
+       {
+        "speaker": "A",
+        "name": "수진",
+        "es": "¡Muchas gracias! ¡Hasta luego!",
+        "ko": "정말 감사합니다! 안녕히 계세요!",
+        "koPron": "무차스 그라씨아스 아스따 루에고"
        }
       ]
      },
      "grammar": [
       {
-       "title": "estar로 위치 말하기: ¿Dónde está...?",
-       "explain": "특정한 장소가 '어디에 있는지' 물을 때는 estar 동사를 써요. ¿Dónde está + 장소? 하고 물으면, 대답은 Está + 위치로 해요. 한국어의 '~은 ~에 있어요'와 같은 구조예요.",
+       "title": "¿Dónde está…? — 그 장소가 어디에 있나요?",
+       "explain": "이미 있다는 걸 아는 특정한 장소나 사람의 위치를 물을 때는 estar를 써요. 앞에는 el, la 같은 정관사가 옵니다. 대답도 Está…로 하면 돼요.",
        "examples": [
         {
          "es": "¿Dónde está el baño?",
-         "ko": "화장실이 어디에 있어요?",
+         "ko": "화장실이 어디예요?",
          "koPron": "돈데 에스따 엘 바뇨"
         },
         {
          "es": "El baño está a la derecha.",
          "ko": "화장실은 오른쪽에 있어요.",
          "koPron": "엘 바뇨 에스따 아 라 데레차"
+        },
+        {
+         "es": "¿Dónde está Carlos?",
+         "ko": "카를로스는 어디 있어요?",
+         "koPron": "돈데 에스따 까를로스"
         }
        ]
       },
       {
-       "title": "hay로 존재 말하기: ¿Hay...?",
-       "explain": "'~이 있나요?' 하고 있는지 없는지 물을 때는 hay를 써요. 특정한 그 장소를 찾을 땐 ¿Dónde está el baño?(그 화장실 어디예요?), 있는지부터 궁금할 땐 ¿Hay un baño?(화장실이 있나요?)로 구분해요. hay 뒤에는 un/una를 쓰고, está 앞에는 el/la를 쓰는 것도 포인트!",
+       "title": "Hay — ~이 (하나) 있다",
+       "explain": "있는지 없는지 모르는 것의 존재를 물을 때는 hay를 써요. 뒤에는 un, una 같은 부정관사가 옵니다. hay는 모양이 하나뿐이라 단수든 복수든 그대로 쓸 수 있어 아주 편해요. 한국어로 '화장실 어디예요?'(정해진 것)와 '근처에 약국 있어요?'(존재 여부)의 차이라고 생각하면 쉽습니다.",
        "examples": [
         {
          "es": "¿Hay una farmacia por aquí?",
@@ -7466,20 +7628,25 @@ window.ES_DATA = {
          "koPron": "아이 우나 파르마씨아 뽀르 아끼"
         },
         {
-         "es": "Sí, hay un supermercado cerca.",
-         "ko": "네, 근처에 슈퍼마켓이 하나 있어요.",
-         "koPron": "씨 아이 운 수뻬르메르까도 쎄르까"
+         "es": "Sí, hay un banco en esta calle.",
+         "ko": "네, 이 길에 은행이 하나 있어요.",
+         "koPron": "씨 아이 운 반꼬 엔 에스따 까예"
+        },
+        {
+         "es": "No hay metro aquí.",
+         "ko": "여기에는 지하철이 없어요.",
+         "koPron": "노 아이 메뜨로 아끼"
         }
        ]
       },
       {
-       "title": "방향 표현 세트로 외우기",
-       "explain": "길 안내에 꼭 나오는 표현이에요. a la derecha(오른쪽으로), a la izquierda(왼쪽으로), todo recto(쭉 직진), al lado de(~옆에), cerca(가까이), lejos(멀리). 이 여섯 개만 알아들으면 길 안내가 들려요!",
+       "title": "방향 표현과 줄임말 al / del",
+       "explain": "오른쪽은 a la derecha, 왼쪽은 a la izquierda, 직진은 todo recto예요. 그리고 a + el은 al로, de + el은 del로 반드시 줄여 씁니다. 그래서 al lado de + el banco는 al lado del banco가 돼요.",
        "examples": [
         {
-         "es": "Está al lado de la estación.",
-         "ko": "역 옆에 있어요.",
-         "koPron": "에스따 알 라도 데 라 에스따씨온"
+         "es": "Está a la izquierda.",
+         "ko": "왼쪽에 있어요.",
+         "koPron": "에스따 아 라 이쓰끼에르다"
         },
         {
          "es": "Todo recto, por favor.",
@@ -7487,93 +7654,68 @@ window.ES_DATA = {
          "koPron": "또도 렉또 뽀르 파보르"
         },
         {
-         "es": "Está lejos de aquí.",
-         "ko": "여기서 멀어요.",
-         "koPron": "에스따 레호스 데 아끼"
+         "es": "Está al lado del hotel.",
+         "ko": "호텔 옆에 있어요.",
+         "koPron": "에스따 알 라도 델 오뗄"
         }
        ]
       }
      ],
      "tips": [
-      "dónde처럼 의문사에는 항상 악센트 부호가 붙어요. ¿Dónde?(어디), ¿Qué?(무엇)처럼요.",
-      "설명이 너무 빠르게 들리면 당황하지 말고 ¿Está cerca?(가까워요?)라고 짧게 다시 물어보세요. Sí/No만 들어도 큰 도움이 돼요.",
-      "izquierda(이스끼에르다)는 발음이 어렵지만 여행에서 정말 자주 들려요. '이스-끼에르-다' 세 덩어리로 끊어 연습해 보세요."
+      "izquierda는 스페인어에서 가장 발음하기 어려운 단어로 꼽혀요. 이-쓰-끼에르-다처럼 끊어서 천천히 연습해 보세요.",
+      "길을 물을 때는 먼저 Perdón(뻬르돈)이나 Perdona로 말을 걸면 훨씬 자연스러워요.",
+      "estar는 위치, hay는 존재! ¿Dónde está…?에는 el/la, ¿Hay…?에는 un/una가 온다고 짝지어 외우세요.",
+      "화장실은 el baño 외에 los servicios(로스 세르비씨오스)라고도 해요. 문에는 보통 Caballeros(남), Señoras(여)라고 적혀 있습니다."
      ],
-     "culture": "스페인의 도시는 광장(plaza)을 중심으로 골목이 뻗어 나가는 구조라서, 길을 잃으면 '광장이 어디예요?'라고 묻는 게 요령이에요. 스페인 사람들은 길을 물으면 몸짓까지 섞어 가며 아주 열심히 알려 주는 편이랍니다. 마드리드의 지하철(metro)은 유럽에서 손꼽히게 노선이 많아 여행할 때 정말 편리해요.",
+     "culture": "스페인 도시의 중심에는 거의 언제나 광장(la plaza)이 있어서, 길을 물으면 광장을 기준으로 알려주는 경우가 많아요. 카페나 식당의 화장실은 손님용이라 음료 하나쯤 시키고 쓰는 것이 예의입니다. 중남미에서는 화장실을 el baño 외에 el sanitario나 el tocador라고도 불러요. 마드리드와 바르셀로나의 지하철(Metro)은 표지판이 잘 되어 있어 초보 여행자도 어렵지 않게 탈 수 있습니다.",
      "quiz": [
       {
        "type": "choice",
-       "q": "'오른쪽에 있어요'를 바르게 말한 것은?",
+       "q": "'화장실이 어디예요?'를 바르게 쓴 것은?",
+       "choices": [
+        "¿Hay un baño aquí?",
+        "¿Dónde está el baño?",
+        "¿Qué es el baño?",
+        "El baño está aquí."
+       ],
+       "answer": 1,
+       "explain": "위치를 물을 때는 ¿Dónde está + 정관사 + 장소?를 써요."
+      },
+      {
+       "type": "choice",
+       "q": "'오른쪽에 있어요'는 무엇일까요?",
        "choices": [
         "Está a la izquierda.",
-        "Está a la derecha.",
         "Está todo recto.",
+        "Está a la derecha.",
         "Está lejos."
        ],
-       "answer": 1,
-       "explain": "오른쪽은 la derecha(라 데레차)예요. la izquierda는 왼쪽이니 헷갈리지 마세요."
+       "answer": 2,
+       "explain": "derecha가 오른쪽, izquierda가 왼쪽이에요."
       },
       {
        "type": "choice",
-       "q": "'이 근처에 약국이 있나요?'를 바르게 말한 것은?",
+       "q": "빈칸에 알맞은 것은? ¿____ una farmacia por aquí? (이 근처에 약국이 있나요?)",
        "choices": [
-        "¿Dónde hay la farmacia?",
-        "¿Está una farmacia?",
-        "¿Hay una farmacia por aquí?",
-        "¿Qué es la farmacia?"
+        "Hay",
+        "Está",
+        "Es",
+        "Son"
+       ],
+       "answer": 0,
+       "explain": "존재를 물을 때는 hay를 써요. 뒤에 un/una가 오면 거의 항상 hay입니다."
+      },
+      {
+       "type": "choice",
+       "q": "lejos는 무슨 뜻일까요?",
+       "choices": [
+        "오른쪽",
+        "가까이",
+        "멀리",
+        "왼쪽"
        ],
        "answer": 2,
-       "explain": "있는지 없는지 물을 때는 hay를 써요. ¿Hay una farmacia por aquí?가 맞아요."
-      },
-      {
-       "type": "choice",
-       "q": "cerca(가까이)의 반대말은?",
-       "choices": [
-        "lejos",
-        "recto",
-        "aquí",
-        "al lado"
-       ],
-       "answer": 0,
-       "explain": "lejos(레호스)가 '멀리'예요. cerca(가까이)와 세트로 외워 두세요."
-      },
-      {
-       "type": "choice",
-       "q": "'화장실이 어디예요?'라고 특정 장소의 위치를 물을 때 맞는 문장은?",
-       "choices": [
-        "¿Hay el baño?",
-        "¿Qué está el baño?",
-        "¿Dónde hay baño el?",
-        "¿Dónde está el baño?"
-       ],
-       "answer": 3,
-       "explain": "특정한 장소의 위치는 ¿Dónde está + el/la 명사?로 물어요. hay는 있는지 없는지 물을 때 씁니다."
-      },
-      {
-       "type": "listen",
-       "q": "들리는 문장의 뜻으로 알맞은 것은?",
-       "es": "Está al lado de la farmacia.",
-       "choices": [
-        "약국 옆에 있어요.",
-        "약국 앞에 있어요.",
-        "약국에서 멀어요.",
-        "약국 안에 있어요."
-       ],
-       "answer": 0,
-       "explain": "al lado de(알 라도 데)는 '~ 옆에'라는 뜻이에요."
-      },
-      {
-       "type": "listen",
-       "q": "들리는 문장의 뜻으로 알맞은 것은?",
-       "es": "Está muy cerca.",
-       "choices": [
-        "아주 멀어요.",
-        "아주 가까워요.",
-        "오른쪽에 있어요.",
-        "왼쪽에 있어요."
-       ],
-       "answer": 1,
-       "explain": "cerca(쎄르까)는 '가까이'예요. muy가 붙어 '아주 가까워요'가 됩니다."
+       "explain": "lejos는 '멀리', 반대말은 cerca(가까이)예요."
       },
       {
        "type": "listen",
@@ -7581,68 +7723,80 @@ window.ES_DATA = {
        "es": "¿Dónde está la estación de metro?",
        "choices": [
         "지하철역이 어디예요?",
-        "버스 정류장이 어디예요?",
         "약국이 어디예요?",
-        "지하철을 타고 싶어요."
+        "화장실이 어디예요?",
+        "은행이 어디예요?"
        ],
        "answer": 0,
-       "explain": "la estación de metro(라 에스따씨온 데 메뜨로)는 지하철역이에요."
+       "explain": "la estación de metro가 지하철역이에요."
       },
       {
-       "type": "arrange",
-       "q": "'화장실이 어디에 있어요?'가 되도록 단어를 순서대로 배열하세요",
-       "tokens": [
-        "¿Dónde",
-        "está",
-        "el",
-        "baño?"
+       "type": "listen",
+       "q": "들리는 문장의 뜻으로 알맞은 것은?",
+       "es": "Está todo recto.",
+       "choices": [
+        "오른쪽에 있어요",
+        "왼쪽에 있어요",
+        "쭉 직진이에요",
+        "아주 멀어요"
        ],
-       "koPron": "돈데 에스따 엘 바뇨",
-       "explain": "¿Dónde(어디) + está(있다) + el baño(화장실) 순서예요."
+       "answer": 2,
+       "explain": "todo recto는 '쭉 곧장'이라는 뜻의 방향 표현이에요."
+      },
+      {
+       "type": "listen",
+       "q": "들리는 문장의 뜻으로 알맞은 것은?",
+       "es": "¿Hay una farmacia por aquí?",
+       "choices": [
+        "약국이 어디예요?",
+        "이 근처에 약국이 있나요?",
+        "약국은 아주 멀어요",
+        "이 근처에 은행이 있나요?"
+       ],
+       "answer": 1,
+       "explain": "hay는 존재를 묻는 말이고 por aquí는 '이 근처에'예요."
       },
       {
        "type": "arrange",
-       "q": "'오른쪽에 있어요'가 되도록 단어를 순서대로 배열하세요",
+       "q": "'은행 옆에 있어요'가 되도록 단어를 순서대로 배열하세요",
+       "tokens": [
+        "Está",
+        "al",
+        "lado",
+        "del",
+        "banco"
+       ],
+       "koPron": "에스따 알 라도 델 반꼬",
+       "explain": "al lado de + el banco에서 de + el이 del로 줄어 al lado del banco가 됩니다."
+      },
+      {
+       "type": "arrange",
+       "q": "'왼쪽에 있어요'가 되도록 단어를 순서대로 배열하세요",
        "tokens": [
         "Está",
         "a",
         "la",
-        "derecha"
+        "izquierda"
        ],
-       "koPron": "에스따 아 라 데레차",
-       "explain": "위치를 말할 때는 Está + a la derecha/izquierda 패턴을 그대로 써요."
+       "koPron": "에스따 아 라 이쓰끼에르다",
+       "explain": "방향은 a la derecha / a la izquierda처럼 a la를 앞에 붙여요."
       }
      ]
     },
     {
      "id": "u4l5",
      "title": "종합 회화: 지금 뭐 해요?",
-     "goal": "지금 하고 있는 일을 진행형으로 말하고, 유닛에서 배운 표현으로 저녁 약속까지 잡을 수 있어요.",
+     "goal": "estar + -ando/-iendo로 지금 하고 있는 일을 말하고, 친구와 저녁 약속을 잡을 수 있어요.",
      "words": [
-      {
-       "es": "estudiar",
-       "ko": "공부하다",
-       "koPron": "에스뚜디아르"
-      },
-      {
-       "es": "trabajar",
-       "ko": "일하다",
-       "koPron": "뜨라바하르"
-      },
       {
        "es": "la tele",
        "ko": "텔레비전, TV",
        "koPron": "라 뗄레"
       },
       {
-       "es": "ahora",
-       "ko": "지금",
-       "koPron": "아오라"
-      },
-      {
-       "es": "cenar",
-       "ko": "저녁을 먹다",
-       "koPron": "쎄나르"
+       "es": "el móvil",
+       "ko": "휴대폰",
+       "koPron": "엘 모빌"
       },
       {
        "es": "la cena",
@@ -7650,31 +7804,47 @@ window.ES_DATA = {
        "koPron": "라 쎄나"
       },
       {
-       "es": "el restaurante",
-       "ko": "식당, 레스토랑",
-       "koPron": "엘 레스따우란떼"
+       "es": "cenar",
+       "ko": "저녁을 먹다",
+       "koPron": "쎄나르"
+      },
+      {
+       "es": "hablar",
+       "ko": "말하다, 이야기하다",
+       "koPron": "아블라르"
+      },
+      {
+       "es": "el plan",
+       "ko": "계획, 약속",
+       "koPron": "엘 쁠란"
+      },
+      {
+       "es": "ahora",
+       "ko": "지금",
+       "koPron": "아오라"
+      },
+      {
+       "es": "nada",
+       "ko": "아무것도 (아님)",
+       "koPron": "나다"
+      },
+      {
+       "es": "juntos / juntas",
+       "ko": "함께, 같이 (남자들 / 여자들)",
+       "koPron": "훈또스 / 훈따스"
       },
       {
        "es": "esta noche",
        "ko": "오늘 밤",
        "koPron": "에스따 노체"
-      },
-      {
-       "es": "conmigo",
-       "ko": "나와 함께",
-       "koPron": "꼰미고"
-      },
-      {
-       "es": "claro",
-       "ko": "물론(이죠)",
-       "koPron": "끌라로"
       }
      ],
      "keySentences": [
       {
        "es": "¿Qué estás haciendo?",
-       "ko": "지금 뭐 하고 있어요?",
-       "koPron": "께 에스따스 아씨엔도"
+       "ko": "지금 뭐 해요?",
+       "koPron": "께 에스따스 아씨엔도",
+       "note": "전화나 메시지에서 정말 자주 쓰는 인사예요."
       },
       {
        "es": "Estoy viendo la tele.",
@@ -7687,27 +7857,32 @@ window.ES_DATA = {
        "koPron": "에스또이 에스뚜디안도 에스빠뇰"
       },
       {
-       "es": "¿Quieres cenar conmigo esta noche?",
-       "ko": "오늘 밤 나랑 같이 저녁 먹을래요?",
-       "koPron": "끼에레스 쎄나르 꼰미고 에스따 노체"
+       "es": "No estoy haciendo nada.",
+       "ko": "아무것도 안 하고 있어요.",
+       "koPron": "노 에스또이 아씨엔도 나다"
       },
       {
-       "es": "¡Claro que sí!",
-       "ko": "당연하죠!",
-       "koPron": "끌라로 께 씨",
-       "note": "제안을 기분 좋게 받아들일 때 쓰는 표현이에요."
+       "es": "¿Quieres cenar conmigo?",
+       "ko": "저랑 같이 저녁 먹을래요?",
+       "koPron": "끼에레스 쎄나르 꼰미고"
+      },
+      {
+       "es": "¡Cenamos juntas esta noche!",
+       "ko": "오늘 밤에 같이 저녁 먹어요!",
+       "koPron": "쎄나모스 훈따스 에스따 노체",
+       "note": "여자끼리면 juntas, 남자가 끼어 있으면 juntos예요."
       }
      ],
      "dialogue": {
-      "title": "전화 통화",
-      "situation": "수진과 루시아가 전화로 지금 뭐 하는지 묻고, 함께 저녁을 먹으러 가기로 약속해요.",
+      "title": "전화: 지금 뭐 해?",
+      "situation": "수진이 루시아에게 전화를 걸어 지금 뭐 하는지 묻고, 함께 저녁을 먹기로 약속해요.",
       "turns": [
        {
         "speaker": "A",
         "name": "수진",
-        "es": "¡Hola, Lucía! ¿Qué estás haciendo?",
-        "ko": "안녕, 루시아! 지금 뭐 하고 있어?",
-        "koPron": "올라 루씨아 께 에스따스 아씨엔도"
+        "es": "¡Hola, Lucía! ¿Qué tal? ¿Qué estás haciendo?",
+        "ko": "안녕, 루시아! 잘 지내? 지금 뭐 해?",
+        "koPron": "올라 루씨아 께 딸 께 에스따스 아씨엔도"
        },
        {
         "speaker": "B",
@@ -7719,215 +7894,2075 @@ window.ES_DATA = {
        {
         "speaker": "A",
         "name": "수진",
-        "es": "Estoy estudiando español.",
-        "ko": "나는 스페인어 공부하고 있어.",
-        "koPron": "에스또이 에스뚜디안도 에스빠뇰"
+        "es": "Estoy estudiando español. ¿Tienes planes esta noche?",
+        "ko": "나는 스페인어 공부하고 있어. 오늘 밤에 약속 있어?",
+        "koPron": "에스또이 에스뚜디안도 에스빠뇰 띠에네스 쁠라네스 에스따 노체"
        },
        {
         "speaker": "B",
         "name": "루시아",
-        "es": "¡Qué bien! ¿Quieres cenar conmigo esta noche?",
-        "ko": "대단한데! 오늘 밤 나랑 같이 저녁 먹을래?",
-        "koPron": "께 비엔 끼에레스 쎄나르 꼰미고 에스따 노체"
+        "es": "No, no tengo planes. No estoy haciendo nada.",
+        "ko": "아니, 약속 없어. 딱히 하는 것도 없어.",
+        "koPron": "노 노 뗑고 쁠라네스 노 에스또이 아씨엔도 나다"
        },
        {
         "speaker": "A",
         "name": "수진",
-        "es": "¡Claro que sí! ¿Dónde?",
-        "ko": "당연하지! 어디서?",
-        "koPron": "끌라로 께 씨 돈데"
+        "es": "¿Quieres cenar conmigo?",
+        "ko": "나랑 같이 저녁 먹을래?",
+        "koPron": "끼에레스 쎄나르 꼰미고"
        },
        {
         "speaker": "B",
         "name": "루시아",
-        "es": "Hay un restaurante muy bueno cerca de la estación.",
-        "ko": "역 근처에 아주 맛있는 식당이 하나 있어.",
-        "koPron": "아이 운 레스따우란떼 무이 부에노 쎄르까 데 라 에스따씨온"
+        "es": "¡Vale! ¿Dónde?",
+        "ko": "좋아! 어디서?",
+        "koPron": "발레 돈데"
        },
        {
         "speaker": "A",
         "name": "수진",
-        "es": "¡Perfecto! ¿Quieres comer paella?",
-        "ko": "완벽해! 빠에야 먹을래?",
-        "koPron": "뻬르펙또 끼에레스 꼬메르 빠에야"
+        "es": "Hay un restaurante muy bueno al lado del metro. La paella está muy rica.",
+        "ko": "지하철역 옆에 아주 좋은 식당이 하나 있어. 거기 빠에야가 정말 맛있어.",
+        "koPron": "아이 운 레스따우란떼 무이 부에노 알 라도 델 메뜨로 라 빠에야 에스따 무이 리까"
        },
        {
         "speaker": "B",
         "name": "루시아",
-        "es": "¡Me encanta la paella! Hasta luego.",
-        "ko": "나 빠에야 정말 좋아해! 이따 봐.",
-        "koPron": "메 엔깐따 라 빠에야 아스따 루에고"
+        "es": "¡Perfecto! Me encanta la paella. ¿A qué hora?",
+        "ko": "완벽해! 나 빠에야 정말 좋아하거든. 몇 시에?",
+        "koPron": "뻬르펙또 메 엔깐따 라 빠에야 아 께 오라"
        },
        {
         "speaker": "A",
         "name": "수진",
-        "es": "¡Hasta luego!",
-        "ko": "이따 봐!",
-        "koPron": "아스따 루에고"
+        "es": "A las nueve. ¡Cenamos juntas!",
+        "ko": "9시에. 같이 저녁 먹자!",
+        "koPron": "아 라스 누에베 쎄나모스 훈따스"
+       },
+       {
+        "speaker": "B",
+        "name": "루시아",
+        "es": "¡Genial! ¡Hasta luego!",
+        "ko": "아주 좋아! 이따 봐!",
+        "koPron": "헤니알 아스따 루에고"
        }
       ]
      },
      "grammar": [
       {
-       "title": "진행형 estar + -ando/-iendo: 지금 ~하고 있어요",
-       "explain": "'지금 ~하는 중이에요'는 estar 동사 뒤에 동사의 -ndo형을 붙여요. -ar 동사는 -ando(hablar→hablando), -er/-ir 동사는 -iendo(comer→comiendo)로 바꿔요. estar만 estoy(나)/estás(너)/está(그, 그녀)로 바꾸면 되니 생각보다 쉬워요. 한국어의 '~하고 있어요'와 똑같은 느낌이에요.",
+       "title": "estar + -ando / -iendo — 지금 ~하는 중이에요",
+       "explain": "한국어의 '~하고 있다'와 똑같은 표현이에요. estar를 사람에 맞춰 estoy(나), estás(너), está(그·그녀·당신)로 바꾸고, 동사 뒤를 바꿔 붙입니다. -ar 동사는 -ando(estudiar → estudiando), -er/-ir 동사는 -iendo(comer → comiendo, hacer → haciendo)예요. ver는 조금 특이하게 viendo가 됩니다.",
        "examples": [
         {
-         "es": "Estoy estudiando.",
-         "ko": "저는 공부하고 있어요.",
-         "koPron": "에스또이 에스뚜디안도"
+         "es": "Estoy comiendo.",
+         "ko": "저는 밥 먹고 있어요.",
+         "koPron": "에스또이 꼬미엔도"
         },
         {
          "es": "¿Qué estás haciendo?",
-         "ko": "지금 뭐 하고 있어요?",
+         "ko": "지금 뭐 해요?",
          "koPron": "께 에스따스 아씨엔도"
         },
         {
-         "es": "Lucía está viendo la tele.",
-         "ko": "루시아는 TV를 보고 있어요.",
-         "koPron": "루씨아 에스따 비엔도 라 뗄레"
+         "es": "Carlos está viendo la tele.",
+         "ko": "카를로스는 TV를 보고 있어요.",
+         "koPron": "까를로스 에스따 비엔도 라 뗄레"
         }
        ]
       },
       {
-       "title": "유닛 4 핵심 총정리",
-       "explain": "이번 유닛에서 배운 네 가지 무기를 정리해요. 원할 땐 Quiero..., 주문할 땐 Para mí..., 좋아하는 건 Me gusta..., 위치는 ¿Dónde está...?와 ¿Hay...?. 이 패턴들만 있으면 스페인에서 먹고, 즐기고, 길 찾는 하루를 통째로 스페인어로 보낼 수 있어요!",
+       "title": "질문과 대답을 한 세트로",
+       "explain": "¿Qué estás haciendo?라고 물으면 Estoy + -ando/-iendo로 대답하면 돼요. 아무것도 안 할 때는 No estoy haciendo nada라고 합니다. 스페인어는 no와 nada를 함께 쓰는 이중 부정이 정상이에요.",
        "examples": [
         {
-         "es": "¿Qué quieres comer?",
-         "ko": "뭐 먹을래요?",
-         "koPron": "께 끼에레스 꼬메르"
+         "es": "Estoy hablando por teléfono.",
+         "ko": "전화하고 있어요.",
+         "koPron": "에스또이 아블란도 뽀르 뗄레포노"
         },
         {
-         "es": "Me gusta ver películas.",
-         "ko": "저는 영화 보는 걸 좋아해요.",
-         "koPron": "메 구스따 베르 뻴리꿀라스"
+         "es": "Estoy estudiando español.",
+         "ko": "스페인어 공부하고 있어요.",
+         "koPron": "에스또이 에스뚜디안도 에스빠뇰"
         },
         {
-         "es": "¿Dónde está el restaurante?",
-         "ko": "그 식당이 어디에 있어요?",
-         "koPron": "돈데 에스따 엘 레스따우란떼"
+         "es": "No estoy haciendo nada.",
+         "ko": "아무것도 안 하고 있어요.",
+         "koPron": "노 에스또이 아씨엔도 나다"
+        }
+       ]
+      },
+      {
+       "title": "함께 하자고 말하기: conmigo / juntos·juntas",
+       "explain": "conmigo는 '나와 함께'예요. con과 mí가 붙어 만들어진 특별한 단어라 con mí라고 쓰지 않아요. juntos(남자들 또는 남녀 섞인 그룹), juntas(여자들끼리)는 '같이'라는 뜻으로 문장 끝에 붙입니다.",
+       "examples": [
+        {
+         "es": "¿Quieres cenar conmigo?",
+         "ko": "저랑 같이 저녁 먹을래요?",
+         "koPron": "끼에레스 쎄나르 꼰미고"
+        },
+        {
+         "es": "Cenamos juntas.",
+         "ko": "우리 같이 저녁 먹어요.",
+         "koPron": "쎄나모스 훈따스"
+        },
+        {
+         "es": "Estudiamos español juntos.",
+         "ko": "우리 같이 스페인어를 공부해요.",
+         "koPron": "에스뚜디아모스 에스빠뇰 훈또스"
         }
        ]
       }
      ],
      "tips": [
-      "-ando/-iendo는 '안도/이엔도' 리듬으로 노래하듯 연습하세요. hablando, comiendo, viviendo!",
-      "leer(읽다)의 진행형은 leiendo가 아니라 leyendo(레옌도)예요. 모음이 겹칠 때 i가 y로 바뀌는 예외랍니다.",
-      "전화를 받을 때 스페인 사람들은 ¿Diga?(디가) 또는 ¿Sí?(씨)라고 해요. Hola만 해도 물론 통해요."
+      "-ando/-iendo는 한국어의 '~고 있는 중'과 딱 맞아요. estudiando = 공부하고 있는 중!",
+      "haciendo는 '아씨엔도'로 읽어요. h는 소리가 없고 ci는 '씨'입니다.",
+      "전화를 받을 때 스페인에서는 ¿Diga?(디가) 또는 ¿Sí?라고 해요. 멕시코에서는 ¿Bueno?, 다른 중남미 나라에서는 ¿Aló?를 씁니다.",
+      "móvil은 스페인식 휴대폰이에요. 중남미에서는 el celular(엘 쎌룰라르)라고 합니다."
      ],
-     "culture": "스페인의 저녁 식사 시간은 밤 9~10시로 세계에서 손꼽히게 늦어요. 그래서 저녁 전에 바에서 따빠스와 음료로 허기를 달래는 문화가 발달했죠. 친구와 '오늘 밤에 저녁 같이 먹을래?'라는 약속은 스페인식 사교의 기본이니, 이번 레슨의 대화를 통째로 외워 두면 진짜 유용해요. 중남미도 대체로 한국보다 저녁을 늦게 먹는 편이에요.",
+     "culture": "스페인의 저녁 식사는 밤 9~10시에 시작하는 것이 보통이라, 7시에 저녁을 먹자고 하면 오히려 놀랄 수 있어요. 식사를 마친 뒤에도 식탁에 앉아 한참 수다를 떠는 시간을 소브레메사(la sobremesa)라고 부를 만큼 대화를 즐깁니다. 그래서 친구와의 저녁 약속은 두세 시간을 넉넉히 잡아 두는 것이 좋아요.",
      "quiz": [
       {
        "type": "choice",
-       "q": "'나는 스페인어를 공부하고 있어요'를 바르게 말한 것은?",
+       "q": "'지금 뭐 해요?'를 스페인어로 하면?",
        "choices": [
-        "Estoy estudiando español.",
-        "Estoy estudiar español.",
-        "Soy estudiando español.",
-        "Estudiando estoy ser español."
-       ],
-       "answer": 0,
-       "explain": "진행형은 estar + -ndo형이에요. estudiar는 -ar 동사이므로 estudiando가 됩니다."
-      },
-      {
-       "type": "choice",
-       "q": "comer(먹다)의 진행형(-ndo형)으로 알맞은 것은?",
-       "choices": [
-        "comando",
-        "comendo",
-        "comiendo",
-        "comerndo"
-       ],
-       "answer": 2,
-       "explain": "-er 동사는 -iendo를 붙여요. comer → comiendo(꼬미엔도)입니다."
-      },
-      {
-       "type": "choice",
-       "q": "식사를 마치고 계산서를 부탁할 때 하는 말은?",
-       "choices": [
-        "La carta, por favor.",
-        "La cuenta, por favor.",
-        "El baño, por favor.",
-        "Una caña, por favor."
+        "¿Qué quieres comer?",
+        "¿Qué estás haciendo?",
+        "¿Dónde está el baño?",
+        "¿Qué te gusta hacer?"
        ],
        "answer": 1,
-       "explain": "계산서는 la cuenta(라 꾸엔따)예요. la carta(메뉴판)와 헷갈리지 않게 복습!"
+       "explain": "estar + haciendo는 '하고 있는 중'이에요. ¿Qué te gusta hacer?는 취미를 묻는 말이라 뜻이 다릅니다."
       },
       {
        "type": "choice",
-       "q": "'이 근처에 맛있는 식당이 있나요?'를 바르게 말한 것은?",
+       "q": "빈칸에 알맞은 것은? Estoy ____ la tele. (TV 보고 있어요)",
        "choices": [
-        "¿Dónde está restaurante?",
-        "¿Está un restaurante por aquí?",
-        "¿Qué restaurante es aquí?",
-        "¿Hay un restaurante bueno por aquí?"
+        "ver",
+        "veo",
+        "viendo",
+        "vemos"
+       ],
+       "answer": 2,
+       "explain": "estar 뒤에는 -ando/-iendo 형태가 와요. ver는 viendo가 됩니다."
+      },
+      {
+       "type": "choice",
+       "q": "식당에서 종업원에게 추천을 물을 때 하는 말은?",
+       "choices": [
+        "La cuenta, por favor.",
+        "Para mí, la paella.",
+        "¡Qué rico!",
+        "¿Qué me recomienda?"
        ],
        "answer": 3,
-       "explain": "있는지 없는지 물을 때는 hay를 써요. ¿Hay un restaurante bueno por aquí?가 맞아요."
+       "explain": "recomendar는 '추천하다'예요. La cuenta는 계산서, Para mí는 주문할 때 쓰는 표현입니다."
       },
       {
-       "type": "listen",
-       "q": "들리는 문장의 뜻으로 알맞은 것은?",
-       "es": "¿Qué estás haciendo?",
+       "type": "choice",
+       "q": "'저는 여행하는 걸 정말 좋아해요'를 바르게 쓴 것은?",
        "choices": [
-        "뭐 하는 걸 좋아해요?",
-        "지금 뭐 하고 있어요?",
-        "뭐 먹고 싶어요?",
-        "어디에 있어요?"
-       ],
-       "answer": 1,
-       "explain": "estás haciendo(에스따스 아씨엔도)는 hacer의 진행형으로 '지금 뭐 하고 있어요?'예요."
-      },
-      {
-       "type": "listen",
-       "q": "들리는 문장의 뜻으로 알맞은 것은?",
-       "es": "Estoy viendo la tele.",
-       "choices": [
-        "책을 읽고 있어요.",
-        "스페인어를 공부하고 있어요.",
-        "TV를 보고 있어요.",
-        "음악을 듣고 있어요."
-       ],
-       "answer": 2,
-       "explain": "viendo는 ver(보다)의 진행형이고 la tele는 TV예요."
-      },
-      {
-       "type": "listen",
-       "q": "들리는 문장의 뜻으로 알맞은 것은?",
-       "es": "Me encanta la paella.",
-       "choices": [
-        "빠에야를 정말 좋아해요.",
-        "빠에야를 먹고 있어요.",
-        "빠에야를 안 좋아해요.",
-        "빠에야를 주문할게요."
+        "Me encanta viajar.",
+        "Me gusta cocinar.",
+        "No me gusta viajar.",
+        "Me gustan las películas."
        ],
        "answer": 0,
-       "explain": "Me encanta(메 엔깐따)는 '정말 좋아해요'라는 강한 표현이었죠. 3과 복습입니다!"
+       "explain": "encantar는 '정말 좋아하다'예요. 동사원형 viajar 앞이므로 encanta 형태를 씁니다."
+      },
+      {
+       "type": "listen",
+       "q": "들리는 문장의 뜻으로 알맞은 것은?",
+       "es": "Estoy estudiando español.",
+       "choices": [
+        "스페인어를 공부하고 있어요",
+        "스페인어를 공부하고 싶어요",
+        "스페인어 수업이 있어요",
+        "저는 스페인 사람이에요"
+       ],
+       "answer": 0,
+       "explain": "estoy + estudiando는 지금 진행 중인 일을 말해요."
+      },
+      {
+       "type": "listen",
+       "q": "들리는 문장의 뜻으로 알맞은 것은?",
+       "es": "¿Quieres cenar conmigo?",
+       "choices": [
+        "나랑 점심 먹을래?",
+        "나랑 저녁 먹을래?",
+        "저녁에 뭐 먹고 싶어?",
+        "저녁 약속이 몇 시야?"
+       ],
+       "answer": 1,
+       "explain": "cenar는 저녁을 먹다, conmigo는 '나와 함께'예요."
+      },
+      {
+       "type": "listen",
+       "q": "들리는 문장의 뜻으로 알맞은 것은?",
+       "es": "No estoy haciendo nada.",
+       "choices": [
+        "아무것도 하고 싶지 않아요",
+        "아무것도 안 먹고 있어요",
+        "지금 일하고 있어요",
+        "아무것도 안 하고 있어요"
+       ],
+       "answer": 3,
+       "explain": "no ... nada는 '아무것도 ~않다'예요. 지금 아무것도 안 하고 있다는 뜻입니다."
       },
       {
        "type": "arrange",
-       "q": "'나는 스페인어를 공부하고 있어요'가 되도록 단어를 순서대로 배열하세요",
+       "q": "'저는 TV를 보고 있어요'가 되도록 단어를 순서대로 배열하세요",
        "tokens": [
         "Estoy",
-        "estudiando",
-        "español"
+        "viendo",
+        "la",
+        "tele"
        ],
-       "koPron": "에스또이 에스뚜디안도 에스빠뇰",
-       "explain": "estar(estoy) + -ndo형(estudiando) + 대상(español) 순서예요."
+       "koPron": "에스또이 비엔도 라 뗄레",
+       "explain": "Estoy(나는 ~하는 중) + viendo(보고 있는) + la tele 순서예요."
       },
       {
        "type": "arrange",
-       "q": "'오늘 밤 나랑 같이 저녁 먹을래요?'가 되도록 단어를 순서대로 배열하세요",
+       "q": "'지하철역 옆에 식당이 하나 있어요'가 되도록 단어를 순서대로 배열하세요",
        "tokens": [
-        "¿Quieres",
-        "cenar",
-        "conmigo",
-        "esta",
-        "noche?"
+        "Hay",
+        "un",
+        "restaurante",
+        "al",
+        "lado",
+        "del",
+        "metro"
        ],
-       "koPron": "끼에레스 쎄나르 꼰미고 에스따 노체",
-       "explain": "¿Quieres + 동사원형(cenar) + conmigo(나랑) + esta noche(오늘 밤) 순서로 약속을 제안해요."
+       "koPron": "아이 운 레스따우란떼 알 라도 델 메뜨로",
+       "explain": "존재를 말할 때는 hay + un/una, 위치는 al lado del로 이어 줍니다."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "unitId": 5,
+   "title": "실전 여행 회화",
+   "subtitle": "스페인에서 살아남기",
+   "icon": "✈️",
+   "lessons": [
+    {
+     "id": "u5l1",
+     "title": "오늘 날씨 어때요?",
+     "goal": "hace를 써서 오늘 날씨를 묻고 답하고, 내일 날씨까지 예상해 말할 수 있어요.",
+     "words": [
+      {
+       "es": "el tiempo",
+       "ko": "날씨",
+       "koPron": "엘 띠엠뽀"
+      },
+      {
+       "es": "el sol",
+       "ko": "해, 햇빛",
+       "koPron": "엘 솔"
+      },
+      {
+       "es": "la lluvia",
+       "ko": "비",
+       "koPron": "라 유비아"
+      },
+      {
+       "es": "la nieve",
+       "ko": "눈",
+       "koPron": "라 니에베"
+      },
+      {
+       "es": "el viento",
+       "ko": "바람",
+       "koPron": "엘 비엔또"
+      },
+      {
+       "es": "el calor",
+       "ko": "더위",
+       "koPron": "엘 깔로르"
+      },
+      {
+       "es": "el frío",
+       "ko": "추위",
+       "koPron": "엘 프리오"
+      },
+      {
+       "es": "llover",
+       "ko": "비가 오다",
+       "koPron": "요베르"
+      },
+      {
+       "es": "nevar",
+       "ko": "눈이 오다",
+       "koPron": "네바르"
+      },
+      {
+       "es": "el paraguas",
+       "ko": "우산",
+       "koPron": "엘 빠라구아스"
+      },
+      {
+       "es": "el verano",
+       "ko": "여름",
+       "koPron": "엘 베라노"
+      },
+      {
+       "es": "entonces",
+       "ko": "그럼, 그러면",
+       "koPron": "엔똔쎄스"
+      }
+     ],
+     "keySentences": [
+      {
+       "es": "¿Qué tiempo hace hoy?",
+       "ko": "오늘 날씨 어때요?",
+       "koPron": "께 띠엠뽀 아쎄 오이",
+       "note": "날씨를 묻는 가장 기본 문장이에요. 통째로 외워 두세요."
+      },
+      {
+       "es": "Hace buen tiempo.",
+       "ko": "날씨가 좋아요.",
+       "koPron": "아쎄 부엔 띠엠뽀",
+       "note": "반대는 Hace mal tiempo.(날씨가 안 좋아요.)예요."
+      },
+      {
+       "es": "Hace calor.",
+       "ko": "더워요.",
+       "koPron": "아쎄 깔로르",
+       "note": "추울 때는 Hace frío.(아쎄 프리오)라고 해요."
+      },
+      {
+       "es": "Hace sol.",
+       "ko": "해가 나요.",
+       "koPron": "아쎄 솔"
+      },
+      {
+       "es": "Está lloviendo.",
+       "ko": "지금 비가 오고 있어요.",
+       "koPron": "에스따 요비엔도",
+       "note": "그냥 Llueve.(유에베)라고만 해도 '비가 와요'라는 뜻이에요."
+      },
+      {
+       "es": "¿Va a llover mañana?",
+       "ko": "내일 비 올까요?",
+       "koPron": "바 아 요베르 마냐나",
+       "note": "ir a + 동사원형으로 가까운 미래를 말해요."
+      }
+     ],
+     "dialogue": {
+      "title": "오늘도 맑음",
+      "situation": "수진이 카를로스에게 오늘과 내일 날씨를 물어봐요.",
+      "turns": [
+       {
+        "speaker": "A",
+        "name": "수진",
+        "es": "¡Hola, Carlos! ¿Qué tiempo hace hoy?",
+        "ko": "안녕, 카를로스! 오늘 날씨 어때?",
+        "koPron": "올라 까를로스 께 띠엠뽀 아쎄 오이"
+       },
+       {
+        "speaker": "B",
+        "name": "카를로스",
+        "es": "Hace buen tiempo. Hace sol.",
+        "ko": "날씨 좋아. 해가 났어.",
+        "koPron": "아쎄 부엔 띠엠뽀 아쎄 솔"
+       },
+       {
+        "speaker": "A",
+        "name": "수진",
+        "es": "¡Qué bien! ¿Hace calor?",
+        "ko": "잘됐다! 더워?",
+        "koPron": "께 비엔 아쎄 깔로르"
+       },
+       {
+        "speaker": "B",
+        "name": "카를로스",
+        "es": "Sí, hace mucho calor. Es verano.",
+        "ko": "응, 아주 더워. 여름이잖아.",
+        "koPron": "씨 아쎄 무초 깔로르 에스 베라노"
+       },
+       {
+        "speaker": "A",
+        "name": "수진",
+        "es": "¿Va a llover mañana?",
+        "ko": "내일은 비 올까?",
+        "koPron": "바 아 요베르 마냐나"
+       },
+       {
+        "speaker": "B",
+        "name": "카를로스",
+        "es": "Sí, mañana va a llover.",
+        "ko": "응, 내일은 비가 올 거야.",
+        "koPron": "씨 마냐나 바 아 요베르"
+       },
+       {
+        "speaker": "A",
+        "name": "수진",
+        "es": "¡Ay! No me gusta la lluvia.",
+        "ko": "아! 나 비 싫어하는데.",
+        "koPron": "아이 노 메 구스따 라 유비아"
+       },
+       {
+        "speaker": "B",
+        "name": "카를로스",
+        "es": "A mí me gusta. ¿Tienes paraguas?",
+        "ko": "난 좋아해. 너 우산 있어?",
+        "koPron": "아 미 메 구스따 띠에네스 빠라구아스"
+       },
+       {
+        "speaker": "A",
+        "name": "수진",
+        "es": "Sí, tengo uno. Entonces, ¡hasta mañana!",
+        "ko": "응, 하나 있어. 그럼 내일 봐!",
+        "koPron": "씨 뗑고 우노 엔똔쎄스 아스따 마냐나"
+       }
+      ]
+     },
+     "grammar": [
+      {
+       "title": "날씨는 hace로 말해요 (hacer + 명사)",
+       "explain": "한국어는 '덥다, 춥다'처럼 형용사로 말하지만, 스페인어는 '더위를 만든다'는 느낌으로 hace(아쎄) 뒤에 명사를 붙여요. Hace + calor(더위) = 더워요. 주어 없이 hace 하나로 시작하는 게 포인트예요.",
+       "examples": [
+        {
+         "es": "Hace calor.",
+         "ko": "더워요.",
+         "koPron": "아쎄 깔로르"
+        },
+        {
+         "es": "Hace frío.",
+         "ko": "추워요.",
+         "koPron": "아쎄 프리오"
+        },
+        {
+         "es": "Hace viento.",
+         "ko": "바람이 불어요.",
+         "koPron": "아쎄 비엔또"
+        },
+        {
+         "es": "Hace buen tiempo.",
+         "ko": "날씨가 좋아요.",
+         "koPron": "아쎄 부엔 띠엠뽀"
+        },
+        {
+         "es": "Hace mal tiempo.",
+         "ko": "날씨가 안 좋아요.",
+         "koPron": "아쎄 말 띠엠뽀"
+        }
+       ]
+      },
+      {
+       "title": "비와 눈은 동사 하나면 끝: Llueve / Nieva",
+       "explain": "비와 눈은 hace를 쓰지 않고 전용 동사를 써요. llover(비 오다)는 Llueve.(유에베), nevar(눈 오다)는 Nieva.(니에바) 한 단어면 문장이 완성돼요. 주어가 필요 없는 특별한 동사랍니다. 지금 내리는 중이라고 강조하고 싶으면 4단원에서 배운 진행형으로 Está lloviendo.라고 해요.",
+       "examples": [
+        {
+         "es": "Llueve.",
+         "ko": "비가 와요.",
+         "koPron": "유에베"
+        },
+        {
+         "es": "Nieva.",
+         "ko": "눈이 와요.",
+         "koPron": "니에바"
+        },
+        {
+         "es": "Está lloviendo.",
+         "ko": "지금 비가 오고 있어요.",
+         "koPron": "에스따 요비엔도"
+        },
+        {
+         "es": "Hoy llueve mucho.",
+         "ko": "오늘은 비가 많이 와요.",
+         "koPron": "오이 유에베 무초"
+        }
+       ]
+      },
+      {
+       "title": "ir a + 동사원형: 곧 일어날 일 말하기",
+       "explain": "'~할 거예요'라는 가까운 미래는 ir 동사(voy 보이 / vas 바스 / va 바) 뒤에 a + 동사원형만 붙이면 돼요. 어려운 미래 시제를 몰라도 이 공식 하나로 내일 이야기를 다 할 수 있어요.",
+       "examples": [
+        {
+         "es": "Voy a estudiar español.",
+         "ko": "저는 스페인어를 공부할 거예요.",
+         "koPron": "보이 아 에스뚜디아르 에스빠뇰"
+        },
+        {
+         "es": "¿Va a llover mañana?",
+         "ko": "내일 비 올까요?",
+         "koPron": "바 아 요베르 마냐나"
+        },
+        {
+         "es": "Mañana va a hacer frío.",
+         "ko": "내일은 추울 거예요.",
+         "koPron": "마냐나 바 아 아쎄르 프리오"
+        }
+       ]
+      }
+     ],
+     "tips": [
+      "hace의 h는 소리가 나지 않아요. '하쎄'가 아니라 '아쎄'입니다.",
+      "ll은 '야·예·요·유' 소리예요. llover는 '요베르', llueve는 '유에베', lluvia는 '유비아'로 읽어요.",
+      "'아주 더워요'는 muy calor가 아니라 Hace mucho calor예요. 명사 앞에는 muy가 아니라 mucho를 씁니다.",
+      "entonces(엔똔쎄스)는 '그럼, 그러면'이라는 뜻으로 대화를 이어 줄 때 아주 유용해요."
+     ],
+     "culture": "스페인은 지역마다 날씨가 완전히 달라요. 마드리드와 안달루시아의 여름은 40도를 넘나들어서 '¡Qué calor!(께 깔로르, 완전 덥다!)'가 인사말처럼 들리고, 북쪽 갈리시아와 바스크는 일 년 내내 비가 자주 와서 우산이 필수랍니다. 그래서 여행 전에 날씨를 묻는 한마디가 정말 유용해요. 참고로 아르헨티나나 칠레 같은 남반구 나라는 한국과 계절이 정반대여서 1월이 한여름이에요.",
+     "quiz": [
+      {
+       "type": "choice",
+       "q": "'오늘 날씨 어때요?'를 바르게 말한 것은?",
+       "choices": [
+        "¿Qué tiempo hace hoy?",
+        "¿Cómo estás hoy?",
+        "¿Qué hora es hoy?",
+        "¿Dónde está hoy?"
+       ],
+       "answer": 0,
+       "explain": "날씨는 tiempo, 그리고 hace를 써서 ¿Qué tiempo hace hoy?라고 물어요."
+      },
+      {
+       "type": "choice",
+       "q": "'추워요'라는 뜻의 표현은?",
+       "choices": [
+        "Hace calor.",
+        "Hace sol.",
+        "Hace frío.",
+        "Hace viento."
+       ],
+       "answer": 2,
+       "explain": "frío는 '추위'예요. Hace frío.(아쎄 프리오)가 '추워요'입니다."
+      },
+      {
+       "type": "choice",
+       "q": "빈칸에 알맞은 것은? Mañana ___ llover. (내일 비가 올 거예요)",
+       "choices": [
+        "está",
+        "va a",
+        "hace",
+        "es"
+       ],
+       "answer": 1,
+       "explain": "가까운 미래는 ir a + 동사원형이에요. 3인칭은 va a가 됩니다."
+      },
+      {
+       "type": "choice",
+       "q": "'해가 나요'라는 뜻의 문장은?",
+       "choices": [
+        "Llueve.",
+        "Nieva.",
+        "Hace viento.",
+        "Hace sol."
+       ],
+       "answer": 3,
+       "explain": "sol은 '해'예요. Hace sol.이 '해가 나요, 화창해요'라는 뜻입니다."
+      },
+      {
+       "type": "listen",
+       "q": "들리는 문장의 뜻으로 알맞은 것은?",
+       "es": "Hace buen tiempo.",
+       "choices": [
+        "날씨가 좋아요.",
+        "날씨가 안 좋아요.",
+        "비가 와요.",
+        "눈이 와요."
+       ],
+       "answer": 0,
+       "explain": "buen tiempo는 '좋은 날씨'예요. 반대는 Hace mal tiempo.입니다."
+      },
+      {
+       "type": "listen",
+       "q": "들리는 문장의 뜻으로 알맞은 것은?",
+       "es": "Está lloviendo.",
+       "choices": [
+        "눈이 오고 있어요.",
+        "비가 오고 있어요.",
+        "바람이 불고 있어요.",
+        "해가 나고 있어요."
+       ],
+       "answer": 1,
+       "explain": "lloviendo는 llover(비 오다)의 진행형이에요. '지금 비가 오고 있어요'입니다."
+      },
+      {
+       "type": "listen",
+       "q": "들리는 문장의 뜻으로 알맞은 것은?",
+       "es": "¿Va a llover mañana?",
+       "choices": [
+        "지금 비가 와요?",
+        "어제 비가 왔어요?",
+        "내일 눈이 올까요?",
+        "내일 비가 올까요?"
+       ],
+       "answer": 3,
+       "explain": "va a llover는 '비가 올 것이다', mañana는 '내일'이에요."
+      },
+      {
+       "type": "arrange",
+       "q": "'오늘 날씨 어때요?'가 되도록 단어를 순서대로 배열하세요",
+       "tokens": [
+        "¿Qué",
+        "tiempo",
+        "hace",
+        "hoy?"
+       ],
+       "koPron": "께 띠엠뽀 아쎄 오이",
+       "explain": "¿Qué tiempo(어떤 날씨) + hace(만드나요) + hoy(오늘) 순서로 물어요."
+      },
+      {
+       "type": "arrange",
+       "q": "'내일 비가 올 거예요'가 되도록 단어를 순서대로 배열하세요",
+       "tokens": [
+        "Mañana",
+        "va",
+        "a",
+        "llover"
+       ],
+       "koPron": "마냐나 바 아 요베르",
+       "explain": "시간 표현(Mañana) 뒤에 va a + 동사원형(llover)을 붙이면 가까운 미래가 돼요."
+      }
+     ]
+    },
+    {
+     "id": "u5l2",
+     "title": "전화와 약속",
+     "goal": "전화를 받고 걸어서 친구와 만날 시간과 장소를 정하고, 정중하게 거절할 수 있어요.",
+     "words": [
+      {
+       "es": "el teléfono",
+       "ko": "전화기",
+       "koPron": "엘 뗄레포노"
+      },
+      {
+       "es": "el móvil",
+       "ko": "휴대폰",
+       "koPron": "엘 모빌"
+      },
+      {
+       "es": "la llamada",
+       "ko": "전화 통화",
+       "koPron": "라 야마다"
+      },
+      {
+       "es": "quedar",
+       "ko": "만나기로 하다",
+       "koPron": "께다르"
+      },
+      {
+       "es": "poder",
+       "ko": "~할 수 있다",
+       "koPron": "뽀데르"
+      },
+      {
+       "es": "la cita",
+       "ko": "약속",
+       "koPron": "라 씨따"
+      },
+      {
+       "es": "vale",
+       "ko": "좋아요, 알겠어요",
+       "koPron": "발레"
+      },
+      {
+       "es": "libre",
+       "ko": "한가한, 비어 있는",
+       "koPron": "리브레"
+      },
+      {
+       "es": "ocupado / ocupada",
+       "ko": "바쁜",
+       "koPron": "오꾸빠도 / 오꾸빠다"
+      },
+      {
+       "es": "puntual",
+       "ko": "시간을 잘 지키는",
+       "koPron": "뿐뚜알"
+      },
+      {
+       "es": "esta tarde",
+       "ko": "오늘 오후",
+       "koPron": "에스따 따르데"
+      },
+      {
+       "es": "¡claro!",
+       "ko": "물론이죠!",
+       "koPron": "끌라로"
+      }
+     ],
+     "keySentences": [
+      {
+       "es": "¿Dígame?",
+       "ko": "여보세요?",
+       "koPron": "디가메",
+       "note": "스페인에서 전화를 받을 때 쓰는 말이에요. ¿Diga?도 똑같이 써요."
+      },
+      {
+       "es": "Hola, soy Sujin.",
+       "ko": "안녕하세요, 저 수진이에요.",
+       "koPron": "올라 소이 수진",
+       "note": "전화로 자기를 밝힐 때는 estoy가 아니라 soy를 써요."
+      },
+      {
+       "es": "¿Tienes tiempo mañana?",
+       "ko": "내일 시간 있어요?",
+       "koPron": "띠에네스 띠엠뽀 마냐나"
+      },
+      {
+       "es": "¿Quedamos a las siete?",
+       "ko": "7시에 만날까요?",
+       "koPron": "께다모스 아 라스 시에떼",
+       "note": "시간 앞에는 a las를 붙여요. 2단원에서 배운 시간 표현을 그대로 쓰면 돼요."
+      },
+      {
+       "es": "¿Dónde quedamos?",
+       "ko": "어디서 만날까요?",
+       "koPron": "돈데 께다모스"
+      },
+      {
+       "es": "Lo siento, no puedo.",
+       "ko": "미안해요, 저는 안 돼요.",
+       "koPron": "로 시엔또 노 뿌에도",
+       "note": "거절할 때 가장 부드러운 한마디예요."
+      }
+     ],
+     "dialogue": {
+      "title": "내일 만날까?",
+      "situation": "수진이 루시아에게 전화를 걸어 내일 약속을 잡아요.",
+      "turns": [
+       {
+        "speaker": "B",
+        "name": "루시아",
+        "es": "¿Dígame?",
+        "ko": "여보세요?",
+        "koPron": "디가메"
+       },
+       {
+        "speaker": "A",
+        "name": "수진",
+        "es": "Hola, soy Sujin. ¿Qué tal?",
+        "ko": "안녕, 나 수진이야. 잘 지내?",
+        "koPron": "올라 소이 수진 께 딸"
+       },
+       {
+        "speaker": "B",
+        "name": "루시아",
+        "es": "¡Hola, Sujin! Muy bien, gracias.",
+        "ko": "안녕, 수진! 아주 잘 지내, 고마워.",
+        "koPron": "올라 수진 무이 비엔 그라씨아스"
+       },
+       {
+        "speaker": "A",
+        "name": "수진",
+        "es": "¿Tienes tiempo mañana?",
+        "ko": "내일 시간 있어?",
+        "koPron": "띠에네스 띠엠뽀 마냐나"
+       },
+       {
+        "speaker": "B",
+        "name": "루시아",
+        "es": "Sí, mañana estoy libre.",
+        "ko": "응, 내일은 한가해.",
+        "koPron": "씨 마냐나 에스또이 리브레"
+       },
+       {
+        "speaker": "A",
+        "name": "수진",
+        "es": "¿Quedamos a las siete?",
+        "ko": "7시에 만날까?",
+        "koPron": "께다모스 아 라스 시에떼"
+       },
+       {
+        "speaker": "B",
+        "name": "루시아",
+        "es": "Vale. ¿Dónde quedamos?",
+        "ko": "좋아. 어디서 만날까?",
+        "koPron": "발레 돈데 께다모스"
+       },
+       {
+        "speaker": "A",
+        "name": "수진",
+        "es": "En la estación de metro. ¿Puedes?",
+        "ko": "지하철역에서. 괜찮아?",
+        "koPron": "엔 라 에스따씨온 데 메뜨로 뿌에데스"
+       },
+       {
+        "speaker": "B",
+        "name": "루시아",
+        "es": "¡Claro! Hasta mañana.",
+        "ko": "물론이지! 내일 봐.",
+        "koPron": "끌라로 아스따 마냐나"
+       }
+      ]
+     },
+     "grammar": [
+      {
+       "title": "quedar: 약속 잡기의 만능 동사",
+       "explain": "quedar는 '만나기로 하다'예요. 우리 둘 이야기니까 '우리' 형태인 quedamos(께다모스)에 물음표만 붙이면 '만날까요?'라는 제안이 돼요. 시간은 a las + 숫자, 장소는 en + 장소를 붙이면 끝이에요.",
+       "examples": [
+        {
+         "es": "¿Quedamos a las ocho?",
+         "ko": "8시에 만날까요?",
+         "koPron": "께다모스 아 라스 오초"
+        },
+        {
+         "es": "¿Dónde quedamos?",
+         "ko": "어디서 만날까요?",
+         "koPron": "돈데 께다모스"
+        },
+        {
+         "es": "Quedamos en el restaurante.",
+         "ko": "식당에서 만나요.",
+         "koPron": "께다모스 엔 엘 레스따우란떼"
+        }
+       ]
+      },
+      {
+       "title": "poder + 동사원형: 할 수 있어요 / 안 돼요",
+       "explain": "poder는 '~할 수 있다'예요. 나는 puedo(뿌에도), 너는 puedes(뿌에데스)로 바뀌고 뒤에는 동사원형을 붙여요. 이렇게 o가 ue로 바뀌는데, 4단원 querer가 quiero로 바뀐 것(e→ie)과 똑같은 '어간이 변하는 동사'랍니다. 뒤에 동사가 없어도 ¿Puedes?(가능해?), No puedo.(안 돼요.)만으로 완벽한 대답이 돼요.",
+       "examples": [
+        {
+         "es": "¿Puedes mañana?",
+         "ko": "내일 가능해요?",
+         "koPron": "뿌에데스 마냐나"
+        },
+        {
+         "es": "Hoy no puedo.",
+         "ko": "오늘은 안 돼요.",
+         "koPron": "오이 노 뿌에도"
+        },
+        {
+         "es": "¿Puedes cenar conmigo?",
+         "ko": "저랑 저녁 먹을 수 있어요?",
+         "koPron": "뿌에데스 쎄나르 꼰미고"
+        }
+       ]
+      },
+      {
+       "title": "제안에 답하기: Vale / ¡Claro! / Lo siento, no puedo",
+       "explain": "제안을 받아들일 때는 Vale.(발레, 좋아요) 또는 ¡Claro!(끌라로, 물론이죠!)면 충분해요. 거절할 때는 Lo siento, no puedo.(미안해요, 안 돼요.)라고 하고, 이유를 덧붙이고 싶으면 Estoy ocupado.(바빠요.)를 붙이면 정중해집니다.",
+       "examples": [
+        {
+         "es": "Vale, hasta mañana.",
+         "ko": "좋아요, 내일 봐요.",
+         "koPron": "발레 아스따 마냐나"
+        },
+        {
+         "es": "¡Claro! Me gusta la idea.",
+         "ko": "물론이죠! 좋은 생각이에요.",
+         "koPron": "끌라로 메 구스따 라 이데아"
+        },
+        {
+         "es": "Lo siento, no puedo. Estoy ocupada.",
+         "ko": "미안해요, 안 돼요. 제가 바빠서요.",
+         "koPron": "로 시엔또 노 뿌에도 에스또이 오꾸빠다"
+        }
+       ]
+      }
+     ],
+     "tips": [
+      "vale(발레)는 스페인 사람들이 하루에 수십 번 쓰는 말이에요. '오케이'라고 생각하면 딱 맞아요. 중남미에서는 대신 bueno나 dale를 더 자주 씁니다.",
+      "전화를 받을 때 스페인은 ¿Dígame?, 중남미는 ¿Aló?(알로), 멕시코는 ¿Bueno?(부에노)라고 해요.",
+      "quedar의 qu는 '꾸'가 아니라 'ㄲ' 소리예요. quedamos는 '꾸에다모스'가 아니라 '께다모스'입니다.",
+      "휴대폰은 스페인에서 el móvil(엘 모빌), 중남미에서는 el celular(엘 쎌룰라르)라고 해요."
+     ],
+     "culture": "스페인 친구들과의 약속은 시간 감각이 조금 여유로워요. 사적인 만남에서는 10~15분 정도 늦는 걸 크게 문제 삼지 않아서 'la hora española(스페인 시간)'라는 말이 있을 정도랍니다. 다만 병원, 관공서, 회사 미팅은 정확히 지켜야 하니 구분이 필요해요. 또 저녁 식사가 밤 9~10시에 시작되기 때문에 저녁 약속을 잡을 때 7시는 '만나서 한잔할 시간', 9시가 '밥 먹는 시간'이라고 생각하면 딱 맞아요.",
+     "quiz": [
+      {
+       "type": "choice",
+       "q": "스페인에서 전화를 받을 때 흔히 하는 말은?",
+       "choices": [
+        "¿Dígame?",
+        "¡Hasta luego!",
+        "Mucho gusto.",
+        "Por favor."
+       ],
+       "answer": 0,
+       "explain": "스페인에서는 전화를 받으며 ¿Dígame?(디가메) 또는 ¿Diga?라고 해요."
+      },
+      {
+       "type": "choice",
+       "q": "'7시에 만날까요?'를 바르게 말한 것은?",
+       "choices": [
+        "¿Qué hora es?",
+        "¿Dónde quedamos?",
+        "¿Quedamos a las siete?",
+        "¿Tienes siete?"
+       ],
+       "answer": 2,
+       "explain": "quedamos(만날까요?)에 시간 표현 a las siete를 붙이면 돼요."
+      },
+      {
+       "type": "choice",
+       "q": "'Lo siento, no puedo.'의 뜻은?",
+       "choices": [
+        "미안해요, 저는 안 돼요.",
+        "좋아요, 갈게요.",
+        "물론이죠!",
+        "조금 늦을게요."
+       ],
+       "answer": 0,
+       "explain": "no puedo는 '나는 할 수 없다'예요. 약속을 정중히 거절하는 표현입니다."
+      },
+      {
+       "type": "choice",
+       "q": "poder의 '나' 형태(나는 할 수 있어요)로 알맞은 것은?",
+       "choices": [
+        "puedes",
+        "puede",
+        "podemos",
+        "puedo"
+       ],
+       "answer": 3,
+       "explain": "poder는 yo puedo(뿌에도), tú puedes(뿌에데스)로 바뀌어요."
+      },
+      {
+       "type": "listen",
+       "q": "들리는 문장의 뜻으로 알맞은 것은?",
+       "es": "¿Tienes tiempo mañana?",
+       "choices": [
+        "내일 시간 있어요?",
+        "지금 몇 시예요?",
+        "내일 뭐 해요?",
+        "오늘 시간 있어요?"
+       ],
+       "answer": 0,
+       "explain": "tener tiempo는 '시간이 있다', mañana는 '내일'이에요."
+      },
+      {
+       "type": "listen",
+       "q": "들리는 문장의 뜻으로 알맞은 것은?",
+       "es": "¿Dónde quedamos?",
+       "choices": [
+        "언제 만날까요?",
+        "어디서 만날까요?",
+        "어디에 살아요?",
+        "어디 가요?"
+       ],
+       "answer": 1,
+       "explain": "dónde는 '어디', quedamos는 '만날까요?'예요."
+      },
+      {
+       "type": "listen",
+       "q": "들리는 문장의 뜻으로 알맞은 것은?",
+       "es": "Vale, hasta mañana.",
+       "choices": [
+        "미안해, 못 가.",
+        "처음 뵙겠습니다.",
+        "좋아, 내일 봐.",
+        "고마워, 잘 지내."
+       ],
+       "answer": 2,
+       "explain": "Vale는 '좋아, 알겠어', hasta mañana는 '내일 봐'예요."
+      },
+      {
+       "type": "arrange",
+       "q": "'내일 시간 있어요?'가 되도록 단어를 순서대로 배열하세요",
+       "tokens": [
+        "¿Tienes",
+        "tiempo",
+        "mañana?"
+       ],
+       "koPron": "띠에네스 띠엠뽀 마냐나",
+       "explain": "tener(가지다) + tiempo(시간) + mañana(내일) 순서예요."
+      },
+      {
+       "type": "arrange",
+       "q": "'미안해요, 저는 안 돼요'가 되도록 단어를 순서대로 배열하세요",
+       "tokens": [
+        "Lo",
+        "siento,",
+        "no",
+        "puedo"
+       ],
+       "koPron": "로 시엔또 노 뿌에도",
+       "explain": "사과(Lo siento) 뒤에 no puedo(할 수 없어요)를 붙이면 부드러운 거절이 돼요."
+      }
+     ]
+    },
+    {
+     "id": "u5l3",
+     "title": "어떻게 가요?",
+     "goal": "ir 동사로 목적지까지 가는 방법과 걸리는 시간을 묻고 답할 수 있어요.",
+     "words": [
+      {
+       "es": "ir",
+       "ko": "가다",
+       "koPron": "이르"
+      },
+      {
+       "es": "el metro",
+       "ko": "지하철",
+       "koPron": "엘 메뜨로"
+      },
+      {
+       "es": "el autobús",
+       "ko": "버스",
+       "koPron": "엘 아우또부스"
+      },
+      {
+       "es": "el taxi",
+       "ko": "택시",
+       "koPron": "엘 딱시"
+      },
+      {
+       "es": "el tren",
+       "ko": "기차",
+       "koPron": "엘 뜨렌"
+      },
+      {
+       "es": "a pie",
+       "ko": "걸어서",
+       "koPron": "아 삐에"
+      },
+      {
+       "es": "la estación",
+       "ko": "역",
+       "koPron": "라 에스따씨온"
+      },
+      {
+       "es": "el billete",
+       "ko": "표, 승차권",
+       "koPron": "엘 비예떼"
+      },
+      {
+       "es": "el museo",
+       "ko": "박물관",
+       "koPron": "엘 무세오"
+      },
+      {
+       "es": "el centro",
+       "ko": "시내, 중심가",
+       "koPron": "엘 쎈뜨로"
+      },
+      {
+       "es": "tardar",
+       "ko": "(시간이) 걸리다",
+       "koPron": "따르다르"
+      },
+      {
+       "es": "el minuto",
+       "ko": "분",
+       "koPron": "엘 미누또"
+      }
+     ],
+     "keySentences": [
+      {
+       "es": "¿Cómo voy al museo?",
+       "ko": "박물관에 어떻게 가요?",
+       "koPron": "꼬모 보이 알 무세오",
+       "note": "길을 물을 때 가장 편한 한 문장이에요. museo 자리에 목적지만 바꾸면 돼요."
+      },
+      {
+       "es": "Voy en metro.",
+       "ko": "지하철로 가요.",
+       "koPron": "보이 엔 메뜨로",
+       "note": "교통수단 앞에는 en, 걸어갈 때만 a pie를 써요."
+      },
+      {
+       "es": "¿Cuánto se tarda?",
+       "ko": "얼마나 걸려요?",
+       "koPron": "꾸안또 세 따르다"
+      },
+      {
+       "es": "Se tarda veinte minutos.",
+       "ko": "20분 걸려요.",
+       "koPron": "세 따르다 베인떼 미누또스"
+      },
+      {
+       "es": "¿Dónde está la estación?",
+       "ko": "역이 어디예요?",
+       "koPron": "돈데 에스따 라 에스따씨온"
+      },
+      {
+       "es": "Un billete para el centro, por favor.",
+       "ko": "시내까지 표 한 장 주세요.",
+       "koPron": "운 비예떼 빠라 엘 쎈뜨로 뽀르 파보르"
+      }
+     ],
+     "dialogue": {
+      "title": "박물관 가는 길",
+      "situation": "수진이 카를로스에게 박물관까지 가는 방법을 물어봐요.",
+      "turns": [
+       {
+        "speaker": "A",
+        "name": "수진",
+        "es": "Carlos, ¿cómo voy al museo?",
+        "ko": "카를로스, 박물관에 어떻게 가?",
+        "koPron": "까를로스 꼬모 보이 알 무세오"
+       },
+       {
+        "speaker": "B",
+        "name": "카를로스",
+        "es": "Puedes ir en metro o en autobús.",
+        "ko": "지하철이나 버스로 갈 수 있어.",
+        "koPron": "뿌에데스 이르 엔 메뜨로 오 엔 아우또부스"
+       },
+       {
+        "speaker": "A",
+        "name": "수진",
+        "es": "¿Cuánto se tarda en metro?",
+        "ko": "지하철로는 얼마나 걸려?",
+        "koPron": "꾸안또 세 따르다 엔 메뜨로"
+       },
+       {
+        "speaker": "B",
+        "name": "카를로스",
+        "es": "Se tarda veinte minutos.",
+        "ko": "20분 걸려.",
+        "koPron": "세 따르다 베인떼 미누또스"
+       },
+       {
+        "speaker": "A",
+        "name": "수진",
+        "es": "¿Y a pie?",
+        "ko": "걸어서는?",
+        "koPron": "이 아 삐에"
+       },
+       {
+        "speaker": "B",
+        "name": "카를로스",
+        "es": "A pie se tarda una hora. Está lejos.",
+        "ko": "걸어서는 한 시간 걸려. 멀거든.",
+        "koPron": "아 삐에 세 따르다 우나 오라 에스따 레호스"
+       },
+       {
+        "speaker": "A",
+        "name": "수진",
+        "es": "Entonces voy en metro. ¿Dónde está la estación?",
+        "ko": "그럼 지하철로 갈래. 역이 어디야?",
+        "koPron": "엔똔쎄스 보이 엔 메뜨로 돈데 에스따 라 에스따씨온"
+       },
+       {
+        "speaker": "B",
+        "name": "카를로스",
+        "es": "Está muy cerca. Todo recto y a la derecha.",
+        "ko": "아주 가까워. 쭉 직진하다가 오른쪽이야.",
+        "koPron": "에스따 무이 쎄르까 또도 렉또 이 아 라 데레차"
+       },
+       {
+        "speaker": "A",
+        "name": "수진",
+        "es": "¡Muchas gracias, Carlos!",
+        "ko": "정말 고마워, 카를로스!",
+        "koPron": "무차스 그라씨아스 까를로스"
+       }
+      ]
+     },
+     "grammar": [
+      {
+       "title": "ir 동사 + a + 장소: ~에 가요",
+       "explain": "ir(가다)는 아주 많이 쓰는데 모양이 제멋대로 바뀌어요. yo voy(보이), tú vas(바스), él/ella/usted va(바), nosotros vamos(바모스), vosotros vais(바이스), ellos van(반). 목적지 앞에는 꼭 a를 붙여요.",
+       "examples": [
+        {
+         "es": "Voy a Madrid.",
+         "ko": "저는 마드리드에 가요.",
+         "koPron": "보이 아 마드리드"
+        },
+        {
+         "es": "¿Vas a la estación?",
+         "ko": "역에 가요?",
+         "koPron": "바스 아 라 에스따씨온"
+        },
+        {
+         "es": "Carlos va al centro.",
+         "ko": "카를로스는 시내에 가요.",
+         "koPron": "까를로스 바 알 쎈뜨로"
+        },
+        {
+         "es": "¿Vamos a pie?",
+         "ko": "우리 걸어갈까요?",
+         "koPron": "바모스 아 삐에"
+        }
+       ]
+      },
+      {
+       "title": "a + el = al (그리고 de + el = del)",
+       "explain": "a 뒤에 남성 관사 el이 오면 반드시 al로 붙여 씁니다. a el museo는 틀린 말이고 al museo가 맞아요. 마찬가지로 de + el은 del이 돼요. 여성 명사는 그대로 a la, de la로 씁니다.",
+       "examples": [
+        {
+         "es": "Voy al museo.",
+         "ko": "저는 박물관에 가요.",
+         "koPron": "보이 알 무세오"
+        },
+        {
+         "es": "Voy a la estación.",
+         "ko": "저는 역에 가요.",
+         "koPron": "보이 아 라 에스따씨온"
+        },
+        {
+         "es": "El hotel está cerca del museo.",
+         "ko": "호텔은 박물관 근처에 있어요.",
+         "koPron": "엘 오뗄 에스따 쎄르까 델 무세오"
+        },
+        {
+         "es": "De aquí al centro se tarda diez minutos.",
+         "ko": "여기서 시내까지 10분 걸려요.",
+         "koPron": "데 아끼 알 쎈뜨로 세 따르다 디에쓰 미누또스"
+        }
+       ]
+      },
+      {
+       "title": "교통수단은 en, 걷는 것만 a pie",
+       "explain": "'무엇을 타고'는 전부 en으로 통일돼요. en metro, en autobús, en taxi, en tren처럼 en 뒤에 관사 없이 교통수단만 붙이면 됩니다. 단 '걸어서'만 예외적으로 a pie라고 해요.",
+       "examples": [
+        {
+         "es": "Voy en taxi.",
+         "ko": "택시로 가요.",
+         "koPron": "보이 엔 딱시"
+        },
+        {
+         "es": "Vamos en autobús.",
+         "ko": "우리는 버스로 가요.",
+         "koPron": "바모스 엔 아우또부스"
+        },
+        {
+         "es": "Voy a pie.",
+         "ko": "걸어서 가요.",
+         "koPron": "보이 아 삐에"
+        }
+       ]
+      }
+     ],
+     "tips": [
+      "¿Cuánto se tarda?는 통째로 외우세요. 여행 중 하루에도 몇 번씩 쓰게 되는 문장이에요.",
+      "billete의 ll은 '예' 소리예요. '빌레떼'가 아니라 '비예떼'입니다. 중남미에서는 el boleto(엘 볼레또)라고 해요.",
+      "autobús는 스페인에서 el bus(엘 부스)로 줄여 말하기도 하고, 멕시코에서는 el camión, 아르헨티나에서는 el colectivo라고 불러요.",
+      "'저기까지'를 말할 때 de(에서) ... a(까지) 짝을 기억하세요. de la estación al museo = 역에서 박물관까지."
+     ],
+     "culture": "마드리드와 바르셀로나의 지하철(metro)은 노선이 촘촘하고 요금도 저렴해서 여행자에게 최고의 이동 수단이에요. 열 번 탈 수 있는 회수권이나 관광객용 교통 패스를 사면 훨씬 이득이랍니다. 스페인 사람들은 짧은 거리는 웬만하면 걸어 다니고, 도시 간 이동에는 고속열차 AVE(아베)를 자주 이용해요. 표를 살 때는 Un billete para..., por favor. 한 문장이면 충분합니다.",
+     "quiz": [
+      {
+       "type": "choice",
+       "q": "'박물관에 어떻게 가요?'를 바르게 말한 것은?",
+       "choices": [
+        "¿Dónde está el museo?",
+        "¿Cómo voy al museo?",
+        "¿Cuánto cuesta el museo?",
+        "¿Qué es el museo?"
+       ],
+       "answer": 1,
+       "explain": "방법을 물을 때는 ¿Cómo...?, 그리고 a + el은 al로 줄여 al museo라고 해요."
+      },
+      {
+       "type": "choice",
+       "q": "a와 el이 만나면 어떻게 될까요?",
+       "choices": [
+        "al",
+        "del",
+        "el a",
+        "a lo"
+       ],
+       "answer": 0,
+       "explain": "a + el = al이에요. de + el = del도 같이 외워 두세요."
+      },
+      {
+       "type": "choice",
+       "q": "'걸어서 가요'에 해당하는 표현은?",
+       "choices": [
+        "en pie",
+        "de pie",
+        "a pie",
+        "en pies"
+       ],
+       "answer": 2,
+       "explain": "교통수단은 en을 쓰지만 '걸어서'만 a pie라고 해요."
+      },
+      {
+       "type": "choice",
+       "q": "'20분 걸려요'를 바르게 말한 것은?",
+       "choices": [
+        "Son las veinte.",
+        "Cuesta veinte euros.",
+        "Hay veinte minutos.",
+        "Se tarda veinte minutos."
+       ],
+       "answer": 3,
+       "explain": "걸리는 시간은 Se tarda + 시간으로 말해요."
+      },
+      {
+       "type": "listen",
+       "q": "들리는 문장의 뜻으로 알맞은 것은?",
+       "es": "¿Cuánto se tarda?",
+       "choices": [
+        "얼마예요?",
+        "얼마나 걸려요?",
+        "몇 시예요?",
+        "어디예요?"
+       ],
+       "answer": 1,
+       "explain": "tardar는 '시간이 걸리다'예요. 가격을 묻는 ¿Cuánto cuesta?와 헷갈리지 마세요."
+      },
+      {
+       "type": "listen",
+       "q": "들리는 문장의 뜻으로 알맞은 것은?",
+       "es": "Voy en autobús.",
+       "choices": [
+        "택시로 가요.",
+        "지하철로 가요.",
+        "버스로 가요.",
+        "걸어서 가요."
+       ],
+       "answer": 2,
+       "explain": "autobús는 버스예요. 교통수단 앞에는 en을 붙입니다."
+      },
+      {
+       "type": "listen",
+       "q": "들리는 문장의 뜻으로 알맞은 것은?",
+       "es": "Un billete para el centro, por favor.",
+       "choices": [
+        "시내까지 표 한 장 주세요.",
+        "시내가 어디예요?",
+        "시내는 멀어요.",
+        "시내에 가고 싶어요."
+       ],
+       "answer": 0,
+       "explain": "billete는 표, para el centro는 '시내까지'라는 뜻이에요."
+      },
+      {
+       "type": "arrange",
+       "q": "'박물관에 어떻게 가요?'가 되도록 단어를 순서대로 배열하세요",
+       "tokens": [
+        "¿Cómo",
+        "voy",
+        "al",
+        "museo?"
+       ],
+       "koPron": "꼬모 보이 알 무세오",
+       "explain": "¿Cómo(어떻게) + voy(내가 가나요) + al museo(박물관에) 순서예요."
+      },
+      {
+       "type": "arrange",
+       "q": "'지하철로 20분 걸려요'가 되도록 단어를 순서대로 배열하세요",
+       "tokens": [
+        "Se",
+        "tarda",
+        "veinte",
+        "minutos",
+        "en",
+        "metro"
+       ],
+       "koPron": "세 따르다 베인떼 미누또스 엔 메뜨로",
+       "explain": "Se tarda + 시간 + en + 교통수단 순서로 말하면 자연스러워요."
+      }
+     ]
+    },
+    {
+     "id": "u5l4",
+     "title": "호텔과 실전 쇼핑",
+     "goal": "호텔에서 체크인하고, 가게에서 입어 보고 사이즈를 바꾸고 계산까지 스페인어로 할 수 있어요.",
+     "words": [
+      {
+       "es": "el hotel",
+       "ko": "호텔",
+       "koPron": "엘 오뗄"
+      },
+      {
+       "es": "la habitación",
+       "ko": "방, 객실",
+       "koPron": "라 아비따씨온"
+      },
+      {
+       "es": "la reserva",
+       "ko": "예약",
+       "koPron": "라 레세르바"
+      },
+      {
+       "es": "el pasaporte",
+       "ko": "여권",
+       "koPron": "엘 빠사뽀르떼"
+      },
+      {
+       "es": "la maleta",
+       "ko": "여행 가방",
+       "koPron": "라 말레따"
+      },
+      {
+       "es": "la llave",
+       "ko": "열쇠",
+       "koPron": "라 야베"
+      },
+      {
+       "es": "la tarjeta",
+       "ko": "카드",
+       "koPron": "라 따르헤따"
+      },
+      {
+       "es": "la talla",
+       "ko": "사이즈",
+       "koPron": "라 따야"
+      },
+      {
+       "es": "probar / probarse",
+       "ko": "시험해 보다 / 입어 보다",
+       "koPron": "쁘로바르 / 쁘로바르세"
+      },
+      {
+       "es": "pagar",
+       "ko": "지불하다, 계산하다",
+       "koPron": "빠가르"
+      },
+      {
+       "es": "grande",
+       "ko": "큰",
+       "koPron": "그란데"
+      },
+      {
+       "es": "pequeño / pequeña",
+       "ko": "작은",
+       "koPron": "뻬께뇨 / 뻬께냐"
+      }
+     ],
+     "keySentences": [
+      {
+       "es": "Tengo una reserva.",
+       "ko": "예약했어요.",
+       "koPron": "뗑고 우나 레세르바",
+       "note": "체크인할 때 첫마디예요. tener를 써서 '예약을 가지고 있다'라고 말해요."
+      },
+      {
+       "es": "¿Tiene una habitación libre?",
+       "ko": "빈 방 있나요?",
+       "koPron": "띠에네 우나 아비따씨온 리브레",
+       "note": "예약 없이 갔을 때 쓰는 문장이에요."
+      },
+      {
+       "es": "¿Puedo pagar con tarjeta?",
+       "ko": "카드로 결제해도 되나요?",
+       "koPron": "뿌에도 빠가르 꼰 따르헤따"
+      },
+      {
+       "es": "¿Me lo puedo probar?",
+       "ko": "이거 입어 봐도 되나요?",
+       "koPron": "메 로 뿌에도 쁘로바르"
+      },
+      {
+       "es": "¿Tiene una talla más grande?",
+       "ko": "더 큰 사이즈 있나요?",
+       "koPron": "띠에네 우나 따야 마스 그란데",
+       "note": "más pequeña로 바꾸면 '더 작은 사이즈'가 돼요."
+      },
+      {
+       "es": "Me lo llevo.",
+       "ko": "이걸로 할게요.",
+       "koPron": "메 로 예보",
+       "note": "가게에서 사겠다고 말하는 가장 자연스러운 한마디예요."
+      }
+     ],
+     "dialogue": {
+      "title": "호텔 체크인, 그리고 옷 가게에서",
+      "situation": "수진이 호텔에서 체크인을 하고, 오후에는 옷 가게에 들러요.",
+      "turns": [
+       {
+        "speaker": "A",
+        "name": "수진",
+        "es": "Hola, buenas tardes. Tengo una reserva.",
+        "ko": "안녕하세요. 예약했는데요.",
+        "koPron": "올라 부에나스 따르데스 뗑고 우나 레세르바"
+       },
+       {
+        "speaker": "B",
+        "name": "호텔 직원",
+        "es": "Muy bien. ¿Su nombre, por favor?",
+        "ko": "네. 성함이 어떻게 되세요?",
+        "koPron": "무이 비엔 수 놈브레 뽀르 파보르"
+       },
+       {
+        "speaker": "A",
+        "name": "수진",
+        "es": "Me llamo Sujin Kim. Aquí tiene mi pasaporte.",
+        "ko": "김수진입니다. 여기 제 여권이요.",
+        "koPron": "메 야모 수진 낌 아끼 띠에네 미 빠사뽀르떼"
+       },
+       {
+        "speaker": "B",
+        "name": "호텔 직원",
+        "es": "Gracias. Aquí tiene la llave. Es la habitación doce.",
+        "ko": "감사합니다. 여기 열쇠 있습니다. 12호실이에요.",
+        "koPron": "그라씨아스 아끼 띠에네 라 야베 에스 라 아비따씨온 도쎄"
+       },
+       {
+        "speaker": "A",
+        "name": "수진",
+        "es": "Hola, ¿me lo puedo probar?",
+        "ko": "안녕하세요, 이거 입어 봐도 되나요?",
+        "koPron": "올라 메 로 뿌에도 쁘로바르"
+       },
+       {
+        "speaker": "B",
+        "name": "점원",
+        "es": "Sí, claro.",
+        "ko": "네, 그럼요.",
+        "koPron": "씨 끌라로"
+       },
+       {
+        "speaker": "A",
+        "name": "수진",
+        "es": "¿Tiene una talla más grande?",
+        "ko": "더 큰 사이즈 있나요?",
+        "koPron": "띠에네 우나 따야 마스 그란데"
+       },
+       {
+        "speaker": "B",
+        "name": "점원",
+        "es": "Sí, aquí tiene.",
+        "ko": "네, 여기 있습니다.",
+        "koPron": "씨 아끼 띠에네"
+       },
+       {
+        "speaker": "A",
+        "name": "수진",
+        "es": "Perfecto. Me lo llevo. ¿Puedo pagar con tarjeta?",
+        "ko": "좋아요. 이걸로 할게요. 카드로 결제해도 되나요?",
+        "koPron": "뻬르펙또 메 로 예보 뿌에도 빠가르 꼰 따르헤따"
+       },
+       {
+        "speaker": "B",
+        "name": "점원",
+        "es": "Sí, claro. Muchas gracias.",
+        "ko": "네, 물론이죠. 정말 감사합니다.",
+        "koPron": "씨 끌라로 무차스 그라씨아스"
+       }
+      ]
+     },
+     "grammar": [
+      {
+       "title": "¿Puedo...?로 허락 구하기",
+       "explain": "'~해도 되나요?'는 puedo(제가 할 수 있어요) 뒤에 동사원형만 붙이면 끝이에요. 앞 레슨에서 배운 poder를 그대로 쓰는데, 여기서는 '능력'이 아니라 '허락'을 묻는 뜻이 됩니다. 짧고 정중해서 여행 중 가장 많이 쓰게 되는 공식이에요.",
+       "examples": [
+        {
+         "es": "¿Puedo pagar con tarjeta?",
+         "ko": "카드로 결제해도 되나요?",
+         "koPron": "뿌에도 빠가르 꼰 따르헤따"
+        },
+        {
+         "es": "¿Puedo ver la habitación?",
+         "ko": "방을 봐도 될까요?",
+         "koPron": "뿌에도 베르 라 아비따씨온"
+        },
+        {
+         "es": "¿Puedo probarme la talla grande?",
+         "ko": "큰 사이즈를 입어 봐도 될까요?",
+         "koPron": "뿌에도 쁘로바르메 라 따야 그란데"
+        }
+       ]
+      },
+      {
+       "title": "¿Tiene...? — 있나요?",
+       "explain": "가게나 호텔 직원에게는 존댓말 usted 형태인 tiene(띠에네)를 써요. 친구에게 쓰던 tienes에서 s만 빼면 됩니다. ¿Tiene + 원하는 것?만으로 '~있나요?'라는 정중한 질문이 완성돼요.",
+       "examples": [
+        {
+         "es": "¿Tiene una habitación libre?",
+         "ko": "빈 방 있나요?",
+         "koPron": "띠에네 우나 아비따씨온 리브레"
+        },
+        {
+         "es": "¿Tiene una talla más pequeña?",
+         "ko": "더 작은 사이즈 있나요?",
+         "koPron": "띠에네 우나 따야 마스 뻬께냐"
+        },
+        {
+         "es": "¿Tiene un plano de la ciudad?",
+         "ko": "도시 지도 있나요?",
+         "koPron": "띠에네 운 쁠라노 데 라 씨우닫"
+        }
+       ]
+      },
+      {
+       "title": "Me lo llevo — 물건을 lo, la로 받기",
+       "explain": "이미 이야기한 물건은 이름을 반복하지 않고 lo(남성 물건), la(여성 물건)로 받아요. el jersey(스웨터)를 살 때는 Me lo llevo., la camiseta(티셔츠)를 살 때는 Me la llevo.가 되죠. 시착도 마찬가지로 ¿Me lo puedo probar? / ¿Me la puedo probar?로 물어요.",
+       "examples": [
+        {
+         "es": "Me lo llevo.",
+         "ko": "이걸로 할게요. (남성 물건)",
+         "koPron": "메 로 예보"
+        },
+        {
+         "es": "Me la llevo.",
+         "ko": "이걸로 할게요. (여성 물건)",
+         "koPron": "메 라 예보"
+        },
+        {
+         "es": "¿Me lo puedo probar?",
+         "ko": "이거 입어 봐도 되나요?",
+         "koPron": "메 로 뿌에도 쁘로바르"
+        }
+       ]
+      }
+     ],
+     "tips": [
+      "habitación의 h는 묵음이에요. '하비따씨온'이 아니라 '아비따씨온'입니다.",
+      "llave는 '야베', talla는 '따야'예요. ll이 보이면 '야·예' 소리를 떠올리세요.",
+      "tarjeta의 j는 'ㅎ' 소리라서 '따르제따'가 아니라 '따르헤따'로 읽어요.",
+      "사겠다고 결정했으면 Me lo llevo., 조금 더 보고 싶으면 Solo estoy mirando.(쏠로 에스또이 미란도, 그냥 구경 중이에요)라고 하면 편해요."
+     ],
+     "culture": "스페인 상점은 보통 오전 10시에 열어 오후 2시쯤 문을 닫고, 낮잠 시간(la siesta)이 지난 오후 4~5시에 다시 열어 8~9시까지 영업해요. 일요일에는 대부분 문을 닫으니 여행 일정을 짤 때 꼭 기억하세요. 1월과 7월에는 las rebajas(라스 레바하스)라고 부르는 정기 세일 기간이 있어서 옷값이 절반까지 떨어지기도 한답니다. 호텔 체크인 때는 여권 제시가 의무라서 el pasaporte라는 단어를 꼭 알아 두면 좋아요.",
+     "quiz": [
+      {
+       "type": "choice",
+       "q": "호텔에서 '예약했어요'라고 말할 때 알맞은 문장은?",
+       "choices": [
+        "Tengo una reserva.",
+        "Quiero una reserva.",
+        "Hay una reserva.",
+        "Soy una reserva."
+       ],
+       "answer": 0,
+       "explain": "예약은 tener(가지다)를 써서 Tengo una reserva.라고 말해요."
+      },
+      {
+       "type": "choice",
+       "q": "'카드로 결제해도 되나요?'를 바르게 말한 것은?",
+       "choices": [
+        "¿Cuánto cuesta con tarjeta?",
+        "¿Puedo pagar con tarjeta?",
+        "¿Tiene tarjeta?",
+        "¿Dónde está la tarjeta?"
+       ],
+       "answer": 1,
+       "explain": "허락은 ¿Puedo + 동사원형?이에요. pagar con tarjeta는 '카드로 결제하다'입니다."
+      },
+      {
+       "type": "choice",
+       "q": "옷이 작을 때 점원에게 할 말은?",
+       "choices": [
+        "¿Tiene una talla más pequeña?",
+        "¿Tiene una habitación libre?",
+        "¿Tiene una talla más grande?",
+        "¿Puedo pagar más grande?"
+       ],
+       "answer": 2,
+       "explain": "más grande는 '더 큰'이에요. 반대로 크면 más pequeña라고 하면 됩니다."
+      },
+      {
+       "type": "choice",
+       "q": "'Me lo llevo.'의 뜻은?",
+       "choices": [
+        "안 살게요.",
+        "입어 볼게요.",
+        "조금 깎아 주세요.",
+        "이걸로 살게요."
+       ],
+       "answer": 3,
+       "explain": "llevarse는 '가져가다'예요. 가게에서는 '이걸로 살게요'라는 뜻이 됩니다."
+      },
+      {
+       "type": "listen",
+       "q": "들리는 문장의 뜻으로 알맞은 것은?",
+       "es": "¿Tiene una habitación libre?",
+       "choices": [
+        "빈 방 있나요?",
+        "방이 어디예요?",
+        "방이 얼마예요?",
+        "열쇠 있나요?"
+       ],
+       "answer": 0,
+       "explain": "libre는 '비어 있는'이에요. 예약 없이 방을 구할 때 쓰는 문장입니다."
+      },
+      {
+       "type": "listen",
+       "q": "들리는 문장의 뜻으로 알맞은 것은?",
+       "es": "¿Me lo puedo probar?",
+       "choices": [
+        "이거 살 수 있나요?",
+        "이거 입어 봐도 되나요?",
+        "이거 얼마예요?",
+        "이거 주세요."
+       ],
+       "answer": 1,
+       "explain": "probar는 '입어 보다'예요. lo는 앞에서 말한 그 물건을 가리킵니다."
+      },
+      {
+       "type": "listen",
+       "q": "들리는 문장의 뜻으로 알맞은 것은?",
+       "es": "Aquí tiene la llave.",
+       "choices": [
+        "여기 여권이요.",
+        "여기 표요.",
+        "여기 열쇠요.",
+        "여기 가방이요."
+       ],
+       "answer": 2,
+       "explain": "llave는 열쇠예요. Aquí tiene는 물건을 건네며 '여기 있습니다'라는 뜻입니다."
+      },
+      {
+       "type": "arrange",
+       "q": "'카드로 결제해도 되나요?'가 되도록 단어를 순서대로 배열하세요",
+       "tokens": [
+        "¿Puedo",
+        "pagar",
+        "con",
+        "tarjeta?"
+       ],
+       "koPron": "뿌에도 빠가르 꼰 따르헤따",
+       "explain": "¿Puedo + 동사원형(pagar) + con tarjeta(카드로) 순서예요."
+      },
+      {
+       "type": "arrange",
+       "q": "'빈 방 있나요?'가 되도록 단어를 순서대로 배열하세요",
+       "tokens": [
+        "¿Tiene",
+        "una",
+        "habitación",
+        "libre?"
+       ],
+       "koPron": "띠에네 우나 아비따씨온 리브레",
+       "explain": "¿Tiene + 명사 + 형용사 순서로, 형용사 libre는 명사 뒤에 놓여요."
+      }
+     ]
+    },
+    {
+     "id": "u5l5",
+     "title": "종합: 마드리드 여행기",
+     "goal": "공항 도착부터 호텔, 길 찾기, 식당, 쇼핑, 작별까지 여행 하루를 스페인어로 해낼 수 있어요.",
+     "words": [
+      {
+       "es": "el viaje",
+       "ko": "여행",
+       "koPron": "엘 비아헤"
+      },
+      {
+       "es": "el aeropuerto",
+       "ko": "공항",
+       "koPron": "엘 아에로뿌에르또"
+      },
+      {
+       "es": "la recepción",
+       "ko": "프런트, 안내 데스크",
+       "koPron": "라 레쎕씨온"
+      },
+      {
+       "es": "el plano",
+       "ko": "(도시) 지도",
+       "koPron": "엘 쁠라노"
+      },
+      {
+       "es": "la plaza",
+       "ko": "광장",
+       "koPron": "라 쁠라싸"
+      },
+      {
+       "es": "el recuerdo",
+       "ko": "기념품",
+       "koPron": "엘 레꾸에르도"
+      },
+      {
+       "es": "el turista / la turista",
+       "ko": "관광객",
+       "koPron": "엘 뚜리스따 / 라 뚜리스따"
+      },
+      {
+       "es": "la despedida",
+       "ko": "작별 인사",
+       "koPron": "라 데스뻬디다"
+      },
+      {
+       "es": "bonito / bonita",
+       "ko": "예쁜, 멋진",
+       "koPron": "보니또 / 보니따"
+      },
+      {
+       "es": "¡buen viaje!",
+       "ko": "좋은 여행 되세요!",
+       "koPron": "부엔 비아헤"
+      }
+     ],
+     "keySentences": [
+      {
+       "es": "¿Cómo voy al centro?",
+       "ko": "시내에 어떻게 가요?",
+       "koPron": "꼬모 보이 알 쎈뜨로",
+       "note": "공항에 내리자마자 쓰게 되는 문장이에요."
+      },
+      {
+       "es": "Tengo una reserva.",
+       "ko": "예약했어요.",
+       "koPron": "뗑고 우나 레세르바"
+      },
+      {
+       "es": "Para mí, una paella, por favor.",
+       "ko": "저는 빠에야로 할게요.",
+       "koPron": "빠라 미 우나 빠에야 뽀르 파보르",
+       "note": "4단원에서 배운 주문 공식이에요."
+      },
+      {
+       "es": "¿Cuánto cuesta?",
+       "ko": "얼마예요?",
+       "koPron": "꾸안또 꾸에스따"
+      },
+      {
+       "es": "Me lo llevo.",
+       "ko": "이걸로 할게요.",
+       "koPron": "메 로 예보"
+      },
+      {
+       "es": "¡Buen viaje! Hasta pronto.",
+       "ko": "좋은 여행 되세요! 곧 또 봐요.",
+       "koPron": "부엔 비아헤 아스따 쁘론또"
+      }
+     ],
+     "dialogue": {
+      "title": "수진의 마드리드 하루",
+      "situation": "공항 도착부터 호텔, 길 찾기, 식당, 쇼핑, 작별까지 수진의 여행 하루를 따라가 봐요.",
+      "turns": [
+       {
+        "speaker": "A",
+        "name": "수진",
+        "es": "Hola, buenas tardes. Al Hotel Sol, por favor.",
+        "ko": "안녕하세요. 솔 호텔로 가 주세요.",
+        "koPron": "올라 부에나스 따르데스 알 오뗄 솔 뽀르 파보르"
+       },
+       {
+        "speaker": "B",
+        "name": "택시 기사",
+        "es": "Muy bien. Se tarda veinte minutos.",
+        "ko": "알겠습니다. 20분 걸려요.",
+        "koPron": "무이 비엔 세 따르다 베인떼 미누또스"
+       },
+       {
+        "speaker": "A",
+        "name": "수진",
+        "es": "Hola, tengo una reserva. Aquí tiene mi pasaporte.",
+        "ko": "안녕하세요, 예약했어요. 여기 제 여권이요.",
+        "koPron": "올라 뗑고 우나 레세르바 아끼 띠에네 미 빠사뽀르떼"
+       },
+       {
+        "speaker": "B",
+        "name": "호텔 직원",
+        "es": "Gracias. Aquí tiene la llave y un plano de Madrid.",
+        "ko": "감사합니다. 여기 열쇠와 마드리드 지도요.",
+        "koPron": "그라씨아스 아끼 띠에네 라 야베 이 운 쁠라노 데 마드리드"
+       },
+       {
+        "speaker": "A",
+        "name": "수진",
+        "es": "¿Cómo voy a la Plaza Mayor?",
+        "ko": "마요르 광장에 어떻게 가요?",
+        "koPron": "꼬모 보이 아 라 쁠라싸 마요르"
+       },
+       {
+        "speaker": "B",
+        "name": "호텔 직원",
+        "es": "En metro se tarda diez minutos. Está muy cerca.",
+        "ko": "지하철로 10분 걸려요. 아주 가까워요.",
+        "koPron": "엔 메뜨로 세 따르다 디에쓰 미누또스 에스따 무이 쎄르까"
+       },
+       {
+        "speaker": "A",
+        "name": "수진",
+        "es": "Para mí, una paella y un agua, por favor.",
+        "ko": "저는 빠에야하고 물 주세요.",
+        "koPron": "빠라 미 우나 빠에야 이 운 아구아 뽀르 파보르"
+       },
+       {
+        "speaker": "B",
+        "name": "종업원",
+        "es": "Aquí tiene. ¡Buen provecho!",
+        "ko": "여기 있습니다. 맛있게 드세요!",
+        "koPron": "아끼 띠에네 부엔 쁘로베초"
+       },
+       {
+        "speaker": "A",
+        "name": "수진",
+        "es": "Me llevo este recuerdo. Es muy bonito.",
+        "ko": "이 기념품으로 할게요. 아주 예뻐요.",
+        "koPron": "메 예보 에스떼 레꾸에르도 에스 무이 보니또"
+       },
+       {
+        "speaker": "B",
+        "name": "카를로스",
+        "es": "¡Buen viaje, Sujin! Hasta pronto.",
+        "ko": "좋은 여행 돼, 수진! 곧 또 보자.",
+        "koPron": "부엔 비아헤 수진 아스따 쁘론또"
+       }
+      ]
+     },
+     "grammar": [
+      {
+       "title": "여행 5장면, 문장 하나씩만 기억하세요",
+       "explain": "여행에서 필요한 스페인어는 생각보다 적어요. 장면마다 대표 문장 하나면 대화가 시작됩니다. 공항과 택시에서는 목적지 + por favor, 호텔에서는 Tengo una reserva., 길에서는 ¿Cómo voy a...?, 식당에서는 Para mí..., 가게에서는 Me lo llevo. 이 다섯 개가 뼈대예요.",
+       "examples": [
+        {
+         "es": "Al Hotel Sol, por favor.",
+         "ko": "솔 호텔로 가 주세요.",
+         "koPron": "알 오뗄 솔 뽀르 파보르"
+        },
+        {
+         "es": "Tengo una reserva.",
+         "ko": "예약했어요.",
+         "koPron": "뗑고 우나 레세르바"
+        },
+        {
+         "es": "¿Cómo voy a la plaza?",
+         "ko": "광장에 어떻게 가요?",
+         "koPron": "꼬모 보이 아 라 쁠라싸"
+        },
+        {
+         "es": "Para mí, una paella, por favor.",
+         "ko": "저는 빠에야로 할게요.",
+         "koPron": "빠라 미 우나 빠에야 뽀르 파보르"
+        },
+        {
+         "es": "Me lo llevo. ¿Puedo pagar con tarjeta?",
+         "ko": "이걸로 할게요. 카드로 결제해도 되나요?",
+         "koPron": "메 로 예보 뿌에도 빠가르 꼰 따르헤따"
+        }
+       ]
+      },
+      {
+       "title": "유닛 5 핵심 총정리",
+       "explain": "이번 유닛의 문법은 네 가지예요. 첫째 날씨는 Hace + 명사, 둘째 가까운 미래는 ir a + 동사원형, 셋째 이동은 ir + a + 장소와 en + 교통수단(a + el은 al!), 넷째 허락과 가능은 poder + 동사원형이에요. 여기에 약속의 quedar만 더하면 여행 회화의 기본기가 완성됩니다.",
+       "examples": [
+        {
+         "es": "Hoy hace sol, pero mañana va a llover.",
+         "ko": "오늘은 해가 나지만 내일은 비가 올 거예요.",
+         "koPron": "오이 아쎄 솔 뻬로 마냐나 바 아 요베르"
+        },
+        {
+         "es": "Voy al museo en metro.",
+         "ko": "저는 지하철로 박물관에 가요.",
+         "koPron": "보이 알 무세오 엔 메뜨로"
+        },
+        {
+         "es": "¿Quedamos a las nueve en la plaza?",
+         "ko": "9시에 광장에서 만날까요?",
+         "koPron": "께다모스 아 라스 누에베 엔 라 쁠라싸"
+        },
+        {
+         "es": "Lo siento, hoy no puedo.",
+         "ko": "미안해요, 오늘은 안 돼요.",
+         "koPron": "로 시엔또 오이 노 뿌에도"
+        }
+       ]
+      }
+     ],
+     "tips": [
+      "식당에서 음식이 나오면 ¡Buen provecho!(부엔 쁘로베초)라고 인사해요. '맛있게 드세요'라는 뜻으로, 옆 테이블 사람에게도 자주 건넨답니다.",
+      "여행 중에는 완벽한 문장보다 표정과 por favor, gracias가 더 강력해요. 짧게 말하고 웃으면 대부분 통합니다.",
+      "잘 안 들릴 때는 ¿Puede hablar más despacio, por favor?(뿌에데 아블라르 마스 데스빠씨오 뽀르 파보르, 조금 천천히 말해 주시겠어요?)를 꺼내 보세요.",
+      "매일 이 대화를 소리 내어 한 번씩 읽으면 5분 만에 전 과정을 복습할 수 있어요."
+     ],
+     "culture": "축하합니다! 인사부터 숫자, 자기소개, 일상 회화, 여행 실전까지 전 과정을 끝내셨어요. 이제 여러분의 실력은 유럽 공통 기준의 A1 초입에 해당하니, 다음 목표는 스페인어 공인 시험 DELE A1에 도전하고 이어서 A2까지 확장하는 거예요. 가장 중요한 건 습관입니다. 하루 10분씩 지난 레슨의 대화를 소리 내어 읽고, 스페인어 노래나 짧은 영상을 곁들이면 실력이 계속 자라요. ¡Buen viaje con el español! (스페인어와 함께 좋은 여행 되세요!)",
+     "quiz": [
+      {
+       "type": "choice",
+       "q": "호텔 프런트에서 체크인할 때 첫마디로 알맞은 것은?",
+       "choices": [
+        "Me lo llevo.",
+        "Tengo una reserva.",
+        "¿Cuánto se tarda?",
+        "Hace calor."
+       ],
+       "answer": 1,
+       "explain": "체크인은 Tengo una reserva.(예약했어요.)로 시작해요."
+      },
+      {
+       "type": "choice",
+       "q": "식당에서 '저는 빠에야로 할게요'를 바르게 말한 것은?",
+       "choices": [
+        "Para mí, una paella.",
+        "Por favor, una paella es.",
+        "Quiero paella soy.",
+        "Hay una paella."
+       ],
+       "answer": 0,
+       "explain": "주문할 때는 Para mí(저는) + 음식 이름이면 충분해요."
+      },
+      {
+       "type": "choice",
+       "q": "가격을 물을 때 쓰는 문장은?",
+       "choices": [
+        "¿Cuánto se tarda?",
+        "¿Qué tal?",
+        "¿Cuánto cuesta?",
+        "¿Cómo voy?"
+       ],
+       "answer": 2,
+       "explain": "가격은 ¿Cuánto cuesta?, 걸리는 시간은 ¿Cuánto se tarda?예요."
+      },
+      {
+       "type": "choice",
+       "q": "'더워요'를 바르게 말한 것은?",
+       "choices": [
+        "Es calor.",
+        "Hay calor.",
+        "Está calor.",
+        "Hace calor."
+       ],
+       "answer": 3,
+       "explain": "날씨는 ser나 estar가 아니라 hacer를 써서 Hace calor.라고 해요."
+      },
+      {
+       "type": "choice",
+       "q": "공항에서 떠나는 친구에게 하는 인사로 알맞은 것은?",
+       "choices": [
+        "¡Buen provecho!",
+        "¡Buen viaje!",
+        "¡Buenos días!",
+        "¡Mucho gusto!"
+       ],
+       "answer": 1,
+       "explain": "¡Buen viaje!는 '좋은 여행 되세요!'예요. ¡Buen provecho!는 식사할 때 쓰는 인사입니다."
+      },
+      {
+       "type": "listen",
+       "q": "들리는 문장의 뜻으로 알맞은 것은?",
+       "es": "¿Cómo voy al centro?",
+       "choices": [
+        "시내에 어떻게 가요?",
+        "시내가 얼마나 멀어요?",
+        "시내에 뭐가 있어요?",
+        "시내에서 뭐 해요?"
+       ],
+       "answer": 0,
+       "explain": "¿Cómo voy a...?는 '~에 어떻게 가요?'예요. a + el centro는 al centro가 됩니다."
+      },
+      {
+       "type": "listen",
+       "q": "들리는 문장의 뜻으로 알맞은 것은?",
+       "es": "¿Puedo pagar con tarjeta?",
+       "choices": [
+        "카드 있으세요?",
+        "현금으로 낼게요.",
+        "카드로 결제해도 되나요?",
+        "얼마예요?"
+       ],
+       "answer": 2,
+       "explain": "¿Puedo + 동사원형?은 '~해도 되나요?'라는 허락 표현이에요."
+      },
+      {
+       "type": "listen",
+       "q": "들리는 문장의 뜻으로 알맞은 것은?",
+       "es": "Se tarda veinte minutos en metro.",
+       "choices": [
+        "지하철이 20유로예요.",
+        "지금 8시 20분이에요.",
+        "지하철로 12분 걸려요.",
+        "지하철로 20분 걸려요."
+       ],
+       "answer": 3,
+       "explain": "Se tarda + 시간 + en + 교통수단이에요. veinte는 20입니다."
+      },
+      {
+       "type": "arrange",
+       "q": "'시내에 어떻게 가요?'가 되도록 단어를 순서대로 배열하세요",
+       "tokens": [
+        "¿Cómo",
+        "voy",
+        "al",
+        "centro?"
+       ],
+       "koPron": "꼬모 보이 알 쎈뜨로",
+       "explain": "¿Cómo(어떻게) + voy(가나요) + al centro(시내로) 순서예요."
+      },
+      {
+       "type": "arrange",
+       "q": "'저는 빠에야 하나 주세요'가 되도록 단어를 순서대로 배열하세요",
+       "tokens": [
+        "Para",
+        "mí,",
+        "una",
+        "paella,",
+        "por",
+        "favor"
+       ],
+       "koPron": "빠라 미 우나 빠에야 뽀르 파보르",
+       "explain": "Para mí(저는) + 주문할 음식 + por favor 순서로 말하면 완벽한 주문이 돼요."
       }
      ]
     }
