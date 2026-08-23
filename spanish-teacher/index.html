@@ -356,6 +356,7 @@ function loadStore() {
         completed: d.completed || {},
         srs: d.srs || {},
         streak: d.streak || { last: '', count: 0 },
+        lastPos: d.lastPos || null,            // 마지막으로 보던 위치 {id, step}
         settings: Object.assign({ koPron: true, rate: 1, freeNav: false }, d.settings || {}),
     };
 }
@@ -437,6 +438,19 @@ function isUnlocked(idx) {
     if (idx === 0) return true;
     return isDone(ALL[idx - 1].id);
 }
+function savePos(id, step) {
+    store.lastPos = { id: id, step: step };
+    save();
+}
+function resumeTarget() {
+    const lp = store.lastPos;
+    if (lp && LESSON_BY_ID[lp.id] !== undefined && !isDone(lp.id)) {
+        const idx = LESSON_BY_ID[lp.id];
+        if (isUnlocked(idx)) return { idx: idx, step: Math.min(4, Math.max(0, lp.step || 0)) };
+    }
+    const n = nextLessonIdx();
+    return n >= 0 ? { idx: n, step: 0 } : null;
+}
 function nextLessonIdx() {
     for (let i = 0; i < ALL.length; i++) if (!isDone(ALL[i].id)) return i;
     return -1;
@@ -454,6 +468,42 @@ function addWordsToSrs(lesson) {
         if (!store.srs[k]) store.srs[k] = { es: w.es, ko: w.ko, koPron: w.koPron || '', box: 1, due: t };
     });
     save();
+}
+
+/* ═══════════════════ 진도 백업 · 복원 ═══════════════════ */
+const BACKUP_TAG = '올라 스페인어';
+function b64encode(str) {
+    const bytes = new TextEncoder().encode(str);
+    let bin = '';
+    const CH = 0x8000;
+    for (let i = 0; i < bytes.length; i += CH) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CH));
+    return btoa(bin);
+}
+function b64decode(b64) {
+    const bin = atob(b64.replace(/\s+/g, ''));
+    const bytes = Uint8Array.from(bin, c => c.charCodeAt(0));
+    return new TextDecoder().decode(bytes);
+}
+function exportProgress() {
+    return b64encode(JSON.stringify({ v: 1, tag: BACKUP_TAG, data: store }));
+}
+function importProgress(code) {
+    if (!code || !code.trim()) throw new Error('코드를 붙여넣어 주세요.');
+    let obj;
+    try { obj = JSON.parse(b64decode(code)); }
+    catch (e) { throw new Error('코드를 읽을 수 없어요. 전체를 빠짐없이 복사했는지 확인해 주세요.'); }
+    if (!obj || !obj.data || typeof obj.data !== 'object') throw new Error('올바른 백업 코드가 아니에요.');
+    if (obj.tag && obj.tag !== BACKUP_TAG) throw new Error('다른 앱(' + obj.tag + ')의 백업 코드예요.');
+    const d = obj.data;
+    store = {
+        completed: d.completed || {},
+        srs: d.srs || {},
+        streak: d.streak || { last: '', count: 0 },
+        lastPos: d.lastPos || null,
+        settings: Object.assign({ koPron: true, rate: 1, freeNav: false }, d.settings || {}),
+    };
+    save();
+    return { lessons: Object.keys(store.completed).length, cards: Object.keys(store.srs).length };
 }
 
 /* ═══════════════════ 라우터 ═══════════════════ */
@@ -506,8 +556,10 @@ function renderNoData() {
 
 /* ═══════════════════ 홈 (학습 경로) ═══════════════════ */
 function renderHome() {
-    const nextIdx = nextLessonIdx();
-    const next = nextIdx >= 0 ? ALL[nextIdx] : null;
+    const rt = resumeTarget();
+    const nextIdx = rt ? rt.idx : -1;
+    const resumeStep = rt ? rt.step : 0;
+    const next = rt ? ALL[rt.idx] : null;
     if (S.openUnit === null && next) S.openUnit = next.unitId;
     const due = dueCards().length;
 
@@ -520,9 +572,11 @@ function renderHome() {
 
     if (next) {
         html += '<div class="continue-card" id="continueBtn">' +
-            '<div class="cc-label">' + (doneCount() === 0 ? '🚀 학습 시작하기' : '▶ 이어서 학습하기') + '</div>' +
+            '<div class="cc-label">' + (doneCount() === 0 && resumeStep === 0 ? '🚀 학습 시작하기' : (resumeStep > 0 ? '📍 멈춘 곳부터 이어서' : '▶ 이어서 학습하기')) + '</div>' +
             '<div class="cc-title">' + esc(next.unitIcon) + ' ' + esc(next.title) + '</div>' +
-            '<div class="cc-goal">' + esc(next.goal || '') + '</div></div>';
+            '<div class="cc-goal">' + (resumeStep > 0
+                ? '지난번 「' + STEP_NAMES[resumeStep] + '」 단계까지 보셨어요 — 여기서 이어집니다'
+                : esc(next.goal || '')) + '</div></div>';
     } else {
         html += '<div class="continue-card" id="continueBtn"><div class="cc-label">🎉 전 과정 수료!</div>' +
             '<div class="cc-title">모든 레슨을 완료했어요</div>' +
@@ -550,7 +604,8 @@ function renderHome() {
                 const gi = LESSON_BY_ID[l.id];
                 const done_ = isDone(l.id), unlocked = isUnlocked(gi);
                 const cls = done_ ? 'done' : (unlocked ? 'current' : 'locked');
-                const stateIco = done_ ? '✅' : (unlocked ? '▶' : '🔒');
+                const atHere = !done_ && store.lastPos && store.lastPos.id === l.id;
+                const stateIco = done_ ? '✅' : (unlocked ? (atHere ? '📍' : '▶') : '🔒');
                 html += '<div class="lesson-row ' + cls + '" data-lesson="' + gi + '" ' + (unlocked ? '' : 'data-locked="1"') + '>' +
                     '<div class="lesson-num">' + (li + 1) + '</div>' +
                     '<div><div class="l-title">' + esc(l.title) + '</div><div class="l-goal">' + esc(l.goal || '') + '</div></div>' +
@@ -563,7 +618,7 @@ function renderHome() {
     $main.innerHTML = html;
 
     const cb = document.getElementById('continueBtn');
-    if (cb) cb.addEventListener('click', () => { if (nextIdx >= 0) openLesson(nextIdx); else go('review'); });
+    if (cb) cb.addEventListener('click', () => { if (nextIdx >= 0) openLesson(nextIdx, resumeStep); else go('review'); });
     const gb = document.getElementById('guideBanner');
     if (gb) gb.addEventListener('click', () => go('guide'));
     const rb = document.getElementById('reviewBanner');
@@ -581,8 +636,9 @@ function renderHome() {
     function stat(e, n, l) { return '<div class="stat"><div class="num">' + e + ' ' + n + '</div><div class="lbl">' + l + '</div></div>'; }
 }
 
-function openLesson(idx) {
-    S.lessonIdx = idx; S.step = 0; S.quiz = null;
+function openLesson(idx, step) {
+    S.lessonIdx = idx; S.step = step || 0; S.quiz = null;
+    savePos(ALL[idx].id, S.step);
     go('lesson');
 }
 
@@ -622,6 +678,7 @@ function renderLesson() {
 
 function renderStep() {
     const l = ALL[S.lessonIdx];
+    savePos(l.id, S.step);
     const body = document.getElementById('stepBody');
     $main.querySelectorAll('.step-chip').forEach((c, i) => c.classList.toggle('active', i === S.step));
     stopSpeak();
@@ -1121,12 +1178,49 @@ function renderSettings() {
         setRow('학습 데이터', '완료 ' + doneCount() + '레슨 · 단어장 ' + Object.keys(store.srs).length + '장 · 이 브라우저에 저장됨',
             '<button class="btn small" id="resetBtn" style="background:var(--error)">초기화</button>') +
         '</div>';
+    h += '<div class="card">' +
+        '<div style="font-size:14px;font-weight:700;margin-bottom:2px">📦 진도 백업 · 다른 기기로 옮기기</div>' +
+        '<div class="muted" style="margin-bottom:10px">진도는 이 브라우저에만 저장돼요. 폰↔PC로 옮기거나 안전하게 백업하려면 코드를 사용하세요.</div>' +
+        '<div style="display:flex;gap:8px">' +
+        '<button class="btn small ghost" id="backupBtn" style="flex:1">백업 코드 만들기</button>' +
+        '<button class="btn small ghost" id="restoreBtn" style="flex:1">코드로 복원하기</button>' +
+        '</div><div id="backupArea"></div></div>';
     h += '<div class="muted" style="text-align:center;margin-top:16px">올라 스페인어 v1.0 · 오프라인에서도 동작해요 💃<br>발음은 브라우저 내장 스페인어 음성(TTS)을 사용합니다</div>';
     $main.innerHTML = h;
 
     document.getElementById('setKoPron').addEventListener('change', e => { store.settings.koPron = e.target.checked; save(); });
     document.getElementById('setRate').addEventListener('change', e => { store.settings.rate = parseFloat(e.target.value); save(); renderSettings(); speak('Hola', 0.95); });
     document.getElementById('setFree').addEventListener('change', e => { store.settings.freeNav = e.target.checked; save(); });
+    const area = () => document.getElementById('backupArea');
+    document.getElementById('backupBtn').addEventListener('click', () => {
+        area().innerHTML = '<div class="muted" style="margin:12px 0 6px">아래 코드 전체를 복사해서, 다른 기기의 <b>[코드로 복원하기]</b>에 붙여넣으세요.<br>완료 ' + doneCount() + '레슨 · 단어장 ' + Object.keys(store.srs).length + '장이 담겨 있어요.</div>' +
+            '<textarea id="backupCode" readonly style="width:100%;height:88px;font-size:11px;border:1px solid var(--border);border-radius:10px;padding:8px;font-family:monospace;background:#f8fafc"></textarea>' +
+            '<button class="btn small block" id="copyBtn" style="margin-top:6px">📋 코드 복사하기</button>';
+        const ta = document.getElementById('backupCode');
+        ta.value = exportProgress();
+        document.getElementById('copyBtn').addEventListener('click', () => {
+            ta.select(); ta.setSelectionRange(0, 999999);
+            let ok = false;
+            try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+            if (!ok && navigator.clipboard) { navigator.clipboard.writeText(ta.value).then(() => alert('복사했어요! 📋')); return; }
+            alert(ok ? '복사했어요! 📋' : '복사가 안 되면 코드를 길게 눌러 직접 복사해 주세요.');
+        });
+    });
+    document.getElementById('restoreBtn').addEventListener('click', () => {
+        area().innerHTML = '<div class="muted" style="margin:12px 0 6px">다른 기기에서 만든 백업 코드를 붙여넣으세요.<br>⚠️ 지금 이 기기의 진도는 코드의 내용으로 <b>덮어써집니다.</b></div>' +
+            '<textarea id="restoreCode" placeholder="여기에 백업 코드를 붙여넣으세요" style="width:100%;height:88px;font-size:11px;border:1px solid var(--border);border-radius:10px;padding:8px;font-family:monospace"></textarea>' +
+            '<button class="btn small block" id="doRestore" style="margin-top:6px">진도 복원하기</button>';
+        document.getElementById('doRestore').addEventListener('click', () => {
+            const code = document.getElementById('restoreCode').value;
+            try {
+                const r = importProgress(code);
+                alert('복원 완료! 🎉\n완료 ' + r.lessons + '레슨 · 단어장 ' + r.cards + '장을 되살렸어요.');
+                go('home');
+            } catch (e) {
+                alert('복원하지 못했어요.\n' + e.message);
+            }
+        });
+    });
     document.getElementById('resetBtn').addEventListener('click', () => {
         if (confirm('정말 모든 학습 기록을 지울까요?\n(완료한 레슨, 복습 단어장, 연속 기록이 사라져요)')) {
             localStorage.removeItem(LS_KEY);
