@@ -177,6 +177,13 @@
             padding: 12px 14px; font-size: 13px; margin: 14px 0 8px; line-height: 1.6;
         }
         .tip-box b { color: #7a5f00; }
+        .story-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 14px; margin-bottom: 10px; display: flex; gap: 12px; align-items: center; cursor: pointer; }
+        .story-card.locked { opacity: .5; cursor: default; }
+        .story-card .st-emoji { width: 46px; height: 46px; border-radius: 12px; background: var(--red-soft); display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; }
+        .story-card .st-title { font-size: 14.5px; font-weight: 700; }
+        .story-card .st-desc { font-size: 11.5px; color: var(--text-light); margin-top: 2px; }
+        .story-card .st-lv { margin-left: auto; font-size: 11px; font-weight: 700; color: var(--primary); background: var(--red-soft); border-radius: 8px; padding: 4px 8px; white-space: nowrap; }
+        .story-sent { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px; margin-bottom: 10px; }
         .culture-box {
             background: #eef6ff; border: 1px solid #cfe3fa; border-radius: 12px;
             padding: 12px 14px; font-size: 13px; margin: 14px 0 8px; line-height: 1.6;
@@ -335,6 +342,7 @@
 </div>
 
 <script src="data.js"></script>
+<script src="stories.js"></script>
 <script>
 'use strict';
 /* ═══════════════════ 데이터 준비 ═══════════════════ */
@@ -342,6 +350,8 @@ const DATA = (window.ES_DATA && window.ES_DATA.units) ? window.ES_DATA : null;
 const UNITS = DATA ? DATA.units : [];
 const ALL = UNITS.flatMap(u => u.lessons.map(l => ({ ...l, unitId: u.unitId, unitTitle: u.title, unitIcon: u.icon })));
 const LESSON_BY_ID = Object.fromEntries(ALL.map((l, i) => [l.id, i]));
+const STORIES = (window.ES_STORIES && window.ES_STORIES.stories) || [];
+function storiesRequiredCount(afterUnit) { let n = 0; UNITS.forEach(u => { if (u.unitId <= afterUnit) n += u.lessons.length; }); return n; }
 const PASS_RATE = 0.7;
 const SRS_INTERVALS = { 1: 1, 2: 2, 3: 4, 4: 7, 5: 15 };
 const STEP_NAMES = ['단어', '핵심 문장', '회화', '문법', '퀴즈'];
@@ -507,7 +517,7 @@ function importProgress(code) {
 }
 
 /* ═══════════════════ 라우터 ═══════════════════ */
-const S = { view: 'home', lessonIdx: 0, step: 0, quiz: null, review: null, verb: null, openUnit: null };
+const S = { view: 'home', lessonIdx: 0, step: 0, quiz: null, review: null, verb: null, story: null, storyIdx: null, openUnit: null };
 const $main = document.getElementById('main');
 
 function go(view) { stopSpeak(); seqPlaying = false; S.view = view; render(); }
@@ -519,6 +529,8 @@ function render() {
         case 'lesson': renderLesson(); break;
         case 'review': renderReview(); break;
         case 'verb': renderVerb(); break;
+        case 'story': renderStoryList(); break;
+        case 'storyRead': renderStoryRead(); break;
         case 'guide': renderGuide(); break;
         case 'settings': renderSettings(); break;
         default: renderHome();
@@ -536,17 +548,18 @@ function updateTabs() {
         { id: 'home', ico: '🏠', label: '학습' },
         { id: 'review', ico: '🃏', label: '복습', badge: due },
         { id: 'verb', ico: '🔠', label: '동사' },
+        { id: 'story', ico: '📚', label: '읽기' },
         { id: 'guide', ico: '📖', label: '가이드' },
         { id: 'settings', ico: '⚙️', label: '설정' },
     ];
     const bar = document.getElementById('tabbar');
     bar.innerHTML = tabs.map(t =>
-        '<button class="tab' + ((S.view === t.id || (t.id === 'home' && S.view === 'lesson')) ? ' active' : '') + '" data-tab="' + t.id + '">' +
+        '<button class="tab' + ((S.view === t.id || (t.id === 'home' && S.view === 'lesson') || (t.id === 'story' && S.view === 'storyRead')) ? ' active' : '') + '" data-tab="' + t.id + '">' +
         (t.badge ? '<span class="badge">' + t.badge + '</span>' : '') +
         '<span class="ico">' + t.ico + '</span>' + t.label + '</button>'
     ).join('');
     bar.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
-        S.review = null; S.verb = null;
+        S.review = null; S.verb = null; S.story = null;
         go(b.dataset.tab);
     }));
 }
@@ -1120,6 +1133,107 @@ function renderVerb() {
         speak(spoken, 0.9);
         document.getElementById('vNext').addEventListener('click', () => { t.i++; t.cur = null; t.answered = false; renderVerb(); });
     }));
+}
+
+/* ═══════════════════ 읽기 (쉬운 동화) ═══════════════════ */
+function renderStoryList() {
+    if (!STORIES.length) {
+        $main.innerHTML = '<div class="empty-state"><div class="es-emoji">📚</div><b>쉬운 읽기 콘텐츠 준비 중</b><br>배운 단어만으로 읽는 짧은 동화가<br>곧 이 자리에 채워질 예정이에요!</div>';
+        return;
+    }
+    let h = '<div class="section-title" style="margin-top:0">📚 쉬운 읽기</div>' +
+        '<div class="muted" style="margin-bottom:12px">배운 단어만으로 쓰인 짧은 이야기예요. 진도가 쌓일수록 새 이야기가 열립니다.</div>';
+    STORIES.forEach((s, i) => {
+        const need = storiesRequiredCount(s.unlockAfter);
+        const unlocked = store.settings.freeNav || doneCount() >= need;
+        const readDone = store.storiesRead && store.storiesRead[s.id];
+        h += '<div class="story-card' + (unlocked ? '' : ' locked') + '" data-story="' + i + '">' +
+            '<div class="st-emoji">' + esc(s.emoji || '📖') + '</div>' +
+            '<div style="flex:1;min-width:0"><div class="st-title">' + (readDone ? '✅ ' : '') + esc(s.title) + '</div>' +
+            '<div class="st-desc">' + esc(unlocked ? (s.summary || '') : need + '레슨 완료 시 열림') + '</div></div>' +
+            '<div class="st-lv">Lv.' + s.level + '</div></div>';
+    });
+    $main.innerHTML = h;
+    $main.querySelectorAll('.story-card').forEach(c => c.addEventListener('click', () => {
+        const i = parseInt(c.dataset.story, 10);
+        const s = STORIES[i];
+        const need = storiesRequiredCount(s.unlockAfter);
+        if (!(store.settings.freeNav || doneCount() >= need)) { alert('아직 잠겨 있어요 🔒\n' + need + '개 레슨을 완료하면 열립니다.'); return; }
+        S.storyIdx = i; S.story = { showKo: {}, quiz: null };
+        go('storyRead');
+    }));
+}
+function renderStoryRead() {
+    const s = STORIES[S.storyIdx];
+    const st = S.story;
+    let h = '<div class="lesson-top"><button class="back-btn" id="backBtn">←</button>' +
+        '<div><div class="lt-title">' + esc(s.emoji || '📖') + ' ' + esc(s.title) + '</div>' +
+        '<div class="lt-sub">' + esc(s.titleNative || '') + ' · Lv.' + s.level + '</div></div></div>';
+    if (s.newWords && s.newWords.length) {
+        h += '<div class="tip-box"><b>📌 새로 나오는 단어</b><br>' +
+            s.newWords.map(w => esc(w.es) + (w.koPron ? '[' + esc(w.koPron) + ']' : '') + '=' + esc(w.ko)).join(' · ') + '</div>';
+    }
+    h += '<div style="display:flex;gap:8px;margin:10px 0 14px">' +
+        '<button class="btn small ghost" id="playAll">🔊 전체 듣기</button>' +
+        '<button class="btn small gray" id="stopAll">⏹ 정지</button></div>';
+    (s.sentences || []).forEach((sent, i) => {
+        const shown = !!st.showKo[i];
+        h += '<div class="story-sent" data-sent="' + i + '">' +
+            '<div class="hanzi">' + esc(sent.es) + '</div>' +
+            '' +
+            (store.settings.koPron && sent.koPron ? '<div class="kopron">[' + esc(sent.koPron) + ']</div>' : '') +
+            (shown ? '<div class="ko" style="margin-top:6px">' + esc(sent.ko) + '</div>' : '<div class="muted" style="margin-top:6px">👆 문장을 눌러 뜻을 확인하세요</div>') +
+            '</div>';
+    });
+    if (s.moral) {
+        h += '<div class="culture-box"><b>💡 교훈</b><br><span class="hanzi">' + esc(s.moral.es) + '</span><br>' + esc(s.moral.ko || '') + '</div>';
+    }
+    h += '<button class="btn block" id="storyQuizBtn" style="margin-top:6px">이해도 퀴즈 풀기 →</button>';
+    $main.innerHTML = h;
+    document.getElementById('backBtn').addEventListener('click', () => { S.story = null; go('story'); });
+    document.getElementById('playAll').addEventListener('click', () => speakSeq((s.sentences || []).map(x => x.es)));
+    document.getElementById('stopAll').addEventListener('click', () => { seqPlaying = false; stopSpeak(); });
+    $main.querySelectorAll('.story-sent').forEach(el => el.addEventListener('click', () => {
+        const i = parseInt(el.dataset.sent, 10);
+        speak(s.sentences[i].es, 0.92);
+        st.showKo[i] = true;
+        renderStoryRead();
+    }));
+    document.getElementById('storyQuizBtn').addEventListener('click', () => { st.quiz = { i: 0, score: 0, answered: false }; renderStoryRead(); });
+    if (st.quiz) renderStoryQuizInner();
+
+    function renderStoryQuizInner() {
+        const q = st.quiz;
+        const items = s.quiz || [];
+        if (!items.length) return;
+        if (q.i >= items.length) {
+            if (!store.storiesRead) store.storiesRead = {};
+            store.storiesRead[s.id] = true; save(); touchStreak();
+            $main.innerHTML = '<div class="result-hero"><div class="r-emoji">📖</div>' +
+                '<div class="r-score" style="color:var(--success)">' + q.score + ' / ' + items.length + '</div>' +
+                '<div class="r-msg">다 읽었어요! 이 이야기는 완료로 기록됐어요.</div></div>' +
+                '<button class="btn block" id="storyDone">읽기 목록으로</button>';
+            document.getElementById('storyDone').addEventListener('click', () => { S.story = null; go('story'); });
+            return;
+        }
+        const item = items[q.i];
+        let h2 = '<div class="quiz-prog"><div class="qp-bar"><div style="width:' + (q.i / items.length * 100) + '%"></div></div><div class="qp-txt">' + (q.i + 1) + ' / ' + items.length + '</div></div>' +
+            '<div class="quiz-q">' + esc(item.q) + '</div>';
+        item.choices.forEach((c, ci) => { h2 += '<button class="choice-btn" data-a="' + ci + '">' + esc(c) + '</button>'; });
+        h2 += '<div id="sqFeedback"></div>';
+        $main.innerHTML = h2;
+        $main.querySelectorAll('[data-a]').forEach(b => b.addEventListener('click', () => {
+            if (q.answered) return;
+            q.answered = true;
+            const ci = parseInt(b.dataset.a, 10), ok = ci === item.answer;
+            if (ok) q.score++;
+            $main.querySelectorAll('[data-a]').forEach((bb, bi) => { bb.disabled = true; if (bi === item.answer) bb.classList.add('correct'); else if (bi === ci && !ok) bb.classList.add('wrong'); });
+            document.getElementById('sqFeedback').innerHTML =
+                '<div class="explain-box ' + (ok ? 'good' : 'bad') + '"><div class="eb-head">' + (ok ? '⭕ 정답!' : '❌ 아쉬워요!') + '</div>' + esc(item.explain || '') + '</div>' +
+                '<button class="btn block" id="sqNext">' + (q.i + 1 >= items.length ? '결과 보기' : '다음 문제 →') + '</button>';
+            document.getElementById('sqNext').addEventListener('click', () => { q.i++; q.answered = false; renderStoryQuizInner(); });
+        }));
+    }
 }
 
 /* ═══════════════════ 학습 가이드 ═══════════════════ */
