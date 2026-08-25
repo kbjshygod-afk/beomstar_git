@@ -119,6 +119,7 @@
         .lang-card .lc-arrow { margin-left: auto; font-size: 20px; color: var(--text-light); }
         .lang-card.zh:hover, .lang-card.zh:active { border-color: #d92332; }
         .lang-card.es:hover, .lang-card.es:active { border-color: #c60b1e; }
+        .lang-card.ja:hover, .lang-card.ja:active { border-color: #bc002d; }
         /* ── Home ───────────────────────────── */
         .stats-row { display: flex; gap: 8px; margin-bottom: 14px; }
         .stat { flex: 1; background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 10px 6px; text-align: center; }
@@ -200,6 +201,30 @@
             padding: 12px 14px; font-size: 13px; margin: 14px 0 8px; line-height: 1.6;
         }
         .tip-box b { color: #7a5b00; }
+
+        .hist-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 14px; }
+        .hist-stats .stat .num { font-size: 15px; }
+        .hist-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+        .hist-nav .hn-title { font-size: 15px; font-weight: 800; }
+        .hist-nav button { background: white; border: 1px solid var(--border); border-radius: 10px; width: 32px; height: 32px; font-size: 14px; cursor: pointer; font-family: inherit; }
+        .hist-nav button:disabled { opacity: .35; cursor: default; }
+        .hist-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 16px; }
+        .hist-dow { text-align: center; font-size: 10.5px; color: var(--text-light); font-weight: 700; padding-bottom: 4px; }
+        .hist-day { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 10px; font-size: 12px; cursor: pointer; background: #f8fafc; color: var(--text-light); border: none; font-family: inherit; }
+        .hist-day.empty { visibility: hidden; cursor: default; }
+        .hist-day.act { background: var(--red-soft); color: var(--text); font-weight: 700; }
+        .hist-day .hd-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--primary); margin-top: 2px; visibility: hidden; }
+        .hist-day.act .hd-dot { visibility: visible; }
+        .hist-day.today { box-shadow: inset 0 0 0 2px var(--primary); }
+        .hist-day.sel { background: var(--primary); color: white; }
+        .hist-day.sel .hd-dot { background: white; }
+        .hist-date-group { margin-bottom: 14px; }
+        .hist-date-group .hg-date { font-size: 12.5px; font-weight: 700; color: var(--text-light); margin-bottom: 6px; }
+        .hist-entry { display: flex; align-items: center; gap: 10px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; margin-bottom: 6px; }
+        .hist-entry .he-ico { font-size: 18px; flex-shrink: 0; }
+        .hist-entry .he-title { font-size: 13.5px; font-weight: 600; flex: 1; min-width: 0; }
+        .hist-entry .he-score { font-size: 12px; color: var(--primary); font-weight: 700; white-space: nowrap; flex-shrink: 0; }
+        .hist-reset { font-size: 12.5px; color: var(--primary); font-weight: 700; cursor: pointer; margin-bottom: 10px; display: inline-block; background: none; border: none; font-family: inherit; padding: 0; }
         .culture-box {
             background: #eef6ff; border: 1px solid #cfe3fa; border-radius: 12px;
             padding: 12px 14px; font-size: 13px; margin: 14px 0 8px; line-height: 1.6;
@@ -301,6 +326,16 @@
         .tone-cell .t-name { font-size: 13px; font-weight: 800; margin-bottom: 2px; }
         .tone-cell .t-desc { font-size: 11px; color: var(--text-light); margin-bottom: 6px; }
         .tone-cell svg { width: 100%; height: 46px; }
+        /* ── Kana dojo (일본어) ─────────────── */
+        .kana-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+        .kana-row:last-child { margin-bottom: 0; }
+        .kr-label { width: 34px; flex-shrink: 0; font-size: 10.5px; color: var(--text-light); font-weight: 700; }
+        .kr-cells { flex: 1; display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
+        .kana-cell { background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 4px 2px 5px; text-align: center; cursor: pointer; }
+        .kana-cell.empty { visibility: hidden; cursor: default; }
+        .kana-cell .kc-h { font-size: 16px; font-weight: 700; line-height: 1.2; }
+        .kana-cell .kc-k { font-size: 10.5px; color: var(--text-light); line-height: 1.3; }
+        .kana-cell .kc-r { font-size: 9.5px; color: var(--primary); font-weight: 700; margin-top: 1px; }
         /* ── Verb trainer (스페인어) ────────── */
         .conj-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
         .conj-cell { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 12px; }
@@ -389,6 +424,7 @@ const LANGS = {
         ttsLang: 'zh-CN', trainerTab: 'tone', trainerIco: '🎵', trainerLabel: '성조',
         primary: '#d92332', primaryDark: '#a01526', gold: '#f0a500', goldLight: '#fff4d6', redSoft: '#fdf0f0',
         desc: '성조와 병음부터 여행 회화까지', sampleWord: '你好', joiner: '',
+        nativeField: 'hanzi', romanField: 'pinyin',
     },
     es: {
         code: 'es', flag: '💃', name: '스페인어', appName: '올라 스페인어', tag: '스페인어',
@@ -396,6 +432,15 @@ const LANGS = {
         ttsLang: 'es-ES', trainerTab: 'verb', trainerIco: '🔠', trainerLabel: '동사',
         primary: '#c60b1e', primaryDark: '#8e0916', gold: '#f1bf00', goldLight: '#fdf3d0', redSoft: '#fdf0ef',
         desc: '알파벳부터 여행 회화까지', sampleWord: 'Hola', joiner: ' ',
+        nativeField: 'es', romanField: null,
+    },
+    ja: {
+        code: 'ja', flag: '🎏', name: '일본어', appName: '곤니치와 일본어', tag: '일본어',
+        dataFile: './data-ja.js', dataGlobal: 'JA_DATA', storyFile: './stories-ja.js', storyGlobal: 'STORIES_JA',
+        ttsLang: 'ja-JP', trainerTab: 'kana', trainerIco: 'あ', trainerLabel: '가나',
+        primary: '#bc002d', primaryDark: '#7a0020', gold: '#c9a227', goldLight: '#faf1d9', redSoft: '#fdeef1',
+        desc: '히라가나·가타카나부터 여행 회화까지', sampleWord: 'こんにちは', joiner: '',
+        nativeField: 'ja', romanField: 'romaji',
     },
 };
 let CUR = null;               // 현재 언어 설정(LANGS[code])
@@ -454,8 +499,8 @@ function seededShuffle(arr, seed) {
 }
 function hashStr(s) { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return h; }
 // 언어 중립 필드 접근자: zh는 hanzi/pinyin, es는 es(관용 문형 텍스트)만 사용
-function nativeText(item) { return item ? (item.hanzi != null ? item.hanzi : item.es) : ''; }
-function romanText(item) { return item ? (item.pinyin || '') : ''; }   // 병음(중국어만 별도 표시)
+function nativeText(item) { return item ? (item[CUR.nativeField] != null ? item[CUR.nativeField] : '') : ''; }
+function romanText(item) { return (item && CUR.romanField) ? (item[CUR.romanField] || '') : ''; }   // 로마자 표기(언어별 필드, 없으면 빈 문자열)
 
 /* ═══════════════════ TTS ═══════════════════ */
 const voiceCache = {};
@@ -634,6 +679,7 @@ function render() {
         case 'review': renderReview(); break;
         case 'trainer': renderTrainer(); break;
         case 'story': renderStoryList(); break;
+        case 'history': renderHistory(); break;
         case 'storyRead': renderStoryRead(); break;
         case 'guide': renderGuide(); break;
         case 'settings': renderSettings(); break;
@@ -653,6 +699,7 @@ function updateTabs() {
         { id: 'review', ico: '🃏', label: '복습', badge: due },
         { id: 'trainer', ico: CUR.trainerIco, label: CUR.trainerLabel },
         { id: 'story', ico: '📚', label: '읽기' },
+        { id: 'history', ico: '📅', label: '기록' },
         { id: 'guide', ico: '📖', label: '가이드' },
         { id: 'settings', ico: '⚙️', label: '설정' },
     ];
@@ -663,7 +710,7 @@ function updateTabs() {
         '<span class="ico">' + t.ico + '</span>' + t.label + '</button>'
     ).join('');
     bar.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
-        S.review = null; S.trainer = null; S.story = null;
+        S.review = null; S.trainer = null; S.story = null; S.histSel = null;
         go(b.dataset.tab);
     }));
 }
@@ -975,10 +1022,10 @@ function renderQuiz(body, l) {
             const answer = item.tokens.join(CUR.joiner);
             const ok = user === answer;
             ck.disabled = true;
-            const roman = item.pinyin || item.koPron || '';
+            const roman = romanText(item) || item.koPron || '';
             answerFeedback(ok, item,
                 '<div class="eb-answer">정답: <span class="native">' + esc(answer) + '</span>' +
-                (roman ? '<br><span style="color:var(--primary);font-weight:600">' + (CUR.code === 'zh' ? esc(roman) : '[' + esc(roman) + ']') + '</span>' : '') + '</div>');
+                (roman ? '<br><span style="color:var(--primary);font-weight:600">' + (CUR.romanField ? esc(roman) : '[' + esc(roman) + ']') + '</span>' : '') + '</div>');
         });
     } else {
         body.querySelectorAll('[data-choice]').forEach(el => el.addEventListener('click', () => {
@@ -1004,7 +1051,7 @@ function renderQuiz(body, l) {
         fb.innerHTML = '<div class="explain-box ' + (ok ? 'good' : 'bad') + '">' +
             '<div class="eb-head">' + (ok ? '⭕ 정답이에요!' : '❌ 아쉬워요!') + '</div>' + extraHtml +
             ((itemText && item.type !== 'arrange') ? '<div class="eb-answer"><span class="native">' + esc(itemText) + '</span>' +
-                (item.pinyin ? ' <span style="color:var(--primary);font-weight:600">' + esc(item.pinyin) + '</span>' : '') + '</div>' : '') +
+                (romanText(item) ? ' <span style="color:var(--primary);font-weight:600">' + esc(romanText(item)) + '</span>' : '') + '</div>' : '') +
             esc(item.explain || '') + '</div>' +
             '<button class="btn block" id="qNext">' + (q.i + 1 >= items.length ? '결과 보기' : '다음 문제 →') + '</button>';
         const arr = document.getElementById('arrArea');
@@ -1045,7 +1092,7 @@ function renderQuizResult(body, l) {
         q.wrong.forEach(w => {
             const it = w.item, txt = nativeText(it);
             h += '<div class="wrong-item"><b>Q' + (w.idx + 1) + '.</b> ' + esc(it.q) +
-                (txt ? '<div style="margin-top:5px"><span class="native">' + esc(txt) + '</span>' + (it.pinyin ? ' <span style="color:var(--primary)">' + esc(it.pinyin) + '</span>' : '') + '</div>' : '') +
+                (txt ? '<div style="margin-top:5px"><span class="native">' + esc(txt) + '</span>' + (romanText(it) ? ' <span style="color:var(--primary)">' + esc(romanText(it)) + '</span>' : '') + '</div>' : '') +
                 (it.type === 'arrange' ? '<div style="margin-top:5px">정답: <span class="native">' + esc(it.tokens.join(CUR.joiner)) + '</span></div>' :
                     '<div style="margin-top:5px">정답: <b>' + esc(it.choices[it.answer]) + '</b></div>') +
                 '<div class="muted" style="margin-top:4px">' + esc(it.explain || '') + '</div></div>';
@@ -1192,7 +1239,9 @@ const SOUND_SETS = [
 ];
 
 function renderTrainer() {
-    if (CUR.code === 'zh') renderToneTrainer(); else renderVerbTrainer();
+    if (CUR.code === 'zh') renderToneTrainer();
+    else if (CUR.code === 'es') renderVerbTrainer();
+    else renderKanaTrainer();
 }
 
 function renderToneTrainer() {
@@ -1298,6 +1347,103 @@ function renderVerbTrainer() {
         document.getElementById('tNext').addEventListener('click', () => { t.i++; t.cur = null; t.answered = false; renderTrainer(); });
     }));
 }
+
+/* ═══════════════════ 가나 도장 (일본어 전용 훈련소) ═══════════════════ */
+const KANA_SEION = [
+    { row: 'あ행', cells: [{ h: 'あ', k: 'ア', r: 'a' }, { h: 'い', k: 'イ', r: 'i' }, { h: 'う', k: 'ウ', r: 'u' }, { h: 'え', k: 'エ', r: 'e' }, { h: 'お', k: 'オ', r: 'o' }] },
+    { row: 'か행', cells: [{ h: 'か', k: 'カ', r: 'ka' }, { h: 'き', k: 'キ', r: 'ki' }, { h: 'く', k: 'ク', r: 'ku' }, { h: 'け', k: 'ケ', r: 'ke' }, { h: 'こ', k: 'コ', r: 'ko' }] },
+    { row: 'さ행', cells: [{ h: 'さ', k: 'サ', r: 'sa' }, { h: 'し', k: 'シ', r: 'shi' }, { h: 'す', k: 'ス', r: 'su' }, { h: 'せ', k: 'セ', r: 'se' }, { h: 'そ', k: 'ソ', r: 'so' }] },
+    { row: 'た행', cells: [{ h: 'た', k: 'タ', r: 'ta' }, { h: 'ち', k: 'チ', r: 'chi' }, { h: 'つ', k: 'ツ', r: 'tsu' }, { h: 'て', k: 'テ', r: 'te' }, { h: 'と', k: 'ト', r: 'to' }] },
+    { row: 'な행', cells: [{ h: 'な', k: 'ナ', r: 'na' }, { h: 'に', k: 'ニ', r: 'ni' }, { h: 'ぬ', k: 'ヌ', r: 'nu' }, { h: 'ね', k: 'ネ', r: 'ne' }, { h: 'の', k: 'ノ', r: 'no' }] },
+    { row: 'は행', cells: [{ h: 'は', k: 'ハ', r: 'ha' }, { h: 'ひ', k: 'ヒ', r: 'hi' }, { h: 'ふ', k: 'フ', r: 'fu' }, { h: 'へ', k: 'ヘ', r: 'he' }, { h: 'ほ', k: 'ホ', r: 'ho' }] },
+    { row: 'ま행', cells: [{ h: 'ま', k: 'マ', r: 'ma' }, { h: 'み', k: 'ミ', r: 'mi' }, { h: 'む', k: 'ム', r: 'mu' }, { h: 'め', k: 'メ', r: 'me' }, { h: 'も', k: 'モ', r: 'mo' }] },
+    { row: 'や행', cells: [{ h: 'や', k: 'ヤ', r: 'ya' }, null, { h: 'ゆ', k: 'ユ', r: 'yu' }, null, { h: 'よ', k: 'ヨ', r: 'yo' }] },
+    { row: 'ら행', cells: [{ h: 'ら', k: 'ラ', r: 'ra' }, { h: 'り', k: 'リ', r: 'ri' }, { h: 'る', k: 'ル', r: 'ru' }, { h: 'れ', k: 'レ', r: 're' }, { h: 'ろ', k: 'ロ', r: 'ro' }] },
+    { row: 'わ행', cells: [{ h: 'わ', k: 'ワ', r: 'wa' }, null, null, null, { h: 'を', k: 'ヲ', r: 'wo' }] },
+    { row: 'ん', cells: [{ h: 'ん', k: 'ン', r: 'n' }, null, null, null, null] },
+];
+const KANA_DAKUON = [
+    { row: 'が행', cells: [{ h: 'が', k: 'ガ', r: 'ga' }, { h: 'ぎ', k: 'ギ', r: 'gi' }, { h: 'ぐ', k: 'グ', r: 'gu' }, { h: 'げ', k: 'ゲ', r: 'ge' }, { h: 'ご', k: 'ゴ', r: 'go' }] },
+    { row: 'ざ행', cells: [{ h: 'ざ', k: 'ザ', r: 'za' }, { h: 'じ', k: 'ジ', r: 'ji' }, { h: 'ず', k: 'ズ', r: 'zu' }, { h: 'ぜ', k: 'ゼ', r: 'ze' }, { h: 'ぞ', k: 'ゾ', r: 'zo' }] },
+    { row: 'だ행', cells: [{ h: 'だ', k: 'ダ', r: 'da' }, { h: 'ぢ', k: 'ヂ', r: 'ji' }, { h: 'づ', k: 'ヅ', r: 'zu' }, { h: 'で', k: 'デ', r: 'de' }, { h: 'ど', k: 'ド', r: 'do' }] },
+    { row: 'ば행', cells: [{ h: 'ば', k: 'バ', r: 'ba' }, { h: 'び', k: 'ビ', r: 'bi' }, { h: 'ぶ', k: 'ブ', r: 'bu' }, { h: 'べ', k: 'ベ', r: 'be' }, { h: 'ぼ', k: 'ボ', r: 'bo' }] },
+    { row: 'ぱ행', cells: [{ h: 'ぱ', k: 'パ', r: 'pa' }, { h: 'ぴ', k: 'ピ', r: 'pi' }, { h: 'ぷ', k: 'プ', r: 'pu' }, { h: 'ぺ', k: 'ペ', r: 'pe' }, { h: 'ぽ', k: 'ポ', r: 'po' }] },
+];
+const KANA_CONFUSE_SETS = [
+    { label: 'し・つ・ん・そ 헷갈리는 4형제', chars: ['し', 'つ', 'ん', 'そ'] },
+    { label: 'わ・れ・ね・ぬ 헷갈리는 4형제', chars: ['わ', 'れ', 'ね', 'ぬ'] },
+    { label: 'シ・ツ・ソ・ン (가타카나)', chars: ['シ', 'ツ', 'ソ', 'ン'] },
+    { label: 'き・さ 비슷한 모양', chars: ['き', 'さ'] },
+];
+function kanaPool() {
+    return [...KANA_SEION, ...KANA_DAKUON].flatMap(row => row.cells.filter(Boolean));
+}
+function renderKanaTrainer() {
+    if (!S.trainer) {
+        let h = '<div class="section-title" style="margin-top:0">あ 가나 도장(かな道場)</div>' +
+            '<div class="muted" style="margin-bottom:12px">일본어는 <b>히라가나 46자 + 가타카나 46자</b>만 외우면 왕초보 딱지를 뗄 수 있어요. 한자 없이 소리 나는 대로 읽는 문자라 규칙만 알면 금방 늘어요! 글자를 눌러 발음을 들어 보세요.</div>';
+        h += '<div class="card"><b style="font-size:14px">📖 히라가나 · 가타카나 (청음)</b>' +
+            '<div class="kana-table" style="margin-top:10px">' + kanaTableHtml(KANA_SEION) + '</div></div>';
+        h += '<div class="card"><b style="font-size:14px">📖 탁음 · 반탁음</b>' +
+            '<div class="kana-table" style="margin-top:10px">' + kanaTableHtml(KANA_DAKUON) + '</div></div>';
+        h += '<div class="card"><b style="font-size:14px">🎯 읽기 맞히기 게임</b>' +
+            '<div class="muted" style="margin:6px 0 12px">글자를 보고 알맞은 로마자 발음을 고르세요. 10문제 도전!</div>' +
+            '<button class="btn block" id="trainerStart">훈련 시작하기</button></div>';
+        h += '<div class="card"><b style="font-size:14px">🔊 헷갈리는 글자 비교 듣기</b>' +
+            '<div class="muted" style="margin:6px 0 10px">모양이 비슷한 글자들을 연달아 들어 보세요.</div>' +
+            KANA_CONFUSE_SETS.map((set, si) =>
+                '<button class="btn small ghost" data-set="' + si + '" style="margin:0 6px 8px 0">' + esc(set.label) + '</button>').join('') + '</div>';
+        $main.innerHTML = h;
+        document.getElementById('trainerStart').addEventListener('click', () => { S.trainer = { i: 0, score: 0, cur: null, answered: false }; renderTrainer(); });
+        $main.querySelectorAll('.kana-cell[data-k]').forEach(el => el.addEventListener('click', () => speak(el.dataset.k, 0.85)));
+        $main.querySelectorAll('[data-set]').forEach(b => b.addEventListener('click', () => speakSeq(KANA_CONFUSE_SETS[parseInt(b.dataset.set, 10)].chars)));
+        return;
+    }
+    const t = S.trainer, TOTAL = 10;
+    if (t.i >= TOTAL) { renderTrainerResult(t, TOTAL, t.score >= 8 ? '가나 마스터가 눈앞이에요! 한자 없이도 다 읽을 수 있어요.' : t.score >= 5 ? '좋아요! 반복할수록 눈에 익어요.' : '괜찮아요, 히라가나는 원래 처음엔 헷갈려요. 내일 또 도전!'); return; }
+    if (!t.cur) {
+        const pool = kanaPool();
+        const answer = pool[Math.floor(Math.random() * pool.length)];
+        const others = pool.filter(c => c.r !== answer.r);
+        const distract = [];
+        while (distract.length < 3) {
+            const c = others[Math.floor(Math.random() * others.length)];
+            if (!distract.find(d => d.r === c.r)) distract.push(c);
+        }
+        const choices = distract.concat([answer]).sort(() => Math.random() - 0.5);
+        t.cur = { answer, script: Math.random() < 0.5 ? 'h' : 'k', choices };
+    }
+    const cur = t.cur;
+    const glyph = cur.script === 'h' ? cur.answer.h : cur.answer.k;
+    let hh = trainerProg(t, TOTAL) + '<div class="quiz-q">이 글자의 발음은?</div>' +
+        '<div class="verb-q"><div class="vq-pron" style="font-size:44px">' + esc(glyph) + '</div></div>' +
+        '<div class="quiz-audio"><button class="btn small" id="tPlay">🔊 듣기</button></div>' +
+        '<div class="verb-choice">' + cur.choices.map((c, i) => '<button class="choice-btn" data-a="' + i + '">' + esc(c.r) + '</button>').join('') + '</div>' +
+        '<div id="tFeedback"></div>';
+    $main.innerHTML = hh;
+    document.getElementById('tPlay').addEventListener('click', () => speak(glyph, 0.85));
+    $main.querySelectorAll('[data-a]').forEach(b => b.addEventListener('click', () => {
+        if (t.answered) return;
+        t.answered = true;
+        const sel = parseInt(b.dataset.a, 10), picked = cur.choices[sel], ok = picked.r === cur.answer.r;
+        if (ok) t.score++;
+        $main.querySelectorAll('[data-a]').forEach((bb, bi) => { bb.disabled = true; if (cur.choices[bi].r === cur.answer.r) bb.classList.add('correct'); else if (bi === sel && !ok) bb.classList.add('wrong'); });
+        document.getElementById('tFeedback').innerHTML =
+            '<div class="explain-box ' + (ok ? 'good' : 'bad') + '"><div class="eb-head">' + (ok ? '⭕ 정답!' : '❌ 아쉬워요!') + '</div>' +
+            '<div class="eb-answer"><span class="native" style="font-size:22px">' + esc(glyph) + '</span> ' +
+            '<span style="color:var(--primary);font-weight:700">' + esc(cur.answer.r) + '</span> (히라가나 ' + esc(cur.answer.h) + ' · 가타카나 ' + esc(cur.answer.k) + ')</div></div>' +
+            '<button class="btn block" id="tNext">' + (t.i + 1 >= TOTAL ? '결과 보기' : '다음 문제 →') + '</button>';
+        speak(glyph, 0.85);
+        document.getElementById('tNext').addEventListener('click', () => { t.i++; t.cur = null; t.answered = false; renderTrainer(); });
+    }));
+}
+function kanaTableHtml(rows) {
+    return rows.map(row => '<div class="kana-row"><div class="kr-label">' + esc(row.row) + '</div><div class="kr-cells">' +
+        row.cells.map(c => c
+            ? '<div class="kana-cell" data-k="' + esc(c.h) + '"><div class="kc-h">' + esc(c.h) + '</div><div class="kc-k">' + esc(c.k) + '</div><div class="kc-r">' + esc(c.r) + '</div></div>'
+            : '<div class="kana-cell empty"></div>').join('') + '</div></div>').join('');
+}
+
 function trainerProg(t, TOTAL) {
     return '<div class="quiz-prog"><div class="qp-bar"><div style="width:' + (t.i / TOTAL * 100) + '%"></div></div><div class="qp-txt">' + (t.i + 1) + ' / ' + TOTAL + '</div></div>';
 }
@@ -1391,7 +1537,7 @@ function renderStoryRead() {
         if (q.i >= items.length) {
             const p = prog();
             if (!p.storiesRead) p.storiesRead = {};
-            p.storiesRead[s.id] = true; save(); touchStreak();
+            p.storiesRead[s.id] = { date: todayStr() }; save(); touchStreak();
             $main.innerHTML = '<div class="result-hero"><div class="r-emoji">📖</div>' +
                 '<div class="r-score" style="color:var(--success)">' + q.score + ' / ' + items.length + '</div>' +
                 '<div class="r-msg">다 읽었어요! 이 이야기는 완료로 기록됐어요.</div></div>' +
@@ -1417,6 +1563,115 @@ function renderStoryRead() {
             document.getElementById('sqNext').addEventListener('click', () => { q.i++; q.answered = false; renderStoryQuiz(); });
         }));
     }
+}
+
+
+/* ═══════════════════ 학습 기록 (달력 · 목록) ═══════════════════ */
+const DOW_KO = ['일', '월', '화', '수', '목', '금', '토'];
+function histLessonTitle(id) { const i = LESSON_BY_ID[id]; return i !== undefined ? ALL[i].title : id; }
+function histStoryTitle(id) { const s = STORIES.find(x => x.id === id); return s ? (s.emoji ? s.emoji + ' ' : '') + s.title : id; }
+function histAllEntries() {
+    const out = [];
+    const comp = prog().completed || {};
+    const read = prog().storiesRead || {};
+    Object.entries(comp).forEach(([id, v]) => {
+        if (!v || !v.date) return;
+        out.push({ date: v.date, type: 'lesson', ico: '✅', title: histLessonTitle(id), score: v.score + '/' + v.total + '점' });
+    });
+    Object.entries(read).forEach(([id, v]) => {
+        const date = (v && typeof v === 'object') ? v.date : null;
+        if (!date) return;
+        out.push({ date, type: 'story', ico: '📖', title: histStoryTitle(id), score: '완료' });
+    });
+    out.sort((a, b) => b.date < a.date ? -1 : b.date > a.date ? 1 : 0);
+    return out;
+}
+function histLongestStreak(dates) {
+    if (!dates.size) return 0;
+    const sorted = Array.from(dates).sort();
+    let best = 1, cur = 1;
+    for (let i = 1; i < sorted.length; i++) {
+        const prev = new Date(sorted[i - 1] + 'T00:00:00'), now = new Date(sorted[i] + 'T00:00:00');
+        const diff = Math.round((now - prev) / 86400000);
+        cur = diff === 1 ? cur + 1 : 1;
+        if (cur > best) best = cur;
+    }
+    return best;
+}
+function renderHistory() {
+    const entries = histAllEntries();
+    const dateSet = new Set(entries.map(e => e.date));
+    const now = new Date();
+    if (S.histY === undefined || S.histY === null) { S.histY = now.getFullYear(); S.histM = now.getMonth(); S.histSel = null; }
+
+    let h = '<div class="section-title" style="margin-top:0">📅 학습 기록</div>';
+    h += '<div class="hist-stats">' +
+        stat('📆', dateSet.size + '일', '학습한 날') +
+        stat('✅', entries.filter(e => e.type === 'lesson').length + '개', '완료 레슨') +
+        stat('📖', entries.filter(e => e.type === 'story').length + '편', '읽은 동화') +
+        stat('🔥', histLongestStreak(dateSet) + '일', '최장 연속') +
+        '</div>';
+
+    // 달력
+    const isCurMonth = (S.histY === now.getFullYear() && S.histM === now.getMonth());
+    const first = new Date(S.histY, S.histM, 1);
+    const daysInMonth = new Date(S.histY, S.histM + 1, 0).getDate();
+    const startDow = first.getDay();
+    const todayStr_ = todayStr();
+    h += '<div class="card"><div class="hist-nav">' +
+        '<button id="histPrev">◀</button>' +
+        '<div class="hn-title">' + S.histY + '년 ' + (S.histM + 1) + '월</div>' +
+        '<button id="histNext"' + (isCurMonth ? ' disabled' : '') + '>▶</button></div>';
+    h += '<div class="hist-grid">' + DOW_KO.map(d => '<div class="hist-dow">' + d + '</div>').join('');
+    for (let i = 0; i < startDow; i++) h += '<div class="hist-day empty"></div>';
+    for (let d = 1; d <= daysInMonth; d++) {
+        const ds = S.histY + '-' + String(S.histM + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+        const act = dateSet.has(ds);
+        const cls = ['hist-day'];
+        if (act) cls.push('act');
+        if (ds === todayStr_) cls.push('today');
+        if (S.histSel === ds) cls.push('sel');
+        h += '<button class="' + cls.join(' ') + '" data-day="' + ds + '">' + d + '<span class="hd-dot"></span></button>';
+    }
+    h += '</div></div>';
+
+    // 목록: 선택한 날짜 또는 이번 달 전체
+    const monthPrefix = S.histY + '-' + String(S.histM + 1).padStart(2, '0');
+    let list = S.histSel ? entries.filter(e => e.date === S.histSel) : entries.filter(e => e.date.startsWith(monthPrefix));
+    if (S.histSel) h += '<button class="hist-reset" id="histReset">← 이 달 전체 기록 보기</button>';
+    if (!list.length) {
+        h += '<div class="empty-state" style="padding:30px 20px"><div class="es-emoji">🗓️</div>' +
+            (S.histSel ? '이 날은 기록이 없어요.' : '이 달에는 아직 기록이 없어요.<br>레슨을 완료하거나 동화를 읽으면 여기 남아요!') + '</div>';
+    } else {
+        const byDate = {};
+        list.forEach(e => { (byDate[e.date] = byDate[e.date] || []).push(e); });
+        Object.keys(byDate).sort().reverse().forEach(ds => {
+            const d = new Date(ds + 'T00:00:00');
+            h += '<div class="hist-date-group"><div class="hg-date">' + (d.getMonth() + 1) + '월 ' + d.getDate() + '일 (' + DOW_KO[d.getDay()] + ')' + (ds === todayStr_ ? ' · 오늘' : '') + '</div>';
+            byDate[ds].forEach(e => {
+                h += '<div class="hist-entry"><span class="he-ico">' + e.ico + '</span><span class="he-title">' + esc(e.title) + '</span><span class="he-score">' + esc(e.score) + '</span></div>';
+            });
+            h += '</div>';
+        });
+    }
+    $main.innerHTML = h;
+
+    document.getElementById('histPrev').addEventListener('click', () => {
+        S.histM--; if (S.histM < 0) { S.histM = 11; S.histY--; } S.histSel = null; renderHistory();
+    });
+    const nb = document.getElementById('histNext');
+    if (!isCurMonth) nb.addEventListener('click', () => {
+        S.histM++; if (S.histM > 11) { S.histM = 0; S.histY++; } S.histSel = null; renderHistory();
+    });
+    $main.querySelectorAll('[data-day]').forEach(btn => btn.addEventListener('click', () => {
+        const ds = btn.dataset.day;
+        S.histSel = (S.histSel === ds) ? null : ds;
+        renderHistory();
+    }));
+    const rb = document.getElementById('histReset');
+    if (rb) rb.addEventListener('click', () => { S.histSel = null; renderHistory(); });
+
+    function stat(e, n, l) { return '<div class="stat"><div class="num">' + e + ' ' + n + '</div><div class="lbl">' + l + '</div></div>'; }
 }
 
 /* ═══════════════════ 학습 가이드 ═══════════════════ */

@@ -197,6 +197,30 @@
             padding: 12px 14px; font-size: 13px; margin: 14px 0 8px; line-height: 1.6;
         }
         .tip-box b { color: #7a5b00; }
+
+        .hist-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 14px; }
+        .hist-stats .stat .num { font-size: 15px; }
+        .hist-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+        .hist-nav .hn-title { font-size: 15px; font-weight: 800; }
+        .hist-nav button { background: white; border: 1px solid var(--border); border-radius: 10px; width: 32px; height: 32px; font-size: 14px; cursor: pointer; font-family: inherit; }
+        .hist-nav button:disabled { opacity: .35; cursor: default; }
+        .hist-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 16px; }
+        .hist-dow { text-align: center; font-size: 10.5px; color: var(--text-light); font-weight: 700; padding-bottom: 4px; }
+        .hist-day { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 10px; font-size: 12px; cursor: pointer; background: #f8fafc; color: var(--text-light); border: none; font-family: inherit; }
+        .hist-day.empty { visibility: hidden; cursor: default; }
+        .hist-day.act { background: var(--red-soft); color: var(--text); font-weight: 700; }
+        .hist-day .hd-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--primary); margin-top: 2px; visibility: hidden; }
+        .hist-day.act .hd-dot { visibility: visible; }
+        .hist-day.today { box-shadow: inset 0 0 0 2px var(--primary); }
+        .hist-day.sel { background: var(--primary); color: white; }
+        .hist-day.sel .hd-dot { background: white; }
+        .hist-date-group { margin-bottom: 14px; }
+        .hist-date-group .hg-date { font-size: 12.5px; font-weight: 700; color: var(--text-light); margin-bottom: 6px; }
+        .hist-entry { display: flex; align-items: center; gap: 10px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; margin-bottom: 6px; }
+        .hist-entry .he-ico { font-size: 18px; flex-shrink: 0; }
+        .hist-entry .he-title { font-size: 13.5px; font-weight: 600; flex: 1; min-width: 0; }
+        .hist-entry .he-score { font-size: 12px; color: var(--primary); font-weight: 700; white-space: nowrap; flex-shrink: 0; }
+        .hist-reset { font-size: 12.5px; color: var(--primary); font-weight: 700; cursor: pointer; margin-bottom: 10px; display: inline-block; background: none; border: none; font-family: inherit; padding: 0; }
         .story-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 14px; margin-bottom: 10px; display: flex; gap: 12px; align-items: center; cursor: pointer; }
         .story-card.locked { opacity: .5; cursor: default; }
         .story-card .st-emoji { width: 46px; height: 46px; border-radius: 12px; background: var(--red-soft); display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; }
@@ -554,6 +578,7 @@ function render() {
         case 'review': renderReview(); break;
         case 'tone': renderTone(); break;
         case 'story': renderStoryList(); break;
+        case 'history': renderHistory(); break;
         case 'storyRead': renderStoryRead(); break;
         case 'guide': renderGuide(); break;
         case 'settings': renderSettings(); break;
@@ -573,6 +598,7 @@ function updateTabs() {
         { id: 'review', ico: '🃏', label: '복습', badge: due },
         { id: 'tone', ico: '🎵', label: '성조' },
         { id: 'story', ico: '📚', label: '읽기' },
+        { id: 'history', ico: '📅', label: '기록' },
         { id: 'guide', ico: '📖', label: '가이드' },
         { id: 'settings', ico: '⚙️', label: '설정' },
     ];
@@ -583,7 +609,7 @@ function updateTabs() {
         '<span class="ico">' + t.ico + '</span>' + t.label + '</button>'
     ).join('');
     bar.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
-        S.review = null; S.tone = null; S.story = null;
+        S.review = null; S.tone = null; S.story = null; S.histSel = null;
         go(b.dataset.tab);
     }));
 }
@@ -1221,7 +1247,7 @@ function renderStoryRead() {
         if (!items.length) return;
         if (q.i >= items.length) {
             if (!store.storiesRead) store.storiesRead = {};
-            store.storiesRead[s.id] = true; save(); touchStreak();
+            store.storiesRead[s.id] = { date: todayStr() }; save(); touchStreak();
             $main.innerHTML = '<div class="result-hero"><div class="r-emoji">📖</div>' +
                 '<div class="r-score" style="color:var(--success)">' + q.score + ' / ' + items.length + '</div>' +
                 '<div class="r-msg">다 읽었어요! 이 이야기는 완료로 기록됐어요.</div></div>' +
@@ -1247,6 +1273,115 @@ function renderStoryRead() {
             document.getElementById('sqNext').addEventListener('click', () => { q.i++; q.answered = false; renderStoryQuizInner(); });
         }));
     }
+}
+
+
+/* ═══════════════════ 학습 기록 (달력 · 목록) ═══════════════════ */
+const DOW_KO = ['일', '월', '화', '수', '목', '금', '토'];
+function histLessonTitle(id) { const i = LESSON_BY_ID[id]; return i !== undefined ? ALL[i].title : id; }
+function histStoryTitle(id) { const s = STORIES.find(x => x.id === id); return s ? (s.emoji ? s.emoji + ' ' : '') + s.title : id; }
+function histAllEntries() {
+    const out = [];
+    const comp = store.completed || {};
+    const read = store.storiesRead || {};
+    Object.entries(comp).forEach(([id, v]) => {
+        if (!v || !v.date) return;
+        out.push({ date: v.date, type: 'lesson', ico: '✅', title: histLessonTitle(id), score: v.score + '/' + v.total + '점' });
+    });
+    Object.entries(read).forEach(([id, v]) => {
+        const date = (v && typeof v === 'object') ? v.date : null;
+        if (!date) return;
+        out.push({ date, type: 'story', ico: '📖', title: histStoryTitle(id), score: '완료' });
+    });
+    out.sort((a, b) => b.date < a.date ? -1 : b.date > a.date ? 1 : 0);
+    return out;
+}
+function histLongestStreak(dates) {
+    if (!dates.size) return 0;
+    const sorted = Array.from(dates).sort();
+    let best = 1, cur = 1;
+    for (let i = 1; i < sorted.length; i++) {
+        const prev = new Date(sorted[i - 1] + 'T00:00:00'), now = new Date(sorted[i] + 'T00:00:00');
+        const diff = Math.round((now - prev) / 86400000);
+        cur = diff === 1 ? cur + 1 : 1;
+        if (cur > best) best = cur;
+    }
+    return best;
+}
+function renderHistory() {
+    const entries = histAllEntries();
+    const dateSet = new Set(entries.map(e => e.date));
+    const now = new Date();
+    if (S.histY === undefined || S.histY === null) { S.histY = now.getFullYear(); S.histM = now.getMonth(); S.histSel = null; }
+
+    let h = '<div class="section-title" style="margin-top:0">📅 학습 기록</div>';
+    h += '<div class="hist-stats">' +
+        stat('📆', dateSet.size + '일', '학습한 날') +
+        stat('✅', entries.filter(e => e.type === 'lesson').length + '개', '완료 레슨') +
+        stat('📖', entries.filter(e => e.type === 'story').length + '편', '읽은 동화') +
+        stat('🔥', histLongestStreak(dateSet) + '일', '최장 연속') +
+        '</div>';
+
+    // 달력
+    const isCurMonth = (S.histY === now.getFullYear() && S.histM === now.getMonth());
+    const first = new Date(S.histY, S.histM, 1);
+    const daysInMonth = new Date(S.histY, S.histM + 1, 0).getDate();
+    const startDow = first.getDay();
+    const todayStr_ = todayStr();
+    h += '<div class="card"><div class="hist-nav">' +
+        '<button id="histPrev">◀</button>' +
+        '<div class="hn-title">' + S.histY + '년 ' + (S.histM + 1) + '월</div>' +
+        '<button id="histNext"' + (isCurMonth ? ' disabled' : '') + '>▶</button></div>';
+    h += '<div class="hist-grid">' + DOW_KO.map(d => '<div class="hist-dow">' + d + '</div>').join('');
+    for (let i = 0; i < startDow; i++) h += '<div class="hist-day empty"></div>';
+    for (let d = 1; d <= daysInMonth; d++) {
+        const ds = S.histY + '-' + String(S.histM + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+        const act = dateSet.has(ds);
+        const cls = ['hist-day'];
+        if (act) cls.push('act');
+        if (ds === todayStr_) cls.push('today');
+        if (S.histSel === ds) cls.push('sel');
+        h += '<button class="' + cls.join(' ') + '" data-day="' + ds + '">' + d + '<span class="hd-dot"></span></button>';
+    }
+    h += '</div></div>';
+
+    // 목록: 선택한 날짜 또는 이번 달 전체
+    const monthPrefix = S.histY + '-' + String(S.histM + 1).padStart(2, '0');
+    let list = S.histSel ? entries.filter(e => e.date === S.histSel) : entries.filter(e => e.date.startsWith(monthPrefix));
+    if (S.histSel) h += '<button class="hist-reset" id="histReset">← 이 달 전체 기록 보기</button>';
+    if (!list.length) {
+        h += '<div class="empty-state" style="padding:30px 20px"><div class="es-emoji">🗓️</div>' +
+            (S.histSel ? '이 날은 기록이 없어요.' : '이 달에는 아직 기록이 없어요.<br>레슨을 완료하거나 동화를 읽으면 여기 남아요!') + '</div>';
+    } else {
+        const byDate = {};
+        list.forEach(e => { (byDate[e.date] = byDate[e.date] || []).push(e); });
+        Object.keys(byDate).sort().reverse().forEach(ds => {
+            const d = new Date(ds + 'T00:00:00');
+            h += '<div class="hist-date-group"><div class="hg-date">' + (d.getMonth() + 1) + '월 ' + d.getDate() + '일 (' + DOW_KO[d.getDay()] + ')' + (ds === todayStr_ ? ' · 오늘' : '') + '</div>';
+            byDate[ds].forEach(e => {
+                h += '<div class="hist-entry"><span class="he-ico">' + e.ico + '</span><span class="he-title">' + esc(e.title) + '</span><span class="he-score">' + esc(e.score) + '</span></div>';
+            });
+            h += '</div>';
+        });
+    }
+    $main.innerHTML = h;
+
+    document.getElementById('histPrev').addEventListener('click', () => {
+        S.histM--; if (S.histM < 0) { S.histM = 11; S.histY--; } S.histSel = null; renderHistory();
+    });
+    const nb = document.getElementById('histNext');
+    if (!isCurMonth) nb.addEventListener('click', () => {
+        S.histM++; if (S.histM > 11) { S.histM = 0; S.histY++; } S.histSel = null; renderHistory();
+    });
+    $main.querySelectorAll('[data-day]').forEach(btn => btn.addEventListener('click', () => {
+        const ds = btn.dataset.day;
+        S.histSel = (S.histSel === ds) ? null : ds;
+        renderHistory();
+    }));
+    const rb = document.getElementById('histReset');
+    if (rb) rb.addEventListener('click', () => { S.histSel = null; renderHistory(); });
+
+    function stat(e, n, l) { return '<div class="stat"><div class="num">' + e + ' ' + n + '</div><div class="lbl">' + l + '</div></div>'; }
 }
 
 /* ═══════════════════ 학습 가이드 ═══════════════════ */
