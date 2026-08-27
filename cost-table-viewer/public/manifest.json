@@ -1,0 +1,17 @@
+{
+  "name": "원가표 뷰어",
+  "short_name": "원가표",
+  "description": "구글 시트 기반 원가표를 비밀번호로 보호하여 보여주는 뷰어입니다.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f4f6f8",
+  "theme_color": "#1f6feb",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
