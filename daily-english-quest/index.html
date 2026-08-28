@@ -417,6 +417,24 @@ body {
 .stage-btn.boss .stage-icon { border-color: var(--boss); color: var(--boss); }
 .stage-btn.boss.cleared { background: rgba(34, 197, 94, 0.16); border-color: var(--success); }
 
+.stage-actions { margin-top: 10px; }
+.stage-actions:empty { display: none; }
+.day-done-note {
+  border: 1px solid var(--success);
+  background: rgba(34, 197, 94, 0.12);
+  border-radius: 12px;
+  padding: 11px 12px;
+  font-size: 13px;
+  color: #bbf7d0;
+  margin-bottom: 8px;
+  word-break: keep-all;
+}
+.all-done-note {
+  border: 1px solid var(--warn);
+  background: rgba(250, 204, 21, 0.12);
+  color: #fde68a;
+}
+
 /* ---------- 스크립트 ---------- */
 .script-part { margin-bottom: 14px; }
 .script-part-title {
@@ -704,6 +722,35 @@ table.key-table tr.checked td.en { color: var(--success); }
   word-break: keep-all;
 }
 .storage-warning.hidden { display: none; }
+
+/* 처음 열었을 때 무엇부터 할지 알려 주는 안내 */
+.first-run {
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid var(--accent);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+}
+.first-run.hidden { display: none; }
+.first-run h2 {
+  margin: 0 0 6px;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--accent);
+}
+.first-run ol {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 13px;
+  color: var(--text-dim);
+  line-height: 1.7;
+}
+.first-run .goal {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: var(--text);
+  font-weight: 700;
+}
 
 /* 모달이 열린 동안 뒤 페이지가 따라 스크롤되지 않게 한다 */
 body.modal-open { overflow: hidden; }
@@ -997,7 +1044,7 @@ body.modal-open { overflow: hidden; }
       <span class="stat-value" id="statLevel">Lv.1</span>
     </div>
     <div class="stat-box">
-      <span class="stat-label">Streak</span>
+      <span class="stat-label">연속</span>
       <span class="stat-value success" id="statStreak">0일</span>
     </div>
   </div>
@@ -1012,6 +1059,7 @@ body.modal-open { overflow: hidden; }
 </header>
 
 <div class="storage-warning hidden" id="storageWarning" role="alert"></div>
+<div class="first-run hidden" id="firstRun"></div>
 
 <!-- ================= Day 선택 ================= -->
 <section class="card">
@@ -1056,9 +1104,11 @@ body.modal-open { overflow: hidden; }
 <section class="card">
   <h2 class="card-title">Quest Stage <span class="sub">완료하면 XP 획득</span></h2>
   <div class="stage-list" id="stageList"></div>
+  <div class="stage-actions" id="stageActions"></div>
   <div class="notice" id="stageHint">
-    Stage 3은 아래 <b>핵심 문장 5개</b>를 모두 체크하면 자동으로 클리어됩니다.<br />
-    Boss Mission은 위의 <b>🎤 말하기 도전</b>으로 발음을 채점받거나, 이 버튼으로 직접 클리어할 수 있어요.
+Stage 3은 아래 <b>Key Sentences</b> 표의 문장 5개를 모두 체크하면 클리어됩니다.<br />
+    Boss Mission은 <b>오늘의 퀘스트 카드의 🎤 말하기 도전</b>으로 발음을 채점받거나,
+    위 <b>Boss Mission</b> 버튼을 눌러 직접 클리어할 수 있어요.
   </div>
 </section>
 
@@ -1083,7 +1133,7 @@ body.modal-open { overflow: hidden; }
 
 <!-- ================= 주간 리포트 ================= -->
 <section class="card">
-  <h2 class="card-title">주간 리포트 <span class="sub">최근 7일</span></h2>
+  <h2 class="card-title">최근 7일 <span class="sub">오늘 포함</span></h2>
   <div class="week-chart" id="weekChart"></div>
   <div class="week-stats" id="weekStats"></div>
   <p class="week-comment" id="weekComment">-</p>
@@ -1106,6 +1156,9 @@ body.modal-open { overflow: hidden; }
     Listening Script
     <button class="btn btn-sm btn-ghost" data-action="toggle-script" id="scriptToggleBtn">접기</button>
   </h2>
+  <div class="notice hidden" id="scriptBlindHint">
+    Stage 1은 <b>보지 않고 듣는</b> 단계예요. 위 <b>접기</b>를 눌러 가린 채 먼저 들어 보세요.
+  </div>
   <div class="script-body" id="scriptBody"></div>
 </section>
 
@@ -1128,7 +1181,7 @@ body.modal-open { overflow: hidden; }
 
 <!-- ================= 반복 연습 ================= -->
 <section class="card">
-  <h2 class="card-title">Repeat Practice <span class="sub">3번씩 따라 말하기</span></h2>
+  <h2 class="card-title">발음 워밍업 <span class="sub">점수에 반영되지 않는 연습</span></h2>
   <div class="repeat-list" id="repeatList"></div>
 </section>
 
@@ -1164,7 +1217,8 @@ body.modal-open { overflow: hidden; }
   </button>
   <div class="notice">
     받은 파일을 열면 캘린더 앱이 뜹니다. <b>추가</b>를 누르면 매일 같은 시간에 알림이 옵니다.<br />
-    아이폰에서는 Safari로 열어야 캘린더 앱으로 바로 넘어갑니다.
+    아이폰에서는 Safari로 열어야 캘린더 앱으로 바로 넘어갑니다.<br />
+    시간을 바꿔 다시 받으면 <b>일정이 하나 더 생깁니다.</b> 캘린더에서 이전 일정을 지워 주세요.
   </div>
 </section>
 
@@ -3101,7 +3155,7 @@ var DAY_CONTENTS = [
 var STAGES = [
   { key: "s1",   icon: "🎧", name: "Stage 1. Blind Listening", desc: "화면을 보지 않고 듣기", xp: 10 },
   { key: "s2",   icon: "📖", name: "Stage 2. Read & Listen",   desc: "스크립트를 보며 듣기",   xp: 10 },
-  { key: "s3",   icon: "🗣", name: "Stage 3. Repeat Practice", desc: "핵심 문장 5개 따라 말하기", xp: 15 },
+  { key: "s3",   icon: "🗣", name: "Stage 3. 핵심 문장 익히기", desc: "아래 표의 문장 5개를 체크", xp: 15 },
   { key: "boss", icon: "🔥", name: "Boss Mission",             desc: "보스 문장을 안 보고 말하기", xp: 20 }
 ];
 
@@ -3569,6 +3623,53 @@ function selectDay(dayId) {
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
+/**
+ * 이 Day만 처음 상태로 되돌린다.
+ * 잘못 눌러 클리어된 스테이지를 복구하는 용도라, 그 Day에서 받은 XP도 함께 회수한다.
+ * 연속 학습일과 복습함은 건드리지 않는다.
+ */
+function resetSelectedDay() {
+  var day = getDayContent(state.selectedDay);
+  var earned = getDayEarnedXp(day.id);
+  var ok = window.confirm(
+    "Day " + day.id + " (" + day.title + ") 을(를) 처음 상태로 되돌릴까요?\n\n"
+    + "이 Day에서 받은 " + earned + " XP도 함께 사라집니다.\n"
+    + "연속 학습일과 복습함은 그대로 둡니다."
+  );
+  if (!ok) { return; }
+
+  state.totalXp = Math.max(0, state.totalXp - earned);
+  state.days[String(day.id)] = createDefaultDayProgress();
+  getDayProgress(day.id).visited = true;
+  isBossRevealed = false;
+  saveState();
+  render();
+  showToast("Day " + day.id + "을(를) 되돌렸어요.");
+}
+
+/** 다음 Day로 넘어간다 */
+function goToNextDay() {
+  if (state.selectedDay >= DAY_CONTENTS.length) { return; }
+  selectDay(state.selectedDay + 1);
+  showToast("Day " + state.selectedDay + " 시작! 오늘도 15분이면 충분해요.");
+}
+
+/**
+ * 30일을 다 끝냈을 때 두 번째 바퀴를 시작한다.
+ * 쌓아 온 XP·레벨·연속일·복습함·기록은 그대로 두고 Day 진행만 비운다.
+ */
+function startSecondRound() {
+  var ok = window.confirm(
+    "2회차를 시작할까요?\n\n"
+    + "30일 진행이 Day 1부터 다시 열립니다.\n"
+    + "지금까지 모은 XP(" + state.totalXp + ")와 레벨, 연속 학습일, 복습함은 그대로 유지됩니다."
+  );
+  if (!ok) { return; }
+  state.days = {};
+  selectDay(1);
+  showToast("2회차 시작! 처음보다 훨씬 잘 들릴 거예요.");
+}
+
 /** 전체 기록 초기화 */
 function resetAll() {
   var ok = window.confirm(
@@ -3987,12 +4088,12 @@ function getWeekSummary() {
 /** 이번 주 성적에 맞는 한마디 */
 function getWeekComment(summary) {
   if (!summary.hasAnyRecord) {
-    return "이번 주 기록이 아직 없어요. 오늘 Boss Mission 하나면 시작입니다.";
+    return "최근 7일 기록이 아직 없어요. 오늘 Boss Mission 하나면 시작입니다.";
   }
-  if (summary.bossDays >= 6) { return "이번 주 거의 매일 보스를 잡았어요. 대단합니다."; }
-  if (summary.bossDays >= 4) { return "이번 주 " + summary.bossDays + "일이나 끝냈어요. 아주 좋은 흐름이에요."; }
-  if (summary.bossDays >= 2) { return "이번 주 " + summary.bossDays + "일 완료. 한 번만 더 하면 습관이 됩니다."; }
-  if (summary.bossDays === 1) { return "이번 주 한 번 끝냈어요. 오늘 한 번 더 해볼까요?"; }
+  if (summary.bossDays >= 6) { return "최근 7일 중 거의 매일 보스를 잡았어요. 대단합니다."; }
+  if (summary.bossDays >= 4) { return "최근 7일 중 " + summary.bossDays + "일이나 끝냈어요. 아주 좋은 흐름이에요."; }
+  if (summary.bossDays >= 2) { return "최근 7일 중 " + summary.bossDays + "일 완료. 한 번만 더 하면 습관이 됩니다."; }
+  if (summary.bossDays === 1) { return "최근 7일 중 한 번 끝냈어요. 오늘 한 번 더 해볼까요?"; }
   return "보스는 아직이지만 문장은 만졌어요. 오늘 하나만 끝내 보세요.";
 }
 
@@ -4839,7 +4940,9 @@ function render() {
   renderHeader();
   renderDayGrid();
   renderQuestCard();
+  renderFirstRun();
   renderStages();
+  renderStageActions();
   renderReviewBox();
   renderWeeklyReport();
   renderReminder();
@@ -4994,6 +5097,60 @@ function renderStages() {
   list.innerHTML = html;
 }
 
+/**
+ * 아무것도 안 한 상태에서는 무엇부터 눌러야 하는지 알려 준다.
+ * 한 번이라도 스테이지를 끝내면 사라진다.
+ */
+function renderFirstRun() {
+  var el = document.getElementById("firstRun");
+  if (!el) { return; }
+  var started = state.totalXp > 0 || countClearedDays() > 0;
+  if (started) { el.classList.add("hidden"); el.innerHTML = ""; return; }
+
+  el.innerHTML =
+    "<h2>처음이신가요? 이렇게 하면 됩니다</h2>"
+    + "<ol>"
+    + "<li><b>Stage 1</b> — 아래 <b>▶︎ Read Script</b>를 누르고 화면을 보지 말고 들어 보세요.</li>"
+    + "<li><b>Stage 2</b> — 스크립트를 보면서 한 번 더 듣습니다.</li>"
+    + "<li><b>Stage 3</b> — Key Sentences 표의 문장 5개를 소리 내어 말하고 체크합니다.</li>"
+    + "<li><b>Boss</b> — 오늘의 문장 하나를 안 보고 말하면 오늘 끝!</li>"
+    + "</ol>"
+    + '<p class="goal">하루 목표는 만점이 아니라 Boss Mission 하나입니다.</p>';
+  el.classList.remove("hidden");
+}
+
+/** 스테이지 카드 아래의 다음 행동 (되돌리기 · 다음 Day · 2회차) */
+function renderStageActions() {
+  var day = getDayContent(state.selectedDay);
+  var p = getDayProgress(day.id);
+  var dayDone = p.s1 && p.s2 && p.s3 && p.boss;
+  var earned = getDayEarnedXp(day.id);
+  var allDone = countClearedDays() === DAY_CONTENTS.length;
+  var html = "";
+
+  if (allDone) {
+    html += '<div class="day-done-note all-done-note">🎉 30일을 모두 끝냈어요! '
+      + '지금까지 ' + state.totalXp + ' XP를 모았습니다. '
+      + '한 바퀴 더 돌면 처음보다 훨씬 잘 들려요.</div>'
+      + '<button class="btn btn-accent" style="width:100%" data-action="second-round">'
+      + '🔄 2회차 시작 (XP·레벨·복습함 유지)</button>';
+  } else if (dayDone) {
+    html += '<div class="day-done-note">✅ Day ' + day.id + ' 완료! 오늘 몫은 끝났어요.</div>';
+    if (day.id < DAY_CONTENTS.length) {
+      html += '<button class="btn btn-accent" style="width:100%" data-action="next-day">'
+        + '▶︎ 다음 Day ' + (day.id + 1) + ' 로 가기</button>';
+    }
+  }
+
+  // 잘못 눌러 클리어된 경우를 되돌릴 수 있게 한다
+  if (earned > 0) {
+    html += '<button class="btn btn-ghost" style="width:100%;margin-top:8px" data-action="reset-day">'
+      + '↺ 이 Day 처음부터 다시 (−' + earned + ' XP)</button>';
+  }
+
+  document.getElementById("stageActions").innerHTML = html;
+}
+
 /** 복습함 카드 */
 function renderReviewBox() {
   var stats = getSrsStats();
@@ -5124,6 +5281,14 @@ function renderScript() {
   if (isScriptCollapsed) { body.classList.add("collapsed"); }
   else { body.classList.remove("collapsed"); }
   document.getElementById("scriptToggleBtn").textContent = isScriptCollapsed ? "펼치기" : "접기";
+
+  // Stage 1 은 "화면을 보지 않고 듣기"인데 스크립트가 펼쳐져 있으면 취지가 무너진다.
+  var blindHint = document.getElementById("scriptBlindHint");
+  if (blindHint) {
+    var s1Done = getDayProgress(state.selectedDay).s1;
+    if (!s1Done) { blindHint.classList.remove("hidden"); }
+    else { blindHint.classList.add("hidden"); }
+  }
 }
 
 /** 핵심 문장 표 (English / Korean / Practice Check) */
@@ -5397,6 +5562,15 @@ function handleClick(event) {
 
   } else if (action === "reset") {
     resetAll();
+
+  } else if (action === "reset-day") {
+    resetSelectedDay();
+
+  } else if (action === "next-day") {
+    goToNextDay();
+
+  } else if (action === "second-round") {
+    startSecondRound();
 
   /* ---------- 백업 · 복원 ---------- */
   } else if (action === "open-backup") {
