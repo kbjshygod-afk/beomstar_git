@@ -231,6 +231,8 @@ body {
   color: #e0f2fe;
 }
 .day-btn.done { border-color: var(--success); }
+/* 완료 + 선택이 겹치면 "지금 보는 Day"를 알 수 있게 선택 테두리를 우선한다 */
+.day-btn.done.selected { border-color: var(--accent); }
 .day-btn.done .day-state { color: var(--success); }
 
 /* ---------- 오늘의 퀘스트 ---------- */
@@ -665,6 +667,20 @@ table.key-table tr.checked td.en { color: var(--success); }
 }
 .heard-box .heard-text { color: var(--text); font-weight: 600; }
 
+/* ---------- 저장 경고 배너 ---------- */
+.storage-warning {
+  background: rgba(250, 204, 21, 0.12);
+  border: 1px solid var(--warn);
+  color: var(--warn);
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 13px;
+  line-height: 1.5;
+  margin-bottom: 14px;
+  word-break: keep-all;
+}
+.storage-warning.hidden { display: none; }
+
 /* ---------- 복습함 ---------- */
 .review-box {
   border: 1px solid var(--card-line);
@@ -928,6 +944,8 @@ table.key-table tr.checked td.en { color: var(--success); }
   </div>
 </header>
 
+<div class="storage-warning hidden" id="storageWarning" role="alert"></div>
+
 <!-- ================= Day 선택 ================= -->
 <section class="card">
   <h2 class="card-title">Day 선택 <span class="sub" id="dayProgressText">-</span></h2>
@@ -947,7 +965,7 @@ table.key-table tr.checked td.en { color: var(--success); }
 
   <div class="rate-wrap">
     <div class="rate-info">
-      <span>오늘 완료율</span>
+      <span>이 Day 완료율</span>
       <span id="rateText">0% (0 / 55 XP)</span>
     </div>
     <div class="rate-bar"><div class="rate-bar-fill" id="rateBarFill"></div></div>
@@ -3035,13 +3053,23 @@ var LEVELS = [
    ========================================================= */
 var STORAGE_KEY = "daily-english-quest-v1";
 
+/* 하루에 나오는 핵심 문장 / 반복 문장 개수. 콘텐츠가 늘면 여기만 고치면 된다. */
+var SENTENCES_PER_DAY = 5;
+
+function makeFlagArray() {
+  var arr = [];
+  for (var i = 0; i < SENTENCES_PER_DAY; i++) { arr.push(false); }
+  return arr;
+}
+
 /** 하루(Day 콘텐츠) 하나의 기본 진행 상태 */
 function createDefaultDayProgress() {
   return {
     s1: false, s2: false, s3: false, boss: false,
-    checks: [false, false, false, false, false],       // 핵심 문장 연습 체크
-    repeatPassed: [false, false, false, false, false], // 반복 문장 음성 통과 여부
-    bossScore: 0,                                      // 보스 문장 최고 발음 점수(%)
+    checks: makeFlagArray(),       // 핵심 문장 연습 체크
+    repeatPassed: makeFlagArray(), // 반복 문장 음성 통과 여부
+    bossScore: 0,                  // 보스 문장 최고 발음 점수(%)
+    bossDate: null,                // 이 Day의 보스를 깬 날짜 (YYYY-MM-DD)
     visited: false
   };
 }
@@ -3076,6 +3104,8 @@ function createDefaultSrs() {
 }
 
 var state = createDefaultState();
+var storageWasCorrupt = false; // 저장값을 못 읽었는지 (사용자에게 알려 줘야 한다)
+var storageWriteFailed = false; // 저장이 막혀 있는지 (기록이 휘발된다)
 
 /** localStorage에서 상태를 읽어와 기본값과 합친다 (값이 깨져 있어도 에러 없이 동작) */
 function loadState() {
@@ -3085,6 +3115,8 @@ function loadState() {
     return normalizeState(JSON.parse(raw));
   } catch (err) {
     // 저장된 값이 손상된 경우에도 앱은 기본값으로 계속 동작한다.
+    // 다만 곧바로 덮어쓰지는 않는다. 사용자가 백업으로 되돌릴 기회를 남긴다.
+    storageWasCorrupt = true;
     return createDefaultState();
   }
 }
@@ -3114,12 +3146,13 @@ function normalizeState(parsed) {
       fresh.boss = saved.boss === true;
       fresh.visited = saved.visited === true;
       fresh.bossScore = Math.min(100, toSafeNumber(saved.bossScore, 0));
+      fresh.bossDate = isDateKey(saved.bossDate) ? saved.bossDate : null;
       if (Object.prototype.toString.call(saved.checks) === "[object Array]") {
-        for (var c = 0; c < 5; c++) { fresh.checks[c] = saved.checks[c] === true; }
+        for (var c = 0; c < SENTENCES_PER_DAY; c++) { fresh.checks[c] = saved.checks[c] === true; }
       }
       // repeatPassed는 나중에 추가된 항목이라, 예전 저장값에는 없을 수 있다.
       if (Object.prototype.toString.call(saved.repeatPassed) === "[object Array]") {
-        for (var r = 0; r < 5; r++) { fresh.repeatPassed[r] = saved.repeatPassed[r] === true; }
+        for (var r = 0; r < SENTENCES_PER_DAY; r++) { fresh.repeatPassed[r] = saved.repeatPassed[r] === true; }
       }
     }
     clean.days[id] = fresh;
@@ -3143,9 +3176,13 @@ function isTimeString(value) {
 function normalizeHistory(saved) {
   var clean = {};
   if (!saved || typeof saved !== "object") { return clean; }
+  var today = getTodayKey();
+  var cutoff = addDaysToDateKey(today, -HISTORY_KEEP_DAYS);
   for (var dateKey in saved) {
     if (!Object.prototype.hasOwnProperty.call(saved, dateKey)) { continue; }
     if (!isDateKey(dateKey)) { continue; }
+    // 미래 날짜(기기 시계가 틀렸던 흔적)와 보관 기간이 지난 기록은 여기서 정리한다.
+    if (dateKey > today || dateKey < cutoff) { continue; }
     var entry = saved[dateKey];
     if (!entry || typeof entry !== "object") { continue; }
     clean[dateKey] = {
@@ -3177,7 +3214,8 @@ function normalizeSrs(saved) {
       var type = (card.type === "key" || card.type === "repeat") ? card.type : null;
       var index = Math.floor(toSafeNumber(card.index, -1));
       // 없는 Day나 없는 문장을 가리키는 카드는 버린다.
-      if (!type || dayId < 1 || dayId > DAY_CONTENTS.length || index < 0 || index > 4) { continue; }
+      if (!type || dayId < 1 || dayId > DAY_CONTENTS.length
+          || index < 0 || index >= SENTENCES_PER_DAY) { continue; }
 
       var box = Math.floor(toSafeNumber(card.box, 1));
       if (box < 1) { box = 1; }
@@ -3209,8 +3247,33 @@ function isDateKey(value) {
 function saveState() {
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    if (storageWriteFailed) { storageWriteFailed = false; renderStorageWarning(); }
+    return true;
   } catch (err) {
-    showToast("저장 공간을 사용할 수 없어요. 기록이 유지되지 않습니다.");
+    // 토스트는 2초 뒤 사라지므로, 계속 보이는 경고도 함께 띄운다.
+    if (!storageWriteFailed) {
+      storageWriteFailed = true;
+      renderStorageWarning();
+      showToast("저장이 안 돼요. 지금부터의 기록은 사라집니다.");
+    }
+    return false;
+  }
+}
+
+/** 저장이 막혔거나 저장값이 깨졌을 때 화면 위쪽에 계속 남는 경고 */
+function renderStorageWarning() {
+  var el = document.getElementById("storageWarning");
+  if (!el) { return; }
+  if (storageWriteFailed) {
+    el.textContent = "⚠️ 이 브라우저에서 기록을 저장할 수 없어요. "
+      + "비공개 모드라면 일반 창에서 열어 주세요. 지금은 새로고침하면 사라집니다.";
+    el.classList.remove("hidden");
+  } else if (storageWasCorrupt) {
+    el.textContent = "⚠️ 저장된 기록을 읽지 못해 새로 시작했어요. "
+      + "백업 코드가 있다면 아래 '기록 백업 · 복원'에서 되돌릴 수 있어요.";
+    el.classList.remove("hidden");
+  } else {
+    el.classList.add("hidden");
   }
 }
 
@@ -3223,7 +3286,10 @@ function getDayProgress(dayId) {
 
 function toSafeNumber(value, fallback) {
   var n = Number(value);
-  return (typeof value !== "undefined" && value !== null && !isNaN(n) && n >= 0) ? n : fallback;
+  // Infinity 나 소수가 들어오면 이후 계산과 저장이 모두 망가지므로 걸러낸다.
+  if (typeof value === "undefined" || value === null) { return fallback; }
+  if (!isFinite(n) || n < 0) { return fallback; }
+  return Math.floor(n);
 }
 
 function clampDayId(value) {
@@ -3339,6 +3405,7 @@ function clearStage(dayId, stageKey) {
   recordStageClear(stage.xp, stageKey === "boss"); // 주간 리포트용 기록
 
   if (stageKey === "boss") {
+    progress.bossDate = getTodayKey(); // 이 Day를 오늘 끝냈다는 표시
     updateStreakOnBossClear();
     showToast("🔥 BOSS CLEAR! +" + stage.xp + " XP · 오늘 학습 완료!");
   } else if (stageKey === "s3") {
@@ -3364,6 +3431,20 @@ function updateStreakOnBossClear() {
     state.streak = 1; // 처음이거나 하루 이상 쉼 -> 다시 1일부터
   }
   state.lastBossDate = today;
+}
+
+/**
+ * 오늘 기준으로 살아 있는 연속일.
+ * 마지막 보스가 오늘이나 어제면 아직 이어지는 중이고, 그보다 오래됐으면 끊긴 것이다.
+ * 저장된 streak 값은 건드리지 않고 표시할 때만 계산한다.
+ */
+function getLiveStreak() {
+  if (!state.lastBossDate) { return 0; }
+  var today = getTodayKey();
+  if (state.lastBossDate === today || state.lastBossDate === getYesterdayKey()) {
+    return state.streak;
+  }
+  return 0;
 }
 
 function findStage(stageKey) {
@@ -3548,8 +3629,11 @@ function getDueCards() {
     if (card.due <= today) { due.push(id); }
   }
   // 어려운 문장(상자가 낮은 것)부터, 같으면 Day 순서대로
+  // 오래 밀린 것 -> 어려운 것(낮은 상자) -> Day 순.
+  // 밀린 날짜를 먼저 보지 않으면 20개 제한에 걸려 연체 카드가 영영 안 나온다.
   due.sort(function (a, b) {
     var ca = state.srs.cards[a], cb = state.srs.cards[b];
+    if (ca.due !== cb.due) { return ca.due < cb.due ? -1 : 1; }
     if (ca.box !== cb.box) { return ca.box - cb.box; }
     return ca.dayId - cb.dayId;
   });
@@ -3592,11 +3676,19 @@ function addDayKeySentencesToReview(dayId) {
  * 1번 상자로 되돌리고 오늘 다시 만나게 한다.
  */
 function markSentenceWeak(dayId, type, index) {
-  if (index < 0 || index > 4) { return; }
+  if (index < 0 || index >= SENTENCES_PER_DAY) { return; }
   var id = makeCardId(dayId, type, index);
+  var old = state.srs.cards[id];
+
+  // 졸업한 문장은 건드리지 않는다. 마이크가 소음 때문에 한 번 못 알아들었다고
+  // 몇 주에 걸쳐 쌓은 진도를 되돌리면 억울하다.
+  if (old && old.mastered) { return; }
+
+  // 이미 있는 카드면 상자를 한 칸만 내린다. 없으면 새로 만든다.
+  var box = old ? Math.max(1, old.box - 1) : 1;
   state.srs.cards[id] = {
     dayId: dayId, type: type, index: index,
-    box: 1, due: getTodayKey(), mastered: false
+    box: box, due: getTodayKey(), mastered: false
   };
 }
 
@@ -3693,11 +3785,16 @@ function gradeCurrentReviewCard(remembered) {
   openCurrentReviewCard();
 }
 
-function finishReviewSession() {
+function finishReviewSession(quitEarly) {
   var done = reviewScore.remembered + reviewScore.forgot;
   var remembered = reviewScore.remembered;
+  var left = Math.max(0, reviewQueue.length - reviewIndex);
   closeMicChallenge(); // 여기서 복습 대기열도 함께 정리된다
-  if (done > 0) {
+  if (quitEarly && left > 0) {
+    showToast(done > 0
+      ? (done + "개까지 했어요. 남은 " + left + "개는 그대로 있어요.")
+      : ("복습을 멈췄어요. " + left + "개는 그대로 있어요."));
+  } else if (done > 0) {
     showToast("복습 완료! " + done + "개 중 " + remembered + "개 기억났어요.");
   }
   reviewScore = { remembered: 0, forgot: 0 };
@@ -3908,7 +4005,7 @@ function buildBackupObject() {
     summary: {
       totalXp: state.totalXp,
       level: getLevelInfo(state.totalXp).level,
-      streak: state.streak,
+      streak: getLiveStreak(),
       clearedDays: countClearedDays()
     },
     data: state
@@ -3941,7 +4038,7 @@ function openBackupModal() {
   setRestoreMessage("", "");
   document.getElementById("backupSummary").textContent =
     "지금 기록: " + state.totalXp + " XP · Lv." + getLevelInfo(state.totalXp).level
-    + " · 연속 " + state.streak + "일 · 완료한 Day " + countClearedDays() + "개";
+    + " · 연속 " + getLiveStreak() + "일 · 완료한 Day " + countClearedDays() + "개";
   document.getElementById("backupModal").classList.remove("hidden");
 }
 
@@ -4015,6 +4112,12 @@ function restoreFromText(text) {
     setRestoreMessage("이 앱의 백업이 아니에요.", "warn");
     return;
   }
+  // 앞으로 형식이 바뀌면 옛 앱이 새 백업을 반쪽만 복원하는 사고가 난다.
+  var fileVersion = toSafeNumber(parsed.formatVersion, BACKUP_FORMAT_VERSION);
+  if (fileVersion > BACKUP_FORMAT_VERSION) {
+    setRestoreMessage("더 새로운 버전에서 만든 백업이에요. 앱을 새로 받아 주세요.", "warn");
+    return;
+  }
 
   // { app, data: {...} } 형태와 상태만 담긴 형태를 모두 받아 준다.
   var payload = (parsed.data && typeof parsed.data === "object") ? parsed.data : parsed;
@@ -4040,11 +4143,16 @@ function restoreFromText(text) {
   state = restored;
   getDayProgress(state.selectedDay).visited = true;
   visibleChapterId = getChapterOfDay(state.selectedDay).id;
-  saveState();
+  isBossRevealed = false;   // 복원된 Day의 보스 문장은 다시 가린다
+  storageWasCorrupt = false;
+  var saved = saveState();
   closeBackupModal();
   render();
+  renderStorageWarning();
   window.scrollTo({ top: 0, behavior: "smooth" });
-  showToast("기록을 되돌렸어요! " + state.totalXp + " XP");
+  showToast(saved
+    ? ("기록을 되돌렸어요! " + state.totalXp + " XP")
+    : "되돌렸지만 저장이 안 됐어요. 새로고침하면 사라집니다.");
 }
 
 /** 백업 파일을 골랐을 때 */
@@ -4082,25 +4190,110 @@ var LISTEN_LIMIT_MS = 10000; // 안전용 자동 종료 시간
 
 /* 발음이 비슷해서 인식기가 자주 헷갈리는 단어들 (같은 단어로 인정) */
 var SOUND_ALIKE_GROUPS = [
-  ["to", "two", "too"], ["for", "four"], ["your", "youre"], ["its", "it"],
+  // 숫자 말은 아래 mergeNumberWords 에서 숫자로 바뀌므로 숫자 형태도 함께 넣는다.
+  ["to", "two", "too", "2"], ["for", "four", "4"], ["one", "won", "1"],
+  ["ate", "eight", "8"],
+  ["your", "youre"], ["its", "it"],
   ["i", "ai", "eye"], ["a", "uh"], ["are", "our"], ["there", "their", "theyre"],
-  ["okay", "ok"], ["hi", "high"], ["one", "won"], ["by", "buy", "bye"],
-  ["know", "no"], ["here", "hear"], ["thank", "thanks"]
+  ["okay", "ok"], ["hi", "high"], ["by", "buy", "bye"],
+  ["know", "no"], ["here", "hear"], ["thank", "thanks"],
+  ["oclock", "clock"], ["wanna", "want"], ["kilograms", "kilos"]
 ];
 
-/** 채점용으로 문장을 단순하게 만든다 (소문자, 기호 제거) */
+/* 축약형을 풀어 쓴다. 인식기는 "I'm"으로, 콘텐츠는 "I am"으로 되어 있어
+   그대로 두면 같은 말인데 다른 단어로 세어진다. */
+var CONTRACTIONS = [
+  ["i'm", "i am"], ["you're", "you are"], ["we're", "we are"], ["they're", "they are"],
+  ["he's", "he is"], ["she's", "she is"], ["it's", "it is"], ["that's", "that is"],
+  ["what's", "what is"], ["where's", "where is"], ["who's", "who is"],
+  ["there's", "there is"], ["here's", "here is"], ["how's", "how is"],
+  ["let's", "let us"], ["don't", "do not"], ["doesn't", "does not"],
+  ["didn't", "did not"], ["can't", "can not"], ["cannot", "can not"],
+  ["won't", "will not"], ["isn't", "is not"], ["aren't", "are not"],
+  ["wasn't", "was not"], ["weren't", "were not"], ["haven't", "have not"],
+  ["hasn't", "has not"], ["couldn't", "could not"], ["wouldn't", "would not"],
+  ["shouldn't", "should not"], ["i've", "i have"], ["we've", "we have"],
+  ["you've", "you have"], ["i'll", "i will"], ["you'll", "you will"],
+  ["we'll", "we will"], ["it'll", "it will"], ["that'll", "that will"],
+  ["i'd", "i would"], ["gonna", "going to"], ["gotta", "got to"]
+];
+
+/* 숫자를 말로 한 것과 숫자로 쓴 것을 같게 본다.
+   인식기는 "four"를 "4"로, "twenty four"를 "24"로 돌려주는 일이 잦다. */
+var NUMBER_WORDS = {
+  zero: 0, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7,
+  eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12, thirteen: 13,
+  fourteen: 14, fifteen: 15, sixteen: 16, seventeen: 17, eighteen: 18,
+  nineteen: 19, twenty: 20, thirty: 30, forty: 40, fifty: 50, sixty: 60,
+  seventy: 70, eighty: 80, ninety: 90
+};
+
+/** 채점용으로 문장을 단순하게 만든다 (소문자, 축약형 풀기, 기호 제거) */
 function normalizeForScore(text) {
-  return String(text || "")
-    .toLowerCase()
-    .replace(/[.,!?;:"()‘’“”]/g, " ")
-    .replace(/'/g, "")
+  var s = String(text || "").toLowerCase();
+  // 곡선 따옴표를 곧은 것으로 먼저 통일한다. (U+2018/2019/201C/201D)
+  s = s.replace(/[‘’ʼ]/g, "'").replace(/[“”]/g, '"');
+  for (var i = 0; i < CONTRACTIONS.length; i++) {
+    // 단어 경계에서만 바꾼다 ("i'm" 이 "him"의 일부를 건드리지 않도록)
+    s = s.split(CONTRACTIONS[i][0]).join(CONTRACTIONS[i][1]);
+  }
+  return s
+    .replace(/[.,!?;:"()\-–—]/g, " ")
+    .replace(/'/g, "")   // 남은 소유격 등은 붙여 쓴다 (mom's -> moms)
     .replace(/\s+/g, " ")
     .replace(/^\s|\s$/g, "");
 }
 
+/** 숫자 말이든 숫자든 값으로 바꾼다. 숫자가 아니면 null */
+function numberValueOf(token) {
+  if (Object.prototype.hasOwnProperty.call(NUMBER_WORDS, token)) { return NUMBER_WORDS[token]; }
+  if (/^\d+$/.test(token)) { return Number(token); }
+  return null;
+}
+
+/** 이어진 숫자 말을 하나로 합친다 ("twenty" "four" -> "24", "one hundred" -> "100") */
+function mergeNumberWords(words) {
+  var out = [];
+  var i = 0;
+  while (i < words.length) {
+    var value = numberValueOf(words[i]);
+    if (value === null) { out.push(words[i]); i++; continue; }
+    i++;
+
+    // 20~90 뒤에 1~9가 오면 합친다 (twenty four -> 24)
+    if (value >= 20 && value % 10 === 0 && i < words.length) {
+      var ones = numberValueOf(words[i]);
+      if (ones !== null && ones < 10) { value += ones; i++; }
+    }
+    // "hundred"가 뒤따르면 100을 곱한다 (one hundred five -> 105)
+    if (i < words.length && words[i] === "hundred") {
+      value = value * 100;
+      i++;
+      if (i < words.length) {
+        var rest = numberValueOf(words[i]);
+        if (rest !== null && rest < 100) { value += rest; i++; }
+      }
+    }
+    out.push(String(value));
+  }
+  return out;
+}
+
+/** 좌석·호수처럼 숫자와 글자가 붙은 토큰을 나눈다 ("24a" -> "24","a") */
+function splitAlphaNumeric(words) {
+  var out = [];
+  for (var i = 0; i < words.length; i++) {
+    var m = /^(\d+)([a-z]+)$/.exec(words[i]) || /^([a-z]+)(\d+)$/.exec(words[i]);
+    if (m) { out.push(m[1]); out.push(m[2]); }
+    else { out.push(words[i]); }
+  }
+  return out;
+}
+
 function toWords(text) {
   var cleaned = normalizeForScore(text);
-  return cleaned ? cleaned.split(" ") : [];
+  if (!cleaned) { return []; }
+  return mergeNumberWords(splitAlphaNumeric(cleaned.split(" ")));
 }
 
 /** 두 단어가 사실상 같은 소리인지 */
@@ -4110,8 +4303,13 @@ function isSameSound(a, b) {
     var group = SOUND_ALIKE_GROUPS[i];
     if (indexOfIn(group, a) >= 0 && indexOfIn(group, b) >= 0) { return true; }
   }
-  // 긴 단어는 철자 하나 정도 차이는 맞은 것으로 본다 (인식 오차 보정)
-  if (a.length >= 4 && b.length >= 4 && editDistance(a, b) <= 1) { return true; }
+  // 긴 단어는 철자 하나 정도 차이를 맞은 것으로 본다 (인식 오차 보정).
+  // 짧은 단어까지 봐주면 cold/gold 처럼 다른 단어가 통과하므로 5글자 이상,
+  // 그리고 첫 글자가 같을 때만 인정한다.
+  if (Math.min(a.length, b.length) >= 5 && a.charAt(0) === b.charAt(0)
+      && editDistance(a, b) <= 1) {
+    return true;
+  }
   return false;
 }
 
@@ -4136,33 +4334,75 @@ function editDistance(a, b) {
 }
 
 /**
+ * 목표 문장의 각 단어가 말한 문장 안에 순서대로 있는지 표시한다.
+ * 가장 많이 맞출 수 있는 조합을 찾으므로(최장 공통 부분수열),
+ * 앞에 군더더기가 길게 붙어도 뒤의 단어를 놓치지 않는다.
+ */
+function alignWords(targetWords, saidWords) {
+  var n = targetWords.length, m = saidWords.length;
+  var dp = [], i, j;
+  for (i = 0; i <= n; i++) {
+    var row = [];
+    for (j = 0; j <= m; j++) { row.push(0); }
+    dp.push(row);
+  }
+  for (i = n - 1; i >= 0; i--) {
+    for (j = m - 1; j >= 0; j--) {
+      if (isSameSound(targetWords[i], saidWords[j])) {
+        dp[i][j] = dp[i + 1][j + 1] + 1;
+      } else {
+        dp[i][j] = Math.max(dp[i + 1][j], dp[i][j + 1]);
+      }
+    }
+  }
+
+  var flags = [];
+  var ti = 0, si = 0;
+  while (ti < n) {
+    if (si >= m) { flags.push(false); ti++; continue; }
+    if (isSameSound(targetWords[ti], saidWords[si]) && dp[ti][si] === dp[ti + 1][si + 1] + 1) {
+      flags.push(true); ti++; si++;
+    } else if (dp[ti][si + 1] >= dp[ti + 1][si]) {
+      si++;                       // 말한 쪽의 군더더기를 건너뛴다
+    } else {
+      flags.push(false); ti++;    // 목표 단어를 못 말했다
+    }
+  }
+  return flags;
+}
+
+/* 관계없는 말을 길게 덧붙였을 때의 감점 기준 */
+var EXTRA_WORD_TOLERANCE = 2;   // 이만큼은 군더더기로 봐주고
+var EXTRA_WORD_PENALTY = 8;     // 그 이상은 한 단어당 이만큼 깎는다
+var MAX_EXTRA_PENALTY = 40;
+
+/**
  * 목표 문장과 말한 문장을 비교한다.
- * 순서를 지키면서 단어를 하나씩 맞춰 보고, 맞은 비율을 점수로 낸다.
+ * 목표 단어를 얼마나 말했는지(재현율)를 기본 점수로 하고,
+ * 관계없는 말을 길게 덧붙이면 조금 깎는다.
  * 반환: { score: 0~100, words: [{ word, ok }] }
  */
 function scoreSpeech(targetText, saidText) {
   var targetWords = toWords(targetText);
   var saidWords = toWords(saidText);
+  if (!targetWords.length) { return { score: 0, words: [] }; }
+
+  var flags = alignWords(targetWords, saidWords);
   var result = [];
   var matched = 0;
-  var searchFrom = 0;
-
   for (var i = 0; i < targetWords.length; i++) {
-    var found = -1;
-    // 순서가 조금 밀려도 찾을 수 있게 앞뒤로 조금 여유를 둔다.
-    for (var j = searchFrom; j < saidWords.length && j <= searchFrom + 3; j++) {
-      if (isSameSound(targetWords[i], saidWords[j])) { found = j; break; }
-    }
-    if (found >= 0) {
-      matched++;
-      searchFrom = found + 1;
-      result.push({ word: targetWords[i], ok: true });
-    } else {
-      result.push({ word: targetWords[i], ok: false });
-    }
+    var ok = flags[i] === true;
+    if (ok) { matched++; }
+    result.push({ word: targetWords[i], ok: ok });
   }
 
-  var score = targetWords.length ? Math.round((matched / targetWords.length) * 100) : 0;
+  var recall = (matched / targetWords.length) * 100;
+  var extras = Math.max(0, saidWords.length - targetWords.length);
+  var penalty = Math.min(
+    MAX_EXTRA_PENALTY,
+    Math.max(0, extras - EXTRA_WORD_TOLERANCE) * EXTRA_WORD_PENALTY
+  );
+  var score = Math.max(0, Math.min(100, Math.round(recall - penalty)));
   return { score: score, words: result };
 }
 
@@ -4170,6 +4410,7 @@ function scoreSpeech(targetText, saidText) {
 var micSession = null;      // { target, ko, hideTarget, mode, index }
 var recognition = null;     // 현재 동작 중인 인식기
 var listenTimer = null;
+var recoverTimer = null;    // stop() 후에도 안 끝날 때 화면을 되돌리는 타이머
 var isListening = false;
 
 /**
@@ -4277,20 +4518,28 @@ function startListening() {
   recognition.maxAlternatives = 3;
 
   var finalText = "";
+  var handledByError = false;
+  // 이 인식기가 지금 화면의 주인인지 확인하는 표식.
+  // 창을 닫았다 바로 다시 열면 이전 인식기의 뒤늦은 이벤트가 새 세션을 건드릴 수 있다.
+  var myRecognition = recognition;
+  function isCurrent() { return recognition === myRecognition && micSession !== null; }
+
   isListening = true;
   showMicListening();
 
   recognition.onresult = function (event) {
+    if (!isCurrent()) { return; }  // 창을 닫은 뒤 늦게 도착한 결과는 버린다
     var interim = "";
     for (var i = event.resultIndex; i < event.results.length; i++) {
       var res = event.results[i];
       if (res.isFinal) {
-        // 여러 후보 중 점수가 가장 높은 것을 고른다.
+        // 인식기가 매긴 1순위를 기본으로 쓰고, 다른 후보가 확실히 나을 때만 바꾼다.
+        // 무조건 최고점을 고르면 틀리게 말해도 우연히 맞는 후보가 채택된다.
         var best = res[0].transcript;
         var bestScore = scoreSpeech(micSession.target, best).score;
         for (var k = 1; k < res.length; k++) {
           var s = scoreSpeech(micSession.target, res[k].transcript).score;
-          if (s > bestScore) { bestScore = s; best = res[k].transcript; }
+          if (s >= bestScore + 20) { bestScore = s; best = res[k].transcript; }
         }
         finalText += " " + best;
       } else {
@@ -4301,13 +4550,19 @@ function startListening() {
   };
 
   recognition.onerror = function (event) {
+    if (!isCurrent()) { return; }
+    handledByError = true;   // onend 가 이 안내를 덮어쓰지 않도록 표시
     finishListening();
     var code = event && event.error ? event.error : "";
     if (code === "not-allowed" || code === "service-not-allowed") {
-      showMicReady("마이크 권한이 필요해요.");
-      showToast("마이크 사용을 허용해 주세요. (파일로 열면 막힐 수 있어요)");
+      showMicReady("마이크 권한이 꺼져 있어요.");
+      showToast("설정 > Safari > 마이크에서 허용해 주세요. 파일로 연 경우에는 막힙니다.");
     } else if (code === "no-speech") {
-      showMicReady("소리가 안 들렸어요. 다시 해볼까요?");
+      showMicReady("소리가 안 들렸어요. 조금 크게 다시 말해 보세요.");
+    } else if (code === "audio-capture") {
+      showMicReady("마이크를 찾지 못했어요.");
+    } else if (code === "network") {
+      showMicReady("인터넷 연결을 확인해 주세요. 음성 인식은 온라인에서만 됩니다.");
     } else if (code === "aborted") {
       showMicReady("준비됐어요. 시작을 누르세요.");
     } else {
@@ -4316,11 +4571,13 @@ function startListening() {
   };
 
   recognition.onend = function () {
+    if (!isCurrent()) { return; }
     finishListening();
     var said = finalText.replace(/^\s|\s$/g, "");
-    if (said) { showMicResult(said); }
-    else if (document.getElementById("micResult").style.display === "none") {
-      showMicReady("소리가 안 들렸어요. 다시 해볼까요?");
+    if (said) { showMicResult(said); return; }
+    if (handledByError) { return; }  // onerror 가 이미 이유를 알려 주었다
+    if (document.getElementById("micResult").style.display === "none") {
+      showMicReady("소리가 안 들렸어요. 조금 크게 다시 말해 보세요.");
     }
   };
 
@@ -4328,12 +4585,21 @@ function startListening() {
     recognition.start();
   } catch (err) {
     finishListening();
-    showMicReady("이미 듣고 있어요. 잠시 후 다시 시도해 주세요.");
+    showMicReady("음성 인식을 시작하지 못했어요. 잠시 후 다시 시도해 주세요.");
     return;
   }
 
-  // 너무 오래 켜져 있지 않도록 안전 타이머
-  listenTimer = window.setTimeout(function () { stopListening(); }, LISTEN_LIMIT_MS);
+  // 너무 오래 켜져 있지 않도록 안전 타이머.
+  // stop() 후에도 end 가 오지 않는 환경이 있어 잠시 뒤 화면을 강제로 되돌린다.
+  listenTimer = window.setTimeout(function () {
+    stopListening();
+    recoverTimer = window.setTimeout(function () {
+      if (isListening && isCurrent()) {
+        finishListening();
+        showMicReady("인식이 끝나지 않았어요. 다시 시도해 주세요.");
+      }
+    }, 1500);
+  }, LISTEN_LIMIT_MS);
 }
 
 function stopListening() {
@@ -4345,6 +4611,7 @@ function stopListening() {
 function finishListening() {
   isListening = false;
   if (listenTimer) { window.clearTimeout(listenTimer); listenTimer = null; }
+  if (recoverTimer) { window.clearTimeout(recoverTimer); recoverTimer = null; }
   var circle = document.getElementById("micCircle");
   if (circle) { circle.classList.remove("listening"); }
 }
@@ -4479,7 +4746,7 @@ function renderHeader() {
   document.getElementById("statDay").textContent = String(state.selectedDay);
   document.getElementById("statXp").textContent = String(state.totalXp);
   document.getElementById("statLevel").textContent = "Lv." + levelInfo.level;
-  document.getElementById("statStreak").textContent = state.streak + "일";
+  document.getElementById("statStreak").textContent = getLiveStreak() + "일";
   document.getElementById("levelName").textContent = "Lv." + levelInfo.level + " " + levelInfo.name;
   document.getElementById("levelProgressText").textContent =
     (levelInfo.max === Infinity)
@@ -4544,8 +4811,10 @@ function renderQuestCard() {
   document.getElementById("questTopic").textContent = day.topic;
   document.getElementById("questGoal").textContent = day.goal;
 
+  // 전역 값이 아니라 "지금 보고 있는 Day를 오늘 끝냈는지"로 판정한다.
   document.getElementById("todayBadgeSlot").innerHTML =
-    isTodayCompleted() ? '<span class="today-badge">오늘 완료 ✔</span>' : "";
+    (getDayProgress(day.id).bossDate === getTodayKey())
+      ? '<span class="today-badge">오늘 완료 ✔</span>' : "";
 
   // 완료율 (오늘 얻은 XP / 55)
   var earned = getDayEarnedXp(day.id);
@@ -4835,8 +5104,13 @@ function copyTextFallback(text) {
     document.body.appendChild(area);
     area.select();
     area.setSelectionRange(0, area.value.length);
-    document.execCommand("copy");
+    // execCommand 는 실패해도 예외를 던지지 않고 false 를 돌려준다.
+    var copied = document.execCommand("copy");
     document.body.removeChild(area);
+    if (!copied) {
+      showToast("복사가 막혀 있어요. 칸을 길게 눌러 직접 복사해 주세요.");
+      return;
+    }
     showToast("복사했어요!");
   } catch (err) {
     showToast("복사를 지원하지 않는 브라우저예요.");
@@ -4970,7 +5244,9 @@ function handleClick(event) {
     clearStage(state.selectedDay, "boss");
 
   } else if (action === "close-mic") {
-    closeMicChallenge();
+    // 복습 중이면 남은 개수를 알려 주고 끝낸다 (그만하기와 같은 경로)
+    if (micSession && micSession.mode === "review") { finishReviewSession(true); }
+    else { closeMicChallenge(); }
 
   /* ---------- 복습 ---------- */
   } else if (action === "start-review") {
@@ -4984,7 +5260,7 @@ function handleClick(event) {
     gradeCurrentReviewCard(el.getAttribute("data-ok") === "1");
 
   } else if (action === "review-quit") {
-    finishReviewSession();
+    finishReviewSession(true);
 
   /* ---------- 매일 알림 ---------- */
   } else if (action === "download-reminder") {
@@ -5023,7 +5299,9 @@ function init() {
   });
 
   render();
-  saveState();
+  renderStorageWarning();
+  // 여기서 무조건 저장하지 않는다. 오래 열어 둔 탭이 다른 탭의 최신 기록을
+  // 통째로 덮어쓰는 사고를 막고, 저장값이 깨졌을 때 되돌릴 기회를 남긴다.
 }
 
 if (document.readyState === "loading") {
