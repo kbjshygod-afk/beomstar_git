@@ -53,7 +53,8 @@ body {
   top: 0;
   z-index: 20;
   background: linear-gradient(180deg, #0f172a 78%, rgba(15, 23, 42, 0.85) 100%);
-  padding: 14px 0 10px;
+  /* 홈 화면에 추가해 전체 화면으로 열면 상태바가 제목을 덮으므로 그만큼 내린다 */
+  padding: calc(14px + env(safe-area-inset-top)) 0 10px;
   margin-bottom: 4px;
 }
 
@@ -320,6 +321,9 @@ body {
 .boss-en.hidden-text {
   filter: blur(7px);
   user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;  /* 길게 눌러도 원문이 드러나지 않게 */
+  pointer-events: none;
 }
 .boss-ko {
   font-size: 13px;
@@ -558,8 +562,10 @@ table.key-table tr.checked td.en { color: var(--success); }
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  padding: 16px;
-  padding-bottom: calc(16px + env(safe-area-inset-bottom));
+  padding: 12px;
+  /* 위쪽은 상태바/노치를, 아래쪽은 홈 인디케이터를 피한다 */
+  padding-top: calc(12px + env(safe-area-inset-top));
+  padding-bottom: calc(12px + env(safe-area-inset-bottom));
 }
 .modal.hidden { display: none; }
 .modal-card {
@@ -569,15 +575,27 @@ table.key-table tr.checked td.en { color: var(--success); }
   border: 1px solid var(--boss);
   border-radius: 18px;
   padding: 16px;
-  max-height: 88vh;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+  /* 부모(.modal)가 이미 안전 영역만큼 줄어 있으므로 그 안을 다 쓴다.
+     88vh 로 두면 작은 화면에서 카드 위쪽(닫기 버튼)이 잘려 나간다. */
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
+/* 제목과 ✕ 는 스크롤과 무관하게 항상 보인다 */
 .modal-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 10px;
+  flex: 0 0 auto;
+}
+.modal-body {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain; /* 끝까지 스크롤해도 뒤 페이지가 안 움직인다 */
+  flex: 1 1 auto;
+  min-height: 0;
 }
 .modal-title { font-size: 15px; font-weight: 800; color: var(--boss); }
 .modal-close {
@@ -599,7 +617,13 @@ table.key-table tr.checked td.en { color: var(--success); }
   margin-bottom: 12px;
 }
 .mic-target-en { font-size: 19px; font-weight: 800; word-break: keep-all; }
-.mic-target-en.hidden-text { filter: blur(7px); user-select: none; }
+.mic-target-en.hidden-text {
+  filter: blur(7px);
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  pointer-events: none;
+}
 .mic-target-ko { font-size: 13px; color: var(--text-dim); margin-top: 4px; }
 
 .mic-stage { text-align: center; padding: 6px 0 12px; }
@@ -680,6 +704,48 @@ table.key-table tr.checked td.en { color: var(--success); }
   word-break: keep-all;
 }
 .storage-warning.hidden { display: none; }
+
+/* 모달이 열린 동안 뒤 페이지가 따라 스크롤되지 않게 한다 */
+body.modal-open { overflow: hidden; }
+
+/* 키보드 포커스 표시 — 전역으로 탭 하이라이트를 껐으므로 반드시 있어야 한다 */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+.reminder-input:focus-visible,
+.backup-area:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+/* 손가락으로 눌렀을 때의 반응. .btn 외의 버튼에도 필요하다 */
+.day-btn:active, .chapter-tab:active, .check-box:active,
+.speak-btn:active, .mic-btn:active, .mini-speak:active,
+.stage-btn:active, .modal-close:active, a.app-card:active {
+  transform: scale(0.97);
+  filter: brightness(1.15);
+}
+
+/* 움직임을 줄이도록 설정한 기기에서는 애니메이션을 멈춘다 */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .mic-circle.listening { border-color: var(--boss); background: rgba(249, 115, 22, 0.18); }
+}
+
+/* 화면에는 안 보이지만 스크린리더는 읽는 영역 */
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
 
 /* ---------- 복습함 ---------- */
 .review-box {
@@ -834,7 +900,8 @@ table.key-table tr.checked td.en { color: var(--success); }
   border-radius: 10px;
   color: var(--text-dim);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 11px;
+  /* 16px 미만이면 iOS 가 탭할 때 화면을 확대하고 되돌리지 않는다 */
+  font-size: 16px;
   line-height: 1.5;
   padding: 9px 10px;
   resize: vertical;
@@ -895,7 +962,7 @@ table.key-table tr.checked td.en { color: var(--success); }
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.25s ease, transform 0.25s ease;
-  z-index: 50;
+  z-index: 80;   /* 모달(60)보다 위. 모달 안에서도 안내가 보여야 한다 */
   max-width: 90vw;
   text-align: center;
 }
@@ -1113,13 +1180,14 @@ table.key-table tr.checked td.en { color: var(--success); }
 </section>
 
 <!-- ================= 백업 · 복원 모달 ================= -->
-<div class="modal hidden" id="backupModal" role="dialog" aria-modal="true">
+<div class="modal hidden" id="backupModal" role="dialog" aria-modal="true" aria-labelledby="backupModalTitle">
   <div class="modal-card accent">
     <div class="modal-head">
-      <span class="modal-title accent">💾 기록 백업 · 복원</span>
-      <button class="modal-close" data-action="close-backup" aria-label="닫기">✕</button>
+      <span class="modal-title accent" id="backupModalTitle">💾 기록 백업 · 복원</span>
+      <button class="modal-close" data-action="close-backup" aria-label="백업 창 닫기">✕</button>
     </div>
 
+    <div class="modal-body">
     <p class="backup-summary" id="backupSummary">-</p>
 
     <div class="backup-section">
@@ -1144,17 +1212,19 @@ table.key-table tr.checked td.en { color: var(--success); }
       <div class="restore-msg" id="restoreMsg"></div>
       <button class="btn btn-accent" style="width:100%;margin-top:8px" data-action="backup-restore">↩︎ 복원하기</button>
     </div>
+    </div>
   </div>
 </div>
 
 <!-- ================= 말하기 도전 모달 ================= -->
-<div class="modal hidden" id="micModal" role="dialog" aria-modal="true">
+<div class="modal hidden" id="micModal" role="dialog" aria-modal="true" aria-labelledby="micModalTitle">
   <div class="modal-card">
     <div class="modal-head">
       <span class="modal-title" id="micModalTitle">🎤 말하기 도전</span>
-      <button class="modal-close" data-action="close-mic" aria-label="닫기">✕</button>
+      <button class="modal-close" data-action="close-mic" aria-label="말하기 창 닫기">✕</button>
     </div>
 
+    <div class="modal-body">
     <p class="mic-hint" id="micHint">준비되면 시작을 누르고, 문장을 소리 내어 말하세요.</p>
 
     <div class="mic-target">
@@ -1173,14 +1243,18 @@ table.key-table tr.checked td.en { color: var(--success); }
     <div id="micResult" style="display:none">
       <div class="score-big" id="scoreBig">0%</div>
       <div class="score-bar"><div class="score-bar-fill" id="scoreBarFill"></div></div>
-      <div class="diff-label">문장 비교 (초록 = 잘 말한 단어)</div>
+      <div class="diff-label" id="diffLabel">문장 비교 — ✓ 말한 단어 / ✗ 놓친 단어</div>
       <div class="diff-words" id="diffWords"></div>
       <div class="heard-box">들린 문장: <span class="heard-text" id="heardText">-</span></div>
     </div>
 
     <div class="btn-row" id="micActions"></div>
+    </div>
   </div>
 </div>
+
+<!-- 스크린리더에 XP/채점 결과 같은 변화를 알리는 자리 -->
+<div id="liveRegion" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
 
 <div id="toast"></div>
 
@@ -3550,27 +3624,56 @@ function pickEnglishVoice() {
 }
 
 /** 문장 배열을 한 줄씩 천천히 읽는다 */
+var speakQueue = [];      // 아직 읽지 않은 문장들
+var speakQueueId = 0;     // 새로 시작하면 번호가 바뀌어 이전 대기열이 멈춘다
+
+/**
+ * 문장 배열을 한 줄씩 읽는다.
+ * iOS 사파리는 한 번에 수십 개를 큐에 넣으면 중간에 조용히 멈추므로,
+ * 한 문장이 끝나면 다음 문장을 넣는 방식으로 이어 읽는다.
+ */
 function speakLines(lines) {
   if (!speechAvailable) {
     showToast("이 브라우저에서는 음성 읽기를 지원하지 않습니다.");
     return;
   }
   stopSpeaking();
+
+  speakQueue = [];
   for (var i = 0; i < lines.length; i++) {
-    var text = String(lines[i]).replace(/^[AB]:\s*/, ""); // "A:", "B:" 표시는 읽지 않는다
-    if (!text) { continue; }
-    var utter = new window.SpeechSynthesisUtterance(text);
-    utter.lang = "en-US";
-    utter.rate = SPEECH_RATE;
-    utter.pitch = 1;
-    if (englishVoice) { utter.voice = englishVoice; }
+    var text = String(lines[i]).replace(/^[ABC]:\s*/, ""); // "A:", "B:" 표시는 읽지 않는다
+    if (text) { speakQueue.push(text); }
+  }
+  speakQueueId = speakQueueId + 1;
+  speakNextInQueue(speakQueueId);
+}
+
+function speakNextInQueue(queueId) {
+  if (queueId !== speakQueueId) { return; }   // 그사이 새로 시작했거나 멈췄다
+  if (!speakQueue.length) { return; }
+
+  var text = speakQueue.shift();
+  var utter = new window.SpeechSynthesisUtterance(text);
+  utter.lang = "en-US";
+  utter.rate = SPEECH_RATE;
+  utter.pitch = 1;
+  if (englishVoice) { utter.voice = englishVoice; }
+  utter.onend = function () { speakNextInQueue(queueId); };
+  // 읽기에 실패해도 멈추지 않고 다음 문장으로 넘어간다.
+  utter.onerror = function () { speakNextInQueue(queueId); };
+
+  try {
     window.speechSynthesis.speak(utter);
+  } catch (err) {
+    speakNextInQueue(queueId);
   }
 }
 
 function speakOne(text) { speakLines([text]); }
 
 function stopSpeaking() {
+  speakQueue = [];
+  speakQueueId = speakQueueId + 1;   // 진행 중인 대기열을 무효로 만든다
   if (!speechAvailable) { return; }
   try { window.speechSynthesis.cancel(); } catch (err) { /* 무시 */ }
 }
@@ -4039,11 +4142,11 @@ function openBackupModal() {
   document.getElementById("backupSummary").textContent =
     "지금 기록: " + state.totalXp + " XP · Lv." + getLevelInfo(state.totalXp).level
     + " · 연속 " + getLiveStreak() + "일 · 완료한 Day " + countClearedDays() + "개";
-  document.getElementById("backupModal").classList.remove("hidden");
+  openModal("backupModal");
 }
 
 function closeBackupModal() {
-  document.getElementById("backupModal").classList.add("hidden");
+  closeModal("backupModal");
 }
 
 /**
@@ -4439,7 +4542,7 @@ function openMicChallenge(config) {
   document.getElementById("micTargetKo").textContent = config.ko || "";
 
   showMicReady("준비됐어요. 시작을 누르세요.");
-  document.getElementById("micModal").classList.remove("hidden");
+  openModal("micModal");
 }
 
 /** 준비 화면 */
@@ -4638,8 +4741,9 @@ function showMicResult(saidText) {
 
   var diffHtml = "";
   for (var i = 0; i < judged.words.length; i++) {
+    // 색만으로 구분하면 색각 이상 사용자가 알 수 없으므로 기호를 함께 붙인다.
     diffHtml += '<span class="diff-word ' + (judged.words[i].ok ? "ok" : "miss") + '">'
-      + escapeHtml(judged.words[i].word) + "</span>";
+      + (judged.words[i].ok ? "✓ " : "✗ ") + escapeHtml(judged.words[i].word) + "</span>";
   }
   document.getElementById("diffWords").innerHTML = diffHtml;
   document.getElementById("heardText").textContent = saidText;
@@ -4675,8 +4779,15 @@ function showMicResult(saidText) {
   }
   document.getElementById("micActions").innerHTML = actions;
 
-  if (passed) { showToast("좋아요! " + judged.score + "% 통과!"); }
-  else { showToast(judged.score + "% · 빨간 단어를 다시 들어 보세요."); }
+  var missed = [];
+  for (var mi = 0; mi < judged.words.length; mi++) {
+    if (!judged.words[mi].ok) { missed.push(judged.words[mi].word); }
+  }
+  if (passed) {
+    showToast("좋아요! " + judged.score + "% 통과!");
+  } else {
+    showToast(judged.score + "% · 놓친 단어: " + (missed.length ? missed.join(", ") : "없음"));
+  }
 }
 
 /**
@@ -4708,7 +4819,7 @@ function closeMicChallenge() {
   micSession = null;
   reviewQueue = [];
   reviewIndex = 0;
-  document.getElementById("micModal").classList.add("hidden");
+  closeModal("micModal");
 }
 
 /* =========================================================
@@ -4771,6 +4882,7 @@ function renderDayGrid() {
     var chapter = CHAPTERS[i];
     var isSelected = (chapter.id === visibleChapterId);
     chapterHtml += '<button class="chapter-tab' + (isSelected ? " selected" : "") + '" '
+      + 'aria-pressed="' + (isSelected ? "true" : "false") + '" '
       + 'data-action="select-chapter" data-chapter="' + chapter.id + '">'
       + escapeHtml(chapter.name)
       + '<span class="chapter-range">Day ' + chapter.from + "-" + chapter.to + "</span></button>";
@@ -4794,8 +4906,12 @@ function renderDayGrid() {
     var cls = "day-btn";
     if (day.id === state.selectedDay) { cls += " selected"; }
     if (isDone) { cls += " done"; }
-    dayHtml += '<button class="' + cls + '" data-action="select-day" data-day="' + day.id + '">'
-          + "Day " + day.id + '<span class="day-state">' + stateText + "</span></button>";
+    var dayLabel = "Day " + day.id + " " + day.title
+      + (isDone ? ", 완료" : (earned > 0 ? ", " + earned + " XP" : ", 시작 안 함"));
+    dayHtml += '<button class="' + cls + '" data-action="select-day" data-day="' + day.id + '" '
+          + 'aria-current="' + (day.id === state.selectedDay ? "true" : "false") + '" '
+          + 'aria-label="' + escapeHtml(dayLabel) + '">'
+          + "Day " + day.id + '<span class="day-state" aria-hidden="true">' + stateText + "</span></button>";
   }
   document.getElementById("dayGrid").innerHTML = dayHtml;
 
@@ -5022,11 +5138,14 @@ function renderKeyTable() {
     var on = progress.checks[i] === true;
     html += "<tr" + (on ? ' class="checked"' : "") + ">"
       + '<td class="en"><button class="mini-speak" data-action="speak-line" '
-      + 'data-text="' + escapeHtml(item.en) + '" aria-label="문장 듣기">🔊</button>'
+      + 'data-text="' + escapeHtml(item.en) + '" '
+      + 'aria-label="' + escapeHtml(item.en) + ' 듣기">🔊</button>'
       + escapeHtml(item.en) + "</td>"
       + '<td class="ko">' + escapeHtml(item.ko) + "</td>"
       + '<td class="chk"><button class="check-box' + (on ? " on" : "") + '" '
-      + 'data-action="toggle-check" data-index="' + i + '" aria-label="연습 체크">' + (on ? "✔" : "") + "</button></td>"
+      + 'data-action="toggle-check" data-index="' + i + '" '
+      + 'aria-pressed="' + (on ? "true" : "false") + '" '
+      + 'aria-label="' + escapeHtml(item.en) + ' 연습 체크">' + (on ? "✔" : "") + "</button></td>"
       + "</tr>";
   }
   tbody.innerHTML = html;
@@ -5048,9 +5167,11 @@ function renderRepeatCards() {
       + '<span class="text"><span class="repeat-en">' + escapeHtml(item.en) + "</span>"
       + '<span class="repeat-ko">' + escapeHtml(item.ko)
       + (passed ? ' <span class="pass-mark">· 통과</span>' : "") + "</span></span>"
-      + '<button class="speak-btn" data-action="speak-line" data-text="' + escapeHtml(item.en) + '" aria-label="문장 듣기">🔊</button>'
+      + '<button class="speak-btn" data-action="speak-line" data-text="' + escapeHtml(item.en) + '" '
+      + 'aria-label="' + escapeHtml(item.en) + ' 듣기">🔊</button>'
       + (recognitionAvailable
-          ? '<button class="mic-btn" data-action="challenge-repeat" data-index="' + i + '" aria-label="따라 말하기">🎤</button>'
+          ? '<button class="mic-btn" data-action="challenge-repeat" data-index="' + i + '" '
+            + 'aria-label="' + escapeHtml(item.en) + ' 따라 말하기">🎤</button>'
           : "")
       + "</div>";
   }
@@ -5069,11 +5190,100 @@ function renderNextActions() {
 }
 
 /* =========================================================
+   7-2. 모달 공통 동작 (열기/닫기 · 포커스 · 배경 스크롤)
+   - 모달이 열리면 뒤 페이지가 따라 스크롤되지 않게 잠근다.
+   - 키보드/보이스오버 사용자가 모달 밖으로 빠져나가지 않도록 포커스를 가둔다.
+   - Esc 로 닫을 수 있게 한다.
+   ========================================================= */
+var openModalId = null;       // 지금 열려 있는 모달
+var focusBeforeModal = null;  // 모달을 열기 직전에 포커스가 있던 곳
+
+/** 모달 안에서 포커스를 받을 수 있는 요소들 */
+function getFocusableIn(container) {
+  var nodes = container.querySelectorAll(
+    'button:not([disabled]), [href], input:not([disabled]), textarea:not([disabled]), select, [tabindex]:not([tabindex="-1"])'
+  );
+  var list = [];
+  for (var i = 0; i < nodes.length; i++) {
+    // 숨어 있는 요소는 건너뛴다 (offsetParent 가 없으면 화면에 없다)
+    if (nodes[i].offsetParent !== null || nodes[i] === document.activeElement) { list.push(nodes[i]); }
+  }
+  return list;
+}
+
+function openModal(modalId) {
+  var modal = document.getElementById(modalId);
+  if (!modal) { return; }
+  focusBeforeModal = document.activeElement;
+  openModalId = modalId;
+  modal.classList.remove("hidden");
+  document.body.classList.add("modal-open");
+  // 첫 번째 조작 가능한 요소로 포커스를 옮긴다.
+  var focusable = getFocusableIn(modal);
+  if (focusable.length) { focusable[0].focus(); }
+}
+
+function closeModal(modalId) {
+  var modal = document.getElementById(modalId);
+  if (modal) { modal.classList.add("hidden"); }
+  if (openModalId === modalId) {
+    openModalId = null;
+    document.body.classList.remove("modal-open");
+    // 열기 전 위치로 포커스를 되돌린다.
+    if (focusBeforeModal && typeof focusBeforeModal.focus === "function") {
+      try { focusBeforeModal.focus(); } catch (err) { /* 사라진 버튼이면 무시 */ }
+    }
+    focusBeforeModal = null;
+  }
+}
+
+/** 모달이 열려 있을 때의 키보드 처리 (Esc 닫기 · Tab 가두기) */
+function handleModalKeydown(event) {
+  if (!openModalId) { return; }
+  var modal = document.getElementById(openModalId);
+  if (!modal) { return; }
+
+  if (event.key === "Escape" || event.key === "Esc") {
+    event.preventDefault();
+    if (openModalId === "micModal") {
+      if (micSession && micSession.mode === "review") { finishReviewSession(true); }
+      else { closeMicChallenge(); }
+    } else {
+      closeBackupModal();
+    }
+    return;
+  }
+
+  if (event.key !== "Tab") { return; }
+  var focusable = getFocusableIn(modal);
+  if (!focusable.length) { return; }
+  var first = focusable[0];
+  var last = focusable[focusable.length - 1];
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault(); last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault(); first.focus();
+  } else if (modal.contains(document.activeElement) === false) {
+    event.preventDefault(); first.focus();
+  }
+}
+
+/** 스크린리더에 상태 변화를 알린다 (XP 획득, 채점 결과 등) */
+function announce(message) {
+  var el = document.getElementById("liveRegion");
+  if (!el) { return; }
+  // 같은 문장이 연속으로 오면 읽지 않으므로 살짝 비웠다가 넣는다.
+  el.textContent = "";
+  window.setTimeout(function () { el.textContent = message; }, 30);
+}
+
+/* =========================================================
    8. 보조 기능 (토스트 / 복사)
    ========================================================= */
 var toastTimer = null;
 
 function showToast(message) {
+  announce(message);   // 스크린리더에도 같은 내용을 전달한다
   var el = document.getElementById("toast");
   if (!el) { return; }
   el.textContent = message;
@@ -5278,6 +5488,7 @@ function init() {
 
   initSpeech();
   document.addEventListener("click", handleClick, false);
+  document.addEventListener("keydown", handleModalKeydown, false);
 
   // 백업 파일 선택은 클릭이 아니라 change 이벤트로 받는다.
   var backupFileInput = document.getElementById("backupFile");
