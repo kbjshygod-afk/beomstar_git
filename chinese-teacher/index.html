@@ -197,6 +197,37 @@
             padding: 12px 14px; font-size: 13px; margin: 14px 0 8px; line-height: 1.6;
         }
         .tip-box b { color: #7a5b00; }
+
+        .hist-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 14px; }
+        .hist-stats .stat .num { font-size: 15px; }
+        .hist-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+        .hist-nav .hn-title { font-size: 15px; font-weight: 800; }
+        .hist-nav button { background: white; border: 1px solid var(--border); border-radius: 10px; width: 32px; height: 32px; font-size: 14px; cursor: pointer; font-family: inherit; }
+        .hist-nav button:disabled { opacity: .35; cursor: default; }
+        .hist-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 16px; }
+        .hist-dow { text-align: center; font-size: 10.5px; color: var(--text-light); font-weight: 700; padding-bottom: 4px; }
+        .hist-day { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 10px; font-size: 12px; cursor: pointer; background: #f8fafc; color: var(--text-light); border: none; font-family: inherit; }
+        .hist-day.empty { visibility: hidden; cursor: default; }
+        .hist-day.act { background: var(--red-soft); color: var(--text); font-weight: 700; }
+        .hist-day .hd-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--primary); margin-top: 2px; visibility: hidden; }
+        .hist-day.act .hd-dot { visibility: visible; }
+        .hist-day.today { box-shadow: inset 0 0 0 2px var(--primary); }
+        .hist-day.sel { background: var(--primary); color: white; }
+        .hist-day.sel .hd-dot { background: white; }
+        .hist-date-group { margin-bottom: 14px; }
+        .hist-date-group .hg-date { font-size: 12.5px; font-weight: 700; color: var(--text-light); margin-bottom: 6px; }
+        .hist-entry { display: flex; align-items: center; gap: 10px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; margin-bottom: 6px; }
+        .hist-entry .he-ico { font-size: 18px; flex-shrink: 0; }
+        .hist-entry .he-title { font-size: 13.5px; font-weight: 600; flex: 1; min-width: 0; }
+        .hist-entry .he-score { font-size: 12px; color: var(--primary); font-weight: 700; white-space: nowrap; flex-shrink: 0; }
+        .hist-reset { font-size: 12.5px; color: var(--primary); font-weight: 700; cursor: pointer; margin-bottom: 10px; display: inline-block; background: none; border: none; font-family: inherit; padding: 0; }
+        .story-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 14px; margin-bottom: 10px; display: flex; gap: 12px; align-items: center; cursor: pointer; }
+        .story-card.locked { opacity: .5; cursor: default; }
+        .story-card .st-emoji { width: 46px; height: 46px; border-radius: 12px; background: var(--red-soft); display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; }
+        .story-card .st-title { font-size: 14.5px; font-weight: 700; }
+        .story-card .st-desc { font-size: 11.5px; color: var(--text-light); margin-top: 2px; }
+        .story-card .st-lv { margin-left: auto; font-size: 11px; font-weight: 700; color: var(--primary); background: var(--red-soft); border-radius: 8px; padding: 4px 8px; white-space: nowrap; }
+        .story-sent { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px; margin-bottom: 10px; }
         .culture-box {
             background: #eef6ff; border: 1px solid #cfe3fa; border-radius: 12px;
             padding: 12px 14px; font-size: 13px; margin: 14px 0 8px; line-height: 1.6;
@@ -359,6 +390,7 @@
 </div>
 
 <script src="data.js"></script>
+<script src="stories.js"></script>
 <script>
 'use strict';
 /* ═══════════════════ 데이터 준비 ═══════════════════ */
@@ -366,6 +398,8 @@ const DATA = (window.ZW_DATA && window.ZW_DATA.units) ? window.ZW_DATA : null;
 const UNITS = DATA ? DATA.units : [];
 const ALL = UNITS.flatMap(u => u.lessons.map(l => ({ ...l, unitId: u.unitId, unitTitle: u.title, unitIcon: u.icon })));
 const LESSON_BY_ID = Object.fromEntries(ALL.map((l, i) => [l.id, i]));
+const STORIES = (window.ZW_STORIES && window.ZW_STORIES.stories) || [];
+function storiesRequiredCount(afterUnit) { let n = 0; UNITS.forEach(u => { if (u.unitId <= afterUnit) n += u.lessons.length; }); return n; }
 const PASS_RATE = 0.7;
 const SRS_INTERVALS = { 1: 1, 2: 2, 3: 4, 4: 7, 5: 15 };  // box → days
 const STEP_NAMES = ['단어', '핵심 문장', '회화', '문법', '퀴즈'];
@@ -380,6 +414,7 @@ function loadStore() {
         completed: d.completed || {},          // lessonId → {score,total,date}
         srs: d.srs || {},                      // key → {hanzi,pinyin,ko,koPron,box,due}
         streak: d.streak || { last: '', count: 0 },
+        lastPos: d.lastPos || null,            // 마지막으로 보던 위치 {id, step}
         settings: Object.assign({ koPron: true, rate: 1, freeNav: false }, d.settings || {}),
     };
 }
@@ -461,6 +496,19 @@ function isUnlocked(idx) {
     if (idx === 0) return true;
     return isDone(ALL[idx - 1].id);
 }
+function savePos(id, step) {
+    store.lastPos = { id: id, step: step };
+    save();
+}
+function resumeTarget() {
+    const lp = store.lastPos;
+    if (lp && LESSON_BY_ID[lp.id] !== undefined && !isDone(lp.id)) {
+        const idx = LESSON_BY_ID[lp.id];
+        if (isUnlocked(idx)) return { idx: idx, step: Math.min(4, Math.max(0, lp.step || 0)) };
+    }
+    const n = nextLessonIdx();
+    return n >= 0 ? { idx: n, step: 0 } : null;
+}
 function nextLessonIdx() {
     for (let i = 0; i < ALL.length; i++) if (!isDone(ALL[i].id)) return i;
     return -1;
@@ -480,8 +528,44 @@ function addWordsToSrs(lesson) {
     save();
 }
 
+/* ═══════════════════ 진도 백업 · 복원 ═══════════════════ */
+const BACKUP_TAG = '니하오 중국어';
+function b64encode(str) {
+    const bytes = new TextEncoder().encode(str);
+    let bin = '';
+    const CH = 0x8000;
+    for (let i = 0; i < bytes.length; i += CH) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CH));
+    return btoa(bin);
+}
+function b64decode(b64) {
+    const bin = atob(b64.replace(/\s+/g, ''));
+    const bytes = Uint8Array.from(bin, c => c.charCodeAt(0));
+    return new TextDecoder().decode(bytes);
+}
+function exportProgress() {
+    return b64encode(JSON.stringify({ v: 1, tag: BACKUP_TAG, data: store }));
+}
+function importProgress(code) {
+    if (!code || !code.trim()) throw new Error('코드를 붙여넣어 주세요.');
+    let obj;
+    try { obj = JSON.parse(b64decode(code)); }
+    catch (e) { throw new Error('코드를 읽을 수 없어요. 전체를 빠짐없이 복사했는지 확인해 주세요.'); }
+    if (!obj || !obj.data || typeof obj.data !== 'object') throw new Error('올바른 백업 코드가 아니에요.');
+    if (obj.tag && obj.tag !== BACKUP_TAG) throw new Error('다른 앱(' + obj.tag + ')의 백업 코드예요.');
+    const d = obj.data;
+    store = {
+        completed: d.completed || {},
+        srs: d.srs || {},
+        streak: d.streak || { last: '', count: 0 },
+        lastPos: d.lastPos || null,
+        settings: Object.assign({ koPron: true, rate: 1, freeNav: false }, d.settings || {}),
+    };
+    save();
+    return { lessons: Object.keys(store.completed).length, cards: Object.keys(store.srs).length };
+}
+
 /* ═══════════════════ 라우터 ═══════════════════ */
-const S = { view: 'home', lessonIdx: 0, step: 0, quiz: null, review: null, tone: null, openUnit: null };
+const S = { view: 'home', lessonIdx: 0, step: 0, quiz: null, review: null, tone: null, story: null, storyIdx: null, openUnit: null };
 const $main = document.getElementById('main');
 
 function go(view) { stopSpeak(); seqPlaying = false; S.view = view; render(); }
@@ -493,6 +577,9 @@ function render() {
         case 'lesson': renderLesson(); break;
         case 'review': renderReview(); break;
         case 'tone': renderTone(); break;
+        case 'story': renderStoryList(); break;
+        case 'history': renderHistory(); break;
+        case 'storyRead': renderStoryRead(); break;
         case 'guide': renderGuide(); break;
         case 'settings': renderSettings(); break;
         default: renderHome();
@@ -510,17 +597,19 @@ function updateTabs() {
         { id: 'home', ico: '🏠', label: '학습' },
         { id: 'review', ico: '🃏', label: '복습', badge: due },
         { id: 'tone', ico: '🎵', label: '성조' },
+        { id: 'story', ico: '📚', label: '읽기' },
+        { id: 'history', ico: '📅', label: '기록' },
         { id: 'guide', ico: '📖', label: '가이드' },
         { id: 'settings', ico: '⚙️', label: '설정' },
     ];
     const bar = document.getElementById('tabbar');
     bar.innerHTML = tabs.map(t =>
-        '<button class="tab' + ((S.view === t.id || (t.id === 'home' && S.view === 'lesson')) ? ' active' : '') + '" data-tab="' + t.id + '">' +
+        '<button class="tab' + ((S.view === t.id || (t.id === 'home' && S.view === 'lesson') || (t.id === 'story' && S.view === 'storyRead')) ? ' active' : '') + '" data-tab="' + t.id + '">' +
         (t.badge ? '<span class="badge">' + t.badge + '</span>' : '') +
         '<span class="ico">' + t.ico + '</span>' + t.label + '</button>'
     ).join('');
     bar.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
-        S.review = null; S.tone = null;
+        S.review = null; S.tone = null; S.story = null; S.histSel = null;
         go(b.dataset.tab);
     }));
 }
@@ -530,8 +619,10 @@ function renderNoData() {
 
 /* ═══════════════════ 홈 (학습 경로) ═══════════════════ */
 function renderHome() {
-    const nextIdx = nextLessonIdx();
-    const next = nextIdx >= 0 ? ALL[nextIdx] : null;
+    const rt = resumeTarget();
+    const nextIdx = rt ? rt.idx : -1;
+    const resumeStep = rt ? rt.step : 0;
+    const next = rt ? ALL[rt.idx] : null;
     if (S.openUnit === null && next) S.openUnit = next.unitId;
     const due = dueCards().length;
 
@@ -544,9 +635,11 @@ function renderHome() {
 
     if (next) {
         html += '<div class="continue-card" id="continueBtn">' +
-            '<div class="cc-label">' + (doneCount() === 0 ? '🚀 학습 시작하기' : '▶ 이어서 학습하기') + '</div>' +
+            '<div class="cc-label">' + (doneCount() === 0 && resumeStep === 0 ? '🚀 학습 시작하기' : (resumeStep > 0 ? '📍 멈춘 곳부터 이어서' : '▶ 이어서 학습하기')) + '</div>' +
             '<div class="cc-title">' + esc(next.unitIcon) + ' ' + esc(next.title) + '</div>' +
-            '<div class="cc-goal">' + esc(next.goal || '') + '</div></div>';
+            '<div class="cc-goal">' + (resumeStep > 0
+                ? '지난번 「' + STEP_NAMES[resumeStep] + '」 단계까지 보셨어요 — 여기서 이어집니다'
+                : esc(next.goal || '')) + '</div></div>';
     } else {
         html += '<div class="continue-card" id="continueBtn"><div class="cc-label">🎉 전 과정 수료!</div>' +
             '<div class="cc-title">모든 레슨을 완료했어요</div>' +
@@ -574,7 +667,8 @@ function renderHome() {
                 const gi = LESSON_BY_ID[l.id];
                 const done_ = isDone(l.id), unlocked = isUnlocked(gi);
                 const cls = done_ ? 'done' : (unlocked ? 'current' : 'locked');
-                const stateIco = done_ ? '✅' : (unlocked ? '▶' : '🔒');
+                const atHere = !done_ && store.lastPos && store.lastPos.id === l.id;
+                const stateIco = done_ ? '✅' : (unlocked ? (atHere ? '📍' : '▶') : '🔒');
                 html += '<div class="lesson-row ' + cls + '" data-lesson="' + gi + '" ' + (unlocked ? '' : 'data-locked="1"') + '>' +
                     '<div class="lesson-num">' + (li + 1) + '</div>' +
                     '<div><div class="l-title">' + esc(l.title) + '</div><div class="l-goal">' + esc(l.goal || '') + '</div></div>' +
@@ -587,7 +681,7 @@ function renderHome() {
     $main.innerHTML = html;
 
     const cb = document.getElementById('continueBtn');
-    if (cb) cb.addEventListener('click', () => { if (nextIdx >= 0) openLesson(nextIdx); else go('review'); });
+    if (cb) cb.addEventListener('click', () => { if (nextIdx >= 0) openLesson(nextIdx, resumeStep); else go('review'); });
     const gb = document.getElementById('guideBanner');
     if (gb) gb.addEventListener('click', () => go('guide'));
     const rb = document.getElementById('reviewBanner');
@@ -605,8 +699,9 @@ function renderHome() {
     function stat(e, n, l) { return '<div class="stat"><div class="num">' + e + ' ' + n + '</div><div class="lbl">' + l + '</div></div>'; }
 }
 
-function openLesson(idx) {
-    S.lessonIdx = idx; S.step = 0; S.quiz = null;
+function openLesson(idx, step) {
+    S.lessonIdx = idx; S.step = step || 0; S.quiz = null;
+    savePos(ALL[idx].id, S.step);
     go('lesson');
 }
 
@@ -643,6 +738,7 @@ function renderLesson() {
 
 function renderStep() {
     const l = ALL[S.lessonIdx];
+    savePos(l.id, S.step);
     const body = document.getElementById('stepBody');
     $main.querySelectorAll('.step-chip').forEach((c, i) => c.classList.toggle('active', i === S.step));
     stopSpeak();
@@ -1078,6 +1174,216 @@ function renderTone() {
     }));
 }
 
+/* ═══════════════════ 읽기 (쉬운 동화) ═══════════════════ */
+function renderStoryList() {
+    if (!STORIES.length) {
+        $main.innerHTML = '<div class="empty-state"><div class="es-emoji">📚</div><b>쉬운 읽기 콘텐츠 준비 중</b><br>배운 단어만으로 읽는 짧은 동화가<br>곧 이 자리에 채워질 예정이에요!</div>';
+        return;
+    }
+    let h = '<div class="section-title" style="margin-top:0">📚 쉬운 읽기</div>' +
+        '<div class="muted" style="margin-bottom:12px">배운 단어만으로 쓰인 짧은 이야기예요. 진도가 쌓일수록 새 이야기가 열립니다.</div>';
+    STORIES.forEach((s, i) => {
+        const need = storiesRequiredCount(s.unlockAfter);
+        const unlocked = store.settings.freeNav || doneCount() >= need;
+        const readDone = store.storiesRead && store.storiesRead[s.id];
+        h += '<div class="story-card' + (unlocked ? '' : ' locked') + '" data-story="' + i + '">' +
+            '<div class="st-emoji">' + esc(s.emoji || '📖') + '</div>' +
+            '<div style="flex:1;min-width:0"><div class="st-title">' + (readDone ? '✅ ' : '') + esc(s.title) + '</div>' +
+            '<div class="st-desc">' + esc(unlocked ? (s.summary || '') : need + '레슨 완료 시 열림') + '</div></div>' +
+            '<div class="st-lv">Lv.' + s.level + '</div></div>';
+    });
+    $main.innerHTML = h;
+    $main.querySelectorAll('.story-card').forEach(c => c.addEventListener('click', () => {
+        const i = parseInt(c.dataset.story, 10);
+        const s = STORIES[i];
+        const need = storiesRequiredCount(s.unlockAfter);
+        if (!(store.settings.freeNav || doneCount() >= need)) { alert('아직 잠겨 있어요 🔒\n' + need + '개 레슨을 완료하면 열립니다.'); return; }
+        S.storyIdx = i; S.story = { showKo: {}, quiz: null };
+        go('storyRead');
+    }));
+}
+function renderStoryRead() {
+    const s = STORIES[S.storyIdx];
+    const st = S.story;
+    let h = '<div class="lesson-top"><button class="back-btn" id="backBtn">←</button>' +
+        '<div><div class="lt-title">' + esc(s.emoji || '📖') + ' ' + esc(s.title) + '</div>' +
+        '<div class="lt-sub">' + esc(s.titleNative || '') + ' · Lv.' + s.level + '</div></div></div>';
+    if (s.newWords && s.newWords.length) {
+        h += '<div class="tip-box"><b>📌 새로 나오는 단어</b><br>' +
+            s.newWords.map(w => esc(w.hanzi) + (w.koPron ? '[' + esc(w.koPron) + ']' : '') + '=' + esc(w.ko)).join(' · ') + '</div>';
+    }
+    h += '<div style="display:flex;gap:8px;margin:10px 0 14px">' +
+        '<button class="btn small ghost" id="playAll">🔊 전체 듣기</button>' +
+        '<button class="btn small gray" id="stopAll">⏹ 정지</button></div>';
+    (s.sentences || []).forEach((sent, i) => {
+        const shown = !!st.showKo[i];
+        h += '<div class="story-sent" data-sent="' + i + '">' +
+            '<div class="hanzi">' + esc(sent.hanzi) + '</div>' +
+            (sent.pinyin ? '<div class="pinyin">' + esc(sent.pinyin) + '</div>' : '') +
+            (store.settings.koPron && sent.koPron ? '<div class="kopron">[' + esc(sent.koPron) + ']</div>' : '') +
+            (shown ? '<div class="ko" style="margin-top:6px">' + esc(sent.ko) + '</div>' : '<div class="muted" style="margin-top:6px">👆 문장을 눌러 뜻을 확인하세요</div>') +
+            '</div>';
+    });
+    if (s.moral) {
+        h += '<div class="culture-box"><b>💡 교훈</b><br><span class="hanzi">' + esc(s.moral.hanzi) + '</span><br>' + esc(s.moral.ko || '') + '</div>';
+    }
+    h += '<button class="btn block" id="storyQuizBtn" style="margin-top:6px">이해도 퀴즈 풀기 →</button>';
+    $main.innerHTML = h;
+    document.getElementById('backBtn').addEventListener('click', () => { S.story = null; go('story'); });
+    document.getElementById('playAll').addEventListener('click', () => speakSeq((s.sentences || []).map(x => x.hanzi)));
+    document.getElementById('stopAll').addEventListener('click', () => { seqPlaying = false; stopSpeak(); });
+    $main.querySelectorAll('.story-sent').forEach(el => el.addEventListener('click', () => {
+        const i = parseInt(el.dataset.sent, 10);
+        speak(s.sentences[i].hanzi, 0.92);
+        st.showKo[i] = true;
+        renderStoryRead();
+    }));
+    document.getElementById('storyQuizBtn').addEventListener('click', () => { st.quiz = { i: 0, score: 0, answered: false }; renderStoryRead(); });
+    if (st.quiz) renderStoryQuizInner();
+
+    function renderStoryQuizInner() {
+        const q = st.quiz;
+        const items = s.quiz || [];
+        if (!items.length) return;
+        if (q.i >= items.length) {
+            if (!store.storiesRead) store.storiesRead = {};
+            store.storiesRead[s.id] = { date: todayStr() }; save(); touchStreak();
+            $main.innerHTML = '<div class="result-hero"><div class="r-emoji">📖</div>' +
+                '<div class="r-score" style="color:var(--success)">' + q.score + ' / ' + items.length + '</div>' +
+                '<div class="r-msg">다 읽었어요! 이 이야기는 완료로 기록됐어요.</div></div>' +
+                '<button class="btn block" id="storyDone">읽기 목록으로</button>';
+            document.getElementById('storyDone').addEventListener('click', () => { S.story = null; go('story'); });
+            return;
+        }
+        const item = items[q.i];
+        let h2 = '<div class="quiz-prog"><div class="qp-bar"><div style="width:' + (q.i / items.length * 100) + '%"></div></div><div class="qp-txt">' + (q.i + 1) + ' / ' + items.length + '</div></div>' +
+            '<div class="quiz-q">' + esc(item.q) + '</div>';
+        item.choices.forEach((c, ci) => { h2 += '<button class="choice-btn" data-a="' + ci + '">' + esc(c) + '</button>'; });
+        h2 += '<div id="sqFeedback"></div>';
+        $main.innerHTML = h2;
+        $main.querySelectorAll('[data-a]').forEach(b => b.addEventListener('click', () => {
+            if (q.answered) return;
+            q.answered = true;
+            const ci = parseInt(b.dataset.a, 10), ok = ci === item.answer;
+            if (ok) q.score++;
+            $main.querySelectorAll('[data-a]').forEach((bb, bi) => { bb.disabled = true; if (bi === item.answer) bb.classList.add('correct'); else if (bi === ci && !ok) bb.classList.add('wrong'); });
+            document.getElementById('sqFeedback').innerHTML =
+                '<div class="explain-box ' + (ok ? 'good' : 'bad') + '"><div class="eb-head">' + (ok ? '⭕ 정답!' : '❌ 아쉬워요!') + '</div>' + esc(item.explain || '') + '</div>' +
+                '<button class="btn block" id="sqNext">' + (q.i + 1 >= items.length ? '결과 보기' : '다음 문제 →') + '</button>';
+            document.getElementById('sqNext').addEventListener('click', () => { q.i++; q.answered = false; renderStoryQuizInner(); });
+        }));
+    }
+}
+
+
+/* ═══════════════════ 학습 기록 (달력 · 목록) ═══════════════════ */
+const DOW_KO = ['일', '월', '화', '수', '목', '금', '토'];
+function histLessonTitle(id) { const i = LESSON_BY_ID[id]; return i !== undefined ? ALL[i].title : id; }
+function histStoryTitle(id) { const s = STORIES.find(x => x.id === id); return s ? (s.emoji ? s.emoji + ' ' : '') + s.title : id; }
+function histAllEntries() {
+    const out = [];
+    const comp = store.completed || {};
+    const read = store.storiesRead || {};
+    Object.entries(comp).forEach(([id, v]) => {
+        if (!v || !v.date) return;
+        out.push({ date: v.date, type: 'lesson', ico: '✅', title: histLessonTitle(id), score: v.score + '/' + v.total + '점' });
+    });
+    Object.entries(read).forEach(([id, v]) => {
+        const date = (v && typeof v === 'object') ? v.date : null;
+        if (!date) return;
+        out.push({ date, type: 'story', ico: '📖', title: histStoryTitle(id), score: '완료' });
+    });
+    out.sort((a, b) => b.date < a.date ? -1 : b.date > a.date ? 1 : 0);
+    return out;
+}
+function histLongestStreak(dates) {
+    if (!dates.size) return 0;
+    const sorted = Array.from(dates).sort();
+    let best = 1, cur = 1;
+    for (let i = 1; i < sorted.length; i++) {
+        const prev = new Date(sorted[i - 1] + 'T00:00:00'), now = new Date(sorted[i] + 'T00:00:00');
+        const diff = Math.round((now - prev) / 86400000);
+        cur = diff === 1 ? cur + 1 : 1;
+        if (cur > best) best = cur;
+    }
+    return best;
+}
+function renderHistory() {
+    const entries = histAllEntries();
+    const dateSet = new Set(entries.map(e => e.date));
+    const now = new Date();
+    if (S.histY === undefined || S.histY === null) { S.histY = now.getFullYear(); S.histM = now.getMonth(); S.histSel = null; }
+
+    let h = '<div class="section-title" style="margin-top:0">📅 학습 기록</div>';
+    h += '<div class="hist-stats">' +
+        stat('📆', dateSet.size + '일', '학습한 날') +
+        stat('✅', entries.filter(e => e.type === 'lesson').length + '개', '완료 레슨') +
+        stat('📖', entries.filter(e => e.type === 'story').length + '편', '읽은 동화') +
+        stat('🔥', histLongestStreak(dateSet) + '일', '최장 연속') +
+        '</div>';
+
+    // 달력
+    const isCurMonth = (S.histY === now.getFullYear() && S.histM === now.getMonth());
+    const first = new Date(S.histY, S.histM, 1);
+    const daysInMonth = new Date(S.histY, S.histM + 1, 0).getDate();
+    const startDow = first.getDay();
+    const todayStr_ = todayStr();
+    h += '<div class="card"><div class="hist-nav">' +
+        '<button id="histPrev">◀</button>' +
+        '<div class="hn-title">' + S.histY + '년 ' + (S.histM + 1) + '월</div>' +
+        '<button id="histNext"' + (isCurMonth ? ' disabled' : '') + '>▶</button></div>';
+    h += '<div class="hist-grid">' + DOW_KO.map(d => '<div class="hist-dow">' + d + '</div>').join('');
+    for (let i = 0; i < startDow; i++) h += '<div class="hist-day empty"></div>';
+    for (let d = 1; d <= daysInMonth; d++) {
+        const ds = S.histY + '-' + String(S.histM + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+        const act = dateSet.has(ds);
+        const cls = ['hist-day'];
+        if (act) cls.push('act');
+        if (ds === todayStr_) cls.push('today');
+        if (S.histSel === ds) cls.push('sel');
+        h += '<button class="' + cls.join(' ') + '" data-day="' + ds + '">' + d + '<span class="hd-dot"></span></button>';
+    }
+    h += '</div></div>';
+
+    // 목록: 선택한 날짜 또는 이번 달 전체
+    const monthPrefix = S.histY + '-' + String(S.histM + 1).padStart(2, '0');
+    let list = S.histSel ? entries.filter(e => e.date === S.histSel) : entries.filter(e => e.date.startsWith(monthPrefix));
+    if (S.histSel) h += '<button class="hist-reset" id="histReset">← 이 달 전체 기록 보기</button>';
+    if (!list.length) {
+        h += '<div class="empty-state" style="padding:30px 20px"><div class="es-emoji">🗓️</div>' +
+            (S.histSel ? '이 날은 기록이 없어요.' : '이 달에는 아직 기록이 없어요.<br>레슨을 완료하거나 동화를 읽으면 여기 남아요!') + '</div>';
+    } else {
+        const byDate = {};
+        list.forEach(e => { (byDate[e.date] = byDate[e.date] || []).push(e); });
+        Object.keys(byDate).sort().reverse().forEach(ds => {
+            const d = new Date(ds + 'T00:00:00');
+            h += '<div class="hist-date-group"><div class="hg-date">' + (d.getMonth() + 1) + '월 ' + d.getDate() + '일 (' + DOW_KO[d.getDay()] + ')' + (ds === todayStr_ ? ' · 오늘' : '') + '</div>';
+            byDate[ds].forEach(e => {
+                h += '<div class="hist-entry"><span class="he-ico">' + e.ico + '</span><span class="he-title">' + esc(e.title) + '</span><span class="he-score">' + esc(e.score) + '</span></div>';
+            });
+            h += '</div>';
+        });
+    }
+    $main.innerHTML = h;
+
+    document.getElementById('histPrev').addEventListener('click', () => {
+        S.histM--; if (S.histM < 0) { S.histM = 11; S.histY--; } S.histSel = null; renderHistory();
+    });
+    const nb = document.getElementById('histNext');
+    if (!isCurMonth) nb.addEventListener('click', () => {
+        S.histM++; if (S.histM > 11) { S.histM = 0; S.histY++; } S.histSel = null; renderHistory();
+    });
+    $main.querySelectorAll('[data-day]').forEach(btn => btn.addEventListener('click', () => {
+        const ds = btn.dataset.day;
+        S.histSel = (S.histSel === ds) ? null : ds;
+        renderHistory();
+    }));
+    const rb = document.getElementById('histReset');
+    if (rb) rb.addEventListener('click', () => { S.histSel = null; renderHistory(); });
+
+    function stat(e, n, l) { return '<div class="stat"><div class="num">' + e + ' ' + n + '</div><div class="lbl">' + l + '</div></div>'; }
+}
+
 /* ═══════════════════ 학습 가이드 ═══════════════════ */
 function renderGuide() {
     let h = '<div class="section-title" style="margin-top:0">📖 이렇게 배우면 됩니다</div>';
@@ -1134,12 +1440,49 @@ function renderSettings() {
         setRow('학습 데이터', '완료 ' + doneCount() + '레슨 · 단어장 ' + Object.keys(store.srs).length + '장 · 이 브라우저에 저장됨',
             '<button class="btn small" id="resetBtn" style="background:var(--error)">초기화</button>') +
         '</div>';
+    h += '<div class="card">' +
+        '<div style="font-size:14px;font-weight:700;margin-bottom:2px">📦 진도 백업 · 다른 기기로 옮기기</div>' +
+        '<div class="muted" style="margin-bottom:10px">진도는 이 브라우저에만 저장돼요. 폰↔PC로 옮기거나 안전하게 백업하려면 코드를 사용하세요.</div>' +
+        '<div style="display:flex;gap:8px">' +
+        '<button class="btn small ghost" id="backupBtn" style="flex:1">백업 코드 만들기</button>' +
+        '<button class="btn small ghost" id="restoreBtn" style="flex:1">코드로 복원하기</button>' +
+        '</div><div id="backupArea"></div></div>';
     h += '<div class="muted" style="text-align:center;margin-top:16px">니하오 중국어 v1.0 · 오프라인에서도 동작해요 🐼<br>발음은 브라우저 내장 중국어 음성(TTS)을 사용합니다</div>';
     $main.innerHTML = h;
 
     document.getElementById('setKoPron').addEventListener('change', e => { store.settings.koPron = e.target.checked; save(); });
     document.getElementById('setRate').addEventListener('change', e => { store.settings.rate = parseFloat(e.target.value); save(); renderSettings(); speak('你好', 0.95); });
     document.getElementById('setFree').addEventListener('change', e => { store.settings.freeNav = e.target.checked; save(); });
+    const area = () => document.getElementById('backupArea');
+    document.getElementById('backupBtn').addEventListener('click', () => {
+        area().innerHTML = '<div class="muted" style="margin:12px 0 6px">아래 코드 전체를 복사해서, 다른 기기의 <b>[코드로 복원하기]</b>에 붙여넣으세요.<br>완료 ' + doneCount() + '레슨 · 단어장 ' + Object.keys(store.srs).length + '장이 담겨 있어요.</div>' +
+            '<textarea id="backupCode" readonly style="width:100%;height:88px;font-size:11px;border:1px solid var(--border);border-radius:10px;padding:8px;font-family:monospace;background:#f8fafc"></textarea>' +
+            '<button class="btn small block" id="copyBtn" style="margin-top:6px">📋 코드 복사하기</button>';
+        const ta = document.getElementById('backupCode');
+        ta.value = exportProgress();
+        document.getElementById('copyBtn').addEventListener('click', () => {
+            ta.select(); ta.setSelectionRange(0, 999999);
+            let ok = false;
+            try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+            if (!ok && navigator.clipboard) { navigator.clipboard.writeText(ta.value).then(() => alert('복사했어요! 📋')); return; }
+            alert(ok ? '복사했어요! 📋' : '복사가 안 되면 코드를 길게 눌러 직접 복사해 주세요.');
+        });
+    });
+    document.getElementById('restoreBtn').addEventListener('click', () => {
+        area().innerHTML = '<div class="muted" style="margin:12px 0 6px">다른 기기에서 만든 백업 코드를 붙여넣으세요.<br>⚠️ 지금 이 기기의 진도는 코드의 내용으로 <b>덮어써집니다.</b></div>' +
+            '<textarea id="restoreCode" placeholder="여기에 백업 코드를 붙여넣으세요" style="width:100%;height:88px;font-size:11px;border:1px solid var(--border);border-radius:10px;padding:8px;font-family:monospace"></textarea>' +
+            '<button class="btn small block" id="doRestore" style="margin-top:6px">진도 복원하기</button>';
+        document.getElementById('doRestore').addEventListener('click', () => {
+            const code = document.getElementById('restoreCode').value;
+            try {
+                const r = importProgress(code);
+                alert('복원 완료! 🎉\n완료 ' + r.lessons + '레슨 · 단어장 ' + r.cards + '장을 되살렸어요.');
+                go('home');
+            } catch (e) {
+                alert('복원하지 못했어요.\n' + e.message);
+            }
+        });
+    });
     document.getElementById('resetBtn').addEventListener('click', () => {
         if (confirm('정말 모든 학습 기록을 지울까요?\n(완료한 레슨, 복습 단어장, 연속 기록이 사라져요)')) {
             localStorage.removeItem(LS_KEY);

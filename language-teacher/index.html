@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>올라 스페인어 - 왕초보 기초 회화</title>
+    <title>랭귀지 스타터 - 중국어·스페인어 왕초보 회화</title>
     <style>
         :root {
-            --primary: #c60b1e;
-            --primary-dark: #8e0916;
-            --gold: #f1bf00;
-            --gold-light: #fdf3d0;
+            --primary: #d92332;
+            --primary-dark: #a01526;
+            --gold: #f0a500;
+            --gold-light: #fff4d6;
             --success: #10b981;
             --error: #ef4444;
             --bg: #f8fafc;
@@ -17,16 +17,18 @@
             --text: #1e293b;
             --text-light: #64748b;
             --border: #e2e8f0;
-            --red-soft: #fdf0ef;
+            --red-soft: #fdf0f0;
+            --native-font: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", "Malgun Gothic", sans-serif;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', 'Malgun Gothic', system-ui, sans-serif;
-            background: linear-gradient(135deg, #8e0916 0%, #c60b1e 45%, #f1bf00 135%);
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 45%, var(--gold) 135%);
             min-height: 100vh;
             display: flex; align-items: center; justify-content: center;
             padding: 16px;
             color: var(--text);
+            transition: background .25s;
         }
         .app {
             width: 100%; max-width: 680px;
@@ -37,43 +39,47 @@
             display: flex; flex-direction: column;
             height: 94vh; max-height: 860px;
         }
-        /* ── Header (스페인 국기: 빨강-황금-빨강) ── */
+        /* ── Header ─────────────────────────── */
         .header {
-            background: linear-gradient(180deg, var(--primary) 0%, var(--primary-dark) 100%);
-            border-bottom: 4px solid var(--gold);
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
             color: white; padding: 14px 20px;
             display: flex; align-items: center; gap: 12px;
             flex-shrink: 0;
         }
         .avatar {
             width: 44px; height: 44px;
-            background: rgba(255,255,255,0.18); border-radius: 50%;
+            background: rgba(255,255,255,0.2); border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
-            font-size: 24px; flex-shrink: 0;
+            font-size: 24px; flex-shrink: 0; cursor: pointer;
         }
         .header h1 { font-size: 17px; font-weight: 700; }
-        .header p  { font-size: 11.5px; opacity: 0.85; margin-top: 2px; }
+        .header p  { font-size: 11px; opacity: 0.85; margin-top: 2px; }
         .header-right { margin-left: auto; text-align: right; font-size: 12px; line-height: 1.5; white-space: nowrap; }
-        /* ── Content ── */
+        .lang-switch-btn {
+            background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.35); color: white;
+            border-radius: 10px; padding: 6px 10px; font-size: 11px; font-weight: 700; cursor: pointer;
+            margin-left: 10px; flex-shrink: 0; font-family: inherit;
+        }
+        /* ── Content ────────────────────────── */
         .content { flex: 1; overflow-y: auto; padding: 16px; }
         .content::-webkit-scrollbar { width: 6px; }
         .content::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-        /* ── Tab bar ── */
+        /* ── Tab bar ────────────────────────── */
         .tabbar { display: flex; border-top: 1px solid var(--border); background: var(--card); flex-shrink: 0; }
         .tab {
             flex: 1; padding: 9px 4px 10px; text-align: center;
-            font-size: 11px; color: var(--text-light); cursor: pointer;
+            font-size: 10.5px; color: var(--text-light); cursor: pointer;
             border: none; background: none; font-family: inherit; position: relative;
         }
-        .tab .ico { display: block; font-size: 20px; margin-bottom: 2px; }
+        .tab .ico { display: block; font-size: 19px; margin-bottom: 2px; }
         .tab.active { color: var(--primary); font-weight: 700; }
         .tab .badge {
-            position: absolute; top: 3px; right: calc(50% - 24px);
+            position: absolute; top: 3px; right: calc(50% - 22px);
             background: var(--error); color: white; font-size: 10px; font-weight: 700;
             min-width: 17px; height: 17px; border-radius: 9px;
             display: flex; align-items: center; justify-content: center; padding: 0 4px;
         }
-        /* ── Common ── */
+        /* ── Common cards ───────────────────── */
         .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px; margin-bottom: 12px; }
         .section-title { font-size: 14px; font-weight: 700; margin: 18px 0 10px; color: var(--text); }
         .muted { color: var(--text-light); font-size: 12.5px; }
@@ -90,29 +96,46 @@
         .btn.small { padding: 8px 14px; font-size: 13px; border-radius: 10px; }
         .btn:disabled { opacity: .45; cursor: default; }
         .play-btn {
-            background: var(--red-soft); border: 1px solid #f3cfcd; color: var(--primary);
+            background: var(--red-soft); border: 1px solid var(--border); color: var(--primary);
             width: 34px; height: 34px; border-radius: 50%; cursor: pointer;
             font-size: 14px; flex-shrink: 0;
             display: inline-flex; align-items: center; justify-content: center;
         }
         .play-btn:active { transform: scale(.92); }
         .play-btn.slow { font-size: 15px; }
-        /* ── Home ── */
+        /* ── 언어 선택 화면 ─────────────────── */
+        .lang-pick { padding: 10px 4px; }
+        .lang-pick .lp-title { font-size: 20px; font-weight: 900; text-align: center; margin: 10px 0 4px; }
+        .lang-pick .lp-sub { font-size: 13px; color: var(--text-light); text-align: center; margin-bottom: 22px; }
+        .lang-card {
+            display: flex; align-items: center; gap: 14px;
+            background: var(--card); border: 2px solid var(--border); border-radius: 18px;
+            padding: 18px; margin-bottom: 14px; cursor: pointer; transition: border-color .15s, transform .08s;
+        }
+        .lang-card:active { transform: scale(.98); }
+        .lang-card .lc-emoji { font-size: 40px; flex-shrink: 0; }
+        .lang-card .lc-name { font-size: 18px; font-weight: 800; }
+        .lang-card .lc-desc { font-size: 12px; color: var(--text-light); margin-top: 2px; }
+        .lang-card .lc-arrow { margin-left: auto; font-size: 20px; color: var(--text-light); }
+        .lang-card.zh:hover, .lang-card.zh:active { border-color: #d92332; }
+        .lang-card.es:hover, .lang-card.es:active { border-color: #c60b1e; }
+        .lang-card.ja:hover, .lang-card.ja:active { border-color: #bc002d; }
+        /* ── Home ───────────────────────────── */
         .stats-row { display: flex; gap: 8px; margin-bottom: 14px; }
         .stat { flex: 1; background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 10px 6px; text-align: center; }
         .stat .num { font-size: 17px; font-weight: 800; color: var(--primary); }
         .stat .lbl { font-size: 10.5px; color: var(--text-light); margin-top: 2px; }
         .continue-card {
-            background: linear-gradient(135deg, var(--primary), #e0651e);
+            background: linear-gradient(135deg, var(--primary), var(--gold));
             color: white; border-radius: 16px; padding: 16px; margin-bottom: 6px; cursor: pointer;
         }
         .continue-card .cc-label { font-size: 11px; opacity: .85; }
         .continue-card .cc-title { font-size: 17px; font-weight: 800; margin: 4px 0 2px; }
         .continue-card .cc-goal { font-size: 12px; opacity: .9; }
         .guide-banner {
-            background: var(--gold-light); border: 1px solid #ecd67e;
+            background: var(--gold-light); border: 1px solid #f2d98c;
             border-radius: 12px; padding: 10px 14px; font-size: 13px;
-            margin: 10px 0 4px; cursor: pointer; color: #7a5f00; font-weight: 600;
+            margin: 10px 0 4px; cursor: pointer; color: #7a5b00; font-weight: 600;
         }
         .unit-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; margin-bottom: 12px; overflow: hidden; }
         .unit-head { display: flex; align-items: center; gap: 12px; padding: 14px 16px; cursor: pointer; }
@@ -141,7 +164,7 @@
         .lesson-row .l-title { font-size: 14px; font-weight: 600; }
         .lesson-row .l-goal { font-size: 11.5px; color: var(--text-light); margin-top: 1px; }
         .lesson-row .l-state { margin-left: auto; font-size: 15px; flex-shrink: 0; }
-        /* ── Lesson view ── */
+        /* ── Lesson view ────────────────────── */
         .lesson-top { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
         .back-btn { background: white; border: 1px solid var(--border); border-radius: 10px; width: 34px; height: 34px; font-size: 16px; cursor: pointer; flex-shrink: 0; }
         .lesson-top .lt-title { font-size: 16px; font-weight: 800; }
@@ -153,30 +176,31 @@
             cursor: pointer; font-family: inherit;
         }
         .step-chip.active { background: var(--primary); border-color: var(--primary); color: white; }
-        .step-chip.done { border-color: var(--success); color: var(--success); }
         .word-row {
             display: flex; align-items: center; gap: 12px;
             background: var(--card); border: 1px solid var(--border);
             border-radius: 14px; padding: 12px 14px; margin-bottom: 8px;
         }
         .word-main { flex: 1; min-width: 0; }
-        .estxt { font-weight: 700; }
-        .word-row .estxt { font-size: 20px; }
-        .word-row .pron { font-size: 13px; color: var(--primary); font-weight: 600; margin-top: 1px; }
+        .native { font-family: var(--native-font); font-weight: 700; }
+        .word-row .native { font-size: 22px; }
+        .word-row .pinyin { font-size: 13px; color: var(--primary); font-weight: 600; margin-top: 1px; }
+        .word-row .pron { font-size: 11.5px; color: #b07b00; margin-top: 1px; }
         .word-row .ko { font-size: 13px; color: var(--text-light); margin-top: 2px; }
         .word-btns { display: flex; gap: 6px; flex-shrink: 0; }
         .sent-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px; margin-bottom: 10px; }
-        .sent-card .estxt { font-size: 18px; line-height: 1.5; }
-        .sent-card .pron { font-size: 13px; color: var(--primary); font-weight: 600; margin-top: 3px; }
+        .sent-card .native { font-size: 19px; line-height: 1.5; }
+        .sent-card .pinyin { font-size: 13px; color: var(--primary); font-weight: 600; margin-top: 3px; }
+        .sent-card .pron { font-size: 12px; color: #b07b00; margin-top: 2px; }
         .sent-card .ko { font-size: 13.5px; color: var(--text); margin-top: 5px; }
         .sent-card .note { font-size: 12px; color: var(--text-light); margin-top: 6px; background: #f8fafc; border-radius: 8px; padding: 7px 10px; }
         .sent-head { display: flex; align-items: flex-start; gap: 10px; }
         .sent-head .word-btns { margin-left: auto; }
         .tip-box {
-            background: var(--gold-light); border: 1px solid #ecd67e; border-radius: 12px;
+            background: var(--gold-light); border: 1px solid #f2d98c; border-radius: 12px;
             padding: 12px 14px; font-size: 13px; margin: 14px 0 8px; line-height: 1.6;
         }
-        .tip-box b { color: #7a5f00; }
+        .tip-box b { color: #7a5b00; }
 
         .hist-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 14px; }
         .hist-stats .stat .num { font-size: 15px; }
@@ -201,13 +225,6 @@
         .hist-entry .he-title { font-size: 13.5px; font-weight: 600; flex: 1; min-width: 0; }
         .hist-entry .he-score { font-size: 12px; color: var(--primary); font-weight: 700; white-space: nowrap; flex-shrink: 0; }
         .hist-reset { font-size: 12.5px; color: var(--primary); font-weight: 700; cursor: pointer; margin-bottom: 10px; display: inline-block; background: none; border: none; font-family: inherit; padding: 0; }
-        .story-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 14px; margin-bottom: 10px; display: flex; gap: 12px; align-items: center; cursor: pointer; }
-        .story-card.locked { opacity: .5; cursor: default; }
-        .story-card .st-emoji { width: 46px; height: 46px; border-radius: 12px; background: var(--red-soft); display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; }
-        .story-card .st-title { font-size: 14.5px; font-weight: 700; }
-        .story-card .st-desc { font-size: 11.5px; color: var(--text-light); margin-top: 2px; }
-        .story-card .st-lv { margin-left: auto; font-size: 11px; font-weight: 700; color: var(--primary); background: var(--red-soft); border-radius: 8px; padding: 4px 8px; white-space: nowrap; }
-        .story-sent { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px; margin-bottom: 10px; }
         .culture-box {
             background: #eef6ff; border: 1px solid #cfe3fa; border-radius: 12px;
             padding: 12px 14px; font-size: 13px; margin: 14px 0 8px; line-height: 1.6;
@@ -223,20 +240,22 @@
         .bubble-row.right .bubble-ava { background: var(--red-soft); }
         .bubble { max-width: 82%; border-radius: 14px; padding: 10px 12px; cursor: pointer; }
         .bubble-row.left  .bubble { background: white; border: 1px solid var(--border); border-top-left-radius: 4px; }
-        .bubble-row.right .bubble { background: var(--red-soft); border: 1px solid #f3cfcd; border-top-right-radius: 4px; }
+        .bubble-row.right .bubble { background: var(--red-soft); border: 1px solid var(--border); border-top-right-radius: 4px; }
         .bubble .b-name { font-size: 10.5px; color: var(--text-light); margin-bottom: 3px; font-weight: 700; }
-        .bubble .estxt { font-size: 15.5px; line-height: 1.45; }
-        .bubble .pron { font-size: 12px; color: var(--primary); font-weight: 600; margin-top: 2px; }
+        .bubble .native { font-size: 16px; line-height: 1.45; }
+        .bubble .pinyin { font-size: 12px; color: var(--primary); font-weight: 600; margin-top: 2px; }
+        .bubble .pron { font-size: 11px; color: #b07b00; margin-top: 1px; }
         .bubble .ko { font-size: 12px; color: var(--text-light); margin-top: 3px; }
         /* grammar */
         .gram-card { background: var(--card); border: 1px solid var(--border); border-left: 4px solid var(--gold); border-radius: 12px; padding: 14px; margin-bottom: 10px; }
         .gram-card .g-title { font-size: 14.5px; font-weight: 800; margin-bottom: 6px; }
         .gram-card .g-explain { font-size: 13px; line-height: 1.65; color: var(--text); white-space: pre-line; }
         .gram-ex { display: flex; align-items: center; gap: 10px; background: #f8fafc; border-radius: 10px; padding: 9px 11px; margin-top: 8px; }
-        .gram-ex .estxt { font-size: 14.5px; }
-        .gram-ex .pron { font-size: 11.5px; color: var(--primary); font-weight: 600; }
+        .gram-ex .native { font-size: 15px; }
+        .gram-ex .pinyin { font-size: 11.5px; color: var(--primary); font-weight: 600; }
+        .gram-ex .pron { font-size: 11px; color: #b07b00; }
         .gram-ex .ko { font-size: 11.5px; color: var(--text-light); }
-        /* ── Quiz ── */
+        /* ── Quiz ───────────────────────────── */
         .quiz-prog { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
         .quiz-prog .qp-bar { flex: 1; height: 8px; background: #eef2f7; border-radius: 4px; overflow: hidden; }
         .quiz-prog .qp-bar > div { height: 100%; background: var(--primary); transition: width .25s; }
@@ -250,11 +269,13 @@
             padding: 13px 14px; font-size: 14.5px; margin-bottom: 8px; cursor: pointer;
             font-family: inherit; color: var(--text); transition: border-color .12s;
         }
-        .choice-btn .estxt { font-size: 15px; }
+        .choice-btn .native { font-size: 15.5px; }
         .choice-btn:not(:disabled):hover { border-color: #cbd5e1; }
         .choice-btn.correct { border-color: var(--success); background: #ecfdf5; font-weight: 700; }
         .choice-btn.wrong { border-color: var(--error); background: #fef2f2; }
         .choice-btn:disabled { cursor: default; }
+        .tone-choice, .verb-choice { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .tone-choice .choice-btn, .verb-choice .choice-btn { text-align: center; margin-bottom: 0; }
         .arrange-area {
             min-height: 54px; background: var(--card); border: 1.5px dashed var(--border);
             border-radius: 12px; padding: 9px; margin-bottom: 12px;
@@ -263,39 +284,59 @@
         .arrange-area.ok { border-color: var(--success); background: #ecfdf5; }
         .arrange-area.bad { border-color: var(--error); background: #fef2f2; }
         .token {
-            background: var(--red-soft); border: 1px solid #f3cfcd; color: var(--text);
-            border-radius: 10px; padding: 8px 13px; font-size: 15px; cursor: pointer; font-weight: 700;
+            background: var(--red-soft); border: 1px solid var(--border); color: var(--text);
+            border-radius: 10px; padding: 8px 13px; font-size: 16px; cursor: pointer;
+            font-family: var(--native-font); font-weight: 700;
         }
         .token-bank { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
         .token-bank .token { background: white; border: 1.5px solid var(--border); }
         .token-bank .token.used { opacity: .25; pointer-events: none; }
-        .explain-box { border-radius: 12px; padding: 12px 14px; font-size: 13px; line-height: 1.6; margin: 12px 0; }
+        .explain-box {
+            border-radius: 12px; padding: 12px 14px; font-size: 13px; line-height: 1.6; margin: 12px 0;
+        }
         .explain-box.good { background: #ecfdf5; border: 1px solid #b7e4d0; }
         .explain-box.bad  { background: #fef2f2; border: 1px solid #f5c6c6; }
         .explain-box .eb-head { font-weight: 800; margin-bottom: 4px; font-size: 14px; }
         .explain-box .eb-answer { margin: 6px 0; }
-        .explain-box .estxt { font-size: 15px; }
+        .explain-box .native { font-size: 16px; }
         /* quiz result */
         .result-hero { text-align: center; padding: 26px 10px 18px; }
         .result-hero .r-emoji { font-size: 52px; }
         .result-hero .r-score { font-size: 34px; font-weight: 900; margin: 8px 0 2px; }
         .result-hero .r-msg { font-size: 14px; color: var(--text-light); }
         .wrong-item { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin-bottom: 8px; font-size: 13px; }
-        .wrong-item .estxt { font-size: 14.5px; }
-        /* ── SRS review ── */
+        .wrong-item .native { font-size: 15px; }
+        /* ── SRS review ─────────────────────── */
         .flash-card {
             background: var(--card); border: 1px solid var(--border); border-radius: 20px;
             padding: 40px 20px; text-align: center; margin-bottom: 14px;
             box-shadow: 0 4px 14px rgba(0,0,0,0.05);
         }
-        .flash-card .estxt { font-size: 32px; }
-        .flash-card .pron { font-size: 17px; color: var(--primary); font-weight: 700; margin-top: 10px; }
+        .flash-card .native { font-size: 40px; }
+        .flash-card .pinyin { font-size: 18px; color: var(--primary); font-weight: 700; margin-top: 10px; }
+        .flash-card .pron { font-size: 14px; color: #b07b00; margin-top: 4px; }
         .flash-card .ko { font-size: 17px; margin-top: 10px; }
         .grade-row { display: flex; gap: 10px; }
         .grade-row .btn { flex: 1; }
         .btn.fail { background: #fef2f2; color: var(--error); border: 1.5px solid #f5c6c6; }
         .btn.pass { background: #ecfdf5; color: #067a57; border: 1.5px solid #b7e4d0; }
-        /* ── Verb trainer ── */
+        /* ── Tone trainer (중국어) ──────────── */
+        .tone-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+        .tone-cell { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 12px; text-align: center; }
+        .tone-cell .t-name { font-size: 13px; font-weight: 800; margin-bottom: 2px; }
+        .tone-cell .t-desc { font-size: 11px; color: var(--text-light); margin-bottom: 6px; }
+        .tone-cell svg { width: 100%; height: 46px; }
+        /* ── Kana dojo (일본어) ─────────────── */
+        .kana-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+        .kana-row:last-child { margin-bottom: 0; }
+        .kr-label { width: 34px; flex-shrink: 0; font-size: 10.5px; color: var(--text-light); font-weight: 700; }
+        .kr-cells { flex: 1; display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
+        .kana-cell { background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 4px 2px 5px; text-align: center; cursor: pointer; }
+        .kana-cell.empty { visibility: hidden; cursor: default; }
+        .kana-cell .kc-h { font-size: 16px; font-weight: 700; line-height: 1.2; }
+        .kana-cell .kc-k { font-size: 10.5px; color: var(--text-light); line-height: 1.3; }
+        .kana-cell .kc-r { font-size: 9.5px; color: var(--primary); font-weight: 700; margin-top: 1px; }
+        /* ── Verb trainer (스페인어) ────────── */
         .conj-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
         .conj-cell { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 12px; }
         .conj-cell .c-name { font-size: 13.5px; font-weight: 800; margin-bottom: 2px; color: var(--primary); }
@@ -308,9 +349,16 @@
         .verb-q .vq-pron { font-size: 26px; font-weight: 900; color: var(--primary); }
         .verb-q .vq-inf { font-size: 15px; margin-top: 6px; }
         .verb-q .vq-ko { font-size: 12px; color: var(--text-light); margin-top: 2px; }
-        .verb-choice { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .verb-choice .choice-btn { text-align: center; margin-bottom: 0; font-weight: 700; font-size: 16px; }
-        /* ── Guide ── */
+        /* ── 읽기(동화) ─────────────────────── */
+        .story-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 14px; margin-bottom: 10px; display: flex; gap: 12px; align-items: center; cursor: pointer; }
+        .story-card.locked { opacity: .5; cursor: default; }
+        .story-card .st-emoji { width: 46px; height: 46px; border-radius: 12px; background: var(--red-soft); display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; }
+        .story-card .st-title { font-size: 14.5px; font-weight: 700; }
+        .story-card .st-desc { font-size: 11.5px; color: var(--text-light); margin-top: 2px; }
+        .story-card .st-lv { margin-left: auto; font-size: 11px; font-weight: 700; color: var(--primary); background: var(--red-soft); border-radius: 8px; padding: 4px 8px; white-space: nowrap; }
+        .story-sent { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px; margin-bottom: 10px; }
+        .story-sent .native { font-size: 18px; line-height: 1.6; }
+        /* ── Guide ──────────────────────────── */
         .guide-step { display: flex; gap: 12px; margin-bottom: 12px; }
         .guide-step .gs-num {
             width: 30px; height: 30px; border-radius: 50%; background: var(--primary); color: white;
@@ -326,7 +374,7 @@
         }
         .road-row.now .rr-badge { background: var(--primary); color: white; }
         .road-row .rr-desc { color: var(--text-light); font-size: 11.5px; margin-top: 1px; }
-        /* ── Settings ── */
+        /* ── Settings ───────────────────────── */
         .set-row { display: flex; align-items: center; gap: 12px; padding: 13px 2px; border-bottom: 1px solid #f1f5f9; }
         .set-row:last-child { border-bottom: none; }
         .set-row .s-title { font-size: 14px; font-weight: 600; }
@@ -353,54 +401,79 @@
 </head>
 <body>
 <div class="app">
-    <div class="header">
-        <div class="avatar">💃</div>
+    <div class="header" id="appHeader" style="display:none">
+        <div class="avatar" id="avatarBtn">🌍</div>
         <div>
-            <h1>올라 스페인어</h1>
-            <p>왕초보를 위한 기초 회화 · 알파벳부터 여행 회화까지</p>
+            <h1 id="hdrTitle">랭귀지 스타터</h1>
+            <p id="hdrSub">왕초보를 위한 기초 회화</p>
         </div>
         <div class="header-right" id="headerStats"></div>
+        <button class="lang-switch-btn" id="langSwitchBtn">🔀 언어</button>
     </div>
     <div class="content" id="main"></div>
-    <div class="tabbar" id="tabbar"></div>
+    <div class="tabbar" id="tabbar" style="display:none"></div>
 </div>
 
-<script src="data.js"></script>
-<script src="stories.js"></script>
 <script>
 'use strict';
-/* ═══════════════════ 데이터 준비 ═══════════════════ */
-const DATA = (window.ES_DATA && window.ES_DATA.units) ? window.ES_DATA : null;
-const UNITS = DATA ? DATA.units : [];
-const ALL = UNITS.flatMap(u => u.lessons.map(l => ({ ...l, unitId: u.unitId, unitTitle: u.title, unitIcon: u.icon })));
-const LESSON_BY_ID = Object.fromEntries(ALL.map((l, i) => [l.id, i]));
-const STORIES = (window.ES_STORIES && window.ES_STORIES.stories) || [];
-function storiesRequiredCount(afterUnit) { let n = 0; UNITS.forEach(u => { if (u.unitId <= afterUnit) n += u.lessons.length; }); return n; }
+/* ═══════════════════ 언어 설정 ═══════════════════ */
+const LANGS = {
+    zh: {
+        code: 'zh', flag: '🐼', name: '중국어', appName: '니하오 중국어', tag: '중국어',
+        dataFile: './data-zh.js', dataGlobal: 'ZW_DATA', storyFile: './stories-zh.js', storyGlobal: 'STORIES_ZH',
+        ttsLang: 'zh-CN', trainerTab: 'tone', trainerIco: '🎵', trainerLabel: '성조',
+        primary: '#d92332', primaryDark: '#a01526', gold: '#f0a500', goldLight: '#fff4d6', redSoft: '#fdf0f0',
+        desc: '성조와 병음부터 여행 회화까지', sampleWord: '你好', joiner: '',
+        nativeField: 'hanzi', romanField: 'pinyin',
+    },
+    es: {
+        code: 'es', flag: '💃', name: '스페인어', appName: '올라 스페인어', tag: '스페인어',
+        dataFile: './data-es.js', dataGlobal: 'ES_DATA', storyFile: './stories-es.js', storyGlobal: 'STORIES_ES',
+        ttsLang: 'es-ES', trainerTab: 'verb', trainerIco: '🔠', trainerLabel: '동사',
+        primary: '#c60b1e', primaryDark: '#8e0916', gold: '#f1bf00', goldLight: '#fdf3d0', redSoft: '#fdf0ef',
+        desc: '알파벳부터 여행 회화까지', sampleWord: 'Hola', joiner: ' ',
+        nativeField: 'es', romanField: null,
+    },
+    ja: {
+        code: 'ja', flag: '🎏', name: '일본어', appName: '곤니치와 일본어', tag: '일본어',
+        dataFile: './data-ja.js', dataGlobal: 'JA_DATA', storyFile: './stories-ja.js', storyGlobal: 'STORIES_JA',
+        ttsLang: 'ja-JP', trainerTab: 'kana', trainerIco: 'あ', trainerLabel: '가나',
+        primary: '#bc002d', primaryDark: '#7a0020', gold: '#c9a227', goldLight: '#faf1d9', redSoft: '#fdeef1',
+        desc: '히라가나·가타카나부터 여행 회화까지', sampleWord: 'こんにちは', joiner: '',
+        nativeField: 'ja', romanField: 'romaji',
+    },
+};
+let CUR = null;               // 현재 언어 설정(LANGS[code])
+let DATA = null, UNITS = [], ALL = [], LESSON_BY_ID = {};
+let STORIES = [];
+const loadedScripts = {};     // code → 'loading' | 'done'
 const PASS_RATE = 0.7;
 const SRS_INTERVALS = { 1: 1, 2: 2, 3: 4, 4: 7, 5: 15 };
 const STEP_NAMES = ['단어', '핵심 문장', '회화', '문법', '퀴즈'];
 
-/* ═══════════════════ 저장소 ═══════════════════ */
-const LS_KEY = 'hola_es_v1';
+/* ═══════════════════ 저장소 (언어별 진도 분리) ═══════════════════ */
+const LS_KEY = 'lang_starter_v1';
 let store = loadStore();
 function loadStore() {
     let d = {};
     try { d = JSON.parse(localStorage.getItem(LS_KEY) || '{}'); } catch (e) { d = {}; }
     return {
-        completed: d.completed || {},
-        srs: d.srs || {},
-        streak: d.streak || { last: '', count: 0 },
-        lastPos: d.lastPos || null,            // 마지막으로 보던 위치 {id, step}
+        active: d.active || null,                 // 마지막으로 고른 언어 코드
+        byLang: d.byLang || {},                    // code → {completed, srs, streak, lastPos}
         settings: Object.assign({ koPron: true, rate: 1, freeNav: false }, d.settings || {}),
     };
 }
 function save() { localStorage.setItem(LS_KEY, JSON.stringify(store)); }
+function prog() {
+    if (!store.byLang[CUR.code]) store.byLang[CUR.code] = { completed: {}, srs: {}, streak: { last: '', count: 0 }, lastPos: null };
+    return store.byLang[CUR.code];
+}
 function todayStr(offset = 0) {
     const d = new Date(); d.setDate(d.getDate() + offset);
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 }
 function touchStreak() {
-    const t = todayStr(), y = todayStr(-1), s = store.streak;
+    const t = todayStr(), y = todayStr(-1), s = prog().streak;
     if (s.last === t) return;
     s.count = (s.last === y) ? s.count + 1 : 1;
     s.last = t; save();
@@ -425,38 +498,44 @@ function seededShuffle(arr, seed) {
     return a;
 }
 function hashStr(s) { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return h; }
+// 언어 중립 필드 접근자: zh는 hanzi/pinyin, es는 es(관용 문형 텍스트)만 사용
+function nativeText(item) { return item ? (item[CUR.nativeField] != null ? item[CUR.nativeField] : '') : ''; }
+function romanText(item) { return (item && CUR.romanField) ? (item[CUR.romanField] || '') : ''; }   // 로마자 표기(언어별 필드, 없으면 빈 문자열)
 
-/* ═══════════════════ TTS (스페인어 발음) ═══════════════════ */
-let esVoice = null;
-function pickVoice() {
+/* ═══════════════════ TTS ═══════════════════ */
+const voiceCache = {};
+function pickVoice(code) {
     if (!('speechSynthesis' in window)) return;
     const vs = speechSynthesis.getVoices();
-    esVoice = vs.find(v => /es[-_]ES/i.test(v.lang)) || vs.find(v => /^es/i.test(v.lang)) || null;
+    const lang = LANGS[code].ttsLang;
+    const prefix = lang.split('-')[0];
+    voiceCache[code] = vs.find(v => v.lang && v.lang.toLowerCase() === lang.toLowerCase())
+        || vs.find(v => v.lang && v.lang.toLowerCase().startsWith(prefix)) || null;
 }
 if ('speechSynthesis' in window) {
-    pickVoice();
-    speechSynthesis.onvoiceschanged = pickVoice;
+    speechSynthesis.onvoiceschanged = () => Object.keys(LANGS).forEach(pickVoice);
+    Object.keys(LANGS).forEach(pickVoice);
 }
 function ttsAvailable() { return 'speechSynthesis' in window; }
 function stopSpeak() { if (ttsAvailable()) speechSynthesis.cancel(); }
 function speak(text, rate = 1) {
-    if (!ttsAvailable()) return;
+    if (!ttsAvailable() || !CUR) return;
     stopSpeak();
     const u = new SpeechSynthesisUtterance(text);
-    u.lang = 'es-ES';
-    if (esVoice) u.voice = esVoice;
+    u.lang = CUR.ttsLang;
+    if (voiceCache[CUR.code]) u.voice = voiceCache[CUR.code];
     u.rate = Math.max(0.4, rate * store.settings.rate);
     speechSynthesis.speak(u);
 }
 let seqPlaying = false;
 function speakSeq(texts, onDone) {
-    if (!ttsAvailable()) return;
+    if (!ttsAvailable() || !CUR) return;
     stopSpeak(); seqPlaying = true;
     let i = 0;
     const next = () => {
         if (!seqPlaying || i >= texts.length) { seqPlaying = false; if (onDone) onDone(); return; }
         const u = new SpeechSynthesisUtterance(texts[i++]);
-        u.lang = 'es-ES'; if (esVoice) u.voice = esVoice;
+        u.lang = CUR.ttsLang; if (voiceCache[CUR.code]) u.voice = voiceCache[CUR.code];
         u.rate = 0.92 * store.settings.rate;
         u.onend = () => setTimeout(next, 420);
         u.onerror = () => { seqPlaying = false; if (onDone) onDone(); };
@@ -466,18 +545,33 @@ function speakSeq(texts, onDone) {
 }
 
 /* ═══════════════════ 진행 상태 헬퍼 ═══════════════════ */
-function isDone(id) { return !!store.completed[id]; }
+function isDone(id) { return !!prog().completed[id]; }
 function isUnlocked(idx) {
     if (store.settings.freeNav) return true;
     if (idx === 0) return true;
     return isDone(ALL[idx - 1].id);
 }
-function savePos(id, step) {
-    store.lastPos = { id: id, step: step };
+function nextLessonIdx() {
+    for (let i = 0; i < ALL.length; i++) if (!isDone(ALL[i].id)) return i;
+    return -1;
+}
+function doneCount() { return ALL.filter(l => isDone(l.id)).length; }
+function srsKey(w) { return nativeText(w) + '|' + (w.ko || ''); }
+function dueCards() {
+    const t = todayStr();
+    return Object.entries(prog().srs).filter(([, c]) => c.due <= t).map(([k, c]) => ({ key: k, ...c }));
+}
+function addWordsToSrs(lesson) {
+    const t = todayStr(), p = prog();
+    (lesson.words || []).forEach(w => {
+        const k = srsKey(w);
+        if (!p.srs[k]) p.srs[k] = { native: nativeText(w), pinyin: romanText(w), ko: w.ko, koPron: w.koPron || '', box: 1, due: t };
+    });
     save();
 }
+function savePos(id, step) { prog().lastPos = { id: id, step: step }; save(); }
 function resumeTarget() {
-    const lp = store.lastPos;
+    const lp = prog().lastPos;
     if (lp && LESSON_BY_ID[lp.id] !== undefined && !isDone(lp.id)) {
         const idx = LESSON_BY_ID[lp.id];
         if (isUnlocked(idx)) return { idx: idx, step: Math.min(4, Math.max(0, lp.step || 0)) };
@@ -485,31 +579,11 @@ function resumeTarget() {
     const n = nextLessonIdx();
     return n >= 0 ? { idx: n, step: 0 } : null;
 }
-function nextLessonIdx() {
-    for (let i = 0; i < ALL.length; i++) if (!isDone(ALL[i].id)) return i;
-    return -1;
-}
-function doneCount() { return ALL.filter(l => isDone(l.id)).length; }
-function srsKey(w) { return w.es + '|' + (w.ko || ''); }
-function dueCards() {
-    const t = todayStr();
-    return Object.entries(store.srs).filter(([, c]) => c.due <= t).map(([k, c]) => ({ key: k, ...c }));
-}
-function addWordsToSrs(lesson) {
-    const t = todayStr();
-    (lesson.words || []).forEach(w => {
-        const k = srsKey(w);
-        if (!store.srs[k]) store.srs[k] = { es: w.es, ko: w.ko, koPron: w.koPron || '', box: 1, due: t };
-    });
-    save();
-}
 
 /* ═══════════════════ 진도 백업 · 복원 ═══════════════════ */
-const BACKUP_TAG = '올라 스페인어';
 function b64encode(str) {
     const bytes = new TextEncoder().encode(str);
-    let bin = '';
-    const CH = 0x8000;
+    let bin = ''; const CH = 0x8000;
     for (let i = 0; i < bytes.length; i += CH) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CH));
     return btoa(bin);
 }
@@ -518,41 +592,92 @@ function b64decode(b64) {
     const bytes = Uint8Array.from(bin, c => c.charCodeAt(0));
     return new TextDecoder().decode(bytes);
 }
-function exportProgress() {
-    return b64encode(JSON.stringify({ v: 1, tag: BACKUP_TAG, data: store }));
-}
+function exportProgress() { return b64encode(JSON.stringify({ v: 1, tag: '랭귀지 스타터', data: store })); }
 function importProgress(code) {
     if (!code || !code.trim()) throw new Error('코드를 붙여넣어 주세요.');
     let obj;
     try { obj = JSON.parse(b64decode(code)); }
     catch (e) { throw new Error('코드를 읽을 수 없어요. 전체를 빠짐없이 복사했는지 확인해 주세요.'); }
     if (!obj || !obj.data || typeof obj.data !== 'object') throw new Error('올바른 백업 코드가 아니에요.');
-    if (obj.tag && obj.tag !== BACKUP_TAG) throw new Error('다른 앱(' + obj.tag + ')의 백업 코드예요.');
+    if (obj.tag && obj.tag !== '랭귀지 스타터') throw new Error('다른 앱(' + obj.tag + ')의 백업 코드예요.');
     const d = obj.data;
     store = {
-        completed: d.completed || {},
-        srs: d.srs || {},
-        streak: d.streak || { last: '', count: 0 },
-        lastPos: d.lastPos || null,
+        active: d.active || null,
+        byLang: d.byLang || {},
         settings: Object.assign({ koPron: true, rate: 1, freeNav: false }, d.settings || {}),
     };
     save();
-    return { lessons: Object.keys(store.completed).length, cards: Object.keys(store.srs).length };
+    let lessons = 0, cards = 0;
+    Object.values(store.byLang).forEach(p => { lessons += Object.keys(p.completed || {}).length; cards += Object.keys(p.srs || {}).length; });
+    return { lessons, cards };
+}
+
+/* ═══════════════════ 언어 로딩 · 전환 ═══════════════════ */
+function loadScriptOnce(src, globalName) {
+    return new Promise((resolve, reject) => {
+        if (window[globalName]) return resolve();
+        const s = document.createElement('script');
+        s.src = src;
+        s.onload = () => resolve();
+        s.onerror = () => reject(new Error('데이터를 불러오지 못했어요: ' + src));
+        document.head.appendChild(s);
+    });
+}
+function applyTheme(L) {
+    const r = document.documentElement.style;
+    r.setProperty('--primary', L.primary);
+    r.setProperty('--primary-dark', L.primaryDark);
+    r.setProperty('--gold', L.gold);
+    r.setProperty('--gold-light', L.goldLight);
+    r.setProperty('--red-soft', L.redSoft);
+}
+async function activateLanguage(code) {
+    const L = LANGS[code];
+    CUR = L;
+    applyTheme(L);
+    store.active = code; save();
+    document.getElementById('appHeader').style.display = 'flex';
+    document.getElementById('tabbar').style.display = 'flex';
+    document.getElementById('hdrTitle').textContent = L.appName;
+    document.getElementById('hdrSub').textContent = L.desc;
+    document.getElementById('avatarBtn').textContent = L.flag;
+    $main.innerHTML = '<div class="empty-state"><div class="es-emoji">⏳</div>' + esc(L.name) + ' 학습 데이터를 불러오는 중...</div>';
+    try {
+        await loadScriptOnce(L.dataFile, L.dataGlobal);
+        DATA = window[L.dataGlobal];
+        UNITS = DATA.units || [];
+        ALL = UNITS.flatMap(u => u.lessons.map(l => ({ ...l, unitId: u.unitId, unitTitle: u.title, unitIcon: u.icon })));
+        LESSON_BY_ID = Object.fromEntries(ALL.map((l, i) => [l.id, i]));
+    } catch (e) {
+        $main.innerHTML = '<div class="empty-state"><div class="es-emoji">😢</div>학습 데이터를 불러오지 못했어요.<br>' + esc(L.dataFile) + ' 파일이 이 폴더에 있는지 확인해 주세요.</div>';
+        return;
+    }
+    // 동화 데이터는 있으면 불러오고, 없으면 조용히 비워 둠(추후 추가 예정)
+    try { await loadScriptOnce(L.storyFile, L.storyGlobal); STORIES = (window[L.storyGlobal] && window[L.storyGlobal].stories) || []; }
+    catch (e) { STORIES = []; }
+    S.openUnit = null; S.view = 'home';
+    render();
 }
 
 /* ═══════════════════ 라우터 ═══════════════════ */
-const S = { view: 'home', lessonIdx: 0, step: 0, quiz: null, review: null, verb: null, story: null, storyIdx: null, openUnit: null };
+const S = { view: 'picker', lessonIdx: 0, step: 0, quiz: null, review: null, trainer: null, story: null, storyIdx: null, openUnit: null };
 const $main = document.getElementById('main');
 
 function go(view) { stopSpeak(); seqPlaying = false; S.view = view; render(); }
 function render() {
+    if (S.view === 'picker') {
+        document.getElementById('appHeader').style.display = 'none';
+        document.getElementById('tabbar').style.display = 'none';
+        renderPicker();
+        return;
+    }
     updateHeader(); updateTabs();
-    if (!DATA) { renderNoData(); return; }
+    if (!DATA) { renderPicker(); return; }
     switch (S.view) {
         case 'home': renderHome(); break;
         case 'lesson': renderLesson(); break;
         case 'review': renderReview(); break;
-        case 'verb': renderVerb(); break;
+        case 'trainer': renderTrainer(); break;
         case 'story': renderStoryList(); break;
         case 'history': renderHistory(); break;
         case 'storyRead': renderStoryRead(); break;
@@ -564,7 +689,7 @@ function render() {
 }
 function updateHeader() {
     const el = document.getElementById('headerStats');
-    const streak = (store.streak.last === todayStr() || store.streak.last === todayStr(-1)) ? store.streak.count : 0;
+    const streak = (prog().streak.last === todayStr() || prog().streak.last === todayStr(-1)) ? prog().streak.count : 0;
     el.innerHTML = '🔥 ' + streak + '일 연속<br>📚 ' + doneCount() + '/' + ALL.length + ' 레슨';
 }
 function updateTabs() {
@@ -572,7 +697,7 @@ function updateTabs() {
     const tabs = [
         { id: 'home', ico: '🏠', label: '학습' },
         { id: 'review', ico: '🃏', label: '복습', badge: due },
-        { id: 'verb', ico: '🔠', label: '동사' },
+        { id: 'trainer', ico: CUR.trainerIco, label: CUR.trainerLabel },
         { id: 'story', ico: '📚', label: '읽기' },
         { id: 'history', ico: '📅', label: '기록' },
         { id: 'guide', ico: '📖', label: '가이드' },
@@ -585,12 +710,25 @@ function updateTabs() {
         '<span class="ico">' + t.ico + '</span>' + t.label + '</button>'
     ).join('');
     bar.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
-        S.review = null; S.verb = null; S.story = null; S.histSel = null;
+        S.review = null; S.trainer = null; S.story = null; S.histSel = null;
         go(b.dataset.tab);
     }));
 }
-function renderNoData() {
-    $main.innerHTML = '<div class="empty-state"><div class="es-emoji">😢</div>학습 데이터(data.js)를 불러오지 못했어요.<br>index.html과 같은 폴더에 data.js가 있는지 확인해 주세요.</div>';
+
+/* ═══════════════════ 언어 선택 화면 ═══════════════════ */
+function renderPicker() {
+    let h = '<div class="lang-pick">' +
+        '<div class="lp-title">🌍 어떤 언어를 배울까요?</div>' +
+        '<div class="lp-sub">왕초보를 위한 기초 회화 · 6단계 29레슨</div>';
+    Object.values(LANGS).forEach(L => {
+        h += '<div class="lang-card ' + L.code + '" data-lang="' + L.code + '">' +
+            '<div class="lc-emoji">' + L.flag + '</div>' +
+            '<div><div class="lc-name">' + esc(L.name) + '</div><div class="lc-desc">' + esc(L.desc) + '</div></div>' +
+            '<div class="lc-arrow">→</div></div>';
+    });
+    h += '<div class="muted" style="text-align:center;margin-top:8px">언제든 오른쪽 위 🔀 언어 버튼으로 바꿀 수 있고,<br>두 언어의 진도는 각각 따로 저장돼요.</div></div>';
+    $main.innerHTML = h;
+    $main.querySelectorAll('[data-lang]').forEach(c => c.addEventListener('click', () => activateLanguage(c.dataset.lang)));
 }
 
 /* ═══════════════════ 홈 (학습 경로) ═══════════════════ */
@@ -604,7 +742,7 @@ function renderHome() {
 
     let html = '';
     html += '<div class="stats-row">' +
-        stat('🔥', ((store.streak.last === todayStr() || store.streak.last === todayStr(-1)) ? store.streak.count : 0) + '일', '연속 학습') +
+        stat('🔥', ((prog().streak.last === todayStr() || prog().streak.last === todayStr(-1)) ? prog().streak.count : 0) + '일', '연속 학습') +
         stat('📚', doneCount() + '/' + ALL.length, '완료 레슨') +
         stat('🃏', due + '장', '복습 대기') +
         '</div>';
@@ -619,7 +757,7 @@ function renderHome() {
     } else {
         html += '<div class="continue-card" id="continueBtn"><div class="cc-label">🎉 전 과정 수료!</div>' +
             '<div class="cc-title">모든 레슨을 완료했어요</div>' +
-            '<div class="cc-goal">복습과 동사 훈련으로 실력을 다져 보세요. 가이드에서 다음 단계를 확인!</div></div>';
+            '<div class="cc-goal">복습과 ' + CUR.trainerLabel + ' 훈련, 쉬운 읽기로 실력을 다져 보세요.</div></div>';
     }
     if (doneCount() === 0) html += '<div class="guide-banner" id="guideBanner">👋 처음이신가요? 학습 가이드 먼저 보기 →</div>';
     if (due > 0) html += '<div class="guide-banner" id="reviewBanner">🃏 오늘 복습할 단어가 ' + due + '장 있어요 →</div>';
@@ -642,8 +780,8 @@ function renderHome() {
             lessons.forEach((l, li) => {
                 const gi = LESSON_BY_ID[l.id];
                 const done_ = isDone(l.id), unlocked = isUnlocked(gi);
+                const atHere = !done_ && prog().lastPos && prog().lastPos.id === l.id;
                 const cls = done_ ? 'done' : (unlocked ? 'current' : 'locked');
-                const atHere = !done_ && store.lastPos && store.lastPos.id === l.id;
                 const stateIco = done_ ? '✅' : (unlocked ? (atHere ? '📍' : '▶') : '🔒');
                 html += '<div class="lesson-row ' + cls + '" data-lesson="' + gi + '" ' + (unlocked ? '' : 'data-locked="1"') + '>' +
                     '<div class="lesson-num">' + (li + 1) + '</div>' +
@@ -691,8 +829,11 @@ function bindPlayBtns(root) {
     root.querySelectorAll('[data-say]').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); speak(b.dataset.say, 0.95); }));
     root.querySelectorAll('[data-say-slow]').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); speak(b.dataset.saySlow, 0.55); }));
 }
-function pronLine(p) {
-    return (store.settings.koPron && p) ? '<div class="pron">[' + esc(p) + ']</div>' : '';
+function pronLine(p) { return (store.settings.koPron && p) ? '<div class="pron">[' + esc(p) + ']</div>' : ''; }
+function romanLine(item) {
+    // 중국어만 병음을 별도 줄로 보여주고, 스페인어는 코프론(한글독음)이 그 역할을 겸함
+    const r = romanText(item);
+    return r ? '<div class="pinyin">' + esc(r) + '</div>' : '';
 }
 
 function renderLesson() {
@@ -726,9 +867,9 @@ function renderStep() {
         let h = '<div class="muted" style="margin-bottom:10px">🔊 버튼으로 발음을 듣고, 큰 소리로 3번씩 따라 읽어 보세요.</div>';
         (l.words || []).forEach(w => {
             h += '<div class="word-row"><div class="word-main">' +
-                '<div class="estxt">' + esc(w.es) + '</div>' +
-                pronLine(w.koPron) +
-                '<div class="ko">' + esc(w.ko) + '</div></div>' + playBtns(w.es) + '</div>';
+                '<div class="native">' + esc(nativeText(w)) + '</div>' +
+                romanLine(w) + pronLine(w.koPron) +
+                '<div class="ko">' + esc(w.ko) + '</div></div>' + playBtns(nativeText(w)) + '</div>';
         });
         h += nextStepBtn('핵심 문장 보러 가기 →');
         body.innerHTML = h;
@@ -736,9 +877,9 @@ function renderStep() {
         let h = '<div class="muted" style="margin-bottom:10px">이 레슨의 핵심 표현이에요. 통째로 외우면 바로 써먹을 수 있어요!</div>';
         (l.keySentences || []).forEach(s => {
             h += '<div class="sent-card"><div class="sent-head"><div style="flex:1;min-width:0">' +
-                '<div class="estxt">' + esc(s.es) + '</div>' +
-                pronLine(s.koPron) +
-                '<div class="ko">' + esc(s.ko) + '</div></div>' + playBtns(s.es) + '</div>' +
+                '<div class="native">' + esc(nativeText(s)) + '</div>' +
+                romanLine(s) + pronLine(s.koPron) +
+                '<div class="ko">' + esc(s.ko) + '</div></div>' + playBtns(nativeText(s)) + '</div>' +
                 (s.note ? '<div class="note">💬 ' + esc(s.note) + '</div>' : '') + '</div>';
         });
         if (l.tips && l.tips.length) {
@@ -756,22 +897,22 @@ function renderStep() {
         (d.turns || []).forEach((t, i) => {
             const right = t.speaker !== 'A';
             h += '<div class="bubble-row ' + (right ? 'right' : 'left') + '">' +
-                '<div class="bubble-ava">' + (right ? '🇪🇸' : '🇰🇷') + '</div>' +
+                '<div class="bubble-ava">' + (right ? CUR.flag : '🇰🇷') + '</div>' +
                 '<div class="bubble" data-turn="' + i + '">' +
                 '<div class="b-name">' + esc(t.name || t.speaker) + '</div>' +
-                '<div class="estxt">' + esc(t.es) + '</div>' +
-                pronLine(t.koPron) +
+                '<div class="native">' + esc(nativeText(t)) + '</div>' +
+                romanLine(t) + pronLine(t.koPron) +
                 '<div class="ko">' + esc(t.ko) + '</div></div></div>';
         });
         h += '<div class="muted" style="margin:6px 0 10px">💬 말풍선을 누르면 그 문장을 다시 들을 수 있어요.</div>';
-        if (l.culture) h += '<div class="culture-box"><b>🇪🇸 문화 노트</b><br>' + esc(l.culture) + '</div>';
+        if (l.culture) h += '<div class="culture-box"><b>' + CUR.flag + ' 문화 노트</b><br>' + esc(l.culture) + '</div>';
         h += nextStepBtn('문법 보러 가기 →');
         body.innerHTML = h;
-        document.getElementById('playAll').addEventListener('click', () => speakSeq((d.turns || []).map(t => t.es)));
+        document.getElementById('playAll').addEventListener('click', () => speakSeq((d.turns || []).map(nativeText)));
         document.getElementById('stopAll').addEventListener('click', () => { seqPlaying = false; stopSpeak(); });
         body.querySelectorAll('.bubble').forEach(b => b.addEventListener('click', () => {
             const t = d.turns[parseInt(b.dataset.turn, 10)];
-            if (t) speak(t.es, 0.92);
+            if (t) speak(nativeText(t), 0.92);
         }));
     } else if (S.step === 3) {   /* 문법 */
         let h = '<div class="muted" style="margin-bottom:10px">문법은 딱 필요한 만큼만! 예문을 소리 내어 읽으면 저절로 익혀져요.</div>';
@@ -780,9 +921,9 @@ function renderStep() {
                 '<div class="g-explain">' + esc(g.explain) + '</div>';
             (g.examples || []).forEach(ex => {
                 h += '<div class="gram-ex"><div style="flex:1;min-width:0">' +
-                    '<div class="estxt">' + esc(ex.es) + '</div>' +
-                    pronLine(ex.koPron) +
-                    '<div class="ko">' + esc(ex.ko) + '</div></div>' + playBtns(ex.es) + '</div>';
+                    '<div class="native">' + esc(nativeText(ex)) + '</div>' +
+                    romanLine(ex) + pronLine(ex.koPron) +
+                    '<div class="ko">' + esc(ex.ko) + '</div></div>' + playBtns(nativeText(ex)) + '</div>';
             });
             h += '</div>';
         });
@@ -804,7 +945,7 @@ function renderStep() {
 /* ═══════════════════ 퀴즈 엔진 ═══════════════════ */
 function renderQuiz(body, l) {
     if (!S.quiz) {
-        const done = store.completed[l.id];
+        const done = prog().completed[l.id];
         body.innerHTML = '<div class="card" style="text-align:center;padding:28px 18px">' +
             '<div style="font-size:44px">📝</div>' +
             '<div style="font-size:17px;font-weight:800;margin:10px 0 4px">확인 퀴즈</div>' +
@@ -822,12 +963,13 @@ function renderQuiz(body, l) {
     if (q.i >= items.length) { renderQuizResult(body, l); return; }
     const item = items[q.i];
     const seed = hashStr(l.id) + q.i * 97;
+    const itemText = nativeText(item);
 
     let h = '<div class="quiz-prog"><div class="qp-bar"><div style="width:' + (q.i / items.length * 100) + '%"></div></div>' +
         '<div class="qp-txt">' + (q.i + 1) + ' / ' + items.length + '</div></div>';
     h += '<div class="quiz-q">' + esc(item.q) + '</div>';
 
-    if (item.type === 'listen') {
+    if (item.type === 'listen' || item.type === 'tone') {
         h += '<div class="quiz-audio">' +
             '<button class="btn small" id="qPlay">🔊 듣기</button>' +
             '<button class="btn small ghost" id="qPlaySlow">🐢 느리게</button></div>';
@@ -843,18 +985,20 @@ function renderQuiz(body, l) {
         }).join('') + '</div>';
         h += '<button class="btn block" id="arrCheck"' + (q.sel.length === item.tokens.length ? '' : ' disabled') + '>확인하기</button>';
     } else {
+        const tone = item.type === 'tone';
+        h += '<div class="' + (tone ? 'tone-choice' : '') + '">';
         item.choices.forEach((c, ci) => {
-            h += '<button class="choice-btn" data-choice="' + ci + '"><span class="estxt">' + esc(c) + '</span></button>';
+            h += '<button class="choice-btn" data-choice="' + ci + '"><span class="native">' + esc(c) + '</span></button>';
         });
+        h += '</div>';
     }
     h += '<div id="qFeedback"></div>';
     body.innerHTML = h;
 
-    const playText = item.es || '';
     const qp = document.getElementById('qPlay');
-    if (qp) { qp.addEventListener('click', () => speak(playText, 0.95)); }
+    if (qp) { qp.addEventListener('click', () => speak(itemText, 0.95)); }
     const qps = document.getElementById('qPlaySlow');
-    if (qps) { qps.addEventListener('click', () => speak(playText, 0.55)); }
+    if (qps) { qps.addEventListener('click', () => speak(itemText, 0.55)); }
 
     if (item.type === 'arrange') {
         if (!q.selSrc) q.selSrc = [];
@@ -874,13 +1018,14 @@ function renderQuiz(body, l) {
         const ck = document.getElementById('arrCheck');
         if (ck) ck.addEventListener('click', () => {
             if (q.answered) return;
-            const user = q.sel.join(' ');
-            const answer = item.tokens.join(' ');
+            const user = q.sel.join(CUR.joiner);
+            const answer = item.tokens.join(CUR.joiner);
             const ok = user === answer;
             ck.disabled = true;
+            const roman = romanText(item) || item.koPron || '';
             answerFeedback(ok, item,
-                '<div class="eb-answer">정답: <span class="estxt">' + esc(answer) + '</span>' +
-                (item.koPron ? '<br><span style="color:var(--primary);font-weight:600">[' + esc(item.koPron) + ']</span>' : '') + '</div>');
+                '<div class="eb-answer">정답: <span class="native">' + esc(answer) + '</span>' +
+                (roman ? '<br><span style="color:var(--primary);font-weight:600">' + (CUR.romanField ? esc(roman) : '[' + esc(roman) + ']') + '</span>' : '') + '</div>');
         });
     } else {
         body.querySelectorAll('[data-choice]').forEach(el => el.addEventListener('click', () => {
@@ -900,12 +1045,13 @@ function renderQuiz(body, l) {
         q.answered = true;
         if (ok) q.score++;
         else q.wrong.push({ item, idx: q.i });
-        if (item.type === 'arrange') { if (ok) speak(item.tokens.join(' '), 0.95); }
-        else if (ok && item.type === 'listen') speak(item.es, 0.95);
+        if (item.type === 'arrange') { if (ok) speak(item.tokens.join(CUR.joiner), 0.95); }
+        else if (ok && (item.type === 'listen' || item.type === 'tone')) speak(itemText, 0.95);
         const fb = document.getElementById('qFeedback');
         fb.innerHTML = '<div class="explain-box ' + (ok ? 'good' : 'bad') + '">' +
             '<div class="eb-head">' + (ok ? '⭕ 정답이에요!' : '❌ 아쉬워요!') + '</div>' + extraHtml +
-            ((item.es && item.type !== 'arrange') ? '<div class="eb-answer"><span class="estxt">' + esc(item.es) + '</span></div>' : '') +
+            ((itemText && item.type !== 'arrange') ? '<div class="eb-answer"><span class="native">' + esc(itemText) + '</span>' +
+                (romanText(item) ? ' <span style="color:var(--primary);font-weight:600">' + esc(romanText(item)) + '</span>' : '') + '</div>' : '') +
             esc(item.explain || '') + '</div>' +
             '<button class="btn block" id="qNext">' + (q.i + 1 >= items.length ? '결과 보기' : '다음 문제 →') + '</button>';
         const arr = document.getElementById('arrArea');
@@ -924,9 +1070,10 @@ function renderQuizResult(body, l) {
     const total = items.length;
     const pass = q.score / total >= PASS_RATE;
     if (pass) {
-        const prev = store.completed[l.id];
-        if (!prev || q.score > prev.score) store.completed[l.id] = { score: q.score, total, date: todayStr() };
-        else store.completed[l.id].date = todayStr();
+        const p = prog();
+        const prev = p.completed[l.id];
+        if (!prev || q.score > prev.score) p.completed[l.id] = { score: q.score, total, date: todayStr() };
+        else p.completed[l.id].date = todayStr();
         addWordsToSrs(l);
         touchStreak();
         save();
@@ -937,16 +1084,16 @@ function renderQuizResult(body, l) {
         '<div class="r-emoji">' + (pass ? (q.score === total ? '🏆' : '🎉') : '💪') + '</div>' +
         '<div class="r-score" style="color:' + (pass ? 'var(--success)' : 'var(--error)') + '">' + q.score + ' / ' + total + '</div>' +
         '<div class="r-msg">' + (pass ?
-            (q.score === total ? '완벽해요! ¡Perfecto!' : '통과! ¡Muy bien! 👏') + '<br>이 레슨 단어들이 복습함에 담겼어요.' :
+            (q.score === total ? '완벽해요!' : '통과! 잘하고 있어요 👏') + '<br>이 레슨 단어들이 복습함에 담겼어요.' :
             Math.round(PASS_RATE * 100) + '% 이상 맞혀야 통과예요.<br>단어와 회화를 다시 보고 도전해 보세요!') + '</div></div>';
 
     if (q.wrong.length) {
         h += '<div class="section-title">틀린 문제 다시 보기</div>';
         q.wrong.forEach(w => {
-            const it = w.item;
+            const it = w.item, txt = nativeText(it);
             h += '<div class="wrong-item"><b>Q' + (w.idx + 1) + '.</b> ' + esc(it.q) +
-                (it.es ? '<div style="margin-top:5px"><span class="estxt">' + esc(it.es) + '</span></div>' : '') +
-                (it.type === 'arrange' ? '<div style="margin-top:5px">정답: <span class="estxt">' + esc(it.tokens.join(' ')) + '</span></div>' :
+                (txt ? '<div style="margin-top:5px"><span class="native">' + esc(txt) + '</span>' + (romanText(it) ? ' <span style="color:var(--primary)">' + esc(romanText(it)) + '</span>' : '') + '</div>' : '') +
+                (it.type === 'arrange' ? '<div style="margin-top:5px">정답: <span class="native">' + esc(it.tokens.join(CUR.joiner)) + '</span></div>' :
                     '<div style="margin-top:5px">정답: <b>' + esc(it.choices[it.answer]) + '</b></div>') +
                 '<div class="muted" style="margin-top:4px">' + esc(it.explain || '') + '</div></div>';
         });
@@ -975,14 +1122,14 @@ function renderQuizResult(body, l) {
 function renderReview() {
     if (!S.review) {
         const due = dueCards();
-        const totalCards = Object.keys(store.srs).length;
+        const totalCards = Object.keys(prog().srs).length;
         if (!totalCards) {
             $main.innerHTML = '<div class="empty-state"><div class="es-emoji">🃏</div><b>아직 복습할 단어가 없어요</b><br>레슨 퀴즈를 통과하면 배운 단어가<br>자동으로 복습함에 담깁니다!</div>';
             return;
         }
         if (!due.length) {
             const boxes = [0, 0, 0, 0, 0];
-            Object.values(store.srs).forEach(c => boxes[c.box - 1]++);
+            Object.values(prog().srs).forEach(c => boxes[c.box - 1]++);
             $main.innerHTML = '<div class="empty-state"><div class="es-emoji">🎉</div><b>오늘 복습 끝!</b><br>모든 단어를 복습했어요. 내일 또 만나요.<br><br>' +
                 '<div class="muted">단어함 현황 — 총 ' + totalCards + '장<br>' +
                 boxes.map((b, i) => (i + 1) + '단계 ' + b + '장').join(' · ') + '</div></div>';
@@ -1013,9 +1160,10 @@ function renderReview() {
     const c = r.queue[r.i];
     let h = '<div class="quiz-prog"><div class="qp-bar"><div style="width:' + (r.i / r.queue.length * 100) + '%"></div></div>' +
         '<div class="qp-txt">' + (r.i + 1) + ' / ' + r.queue.length + '</div></div>';
-    h += '<div class="flash-card"><div class="estxt">' + esc(c.es) + '</div>';
+    h += '<div class="flash-card"><div class="native">' + esc(c.native) + '</div>';
     if (r.flipped) {
-        h += (store.settings.koPron && c.koPron ? '<div class="pron">[' + esc(c.koPron) + ']</div>' : '') +
+        h += (c.pinyin ? '<div class="pinyin">' + esc(c.pinyin) + '</div>' : '') +
+            (store.settings.koPron && c.koPron ? '<div class="pron">[' + esc(c.koPron) + ']</div>' : '') +
             '<div class="ko">' + esc(c.ko) + '</div>';
     }
     h += '<div style="margin-top:14px"><button class="play-btn" id="fcPlay" style="width:44px;height:44px;font-size:18px">▶</button> ' +
@@ -1030,8 +1178,8 @@ function renderReview() {
             '<div class="muted" style="text-align:center;margin-top:10px">현재 ' + c.box + '단계 → 기억하면 ' + Math.min(5, c.box + 1) + '단계 (' + SRS_INTERVALS[Math.min(5, c.box + 1)] + '일 뒤)</div>';
     }
     $main.innerHTML = h;
-    document.getElementById('fcPlay').addEventListener('click', () => speak(c.es, 0.95));
-    document.getElementById('fcPlaySlow').addEventListener('click', () => speak(c.es, 0.55));
+    document.getElementById('fcPlay').addEventListener('click', () => speak(c.native, 0.95));
+    document.getElementById('fcPlaySlow').addEventListener('click', () => speak(c.native, 0.55));
     const ff = document.getElementById('fcFlip');
     if (ff) ff.addEventListener('click', () => { r.flipped = true; renderReview(); });
     const fp = document.getElementById('fcPass');
@@ -1040,7 +1188,7 @@ function renderReview() {
     if (fl) fl.addEventListener('click', () => grade(false));
 
     function grade(ok) {
-        const card = store.srs[c.key];
+        const card = prog().srs[c.key];
         if (card) {
             if (ok) { card.box = Math.min(5, card.box + 1); card.due = todayStr(SRS_INTERVALS[card.box]); }
             else { card.box = 1; card.due = todayStr(1); }
@@ -1052,7 +1200,25 @@ function renderReview() {
     }
 }
 
-/* ═══════════════════ 동사 변화 훈련소 ═══════════════════ */
+/* ═══════════════════ 훈련소 (성조/동사 — 언어별 분기) ═══════════════════ */
+const TONE_BANK = [
+    [{ h: '妈', p: 'mā', k: '엄마' }, { h: '麻', p: 'má', k: '삼베' }, { h: '马', p: 'mǎ', k: '말' }, { h: '骂', p: 'mà', k: '혼내다' }],
+    [{ h: '八', p: 'bā', k: '8, 여덟' }, { h: '拔', p: 'bá', k: '뽑다' }, { h: '把', p: 'bǎ', k: '잡다' }, { h: '爸', p: 'bà', k: '아빠' }],
+    [{ h: '汤', p: 'tāng', k: '국, 탕' }, { h: '糖', p: 'táng', k: '사탕, 설탕' }, { h: '躺', p: 'tǎng', k: '눕다' }, { h: '烫', p: 'tàng', k: '뜨겁다' }],
+    [{ h: '医', p: 'yī', k: '의사 의' }, { h: '姨', p: 'yí', k: '이모' }, { h: '椅', p: 'yǐ', k: '의자' }, { h: '亿', p: 'yì', k: '억(숫자)' }],
+    [{ h: '屋', p: 'wū', k: '집, 방' }, { h: '无', p: 'wú', k: '없다' }, { h: '五', p: 'wǔ', k: '5, 다섯' }, { h: '雾', p: 'wù', k: '안개' }],
+    [{ h: '书', p: 'shū', k: '책' }, { h: '熟', p: 'shú', k: '익다' }, { h: '数', p: 'shǔ', k: '세다' }, { h: '树', p: 'shù', k: '나무' }],
+    [{ h: '七', p: 'qī', k: '7, 일곱' }, { h: '骑', p: 'qí', k: '(자전거를) 타다' }, { h: '起', p: 'qǐ', k: '일어나다' }, { h: '气', p: 'qì', k: '공기, 기운' }],
+];
+const TONE_SVGS = [
+    '<svg viewBox="0 0 100 50"><line x1="5" y1="10" x2="95" y2="10" stroke="#d92332" stroke-width="5" stroke-linecap="round"/></svg>',
+    '<svg viewBox="0 0 100 50"><line x1="5" y1="35" x2="95" y2="8" stroke="#f0a500" stroke-width="5" stroke-linecap="round"/></svg>',
+    '<svg viewBox="0 0 100 50"><path d="M5 25 Q 40 55 60 35 T 95 12" fill="none" stroke="#10b981" stroke-width="5" stroke-linecap="round"/></svg>',
+    '<svg viewBox="0 0 100 50"><line x1="5" y1="8" x2="95" y2="42" stroke="#6366f1" stroke-width="5" stroke-linecap="round"/></svg>',
+];
+const TONE_NAMES = ['1성 (높고 평평 ˉ)', '2성 (쭉 올라감 ˊ)', '3성 (내려갔다 올라감 ˇ)', '4성 (뚝 떨어짐 ˋ)'];
+const TONE_DESCS = ['"솔~" 음으로 길게', '"뭐~?" 하고 되묻듯', '깊이 눌렀다 올리기', '단호하게 "앗!"'];
+
 const PRONOUNS = ['yo', 'tú', 'él/ella', 'nosotros', 'vosotros', 'ellos/ellas'];
 const PRONOUN_KO = ['나', '너', '그/그녀', '우리', '너희', '그들'];
 const VERB_BANK = [
@@ -1072,107 +1238,244 @@ const SOUND_SETS = [
     { label: '묵음 h', words: ['hola', 'hotel', 'hermano', 'hasta'] },
 ];
 
-function renderVerb() {
-    if (!S.verb) {
+function renderTrainer() {
+    if (CUR.code === 'zh') renderToneTrainer();
+    else if (CUR.code === 'es') renderVerbTrainer();
+    else renderKanaTrainer();
+}
+
+function renderToneTrainer() {
+    if (!S.trainer) {
+        let h = '<div class="section-title" style="margin-top:0">🎵 성조 훈련소</div>' +
+            '<div class="muted" style="margin-bottom:12px">중국어는 <b>음의 높낮이(성조)가 뜻을 바꾸는</b> 언어예요. 같은 "ma"도 성조에 따라 엄마(妈)가 되기도, 말(马)이 되기도! 귀가 뚫릴 때까지 훈련해 보세요.</div>';
+        h += '<div class="tone-grid">' + TONE_NAMES.map((n, i) =>
+            '<div class="tone-cell"><div class="t-name">' + n + '</div><div class="t-desc">' + TONE_DESCS[i] + '</div>' + TONE_SVGS[i] + '</div>').join('') + '</div>';
+        h += '<div class="card"><b style="font-size:14px">🎧 듣고 맞히기 게임</b>' +
+            '<div class="muted" style="margin:6px 0 12px">발음을 듣고 몇 성인지 맞혀 보세요. 10문제 도전!</div>' +
+            '<button class="btn block" id="trainerStart">훈련 시작하기</button></div>';
+        h += '<div class="card"><b style="font-size:14px">🔊 성조 비교 듣기</b>' +
+            '<div class="muted" style="margin:6px 0 10px">같은 소리의 4가지 성조를 연달아 들어 보세요.</div>' +
+            TONE_BANK.map((set, si) =>
+                '<button class="btn small ghost" data-set="' + si + '" style="margin:0 6px 8px 0">' +
+                set.map(x => x.p).join(' · ') + '</button>').join('') + '</div>';
+        $main.innerHTML = h;
+        document.getElementById('trainerStart').addEventListener('click', () => { S.trainer = { i: 0, score: 0, cur: null, answered: false }; renderTrainer(); });
+        $main.querySelectorAll('[data-set]').forEach(b => b.addEventListener('click', () => speakSeq(TONE_BANK[parseInt(b.dataset.set, 10)].map(x => x.h))));
+        return;
+    }
+    const t = S.trainer, TOTAL = 10;
+    if (t.i >= TOTAL) { renderTrainerResult(t, TOTAL, t.score >= 8 ? '성조 마스터가 눈앞이에요!' : t.score >= 5 ? '좋아요! 꾸준히 하면 귀가 뚫려요.' : '괜찮아요, 성조는 원래 어려워요. 내일 또 도전!'); return; }
+    if (!t.cur) {
+        const set = TONE_BANK[Math.floor(Math.random() * TONE_BANK.length)];
+        const tone = Math.floor(Math.random() * 4);
+        t.cur = { syl: set[tone], tone };
+    }
+    const cur = t.cur;
+    let h = trainerProg(t, TOTAL) + '<div class="quiz-q">🎧 발음을 듣고 성조를 맞혀 보세요!</div>' +
+        '<div class="quiz-audio"><button class="btn small" id="tPlay">🔊 듣기</button><button class="btn small ghost" id="tPlaySlow">🐢 느리게</button></div>' +
+        '<div class="tone-choice">' + TONE_NAMES.map((n, i) =>
+            '<button class="choice-btn" data-a="' + i + '">' + TONE_SVGS[i] + '<div style="margin-top:4px;font-weight:700;font-size:13px">' + n + '</div></button>').join('') + '</div>' +
+        '<div id="tFeedback"></div>';
+    $main.innerHTML = h;
+    document.getElementById('tPlay').addEventListener('click', () => speak(cur.syl.h, 0.9));
+    document.getElementById('tPlaySlow').addEventListener('click', () => speak(cur.syl.h, 0.55));
+    $main.querySelectorAll('[data-a]').forEach(b => b.addEventListener('click', () => {
+        if (t.answered) return;
+        t.answered = true;
+        const sel = parseInt(b.dataset.a, 10), ok = sel === cur.tone;
+        if (ok) t.score++;
+        $main.querySelectorAll('[data-a]').forEach((bb, bi) => { bb.disabled = true; if (bi === cur.tone) bb.classList.add('correct'); else if (bi === sel && !ok) bb.classList.add('wrong'); });
+        document.getElementById('tFeedback').innerHTML =
+            '<div class="explain-box ' + (ok ? 'good' : 'bad') + '"><div class="eb-head">' + (ok ? '⭕ 정답!' : '❌ 아쉬워요!') + '</div>' +
+            '<div class="eb-answer"><span class="native" style="font-size:22px">' + esc(cur.syl.h) + '</span> <span style="color:var(--primary);font-weight:700">' + esc(cur.syl.p) + '</span> — ' + esc(cur.syl.k) + ' (' + TONE_NAMES[cur.tone] + ')</div></div>' +
+            '<button class="btn block" id="tNext">' + (t.i + 1 >= TOTAL ? '결과 보기' : '다음 문제 →') + '</button>';
+        speak(cur.syl.h, 0.9);
+        document.getElementById('tNext').addEventListener('click', () => { t.i++; t.cur = null; t.answered = false; renderTrainer(); });
+    }));
+}
+
+function renderVerbTrainer() {
+    if (!S.trainer) {
         let h = '<div class="section-title" style="margin-top:0">🔠 동사 변화 훈련소</div>' +
             '<div class="muted" style="margin-bottom:12px">스페인어는 <b>주어에 따라 동사 모양이 바뀌는</b> 언어예요. "yo hablo(나는 말한다), tú hablas(너는 말한다)"처럼요. 이 여섯 가지 변화만 몸에 익으면 스페인어의 절반은 끝!</div>';
         h += '<div class="conj-grid">' + VERB_BANK.slice(0, 4).map(v =>
             '<div class="conj-cell"><div class="c-name">' + esc(v.inf) + '</div><div class="c-desc">' + esc(v.ko) + ' · ' + esc(v.reg) + '</div>' +
-            v.forms.map((f, i) => '<div class="conj-row"><span class="cp">' + esc(PRONOUNS[i]) + '</span><span class="cf">' + esc(f) + '</span></div>').join('') +
-            '</div>').join('') + '</div>';
+            v.forms.map((f, i) => '<div class="conj-row"><span class="cp">' + esc(PRONOUNS[i]) + '</span><span class="cf">' + esc(f) + '</span></div>').join('') + '</div>').join('') + '</div>';
         h += '<div class="card"><b style="font-size:14px">🎯 동사 변화 맞히기 게임</b>' +
             '<div class="muted" style="margin:6px 0 12px">주어에 맞는 동사 형태를 고르세요. 10문제 도전!</div>' +
-            '<button class="btn block" id="verbStart">훈련 시작하기</button></div>';
+            '<button class="btn block" id="trainerStart">훈련 시작하기</button></div>';
         h += '<div class="card"><b style="font-size:14px">🔊 발음 비교 듣기</b>' +
             '<div class="muted" style="margin:6px 0 10px">스페인어 특유의 소리를 연달아 들어 보세요.</div>' +
-            SOUND_SETS.map((set, si) =>
-                '<button class="btn small ghost" data-soundset="' + si + '" style="margin:0 6px 8px 0">' +
-                esc(set.label) + '</button>').join('') + '</div>';
+            SOUND_SETS.map((set, si) => '<button class="btn small ghost" data-set="' + si + '" style="margin:0 6px 8px 0">' + esc(set.label) + '</button>').join('') + '</div>';
         $main.innerHTML = h;
-        document.getElementById('verbStart').addEventListener('click', () => {
-            S.verb = { i: 0, score: 0, cur: null, answered: false };
-            renderVerb();
-        });
-        $main.querySelectorAll('[data-soundset]').forEach(b => b.addEventListener('click', () => {
-            const set = SOUND_SETS[parseInt(b.dataset.soundset, 10)];
-            speakSeq(set.words);
-        }));
+        document.getElementById('trainerStart').addEventListener('click', () => { S.trainer = { i: 0, score: 0, cur: null, answered: false }; renderTrainer(); });
+        $main.querySelectorAll('[data-set]').forEach(b => b.addEventListener('click', () => speakSeq(SOUND_SETS[parseInt(b.dataset.set, 10)].words)));
         return;
     }
-    const t = S.verb;
-    const TOTAL = 10;
-    if (t.i >= TOTAL) {
-        touchStreak();
-        $main.innerHTML = '<div class="result-hero"><div class="r-emoji">' + (t.score >= 8 ? '🏆' : t.score >= 5 ? '🎉' : '💪') + '</div>' +
-            '<div class="r-score" style="color:var(--primary)">' + t.score + ' / ' + TOTAL + '</div>' +
-            '<div class="r-msg">' + (t.score >= 8 ? '동사 마스터가 눈앞이에요! ¡Genial!' : t.score >= 5 ? '좋아요! 꾸준히 하면 입에 붙어요.' : '괜찮아요, 동사 변화는 원래 어려워요. 내일 또 도전!') + '</div></div>' +
-            '<div style="display:flex;gap:10px"><button class="btn block" id="verbAgain">한 번 더!</button>' +
-            '<button class="btn block ghost" id="verbExit">그만하기</button></div>';
-        document.getElementById('verbAgain').addEventListener('click', () => { S.verb = { i: 0, score: 0, cur: null, answered: false }; renderVerb(); });
-        document.getElementById('verbExit').addEventListener('click', () => { S.verb = null; renderVerb(); });
-        return;
-    }
+    const t = S.trainer, TOTAL = 10;
+    if (t.i >= TOTAL) { renderTrainerResult(t, TOTAL, t.score >= 8 ? '동사 마스터가 눈앞이에요! ¡Genial!' : t.score >= 5 ? '좋아요! 꾸준히 하면 입에 붙어요.' : '괜찮아요, 동사 변화는 원래 어려워요. 내일 또 도전!'); return; }
     if (!t.cur) {
         const verb = VERB_BANK[Math.floor(Math.random() * VERB_BANK.length)];
         const pi = Math.floor(Math.random() * 6);
         const others = verb.forms.filter((_, i) => i !== pi);
         const distract = [];
-        while (distract.length < 3) {
-            const c = others[Math.floor(Math.random() * others.length)];
-            if (!distract.includes(c)) distract.push(c);
-        }
+        while (distract.length < 3) { const c = others[Math.floor(Math.random() * others.length)]; if (!distract.includes(c)) distract.push(c); }
         const choices = distract.concat([verb.forms[pi]]);
-        for (let i = choices.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [choices[i], choices[j]] = [choices[j], choices[i]];
-        }
+        for (let i = choices.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [choices[i], choices[j]] = [choices[j], choices[i]]; }
         t.cur = { verb, pi, choices, answer: choices.indexOf(verb.forms[pi]) };
     }
     const cur = t.cur;
-    let h = '<div class="quiz-prog"><div class="qp-bar"><div style="width:' + (t.i / TOTAL * 100) + '%"></div></div>' +
-        '<div class="qp-txt">' + (t.i + 1) + ' / ' + TOTAL + '</div></div>';
-    h += '<div class="quiz-q">주어에 맞는 동사 형태는?</div>';
-    h += '<div class="verb-q"><div class="vq-pron">' + esc(PRONOUNS[cur.pi]) + ' + ___</div>' +
+    let h = trainerProg(t, TOTAL) + '<div class="quiz-q">주어에 맞는 동사 형태는?</div>' +
+        '<div class="verb-q"><div class="vq-pron">' + esc(PRONOUNS[cur.pi]) + ' + ___</div>' +
         '<div class="vq-inf">' + esc(cur.verb.inf) + ' <span class="muted">(' + esc(cur.verb.ko) + ' · ' + esc(cur.verb.reg) + ')</span></div>' +
-        '<div class="vq-ko">' + esc(PRONOUN_KO[cur.pi]) + '(는/은) ' + esc(cur.verb.ko) + '</div></div>';
-    h += '<div class="verb-choice">' + cur.choices.map((c, i) =>
-        '<button class="choice-btn" data-verb="' + i + '">' + esc(c) + '</button>').join('') + '</div>';
-    h += '<div id="vFeedback"></div>';
+        '<div class="vq-ko">' + esc(PRONOUN_KO[cur.pi]) + '(는/은) ' + esc(cur.verb.ko) + '</div></div>' +
+        '<div class="verb-choice">' + cur.choices.map((c, i) => '<button class="choice-btn" data-a="' + i + '">' + esc(c) + '</button>').join('') + '</div>' +
+        '<div id="tFeedback"></div>';
     $main.innerHTML = h;
-    $main.querySelectorAll('[data-verb]').forEach(b => b.addEventListener('click', () => {
+    $main.querySelectorAll('[data-a]').forEach(b => b.addEventListener('click', () => {
         if (t.answered) return;
         t.answered = true;
-        const sel = parseInt(b.dataset.verb, 10);
-        const ok = sel === cur.answer;
+        const sel = parseInt(b.dataset.a, 10), ok = sel === cur.answer;
         if (ok) t.score++;
-        $main.querySelectorAll('[data-verb]').forEach((bb, bi) => {
-            bb.disabled = true;
-            if (bi === cur.answer) bb.classList.add('correct');
-            else if (bi === sel && !ok) bb.classList.add('wrong');
-        });
+        $main.querySelectorAll('[data-a]').forEach((bb, bi) => { bb.disabled = true; if (bi === cur.answer) bb.classList.add('correct'); else if (bi === sel && !ok) bb.classList.add('wrong'); });
         const spoken = (cur.pi === 2 ? 'él ' : cur.pi === 5 ? 'ellos ' : PRONOUNS[cur.pi] + ' ') + cur.verb.forms[cur.pi];
-        document.getElementById('vFeedback').innerHTML =
+        document.getElementById('tFeedback').innerHTML =
             '<div class="explain-box ' + (ok ? 'good' : 'bad') + '"><div class="eb-head">' + (ok ? '⭕ 정답!' : '❌ 아쉬워요!') + '</div>' +
-            '<div class="eb-answer"><span class="estxt">' + esc(PRONOUNS[cur.pi]) + ' ' + esc(cur.verb.forms[cur.pi]) + '</span> — ' +
-            esc(PRONOUN_KO[cur.pi]) + '(는/은) ' + esc(cur.verb.ko) + '</div></div>' +
-            '<button class="btn block" id="vNext">' + (t.i + 1 >= TOTAL ? '결과 보기' : '다음 문제 →') + '</button>';
+            '<div class="eb-answer"><span class="native">' + esc(PRONOUNS[cur.pi]) + ' ' + esc(cur.verb.forms[cur.pi]) + '</span> — ' + esc(PRONOUN_KO[cur.pi]) + '(는/은) ' + esc(cur.verb.ko) + '</div></div>' +
+            '<button class="btn block" id="tNext">' + (t.i + 1 >= TOTAL ? '결과 보기' : '다음 문제 →') + '</button>';
         speak(spoken, 0.9);
-        document.getElementById('vNext').addEventListener('click', () => { t.i++; t.cur = null; t.answered = false; renderVerb(); });
+        document.getElementById('tNext').addEventListener('click', () => { t.i++; t.cur = null; t.answered = false; renderTrainer(); });
     }));
 }
 
+/* ═══════════════════ 가나 도장 (일본어 전용 훈련소) ═══════════════════ */
+const KANA_SEION = [
+    { row: 'あ행', cells: [{ h: 'あ', k: 'ア', r: 'a' }, { h: 'い', k: 'イ', r: 'i' }, { h: 'う', k: 'ウ', r: 'u' }, { h: 'え', k: 'エ', r: 'e' }, { h: 'お', k: 'オ', r: 'o' }] },
+    { row: 'か행', cells: [{ h: 'か', k: 'カ', r: 'ka' }, { h: 'き', k: 'キ', r: 'ki' }, { h: 'く', k: 'ク', r: 'ku' }, { h: 'け', k: 'ケ', r: 'ke' }, { h: 'こ', k: 'コ', r: 'ko' }] },
+    { row: 'さ행', cells: [{ h: 'さ', k: 'サ', r: 'sa' }, { h: 'し', k: 'シ', r: 'shi' }, { h: 'す', k: 'ス', r: 'su' }, { h: 'せ', k: 'セ', r: 'se' }, { h: 'そ', k: 'ソ', r: 'so' }] },
+    { row: 'た행', cells: [{ h: 'た', k: 'タ', r: 'ta' }, { h: 'ち', k: 'チ', r: 'chi' }, { h: 'つ', k: 'ツ', r: 'tsu' }, { h: 'て', k: 'テ', r: 'te' }, { h: 'と', k: 'ト', r: 'to' }] },
+    { row: 'な행', cells: [{ h: 'な', k: 'ナ', r: 'na' }, { h: 'に', k: 'ニ', r: 'ni' }, { h: 'ぬ', k: 'ヌ', r: 'nu' }, { h: 'ね', k: 'ネ', r: 'ne' }, { h: 'の', k: 'ノ', r: 'no' }] },
+    { row: 'は행', cells: [{ h: 'は', k: 'ハ', r: 'ha' }, { h: 'ひ', k: 'ヒ', r: 'hi' }, { h: 'ふ', k: 'フ', r: 'fu' }, { h: 'へ', k: 'ヘ', r: 'he' }, { h: 'ほ', k: 'ホ', r: 'ho' }] },
+    { row: 'ま행', cells: [{ h: 'ま', k: 'マ', r: 'ma' }, { h: 'み', k: 'ミ', r: 'mi' }, { h: 'む', k: 'ム', r: 'mu' }, { h: 'め', k: 'メ', r: 'me' }, { h: 'も', k: 'モ', r: 'mo' }] },
+    { row: 'や행', cells: [{ h: 'や', k: 'ヤ', r: 'ya' }, null, { h: 'ゆ', k: 'ユ', r: 'yu' }, null, { h: 'よ', k: 'ヨ', r: 'yo' }] },
+    { row: 'ら행', cells: [{ h: 'ら', k: 'ラ', r: 'ra' }, { h: 'り', k: 'リ', r: 'ri' }, { h: 'る', k: 'ル', r: 'ru' }, { h: 'れ', k: 'レ', r: 're' }, { h: 'ろ', k: 'ロ', r: 'ro' }] },
+    { row: 'わ행', cells: [{ h: 'わ', k: 'ワ', r: 'wa' }, null, null, null, { h: 'を', k: 'ヲ', r: 'wo' }] },
+    { row: 'ん', cells: [{ h: 'ん', k: 'ン', r: 'n' }, null, null, null, null] },
+];
+const KANA_DAKUON = [
+    { row: 'が행', cells: [{ h: 'が', k: 'ガ', r: 'ga' }, { h: 'ぎ', k: 'ギ', r: 'gi' }, { h: 'ぐ', k: 'グ', r: 'gu' }, { h: 'げ', k: 'ゲ', r: 'ge' }, { h: 'ご', k: 'ゴ', r: 'go' }] },
+    { row: 'ざ행', cells: [{ h: 'ざ', k: 'ザ', r: 'za' }, { h: 'じ', k: 'ジ', r: 'ji' }, { h: 'ず', k: 'ズ', r: 'zu' }, { h: 'ぜ', k: 'ゼ', r: 'ze' }, { h: 'ぞ', k: 'ゾ', r: 'zo' }] },
+    { row: 'だ행', cells: [{ h: 'だ', k: 'ダ', r: 'da' }, { h: 'ぢ', k: 'ヂ', r: 'ji' }, { h: 'づ', k: 'ヅ', r: 'zu' }, { h: 'で', k: 'デ', r: 'de' }, { h: 'ど', k: 'ド', r: 'do' }] },
+    { row: 'ば행', cells: [{ h: 'ば', k: 'バ', r: 'ba' }, { h: 'び', k: 'ビ', r: 'bi' }, { h: 'ぶ', k: 'ブ', r: 'bu' }, { h: 'べ', k: 'ベ', r: 'be' }, { h: 'ぼ', k: 'ボ', r: 'bo' }] },
+    { row: 'ぱ행', cells: [{ h: 'ぱ', k: 'パ', r: 'pa' }, { h: 'ぴ', k: 'ピ', r: 'pi' }, { h: 'ぷ', k: 'プ', r: 'pu' }, { h: 'ぺ', k: 'ペ', r: 'pe' }, { h: 'ぽ', k: 'ポ', r: 'po' }] },
+];
+const KANA_CONFUSE_SETS = [
+    { label: 'し・つ・ん・そ 헷갈리는 4형제', chars: ['し', 'つ', 'ん', 'そ'] },
+    { label: 'わ・れ・ね・ぬ 헷갈리는 4형제', chars: ['わ', 'れ', 'ね', 'ぬ'] },
+    { label: 'シ・ツ・ソ・ン (가타카나)', chars: ['シ', 'ツ', 'ソ', 'ン'] },
+    { label: 'き・さ 비슷한 모양', chars: ['き', 'さ'] },
+];
+function kanaPool() {
+    return [...KANA_SEION, ...KANA_DAKUON].flatMap(row => row.cells.filter(Boolean));
+}
+function renderKanaTrainer() {
+    if (!S.trainer) {
+        let h = '<div class="section-title" style="margin-top:0">あ 가나 도장(かな道場)</div>' +
+            '<div class="muted" style="margin-bottom:12px">일본어는 <b>히라가나 46자 + 가타카나 46자</b>만 외우면 왕초보 딱지를 뗄 수 있어요. 한자 없이 소리 나는 대로 읽는 문자라 규칙만 알면 금방 늘어요! 글자를 눌러 발음을 들어 보세요.</div>';
+        h += '<div class="card"><b style="font-size:14px">📖 히라가나 · 가타카나 (청음)</b>' +
+            '<div class="kana-table" style="margin-top:10px">' + kanaTableHtml(KANA_SEION) + '</div></div>';
+        h += '<div class="card"><b style="font-size:14px">📖 탁음 · 반탁음</b>' +
+            '<div class="kana-table" style="margin-top:10px">' + kanaTableHtml(KANA_DAKUON) + '</div></div>';
+        h += '<div class="card"><b style="font-size:14px">🎯 읽기 맞히기 게임</b>' +
+            '<div class="muted" style="margin:6px 0 12px">글자를 보고 알맞은 로마자 발음을 고르세요. 10문제 도전!</div>' +
+            '<button class="btn block" id="trainerStart">훈련 시작하기</button></div>';
+        h += '<div class="card"><b style="font-size:14px">🔊 헷갈리는 글자 비교 듣기</b>' +
+            '<div class="muted" style="margin:6px 0 10px">모양이 비슷한 글자들을 연달아 들어 보세요.</div>' +
+            KANA_CONFUSE_SETS.map((set, si) =>
+                '<button class="btn small ghost" data-set="' + si + '" style="margin:0 6px 8px 0">' + esc(set.label) + '</button>').join('') + '</div>';
+        $main.innerHTML = h;
+        document.getElementById('trainerStart').addEventListener('click', () => { S.trainer = { i: 0, score: 0, cur: null, answered: false }; renderTrainer(); });
+        $main.querySelectorAll('.kana-cell[data-k]').forEach(el => el.addEventListener('click', () => speak(el.dataset.k, 0.85)));
+        $main.querySelectorAll('[data-set]').forEach(b => b.addEventListener('click', () => speakSeq(KANA_CONFUSE_SETS[parseInt(b.dataset.set, 10)].chars)));
+        return;
+    }
+    const t = S.trainer, TOTAL = 10;
+    if (t.i >= TOTAL) { renderTrainerResult(t, TOTAL, t.score >= 8 ? '가나 마스터가 눈앞이에요! 한자 없이도 다 읽을 수 있어요.' : t.score >= 5 ? '좋아요! 반복할수록 눈에 익어요.' : '괜찮아요, 히라가나는 원래 처음엔 헷갈려요. 내일 또 도전!'); return; }
+    if (!t.cur) {
+        const pool = kanaPool();
+        const answer = pool[Math.floor(Math.random() * pool.length)];
+        const others = pool.filter(c => c.r !== answer.r);
+        const distract = [];
+        while (distract.length < 3) {
+            const c = others[Math.floor(Math.random() * others.length)];
+            if (!distract.find(d => d.r === c.r)) distract.push(c);
+        }
+        const choices = distract.concat([answer]).sort(() => Math.random() - 0.5);
+        t.cur = { answer, script: Math.random() < 0.5 ? 'h' : 'k', choices };
+    }
+    const cur = t.cur;
+    const glyph = cur.script === 'h' ? cur.answer.h : cur.answer.k;
+    let hh = trainerProg(t, TOTAL) + '<div class="quiz-q">이 글자의 발음은?</div>' +
+        '<div class="verb-q"><div class="vq-pron" style="font-size:44px">' + esc(glyph) + '</div></div>' +
+        '<div class="quiz-audio"><button class="btn small" id="tPlay">🔊 듣기</button></div>' +
+        '<div class="verb-choice">' + cur.choices.map((c, i) => '<button class="choice-btn" data-a="' + i + '">' + esc(c.r) + '</button>').join('') + '</div>' +
+        '<div id="tFeedback"></div>';
+    $main.innerHTML = hh;
+    document.getElementById('tPlay').addEventListener('click', () => speak(glyph, 0.85));
+    $main.querySelectorAll('[data-a]').forEach(b => b.addEventListener('click', () => {
+        if (t.answered) return;
+        t.answered = true;
+        const sel = parseInt(b.dataset.a, 10), picked = cur.choices[sel], ok = picked.r === cur.answer.r;
+        if (ok) t.score++;
+        $main.querySelectorAll('[data-a]').forEach((bb, bi) => { bb.disabled = true; if (cur.choices[bi].r === cur.answer.r) bb.classList.add('correct'); else if (bi === sel && !ok) bb.classList.add('wrong'); });
+        document.getElementById('tFeedback').innerHTML =
+            '<div class="explain-box ' + (ok ? 'good' : 'bad') + '"><div class="eb-head">' + (ok ? '⭕ 정답!' : '❌ 아쉬워요!') + '</div>' +
+            '<div class="eb-answer"><span class="native" style="font-size:22px">' + esc(glyph) + '</span> ' +
+            '<span style="color:var(--primary);font-weight:700">' + esc(cur.answer.r) + '</span> (히라가나 ' + esc(cur.answer.h) + ' · 가타카나 ' + esc(cur.answer.k) + ')</div></div>' +
+            '<button class="btn block" id="tNext">' + (t.i + 1 >= TOTAL ? '결과 보기' : '다음 문제 →') + '</button>';
+        speak(glyph, 0.85);
+        document.getElementById('tNext').addEventListener('click', () => { t.i++; t.cur = null; t.answered = false; renderTrainer(); });
+    }));
+}
+function kanaTableHtml(rows) {
+    return rows.map(row => '<div class="kana-row"><div class="kr-label">' + esc(row.row) + '</div><div class="kr-cells">' +
+        row.cells.map(c => c
+            ? '<div class="kana-cell" data-k="' + esc(c.h) + '"><div class="kc-h">' + esc(c.h) + '</div><div class="kc-k">' + esc(c.k) + '</div><div class="kc-r">' + esc(c.r) + '</div></div>'
+            : '<div class="kana-cell empty"></div>').join('') + '</div></div>').join('');
+}
+
+function trainerProg(t, TOTAL) {
+    return '<div class="quiz-prog"><div class="qp-bar"><div style="width:' + (t.i / TOTAL * 100) + '%"></div></div><div class="qp-txt">' + (t.i + 1) + ' / ' + TOTAL + '</div></div>';
+}
+function renderTrainerResult(t, TOTAL, msg) {
+    touchStreak();
+    $main.innerHTML = '<div class="result-hero"><div class="r-emoji">' + (t.score >= 8 ? '🏆' : t.score >= 5 ? '🎉' : '💪') + '</div>' +
+        '<div class="r-score" style="color:var(--primary)">' + t.score + ' / ' + TOTAL + '</div>' +
+        '<div class="r-msg">' + msg + '</div></div>' +
+        '<div style="display:flex;gap:10px"><button class="btn block" id="trAgain">한 번 더!</button><button class="btn block ghost" id="trExit">그만하기</button></div>';
+    document.getElementById('trAgain').addEventListener('click', () => { S.trainer = { i: 0, score: 0, cur: null, answered: false }; renderTrainer(); });
+    document.getElementById('trExit').addEventListener('click', () => { S.trainer = null; renderTrainer(); });
+}
+
 /* ═══════════════════ 읽기 (쉬운 동화) ═══════════════════ */
+function storyUnlocked(story) { return store.settings.freeNav || doneCount() >= (STORIES_REQUIRED_COUNT(story.unlockAfter)); }
+function STORIES_REQUIRED_COUNT(afterUnit) {
+    // afterUnit(예: 3)까지의 유닛에 속한 레슨 수를 합산 — 그 단계 전체를 완료해야 열림
+    let n = 0;
+    UNITS.forEach(u => { if (u.unitId <= afterUnit) n += u.lessons.length; });
+    return n;
+}
 function renderStoryList() {
     if (!STORIES.length) {
         $main.innerHTML = '<div class="empty-state"><div class="es-emoji">📚</div><b>쉬운 읽기 콘텐츠 준비 중</b><br>배운 단어만으로 읽는 짧은 동화가<br>곧 이 자리에 채워질 예정이에요!</div>';
         return;
     }
-    let h = '<div class="section-title" style="margin-top:0">📚 쉬운 읽기</div>' +
+    let h = '<div class="section-title" style="margin-top:0">📚 쉬운 읽기 — ' + esc(CUR.name) + '</div>' +
         '<div class="muted" style="margin-bottom:12px">배운 단어만으로 쓰인 짧은 이야기예요. 진도가 쌓일수록 새 이야기가 열립니다.</div>';
     STORIES.forEach((s, i) => {
-        const need = storiesRequiredCount(s.unlockAfter);
+        const need = STORIES_REQUIRED_COUNT(s.unlockAfter);
         const unlocked = store.settings.freeNav || doneCount() >= need;
-        const readDone = store.storiesRead && store.storiesRead[s.id];
+        const readDone = prog().storiesRead && prog().storiesRead[s.id];
         h += '<div class="story-card' + (unlocked ? '' : ' locked') + '" data-story="' + i + '">' +
             '<div class="st-emoji">' + esc(s.emoji || '📖') + '</div>' +
             '<div style="flex:1;min-width:0"><div class="st-title">' + (readDone ? '✅ ' : '') + esc(s.title) + '</div>' +
@@ -1183,9 +1486,9 @@ function renderStoryList() {
     $main.querySelectorAll('.story-card').forEach(c => c.addEventListener('click', () => {
         const i = parseInt(c.dataset.story, 10);
         const s = STORIES[i];
-        const need = storiesRequiredCount(s.unlockAfter);
+        const need = STORIES_REQUIRED_COUNT(s.unlockAfter);
         if (!(store.settings.freeNav || doneCount() >= need)) { alert('아직 잠겨 있어요 🔒\n' + need + '개 레슨을 완료하면 열립니다.'); return; }
-        S.storyIdx = i; S.story = { showKo: {}, quiz: null };
+        S.storyIdx = i; S.story = { i: 0, showKo: {} };
         go('storyRead');
     }));
 }
@@ -1197,7 +1500,7 @@ function renderStoryRead() {
         '<div class="lt-sub">' + esc(s.titleNative || '') + ' · Lv.' + s.level + '</div></div></div>';
     if (s.newWords && s.newWords.length) {
         h += '<div class="tip-box"><b>📌 새로 나오는 단어</b><br>' +
-            s.newWords.map(w => esc(w.es) + (w.koPron ? '[' + esc(w.koPron) + ']' : '') + '=' + esc(w.ko)).join(' · ') + '</div>';
+            s.newWords.map(w => esc(nativeText(w)) + (w.koPron ? '[' + esc(w.koPron) + ']' : '') + '=' + esc(w.ko)).join(' · ') + '</div>';
     }
     h += '<div style="display:flex;gap:8px;margin:10px 0 14px">' +
         '<button class="btn small ghost" id="playAll">🔊 전체 듣기</button>' +
@@ -1205,36 +1508,36 @@ function renderStoryRead() {
     (s.sentences || []).forEach((sent, i) => {
         const shown = !!st.showKo[i];
         h += '<div class="story-sent" data-sent="' + i + '">' +
-            '<div class="hanzi">' + esc(sent.es) + '</div>' +
-            '' +
-            (store.settings.koPron && sent.koPron ? '<div class="kopron">[' + esc(sent.koPron) + ']</div>' : '') +
+            '<div class="native">' + esc(nativeText(sent)) + '</div>' +
+            romanLine(sent) + pronLine(sent.koPron) +
             (shown ? '<div class="ko" style="margin-top:6px">' + esc(sent.ko) + '</div>' : '<div class="muted" style="margin-top:6px">👆 문장을 눌러 뜻을 확인하세요</div>') +
             '</div>';
     });
     if (s.moral) {
-        h += '<div class="culture-box"><b>💡 교훈</b><br><span class="hanzi">' + esc(s.moral.es) + '</span><br>' + esc(s.moral.ko || '') + '</div>';
+        h += '<div class="culture-box"><b>💡 교훈</b><br><span class="native">' + esc(nativeText(s.moral)) + '</span><br>' + esc(s.moral.ko || '') + '</div>';
     }
     h += '<button class="btn block" id="storyQuizBtn" style="margin-top:6px">이해도 퀴즈 풀기 →</button>';
     $main.innerHTML = h;
     document.getElementById('backBtn').addEventListener('click', () => { S.story = null; go('story'); });
-    document.getElementById('playAll').addEventListener('click', () => speakSeq((s.sentences || []).map(x => x.es)));
+    document.getElementById('playAll').addEventListener('click', () => speakSeq((s.sentences || []).map(nativeText)));
     document.getElementById('stopAll').addEventListener('click', () => { seqPlaying = false; stopSpeak(); });
     $main.querySelectorAll('.story-sent').forEach(el => el.addEventListener('click', () => {
         const i = parseInt(el.dataset.sent, 10);
-        speak(s.sentences[i].es, 0.92);
+        speak(nativeText(s.sentences[i]), 0.92);
         st.showKo[i] = true;
         renderStoryRead();
     }));
-    document.getElementById('storyQuizBtn').addEventListener('click', () => { st.quiz = { i: 0, score: 0, answered: false }; renderStoryRead(); });
-    if (st.quiz) renderStoryQuizInner();
+    document.getElementById('storyQuizBtn').addEventListener('click', () => { st.quiz = { i: 0, score: 0, answered: false }; renderStoryQuiz(); });
+    if (st.quiz) renderStoryQuiz();
 
-    function renderStoryQuizInner() {
+    function renderStoryQuiz() {
         const q = st.quiz;
         const items = s.quiz || [];
         if (!items.length) return;
         if (q.i >= items.length) {
-            if (!store.storiesRead) store.storiesRead = {};
-            store.storiesRead[s.id] = { date: todayStr() }; save(); touchStreak();
+            const p = prog();
+            if (!p.storiesRead) p.storiesRead = {};
+            p.storiesRead[s.id] = { date: todayStr() }; save(); touchStreak();
             $main.innerHTML = '<div class="result-hero"><div class="r-emoji">📖</div>' +
                 '<div class="r-score" style="color:var(--success)">' + q.score + ' / ' + items.length + '</div>' +
                 '<div class="r-msg">다 읽었어요! 이 이야기는 완료로 기록됐어요.</div></div>' +
@@ -1257,7 +1560,7 @@ function renderStoryRead() {
             document.getElementById('sqFeedback').innerHTML =
                 '<div class="explain-box ' + (ok ? 'good' : 'bad') + '"><div class="eb-head">' + (ok ? '⭕ 정답!' : '❌ 아쉬워요!') + '</div>' + esc(item.explain || '') + '</div>' +
                 '<button class="btn block" id="sqNext">' + (q.i + 1 >= items.length ? '결과 보기' : '다음 문제 →') + '</button>';
-            document.getElementById('sqNext').addEventListener('click', () => { q.i++; q.answered = false; renderStoryQuizInner(); });
+            document.getElementById('sqNext').addEventListener('click', () => { q.i++; q.answered = false; renderStoryQuiz(); });
         }));
     }
 }
@@ -1269,8 +1572,8 @@ function histLessonTitle(id) { const i = LESSON_BY_ID[id]; return i !== undefine
 function histStoryTitle(id) { const s = STORIES.find(x => x.id === id); return s ? (s.emoji ? s.emoji + ' ' : '') + s.title : id; }
 function histAllEntries() {
     const out = [];
-    const comp = store.completed || {};
-    const read = store.storiesRead || {};
+    const comp = prog().completed || {};
+    const read = prog().storiesRead || {};
     Object.entries(comp).forEach(([id, v]) => {
         if (!v || !v.date) return;
         out.push({ date: v.date, type: 'lesson', ico: '✅', title: histLessonTitle(id), score: v.score + '/' + v.total + '점' });
@@ -1376,12 +1679,12 @@ function renderGuide() {
     let h = '<div class="section-title" style="margin-top:0">📖 이렇게 배우면 됩니다</div>';
     h += '<div class="card">' +
         gs(1, '매일 15분, 한 레슨씩', '언어는 벼락치기가 안 돼요. 하루 한 레슨(약 15분)이면 한 달 안에 전 과정을 마칠 수 있어요. 연속 학습 🔥 기록을 지켜 보세요!') +
-        gs(2, '무조건 소리 내어 따라 하기', '🔊 버튼으로 원어민 발음을 듣고, 큰 소리로 3번씩 따라 읽으세요. 스페인어는 쓰인 대로 읽는 언어라 소리 내어 읽을수록 빨리 늘어요. 🐢 느리게 듣기로 정확하게!') +
+        gs(2, '무조건 소리 내어 따라 하기', '🔊 버튼으로 원어민 발음을 듣고, 큰 소리로 3번씩 따라 읽으세요. 🐢 느리게 듣기로 정확하게!') +
         gs(3, '퀴즈로 확인하고 통과하기', '각 레슨 끝의 퀴즈를 70% 이상 맞혀야 다음 레슨이 열려요. 틀려도 괜찮아요 — 해설을 읽고 다시 도전하면 더 오래 기억에 남아요.') +
-        gs(4, '복습함으로 어제 배운 걸 지키기', '통과한 레슨의 단어는 🃏 복습함에 자동 저장돼요. 과학적으로 검증된 간격 반복(SRS) 방식이라, 잊어버리기 직전에 다시 만나게 됩니다. 새 레슨보다 복습 먼저!') +
+        gs(4, '복습함 · 읽기로 배운 걸 지키기', '통과한 레슨의 단어는 🃏 복습함에 자동 저장돼요. 진도가 쌓이면 📚 읽기에서 배운 단어로만 된 쉬운 이야기도 즐길 수 있어요.') +
         '</div>';
 
-    h += '<div class="section-title">🗺️ 이 앱의 커리큘럼 (표준 학습 순서)</div><div class="card">';
+    h += '<div class="section-title">🗺️ 이 언어의 커리큘럼 (표준 학습 순서)</div><div class="card">';
     UNITS.forEach(u => {
         const done = u.lessons.filter(l => isDone(l.id)).length;
         h += '<div class="road-row"><span class="rr-badge">' + u.unitId + '단계</span>' +
@@ -1391,25 +1694,20 @@ function renderGuide() {
     h += '</div>';
 
     h += '<div class="section-title">🏔️ 마스터가 되는 로드맵</div><div class="card">' +
-        rr('지금 여기', '이 앱 전 과정 수료', '발음 + 인사 + 숫자 + 자기소개 + 일상/여행 회화 — 스페인어의 뼈대 완성 (DELE A1 수준의 회화)', true) +
-        rr('다음', 'DELE A1 단어 확장', '이 앱의 단어에 조금만 더하면 돼요. 복습함을 매일 비우는 습관이 최고의 준비! 동사 훈련소로 변화형을 완전히 몸에 붙이세요.', false) +
-        rr('3개월', 'DELE A2 + 과거시제', '기초 문법이 완성되는 단계. 스페인 드라마나 라틴 팝(가사 보며 듣기)을 시작하세요.', false) +
-        rr('6개월+', '실전 회화 확장', '언어 교환 친구 만들기, 스페인·중남미 여행 가서 직접 말해 보기. 이 앱의 회화가 실전에서 그대로 나옵니다!', false) +
+        rr('지금 여기', '이 앱 전 과정 수료', '발음 + 인사 + 숫자 + 자기소개 + 일상/여행 회화 — ' + esc(CUR.name) + '의 뼈대 완성', true) +
+        rr('다음', '핵심 어휘 확장', '복습함을 매일 비우는 습관이 최고의 준비! ' + esc(CUR.trainerLabel) + ' 훈련소로 세부 감각을 완전히 몸에 붙이세요.', false) +
+        rr('이어서', '쉬운 동화로 다독', '📚 읽기에서 배운 단어만으로 된 이야기를 읽으며 자연스럽게 어휘를 넓히세요.', false) +
+        rr('6개월+', '실전 회화 확장', '언어 교환 친구 만들기, 현지 여행 가서 직접 말해 보기. 이 앱의 회화가 실전에서 그대로 나옵니다!', false) +
         '</div>';
 
     h += '<div class="tip-box"><b>💡 작심삼일 방지 3원칙</b><br>' +
         '· 같은 시간에 공부하기 (아침 커피와 함께, 자기 전 침대에서)<br>' +
-        '· 완벽하려 하지 않기 — 동사 변화가 틀려도 일단 말하면 늘어요<br>' +
-        '· 배운 문장을 오늘 혼잣말로 3번 써먹기 (¡Hola! ¡Gracias! ¡Hasta luego!)</div>';
+        '· 완벽하려 하지 않기 — 틀려도 일단 말하면 늘어요<br>' +
+        '· 배운 문장을 오늘 혼잣말로 3번 써먹기</div>';
     $main.innerHTML = h;
 
-    function gs(n, title, desc) {
-        return '<div class="guide-step"><div class="gs-num">' + n + '</div><div class="gs-body"><b>' + title + '</b><p>' + desc + '</p></div></div>';
-    }
-    function rr(badge, title, desc, now) {
-        return '<div class="road-row' + (now ? ' now' : '') + '"><span class="rr-badge">' + badge + '</span>' +
-            '<div><b>' + title + '</b><div class="rr-desc">' + desc + '</div></div></div>';
-    }
+    function gs(n, title, desc) { return '<div class="guide-step"><div class="gs-num">' + n + '</div><div class="gs-body"><b>' + title + '</b><p>' + desc + '</p></div></div>'; }
+    function rr(badge, title, desc, now) { return '<div class="road-row' + (now ? ' now' : '') + '"><span class="rr-badge">' + badge + '</span><div><b>' + title + '</b><div class="rr-desc">' + desc + '</div></div></div>'; }
 }
 
 /* ═══════════════════ 설정 ═══════════════════ */
@@ -1417,32 +1715,40 @@ function renderSettings() {
     const hasTTS = ttsAvailable();
     let h = '<div class="section-title" style="margin-top:0">⚙️ 설정</div>';
     if (!hasTTS) h += '<div class="notice">⚠️ 이 브라우저는 음성 합성(TTS)을 지원하지 않아 발음 듣기를 쓸 수 없어요. 크롬/엣지/사파리 최신 버전을 추천합니다.</div>';
-    else if (!esVoice) h += '<div class="notice">ℹ️ 스페인어 음성이 아직 준비되지 않았어요. 발음 버튼을 한 번 누르면 준비되는 경우가 많아요. 안 되면 기기에 스페인어(스페인) 음성을 설치해 주세요.</div>';
+    else if (!voiceCache[CUR.code]) h += '<div class="notice">ℹ️ ' + esc(CUR.name) + ' 음성이 아직 준비되지 않았어요. 발음 버튼을 한 번 누르면 준비되는 경우가 많아요.</div>';
     h += '<div class="card">' +
-        setRow('한글 발음 표기', '스페인어 아래에 한글 독음 [올라] 표시', '<label class="switch"><input type="checkbox" id="setKoPron"' + (store.settings.koPron ? ' checked' : '') + '><span class="slider"></span></label>') +
+        setRow('현재 학습 언어', CUR.flag + ' ' + esc(CUR.name), '<button class="btn small ghost" id="switchLangBtn">바꾸기</button>') +
+        setRow('한글 발음 표기', '외국어 아래에 한글 독음 [' + (CUR.code === 'zh' ? '니 하오' : '올라') + '] 표시', '<label class="switch"><input type="checkbox" id="setKoPron"' + (store.settings.koPron ? ' checked' : '') + '><span class="slider"></span></label>') +
         setRow('말하기 속도', '발음 재생 기본 속도 (' + store.settings.rate.toFixed(1) + '배)', '<input type="range" id="setRate" min="0.6" max="1.2" step="0.1" value="' + store.settings.rate + '">') +
-        setRow('자유 탐색 모드', '순서 잠금을 풀고 모든 레슨 열기 (추천하지 않아요!)', '<label class="switch"><input type="checkbox" id="setFree"' + (store.settings.freeNav ? ' checked' : '') + '><span class="slider"></span></label>') +
+        setRow('자유 탐색 모드', '순서 잠금을 풀고 모든 레슨·읽기 열기 (추천하지 않아요!)', '<label class="switch"><input type="checkbox" id="setFree"' + (store.settings.freeNav ? ' checked' : '') + '><span class="slider"></span></label>') +
         '</div>';
     h += '<div class="card">' +
-        setRow('학습 데이터', '완료 ' + doneCount() + '레슨 · 단어장 ' + Object.keys(store.srs).length + '장 · 이 브라우저에 저장됨',
+        setRow('학습 데이터', '완료 ' + doneCount() + '레슨 · 단어장 ' + Object.keys(prog().srs).length + '장 · 이 브라우저에 저장됨',
             '<button class="btn small" id="resetBtn" style="background:var(--error)">초기화</button>') +
         '</div>';
     h += '<div class="card">' +
         '<div style="font-size:14px;font-weight:700;margin-bottom:2px">📦 진도 백업 · 다른 기기로 옮기기</div>' +
-        '<div class="muted" style="margin-bottom:10px">진도는 이 브라우저에만 저장돼요. 폰↔PC로 옮기거나 안전하게 백업하려면 코드를 사용하세요.</div>' +
+        '<div class="muted" style="margin-bottom:10px">두 언어의 진도가 모두 함께 백업돼요. 폰↔PC로 옮기거나 안전하게 백업하려면 코드를 사용하세요.</div>' +
         '<div style="display:flex;gap:8px">' +
         '<button class="btn small ghost" id="backupBtn" style="flex:1">백업 코드 만들기</button>' +
         '<button class="btn small ghost" id="restoreBtn" style="flex:1">코드로 복원하기</button>' +
         '</div><div id="backupArea"></div></div>';
-    h += '<div class="muted" style="text-align:center;margin-top:16px">올라 스페인어 v1.0 · 오프라인에서도 동작해요 💃<br>발음은 브라우저 내장 스페인어 음성(TTS)을 사용합니다</div>';
+    h += '<div class="muted" style="text-align:center;margin-top:16px">랭귀지 스타터 v1.0 · 오프라인에서도 동작해요 🌍<br>발음은 브라우저 내장 음성(TTS)을 사용합니다</div>';
     $main.innerHTML = h;
 
+    document.getElementById('switchLangBtn').addEventListener('click', () => go('picker'));
     document.getElementById('setKoPron').addEventListener('change', e => { store.settings.koPron = e.target.checked; save(); });
-    document.getElementById('setRate').addEventListener('change', e => { store.settings.rate = parseFloat(e.target.value); save(); renderSettings(); speak('Hola', 0.95); });
+    document.getElementById('setRate').addEventListener('change', e => { store.settings.rate = parseFloat(e.target.value); save(); renderSettings(); speak(CUR.sampleWord, 0.95); });
     document.getElementById('setFree').addEventListener('change', e => { store.settings.freeNav = e.target.checked; save(); });
+    document.getElementById('resetBtn').addEventListener('click', () => {
+        if (confirm('정말 ' + CUR.name + '의 학습 기록을 지울까요?\n(완료한 레슨, 복습 단어장, 연속 기록이 사라져요. 다른 언어의 진도는 유지됩니다)')) {
+            delete store.byLang[CUR.code]; save();
+            go('home');
+        }
+    });
     const area = () => document.getElementById('backupArea');
     document.getElementById('backupBtn').addEventListener('click', () => {
-        area().innerHTML = '<div class="muted" style="margin:12px 0 6px">아래 코드 전체를 복사해서, 다른 기기의 <b>[코드로 복원하기]</b>에 붙여넣으세요.<br>완료 ' + doneCount() + '레슨 · 단어장 ' + Object.keys(store.srs).length + '장이 담겨 있어요.</div>' +
+        area().innerHTML = '<div class="muted" style="margin:12px 0 6px">아래 코드 전체를 복사해서, 다른 기기의 <b>[코드로 복원하기]</b>에 붙여넣으세요.</div>' +
             '<textarea id="backupCode" readonly style="width:100%;height:88px;font-size:11px;border:1px solid var(--border);border-radius:10px;padding:8px;font-family:monospace;background:#f8fafc"></textarea>' +
             '<button class="btn small block" id="copyBtn" style="margin-top:6px">📋 코드 복사하기</button>';
         const ta = document.getElementById('backupCode');
@@ -1464,18 +1770,9 @@ function renderSettings() {
             try {
                 const r = importProgress(code);
                 alert('복원 완료! 🎉\n완료 ' + r.lessons + '레슨 · 단어장 ' + r.cards + '장을 되살렸어요.');
-                go('home');
-            } catch (e) {
-                alert('복원하지 못했어요.\n' + e.message);
-            }
+                if (store.active && LANGS[store.active]) activateLanguage(store.active); else go('picker');
+            } catch (e) { alert('복원하지 못했어요.\n' + e.message); }
         });
-    });
-    document.getElementById('resetBtn').addEventListener('click', () => {
-        if (confirm('정말 모든 학습 기록을 지울까요?\n(완료한 레슨, 복습 단어장, 연속 기록이 사라져요)')) {
-            localStorage.removeItem(LS_KEY);
-            store = loadStore();
-            go('home');
-        }
     });
 
     function setRow(title, desc, ctl) {
@@ -1484,7 +1781,10 @@ function renderSettings() {
 }
 
 /* ═══════════════════ 시작 ═══════════════════ */
-render();
+document.getElementById('langSwitchBtn').addEventListener('click', () => go('picker'));
+document.getElementById('avatarBtn').addEventListener('click', () => go('picker'));
+if (store.active && LANGS[store.active]) activateLanguage(store.active);
+else render();
 </script>
 </body>
 </html>
