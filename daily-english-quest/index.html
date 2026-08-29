@@ -954,8 +954,19 @@ body.modal-open { overflow: hidden; }
   resize: vertical;
 }
 .backup-area:focus { outline: none; border-color: var(--accent); color: var(--text); }
-/* 파일 선택 버튼은 라벨로 대신 보여 준다 */
-#backupFile { display: none; }
+/* 파일 선택 버튼은 라벨로 보여 주되, display:none 은 쓰지 않는다.
+   완전히 숨기면 키보드와 스크린리더가 도달하지 못한다. */
+#backupFile {
+  position: absolute;
+  width: 1px; height: 1px;
+  opacity: 0;
+  overflow: hidden;
+}
+#backupFile:focus-visible + .backup-file-label,
+#backupFile:focus + .backup-file-label {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
 .backup-file-label {
   display: block;
   width: 100%;
@@ -1136,7 +1147,7 @@ Stage 3은 아래 <b>Key Sentences</b> 표의 문장 5개를 모두 체크하면
   <h2 class="card-title">최근 7일 <span class="sub">오늘 포함</span></h2>
   <div class="week-chart" id="weekChart"></div>
   <div class="week-stats" id="weekStats"></div>
-  <p class="week-comment" id="weekComment">-</p>
+  <p class="week-comment"><span id="weekCommentText"></span> <span class="week-best" id="weekBest"></span></p>
 </section>
 
 <!-- ================= 음성 ================= -->
@@ -1259,8 +1270,8 @@ Stage 3은 아래 <b>Key Sentences</b> 표의 문장 5개를 모두 체크하면
     <div class="backup-section">
       <h3 class="backup-title">2. 복원하기</h3>
       <p class="mic-hint">백업 파일을 고르거나 백업 코드를 붙여넣고 복원을 누르세요. 지금 기록은 덮어써집니다.</p>
-      <label class="btn btn-ghost backup-file-label" for="backupFile">📂 백업 파일 선택</label>
       <input type="file" id="backupFile" accept=".json,application/json" />
+      <label class="btn btn-ghost backup-file-label" for="backupFile">📂 백업 파일 선택</label>
       <textarea class="backup-area" id="restoreText" rows="4"
         placeholder="여기에 백업 코드를 붙여넣으세요" aria-label="복원할 백업 코드"></textarea>
       <div class="restore-msg" id="restoreMsg"></div>
@@ -3450,22 +3461,21 @@ function getYesterdayKey() {
 
 /** 누적 XP로 레벨 정보를 찾는다 */
 function getLevelInfo(totalXp) {
-  for (var i = 0; i < LEVELS.length; i++) {
-    if (totalXp >= LEVELS[i].min && totalXp <= LEVELS[i].max) { return LEVELS[i]; }
+  // 아래에서부터 훑어 처음 맞는 구간을 쓴다. 소수 XP 같은 값이 들어와도
+  // 구간 사이로 빠져 최고 레벨로 튀지 않는다.
+  for (var i = LEVELS.length - 1; i >= 0; i--) {
+    if (totalXp >= LEVELS[i].min) { return LEVELS[i]; }
   }
-  return LEVELS[LEVELS.length - 1];
+  return LEVELS[0];
 }
 
 /** 현재 레벨 구간 안에서의 진행률(0~100) */
 function getLevelProgress(totalXp) {
   var info = getLevelInfo(totalXp);
-  if (info.max === Infinity) {
-    return { percent: 100, current: totalXp, target: totalXp };
-  }
+  if (info.max === Infinity) { return { percent: 100 }; }
   var span = info.max - info.min + 1;
   var current = totalXp - info.min + 1;
-  var percent = Math.max(0, Math.min(100, Math.round((current / span) * 100)));
-  return { percent: percent, current: totalXp, target: info.max };
+  return { percent: Math.max(0, Math.min(100, Math.round((current / span) * 100))) };
 }
 
 /** 오늘(선택한 Day)에서 획득한 XP */
@@ -3588,11 +3598,11 @@ function toggleKeyCheck(index) {
   progress.checks[index] = !progress.checks[index];
 
   if (isAllChecked(progress) && !progress.s3) {
-    clearStage(state.selectedDay, "s3");
+    clearStage(state.selectedDay, "s3");  // 여기서 전체를 다시 그린다
     return;
   }
   saveState();
-  render();
+  renderProgressOnly();
 }
 
 /** 오늘(달력 기준) 보스를 깼는지 */
@@ -3845,14 +3855,14 @@ function getDueCards() {
 }
 
 /** 복습함 전체 통계 */
-function getSrsStats() {
+function getSrsStats(dueIds) {
   var total = 0, mastered = 0;
   for (var id in state.srs.cards) {
     if (!Object.prototype.hasOwnProperty.call(state.srs.cards, id)) { continue; }
     total++;
     if (state.srs.cards[id].mastered) { mastered++; }
   }
-  return { total: total, mastered: mastered, due: getDueCards().length };
+  return { total: total, mastered: mastered, due: (dueIds || getDueCards()).length };
 }
 
 /**
@@ -3861,7 +3871,9 @@ function getSrsStats() {
  */
 function addDayKeySentencesToReview(dayId) {
   var day = getDayContent(dayId);
-  var tomorrow = addDaysToDateKey(getTodayKey(), 1);
+  // 첫 복습 간격도 상자 표(SRS_INTERVALS)에서 가져온다. 두 곳에 나뉘어 있으면
+  // 나중에 한쪽만 고치는 사고가 난다.
+  var tomorrow = addDaysToDateKey(getTodayKey(), SRS_INTERVALS[1]);
   var added = 0;
   for (var i = 0; i < day.keySentences.length; i++) {
     var id = makeCardId(dayId, "key", i);
@@ -3983,7 +3995,7 @@ function gradeCurrentReviewCard(remembered) {
   if (remembered) { reviewScore.remembered++; } else { reviewScore.forgot++; }
 
   saveState();
-  render();
+  renderProgressOnly();   // 모달이 떠 있으므로 뒤 페이지는 필요한 부분만
 
   reviewIndex++;
   openCurrentReviewCard();
@@ -4910,7 +4922,7 @@ function saveMicScore(score, passed) {
     else { markSentenceWeak(day.id, "repeat", micSession.index); }
   }
   saveState();
-  render();
+  renderProgressOnly();   // 결과 모달이 떠 있는 상태라 부분 갱신으로 충분하다
 }
 
 /** 도전 창 닫기 (진행 중이던 복습 세션도 함께 정리한다) */
@@ -4934,6 +4946,23 @@ function escapeHtml(text) {
   return String(text)
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
+/**
+ * Day 가 바뀌지 않았을 때 쓰는 가벼운 렌더.
+ * 스크립트 본문과 다음 행동은 Day 가 바뀔 때만 달라지므로 다시 그리지 않는다.
+ * (스크립트가 매번 44줄을 새로 만드는 것이 가장 비쌌다.)
+ */
+function renderProgressOnly() {
+  renderHeader();
+  renderDayGrid();
+  renderQuestCard();
+  renderStages();
+  renderStageActions();
+  renderReviewBox();
+  renderWeeklyReport();
+  renderKeyTable();
+  renderRepeatCards();
 }
 
 function render() {
@@ -4992,10 +5021,11 @@ function renderDayGrid() {
   }
   document.getElementById("chapterTabs").innerHTML = chapterHtml;
 
-  var visible = getChapterOfDay(CHAPTERS[0].from); // 기본값 방어
+  var visible = null;
   for (i = 0; i < CHAPTERS.length; i++) {
     if (CHAPTERS[i].id === visibleChapterId) { visible = CHAPTERS[i]; }
   }
+  if (!visible) { visible = CHAPTERS[0]; }
 
   var dayHtml = "";
   for (i = 0; i < DAY_CONTENTS.length; i++) {
@@ -5153,8 +5183,8 @@ function renderStageActions() {
 
 /** 복습함 카드 */
 function renderReviewBox() {
-  var stats = getSrsStats();
   var dueIds = getDueCards();
+  var stats = getSrsStats(dueIds);   // 같은 목록을 두 번 계산하지 않는다
 
   var summary = "";
   if (stats.total === 0) {
@@ -5237,13 +5267,11 @@ function renderWeeklyReport() {
     + '<div class="week-stat"><span class="ws-num">' + summary.totalReviews + "</span>"
     + '<span class="ws-label">복습한 문장</span></div>';
 
-  var comment = getWeekComment(summary);
-  if (summary.bestDay) {
-    comment += ' <span class="week-best">가장 잘한 날: '
-      + escapeHtml(summary.bestDay.label) + "요일 "
-      + summary.bestDay.entry.xp + "XP</span>";
-  }
-  document.getElementById("weekComment").innerHTML = comment;
+  document.getElementById("weekCommentText").textContent = getWeekComment(summary);
+  var bestEl = document.getElementById("weekBest");
+  bestEl.textContent = summary.bestDay
+    ? ("가장 잘한 날: " + summary.bestDay.label + "요일 " + summary.bestDay.entry.xp + "XP")
+    : "";
 }
 
 /** 매일 알림 설정 */
