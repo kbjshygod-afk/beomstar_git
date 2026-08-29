@@ -49,7 +49,7 @@ beomstar_git/
 
 영어 초급자가 하루 15분씩 듣기와 따라 말하기를 게임처럼 이어가는 앱입니다.
 
-- **하루 4단계**: Blind Listening(10XP) → Read & Listen(10XP) → Repeat Practice(15XP) → Boss Mission(20XP), 하루 최대 55XP
+- **하루 4단계**: Blind Listening(10XP) → Read & Listen(10XP) → 핵심 문장 익히기(15XP) → Boss Mission(20XP), 하루 최대 55XP
 - **30일 콘텐츠**: 주제 중복 없이 3개 챕터로 구성
   - Chapter 1 (Day 1-10) 매일의 생활: 출근 준비, 커피, 장보기, 배달, 지하철, 약국, 고객센터, 은행, 요리, 빨래
   - Chapter 2 (Day 11-20) 밖에서: 택시, 식당, 길 묻기, 미용실, 헬스장, 공항, 호텔, 옷 쇼핑, 우체국, 영화관
