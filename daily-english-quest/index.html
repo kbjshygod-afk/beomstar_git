@@ -360,6 +360,40 @@ body {
 .btn-row .btn { flex: 1 1 30%; }
 .btn-row .btn.full { flex: 1 1 100%; } /* 줄을 혼자 차지하는 보조 버튼 */
 
+/* ---------- 읽기 속도 · 목소리 안내 ---------- */
+.speed-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+.speed-label { font-size: 13px; color: var(--text-dim); flex: 0 0 auto; }
+.speed-seg { display: flex; gap: 6px; flex: 1 1 auto; }
+.speed-seg .btn { flex: 1 1 0; }
+.speed-seg .btn[aria-pressed="true"] {
+  background: rgba(56, 189, 248, 0.22);
+  border-color: var(--accent);
+  color: #e0f2fe;
+}
+.voice-hint {
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--text-dim);
+  margin: 10px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--card-line);
+  word-break: keep-all;
+}
+.voice-hint b { color: var(--text); }
+.voice-now { color: var(--accent); font-weight: 700; word-break: break-all; }
+.voice-hint summary {
+  cursor: pointer;
+  color: var(--accent);
+  font-weight: 700;
+  margin-top: 6px;
+  list-style: none;
+}
+.voice-hint summary::-webkit-details-marker { display: none; }
+.voice-hint summary::before { content: "▸ "; }
+.voice-hint details[open] > summary::before { content: "▾ "; }
+.voice-hint summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.voice-hint .voice-steps { margin: 6px 0 0; padding-left: 2px; }
+
 /* ---------- 스테이지 ---------- */
 .stage-list { display: grid; gap: 10px; }
 .stage-btn {
@@ -1152,12 +1186,21 @@ Stage 3은 아래 <b>Key Sentences</b> 표의 문장 5개를 모두 체크하면
 
 <!-- ================= 음성 ================= -->
 <section class="card">
-  <h2 class="card-title">Listening <span class="sub">느린 속도 · en-US</span></h2>
+  <h2 class="card-title">Listening <span class="sub" id="speechModeSub">en-US</span></h2>
   <div class="btn-row">
     <button class="btn btn-accent" data-action="speak-script">▶︎ Read Script</button>
     <button class="btn btn-accent" data-action="speak-boss">▶︎ Read Boss</button>
     <button class="btn btn-ghost" data-action="stop-speak">■ Stop</button>
   </div>
+  <div class="speed-row">
+    <span class="speed-label" id="speedLabel">읽기 속도</span>
+    <span class="speed-seg" role="group" aria-labelledby="speedLabel" id="speedSeg">
+      <button class="btn btn-sm" data-action="set-rate" data-rate="slow" aria-pressed="false">느리게</button>
+      <button class="btn btn-sm" data-action="set-rate" data-rate="normal" aria-pressed="true">보통</button>
+      <button class="btn btn-sm" data-action="set-rate" data-rate="native" aria-pressed="false">원어민</button>
+    </span>
+  </div>
+  <p class="voice-hint" id="voiceHint"></p>
   <div class="notice hidden" id="speechNotice">이 브라우저에서는 음성 읽기를 지원하지 않습니다.</div>
 </section>
 
@@ -3223,7 +3266,8 @@ function createDefaultState() {
     days: {},          // { "1": {s1, s2, s3, boss, checks[], visited} }
     srs: createDefaultSrs(), // 복습함
     history: {},       // 날짜별 활동 { "2026-08-12": {xp, stages, reviews, boss} }
-    reminderTime: "21:00" // 캘린더 알림에 쓸 시간
+    reminderTime: "21:00", // 캘린더 알림에 쓸 시간
+    speechRate: "normal"   // 읽기 속도: slow / normal / native
   };
 }
 
@@ -3300,6 +3344,8 @@ function normalizeState(parsed) {
   clean.srs = normalizeSrs(parsed.srs);
   clean.history = normalizeHistory(parsed.history);
   clean.reminderTime = isTimeString(parsed.reminderTime) ? parsed.reminderTime : "21:00";
+  clean.speechRate = Object.prototype.hasOwnProperty.call(SPEECH_RATES, parsed.speechRate)
+    ? parsed.speechRate : "normal";
   return clean;
 }
 
@@ -3698,10 +3744,22 @@ function resetAll() {
 
 /* =========================================================
    6. 음성 (Web Speech API)
+   - 대화(A/B)는 서로 다른 목소리로 주고받게 한다.
+   - 문장 사이에 사람이 숨 쉬는 만큼의 틈을 둔다.
+   - 읽기 속도는 느리게/보통/원어민 중에서 고른다.
    ========================================================= */
 var speechAvailable = ("speechSynthesis" in window) && (typeof window.SpeechSynthesisUtterance === "function");
-var englishVoice = null;
-var SPEECH_RATE = 0.75; // 초급자용 느린 속도
+var voiceA = null;   // 혼자 읽는 문장과 대화의 A 화자
+var voiceB = null;   // 대화의 B 화자 (없으면 A로 읽고 음높이만 바꾼다)
+
+var SPEECH_RATES = { slow: 0.7, normal: 0.85, native: 1 };
+var RATE_LABELS = { slow: "느리게", normal: "보통", native: "원어민 속도" };
+
+// 문장 사이 쉬는 시간(ms). 속도를 늘려 늘어뜨리는 대신 여기서 여유를 준다.
+var PAUSE_SENTENCE = 260;   // 같은 사람이 다음 문장으로 넘어갈 때
+var PAUSE_TURN = 520;       // 말하는 사람이 바뀔 때
+var PAUSE_QUESTION = 140;   // 물음표 뒤 여운
+var PAUSE_PART = 420;       // Part가 바뀔 때
 
 function initSpeech() {
   if (!speechAvailable) {
@@ -3709,34 +3767,135 @@ function initSpeech() {
     if (notice) { notice.classList.remove("hidden"); }
     return;
   }
-  pickEnglishVoice();
+  pickEnglishVoices();
   // iOS/크롬은 음성 목록을 늦게 불러오는 경우가 있다.
   if (typeof window.speechSynthesis.onvoiceschanged !== "undefined") {
-    window.speechSynthesis.onvoiceschanged = pickEnglishVoice;
+    window.speechSynthesis.onvoiceschanged = pickEnglishVoices;
   }
 }
 
-function pickEnglishVoice() {
-  try {
-    var voices = window.speechSynthesis.getVoices() || [];
-    var i;
-    for (i = 0; i < voices.length; i++) {
-      if (voices[i].lang === "en-US" && /Samantha|Google US English|Alex/i.test(voices[i].name)) {
-        englishVoice = voices[i]; return;
-      }
-    }
-    for (i = 0; i < voices.length; i++) {
-      if (voices[i].lang === "en-US") { englishVoice = voices[i]; return; }
-    }
-    for (i = 0; i < voices.length; i++) {
-      if (String(voices[i].lang).indexOf("en") === 0) { englishVoice = voices[i]; return; }
-    }
-  } catch (err) { /* 음성 목록을 못 읽어도 기본 음성으로 재생 */ }
+/* ---------- 목소리 고르기 ----------
+   요즘 기기에는 신경망 음성이 들어 있지만 이름이 제각각이라
+   흔히 쓰이는 표시어에 점수를 매겨 가장 좋은 것을 고른다. */
+var VOICE_QUALITY_HINTS = [
+  { re: /neural|natural/i, score: 60 },
+  { re: /premium|enhanced/i, score: 45 },
+  { re: /online/i, score: 25 },
+  { re: /google/i, score: 20 },
+  { re: /siri/i, score: 15 }
+];
+// 이 표시어가 붙은 음성은 점수를 깎아 후보에서 아예 빠지게 한다.
+var VOICE_LOW_QUALITY = /compact|espeak|pico|eloquence/i;
+
+function scoreVoice(voice) {
+  var lang = String(voice && voice.lang || "").replace(/_/g, "-");
+  if (lang.indexOf("en") !== 0) { return -1; }
+
+  var score = 0;
+  if (lang === "en-US") { score += 30; }
+  else if (/^en-(GB|CA|AU|IE)$/i.test(lang)) { score += 10; }
+
+  var name = String(voice.name || "");
+  for (var i = 0; i < VOICE_QUALITY_HINTS.length; i++) {
+    if (VOICE_QUALITY_HINTS[i].re.test(name)) { score += VOICE_QUALITY_HINTS[i].score; }
+  }
+  if (VOICE_LOW_QUALITY.test(name)) { score -= 40; }
+  // 클라우드에서 오는 음성은 대개 신경망 음성이다.
+  if (voice.localService === false) { score += 20; }
+  return score;
 }
 
-/** 문장 배열을 한 줄씩 천천히 읽는다 */
+function pickEnglishVoices() {
+  voiceA = null;
+  voiceB = null;
+  try {
+    var voices = window.speechSynthesis.getVoices() || [];
+    var ranked = [];
+    var i;
+    for (i = 0; i < voices.length; i++) {
+      var s = scoreVoice(voices[i]);
+      if (s >= 0) { ranked.push({ voice: voices[i], score: s, order: i }); }
+    }
+    ranked.sort(function (a, b) {
+      if (b.score !== a.score) { return b.score - a.score; }
+      return a.order - b.order;   // 점수가 같으면 기기가 준 순서대로
+    });
+    if (ranked.length) { voiceA = ranked[0].voice; }
+    // 대화가 두 사람처럼 들리도록 A와 다른 목소리를 하나 더 찾는다.
+    // 한 목소리를 음높이만 바꿔 쓰는 것보다, 조금 덜 좋아도 진짜 다른
+    // 목소리가 훨씬 대화처럼 들린다. 나쁜 음성은 위 점수 필터에서 이미 빠졌다.
+    for (i = 1; i < ranked.length; i++) {
+      if (ranked[i].voice.name !== voiceA.name) { voiceB = ranked[i].voice; break; }
+    }
+  } catch (err) { /* 음성 목록을 못 읽어도 기기 기본 음성으로 재생된다 */ }
+  renderVoiceHint();
+}
+
+/** 화자에 따라 목소리·음높이를 정한다 */
+function getSpeakerTune(speaker) {
+  var twoVoices = !!(voiceA && voiceB);
+  if (speaker === "B") {
+    return {
+      voice: voiceB || voiceA,
+      // 목소리가 하나뿐이면 음높이를 벌려 다른 사람처럼 들리게 한다.
+      pitch: twoVoices ? 0.98 : 0.88,
+      rateScale: 0.98
+    };
+  }
+  return { voice: voiceA, pitch: twoVoices ? 1 : 1.08, rateScale: 1 };
+}
+
+/* ---------- 읽기 속도 ---------- */
+function getSpeechRateKey() {
+  var key = state && state.speechRate;
+  return Object.prototype.hasOwnProperty.call(SPEECH_RATES, key) ? key : "normal";
+}
+function getSpeechRate() { return SPEECH_RATES[getSpeechRateKey()]; }
+
+function setSpeechRate(key) {
+  if (!Object.prototype.hasOwnProperty.call(SPEECH_RATES, key)) { return; }
+  if (state.speechRate === key) { return; }
+  state.speechRate = key;
+  saveState();
+  stopSpeaking();   // 속도가 바뀌면 읽던 것은 멈춘다
+  renderSpeedButtons();
+  showToast("읽기 속도: " + RATE_LABELS[key]);
+}
+
+/* ---------- 읽을 문장 만들기 ---------- */
 var speakQueue = [];      // 아직 읽지 않은 문장들
 var speakQueueId = 0;     // 새로 시작하면 번호가 바뀌어 이전 대기열이 멈춘다
+var speakTimer = null;    // 문장 사이 쉬는 중인 타이머
+
+/**
+ * 읽을 문장 하나를 큐에 넣을 형태로 바꾼다.
+ * "A: Good morning." 처럼 화자 표시가 있으면 떼어 내고 누구 말인지 기억한다.
+ */
+function toSpeechItem(line) {
+  var raw = String(line == null ? "" : line);
+  var speaker = "";
+  var mark = raw.match(/^([ABC]):\s*/);
+  if (mark) { speaker = mark[1]; raw = raw.slice(mark[0].length); }
+  raw = raw.replace(/^\s+|\s+$/g, "");
+  if (!raw) { return null; }
+  return { text: raw, speaker: speaker, pause: 0 };
+}
+
+/** 문장 사이에 사람이 숨 쉬는 만큼의 틈을 넣는다 */
+function applyPauses(items, tailPause) {
+  for (var i = 0; i < items.length; i++) {
+    var cur = items[i];
+    var next = items[i + 1];
+    if (!next) { cur.pause = tailPause || 0; continue; }
+    var gap = PAUSE_SENTENCE;
+    if (cur.speaker && next.speaker && cur.speaker !== next.speaker) {
+      gap = PAUSE_TURN;   // 말하는 사람이 바뀌면 더 쉰다
+    }
+    if (/\?$/.test(cur.text)) { gap += PAUSE_QUESTION; }
+    cur.pause = gap;
+  }
+  return items;
+}
 
 /**
  * 문장 배열을 한 줄씩 읽는다.
@@ -3748,13 +3907,17 @@ function speakLines(lines) {
     showToast("이 브라우저에서는 음성 읽기를 지원하지 않습니다.");
     return;
   }
-  stopSpeaking();
-
-  speakQueue = [];
+  var items = [];
   for (var i = 0; i < lines.length; i++) {
-    var text = String(lines[i]).replace(/^[ABC]:\s*/, ""); // "A:", "B:" 표시는 읽지 않는다
-    if (text) { speakQueue.push(text); }
+    var item = toSpeechItem(lines[i]);
+    if (item) { items.push(item); }
   }
+  speakItems(applyPauses(items, 0));
+}
+
+function speakItems(items) {
+  stopSpeaking();
+  speakQueue = items;
   speakQueueId = speakQueueId + 1;
   speakNextInQueue(speakQueueId);
 }
@@ -3763,20 +3926,30 @@ function speakNextInQueue(queueId) {
   if (queueId !== speakQueueId) { return; }   // 그사이 새로 시작했거나 멈췄다
   if (!speakQueue.length) { return; }
 
-  var text = speakQueue.shift();
-  var utter = new window.SpeechSynthesisUtterance(text);
-  utter.lang = "en-US";
-  utter.rate = SPEECH_RATE;
-  utter.pitch = 1;
-  if (englishVoice) { utter.voice = englishVoice; }
-  utter.onend = function () { speakNextInQueue(queueId); };
+  var item = speakQueue.shift();
+  var tune = getSpeakerTune(item.speaker);
+  var utter = new window.SpeechSynthesisUtterance(item.text);
+  utter.lang = (tune.voice && tune.voice.lang) || "en-US";
+  utter.rate = getSpeechRate() * tune.rateScale;
+  utter.pitch = tune.pitch;
+  if (tune.voice) { utter.voice = tune.voice; }
+
   // 읽기에 실패해도 멈추지 않고 다음 문장으로 넘어간다.
-  utter.onerror = function () { speakNextInQueue(queueId); };
+  var goNext = function () {
+    if (queueId !== speakQueueId) { return; }
+    if (!speakQueue.length) { return; }
+    speakTimer = setTimeout(function () {
+      speakTimer = null;
+      speakNextInQueue(queueId);
+    }, item.pause);
+  };
+  utter.onend = goNext;
+  utter.onerror = goNext;
 
   try {
     window.speechSynthesis.speak(utter);
   } catch (err) {
-    speakNextInQueue(queueId);
+    goNext();
   }
 }
 
@@ -3785,18 +3958,31 @@ function speakOne(text) { speakLines([text]); }
 function stopSpeaking() {
   speakQueue = [];
   speakQueueId = speakQueueId + 1;   // 진행 중인 대기열을 무효로 만든다
+  if (speakTimer) { clearTimeout(speakTimer); speakTimer = null; }
   if (!speechAvailable) { return; }
   try { window.speechSynthesis.cancel(); } catch (err) { /* 무시 */ }
 }
 
 /** 현재 Day의 스크립트 전체 읽기 */
 function speakCurrentScript() {
-  var day = getDayContent(state.selectedDay);
-  var lines = [];
-  for (var i = 0; i < day.script.length; i++) {
-    lines = lines.concat(day.script[i].lines);
+  if (!speechAvailable) {
+    showToast("이 브라우저에서는 음성 읽기를 지원하지 않습니다.");
+    return;
   }
-  speakLines(lines);
+  var day = getDayContent(state.selectedDay);
+  var items = [];
+  for (var i = 0; i < day.script.length; i++) {
+    var partItems = [];
+    var lines = day.script[i].lines;
+    for (var j = 0; j < lines.length; j++) {
+      var item = toSpeechItem(lines[j]);
+      if (item) { partItems.push(item); }
+    }
+    // Part가 끝나면 조금 더 쉬어 장면이 바뀐 느낌을 준다.
+    applyPauses(partItems, i === day.script.length - 1 ? 0 : PAUSE_PART);
+    items = items.concat(partItems);
+  }
+  speakItems(items);
   showToast("스크립트를 읽습니다. 눈을 감고 들어 보세요.");
 }
 
@@ -4170,6 +4356,50 @@ function buildReminderIcs(timeString) {
     "END:VCALENDAR"
   ];
   return lines.join("\r\n") + "\r\n"; // 캘린더 형식은 줄바꿈이 CRLF다
+}
+
+/** 지금 고른 읽기 속도를 버튼에 표시한다 */
+function renderSpeedButtons() {
+  var current = getSpeechRateKey();
+  var seg = document.getElementById("speedSeg");
+  if (seg) {
+    var btns = seg.querySelectorAll("[data-rate]");
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].setAttribute("aria-pressed",
+        btns[i].getAttribute("data-rate") === current ? "true" : "false");
+    }
+  }
+  var sub = document.getElementById("speechModeSub");
+  if (sub) { sub.textContent = RATE_LABELS[current] + " · en-US"; }
+}
+
+/** 지금 어떤 목소리로 읽는지, 더 좋은 목소리는 어떻게 받는지 알려 준다 */
+function renderVoiceHint() {
+  var el = document.getElementById("voiceHint");
+  if (!el) { return; }
+  if (!speechAvailable) { el.textContent = ""; return; }
+
+  var html;
+  if (voiceA && voiceB) {
+    html = '지금 목소리: <span class="voice-now">' + escapeHtml(voiceA.name)
+      + " · " + escapeHtml(voiceB.name)
+      + "</span> — 대화(A/B)는 두 사람이 주고받습니다.";
+  } else if (voiceA) {
+    html = '지금 목소리: <span class="voice-now">' + escapeHtml(voiceA.name)
+      + "</span> — 이 기기에 쓸 만한 영어 음성이 하나뿐이라 대화는 음높이로 구분합니다.";
+  } else {
+    html = "이 기기의 기본 영어 음성으로 읽습니다.";
+  }
+  // 기기에 고품질 음성을 한 번 받아 두면 앱을 안 고쳐도 소리가 크게 좋아진다.
+  // 한 번 읽으면 되는 안내라 접어 둔다.
+  html += "<details><summary>목소리가 기계처럼 들린다면</summary>"
+    + '<div class="voice-steps">'
+    + "기기에 고품질 영어 음성을 한 번 내려받으면 훨씬 자연스러워집니다."
+    + "<br /><b>아이폰</b> 설정 → 손쉬운 사용 → 콘텐츠 말하기 → 음성 → English"
+    + "<br /><b>안드로이드</b> 설정 → 일반 → 텍스트 음성 변환 → 음성 데이터 설치"
+    + "<br />받은 뒤에는 이 화면을 새로고침하세요."
+    + "</div></details>";
+  el.innerHTML = html;
 }
 
 /** 알림 시간을 저장한다 */
@@ -4967,6 +5197,7 @@ function renderProgressOnly() {
 
 function render() {
   renderHeader();
+  renderSpeedButtons();
   renderDayGrid();
   renderQuestCard();
   renderFirstRun();
@@ -5577,6 +5808,9 @@ function handleClick(event) {
   } else if (action === "stop-speak") {
     stopSpeaking();
     showToast("음성을 멈췄어요.");
+
+  } else if (action === "set-rate") {
+    setSpeechRate(el.getAttribute("data-rate"));
 
   } else if (action === "copy-boss") {
     copyText(day.bossSentence.en + " / " + day.bossSentence.ko);
