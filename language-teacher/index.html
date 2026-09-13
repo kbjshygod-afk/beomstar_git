@@ -120,6 +120,7 @@
         .lang-card.zh:hover, .lang-card.zh:active { border-color: #d92332; }
         .lang-card.es:hover, .lang-card.es:active { border-color: #c60b1e; }
         .lang-card.ja:hover, .lang-card.ja:active { border-color: #bc002d; }
+        .lang-card.fr:hover, .lang-card.fr:active { border-color: #0055a4; }
         /* ── Home ───────────────────────────── */
         .stats-row { display: flex; gap: 8px; margin-bottom: 14px; }
         .stat { flex: 1; background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 10px 6px; text-align: center; }
@@ -336,6 +337,22 @@
         .kana-cell .kc-h { font-size: 16px; font-weight: 700; line-height: 1.2; }
         .kana-cell .kc-k { font-size: 10.5px; color: var(--text-light); line-height: 1.3; }
         .kana-cell .kc-r { font-size: 9.5px; color: var(--primary); font-weight: 700; margin-top: 1px; }
+        /* ── Sound dojo (프랑스어) ──────────── */
+        .fr-rule { border-top: 1px solid #f1f5f9; padding: 9px 0 0; margin-top: 9px; }
+        .fr-rule:first-of-type { border-top: none; margin-top: 8px; }
+        .fr-rule-t { font-size: 13px; font-weight: 700; }
+        .fr-rule-e { font-size: 12px; color: var(--text-light); margin-top: 2px; }
+        .fr-vowel-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .fr-vowel { background: #f8fafc; border: 1px solid var(--border); border-radius: 10px; padding: 8px 6px; text-align: center; cursor: pointer; }
+        .fr-vowel .fv-spell { font-size: 13px; font-weight: 800; }
+        .fr-vowel .fv-pron { font-size: 15px; color: var(--primary); font-weight: 800; margin: 1px 0; }
+        .fr-vowel .fv-ex { font-size: 10.5px; color: var(--text-light); }
+        .fr-liaison { display: flex; align-items: center; gap: 10px; background: #f8fafc; border: 1px solid var(--border); border-radius: 10px; padding: 9px 11px; margin-bottom: 6px; cursor: pointer; }
+        .fr-liaison:last-child { margin-bottom: 0; }
+        .fr-liaison .native { font-size: 14.5px; font-weight: 700; }
+        .fr-li-pron { font-size: 12.5px; color: var(--primary); font-weight: 700; }
+        .fr-li-ko { font-size: 11.5px; color: var(--text-light); margin-top: 2px; }
+        .fr-li-play { margin-left: auto; font-size: 16px; flex-shrink: 0; }
         /* ── Verb trainer (스페인어) ────────── */
         .conj-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
         .conj-cell { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 12px; }
@@ -441,6 +458,14 @@ const LANGS = {
         primary: '#bc002d', primaryDark: '#7a0020', gold: '#c9a227', goldLight: '#faf1d9', redSoft: '#fdeef1',
         desc: '히라가나·가타카나부터 여행 회화까지', sampleWord: 'こんにちは', joiner: '',
         nativeField: 'ja', romanField: 'romaji',
+    },
+    fr: {
+        code: 'fr', flag: '🥐', name: '프랑스어', appName: '봉주르 프랑스어', tag: '프랑스어',
+        dataFile: './data-fr.js', dataGlobal: 'FR_DATA', storyFile: './stories-fr.js', storyGlobal: 'STORIES_FR',
+        ttsLang: 'fr-FR', trainerTab: 'sound', trainerIco: '🔤', trainerLabel: '발음',
+        primary: '#0055a4', primaryDark: '#003b73', gold: '#ef4135', goldLight: '#fdeceb', redSoft: '#eaf1fa',
+        desc: '알파벳과 발음 규칙부터 여행 회화까지', sampleWord: 'Bonjour', joiner: ' ',
+        nativeField: 'fr', romanField: null,
     },
 };
 let CUR = null;               // 현재 언어 설정(LANGS[code])
@@ -726,7 +751,7 @@ function renderPicker() {
             '<div><div class="lc-name">' + esc(L.name) + '</div><div class="lc-desc">' + esc(L.desc) + '</div></div>' +
             '<div class="lc-arrow">→</div></div>';
     });
-    h += '<div class="muted" style="text-align:center;margin-top:8px">언제든 오른쪽 위 🔀 언어 버튼으로 바꿀 수 있고,<br>두 언어의 진도는 각각 따로 저장돼요.</div></div>';
+    h += '<div class="muted" style="text-align:center;margin-top:8px">언제든 오른쪽 위 🔀 언어 버튼으로 바꿀 수 있고,<br>언어마다 진도가 각각 따로 저장돼요.</div></div>';
     $main.innerHTML = h;
     $main.querySelectorAll('[data-lang]').forEach(c => c.addEventListener('click', () => activateLanguage(c.dataset.lang)));
 }
@@ -1241,7 +1266,8 @@ const SOUND_SETS = [
 function renderTrainer() {
     if (CUR.code === 'zh') renderToneTrainer();
     else if (CUR.code === 'es') renderVerbTrainer();
-    else renderKanaTrainer();
+    else if (CUR.code === 'ja') renderKanaTrainer();
+    else renderSoundTrainer();
 }
 
 function renderToneTrainer() {
@@ -1442,6 +1468,131 @@ function kanaTableHtml(rows) {
         row.cells.map(c => c
             ? '<div class="kana-cell" data-k="' + esc(c.h) + '"><div class="kc-h">' + esc(c.h) + '</div><div class="kc-k">' + esc(c.k) + '</div><div class="kc-r">' + esc(c.r) + '</div></div>'
             : '<div class="kana-cell empty"></div>').join('') + '</div></div>').join('');
+}
+
+/* ═══════════════════ 발음 도장 (프랑스어 전용 훈련소) ═══════════════════ */
+const FR_SILENT_RULES = [
+    { title: '끝 자음은 대개 묵음', ex: 'petit 프티 · vous 부 · grand 그랑' },
+    { title: '끝 -e도 소리 나지 않음', ex: 'une 윈 · table 타블' },
+    { title: '동사 어미 -ent는 통째로 묵음', ex: 'ils parlent 일 파를' },
+    { title: 'h는 언제나 묵음', ex: 'hôtel 오텔 · heure 외르' },
+    { title: '단 C·R·F·L은 끝에서도 자주 발음돼요', ex: 'avec 아베크 · bonjour 봉주르 · chef 셰프 · mal 말' },
+];
+const FR_VOWELS = [
+    { spell: 'an / en', pron: '앙', ex: 'grand, temps' },
+    { spell: 'on', pron: '옹', ex: 'bon, nom' },
+    { spell: 'in / ain / ein', pron: '앵', ex: 'vin, pain' },
+    { spell: 'un', pron: '앙', ex: 'un, lundi' },
+    { spell: 'ou', pron: '우', ex: 'vous, jour' },
+    { spell: 'u', pron: '위', ex: 'tu, rue' },
+    { spell: 'oi', pron: '우아', ex: 'moi, boire' },
+    { spell: 'eu', pron: '외 / 으', ex: 'deux, je' },
+    { spell: 'au / eau', pron: '오', ex: 'aussi, eau' },
+    { spell: 'ai', pron: '에', ex: 'mais, français' },
+];
+const FR_LIAISON = [
+    { fr: 'vous avez', pron: '부 자베', ko: '당신은 가지고 있어요' },
+    { fr: 'les amis', pron: '레 자미', ko: '친구들' },
+    { fr: 'nous allons', pron: '누 잘롱', ko: '우리는 가요' },
+    { fr: "c'est un ami", pron: '세 탱 나미', ko: '(그는) 친구예요' },
+    { fr: 'deux ans', pron: '되 장', ko: '2년' },
+];
+const FR_SOUND_POOL = [
+    { fr: 'petit', ko: '작은', pron: '프티', trap: '페티트', why: '끝 t는 묵음' },
+    { fr: 'vous', ko: '당신', pron: '부', trap: '보우스', why: '끝 s는 묵음, ou=우' },
+    { fr: 'beaucoup', ko: '많이', pron: '보쿠', trap: '베아우쿠프', why: 'eau=오, 끝 p는 묵음' },
+    { fr: 'parlez', ko: '말하세요', pron: '파를레', trap: '파를레즈', why: '끝 z는 묵음' },
+    { fr: 'hôtel', ko: '호텔', pron: '오텔', trap: '호텔', why: 'h는 언제나 묵음' },
+    { fr: 'heure', ko: '시간', pron: '외르', trap: '헤우레', why: 'h 묵음, eu=외' },
+    { fr: 'tu', ko: '너', pron: '튀', trap: '투', why: 'u는 입술을 동그랗게 모은 위' },
+    { fr: 'tout', ko: '모두', pron: '투', trap: '튀', why: 'ou는 우 (u와 다름!)' },
+    { fr: 'pain', ko: '빵', pron: '팽', trap: '파인', why: 'ain은 비모음 앵' },
+    { fr: 'bon', ko: '좋은', pron: '봉', trap: '본', why: 'on은 비모음 옹' },
+    { fr: 'grand', ko: '큰', pron: '그랑', trap: '그란드', why: 'an=앙, 끝 d는 묵음' },
+    { fr: 'vin', ko: '와인', pron: '뱅', trap: '빈', why: 'in은 비모음 앵' },
+    { fr: 'moi', ko: '나', pron: '무아', trap: '모이', why: 'oi는 우아' },
+    { fr: 'deux', ko: '둘', pron: '되', trap: '데욱스', why: 'eu=외, 끝 x는 묵음' },
+    { fr: 'eau', ko: '물', pron: '오', trap: '에아우', why: 'eau는 통째로 오' },
+    { fr: 'jour', ko: '날, 하루', pron: '주르', trap: '조우르', why: 'j=ㅈ, ou=우' },
+    { fr: 'chat', ko: '고양이', pron: '샤', trap: '차트', why: 'ch=슈 소리, 끝 t 묵음' },
+    { fr: 'français', ko: '프랑스어', pron: '프랑세', trap: '프란카이스', why: 'ç=ㅅ, ai=에, 끝 s 묵음' },
+    { fr: 'fille', ko: '딸, 소녀', pron: '피유', trap: '필레', why: 'ille는 이유' },
+    { fr: 'nuit', ko: '밤', pron: '뉘', trap: '누이트', why: 'ui=위, 끝 t 묵음' },
+    { fr: 'temps', ko: '시간, 날씨', pron: '탕', trap: '템프스', why: 'em=앙, 끝 ps 묵음' },
+    { fr: 'monsieur', ko: '~씨 (남성 존칭)', pron: '므시외', trap: '몬시에우르', why: '철자와 소리가 가장 다른 단어!' },
+];
+function renderSoundTrainer() {
+    if (!S.trainer) {
+        let h = '<div class="section-title" style="margin-top:0">🔤 발음 도장</div>' +
+            '<div class="muted" style="margin-bottom:12px">프랑스어의 가장 큰 벽은 <b>쓰는 대로 읽지 않는다</b>는 것이에요. 하지만 규칙은 딱 세 가지 — <b>묵음 · 비모음 · 연음</b>. 이것만 알면 처음 보는 단어도 읽을 수 있어요!</div>';
+        h += '<div class="card"><b style="font-size:14px">🤫 묵음 규칙</b>' +
+            FR_SILENT_RULES.map(r => '<div class="fr-rule"><div class="fr-rule-t">' + esc(r.title) + '</div><div class="fr-rule-e">' + esc(r.ex) + '</div></div>').join('') + '</div>';
+        h += '<div class="card"><b style="font-size:14px">👃 비모음 · 모음 조합</b>' +
+            '<div class="muted" style="margin:6px 0 10px">눌러서 소리를 들어 보세요.</div>' +
+            '<div class="fr-vowel-grid">' + FR_VOWELS.map((v, i) =>
+                '<div class="fr-vowel" data-vowel="' + i + '"><div class="fv-spell">' + esc(v.spell) + '</div>' +
+                '<div class="fv-pron">' + esc(v.pron) + '</div><div class="fv-ex">' + esc(v.ex) + '</div></div>').join('') + '</div></div>';
+        h += '<div class="card"><b style="font-size:14px">🔗 연음(liaison) 듣기</b>' +
+            '<div class="muted" style="margin:6px 0 10px">끝 묵음 자음이 뒤 모음과 이어져 되살아나요.</div>' +
+            FR_LIAISON.map((l, i) => '<div class="fr-liaison" data-liaison="' + i + '">' +
+                '<div><span class="native">' + esc(l.fr) + '</span> <span class="fr-li-pron">[' + esc(l.pron) + ']</span>' +
+                '<div class="fr-li-ko">' + esc(l.ko) + '</div></div><span class="fr-li-play">🔊</span></div>').join('') + '</div>';
+        h += '<div class="card"><b style="font-size:14px">🎯 읽기 맞히기 게임</b>' +
+            '<div class="muted" style="margin:6px 0 12px">철자를 보고 올바른 발음을 고르세요. 10문제 도전!</div>' +
+            '<button class="btn block" id="trainerStart">훈련 시작하기</button></div>';
+        $main.innerHTML = h;
+        document.getElementById('trainerStart').addEventListener('click', () => { S.trainer = { i: 0, score: 0, cur: null, answered: false }; renderTrainer(); });
+        $main.querySelectorAll('[data-vowel]').forEach(el => el.addEventListener('click', () => {
+            const v = FR_VOWELS[parseInt(el.dataset.vowel, 10)];
+            speakSeq(v.ex.split(',').map(x => x.trim()));
+        }));
+        $main.querySelectorAll('[data-liaison]').forEach(el => el.addEventListener('click', () => {
+            speak(FR_LIAISON[parseInt(el.dataset.liaison, 10)].fr, 0.85);
+        }));
+        return;
+    }
+    const t = S.trainer, TOTAL = 10;
+    if (t.i >= TOTAL) { renderTrainerResult(t, TOTAL, t.score >= 8 ? '발음 규칙을 꿰뚫었어요! 이제 처음 보는 단어도 읽을 수 있어요.' : t.score >= 5 ? '좋아요! 묵음만 익숙해지면 확 늘어요.' : '괜찮아요, 프랑스어 철자는 원래 함정투성이예요. 내일 또 도전!'); return; }
+    if (!t.cur) {
+        const word = FR_SOUND_POOL[Math.floor(Math.random() * FR_SOUND_POOL.length)];
+        const others = FR_SOUND_POOL.filter(w => w.pron !== word.pron && w.pron !== word.trap);
+        const distract = [word.trap];
+        while (distract.length < 3) {
+            const c = others[Math.floor(Math.random() * others.length)].pron;
+            if (!distract.includes(c)) distract.push(c);
+        }
+        const choices = distract.concat([word.pron]).sort(() => Math.random() - 0.5);
+        t.cur = { word, choices };
+    }
+    const cur = t.cur;
+    let hh = trainerProg(t, TOTAL) + '<div class="quiz-q">이 단어는 어떻게 읽을까요?</div>' +
+        '<div class="verb-q"><div class="vq-pron" style="font-size:34px">' + esc(cur.word.fr) + '</div>' +
+        '<div class="vq-ko">' + esc(cur.word.ko) + '</div></div>' +
+        '<div class="quiz-audio"><button class="btn small" id="tPlay">🔊 듣기</button>' +
+        '<button class="btn small ghost" id="tPlaySlow">🐢 느리게</button></div>' +
+        '<div class="verb-choice">' + cur.choices.map((c, i) => '<button class="choice-btn" data-a="' + i + '">' + esc(c) + '</button>').join('') + '</div>' +
+        '<div id="tFeedback"></div>';
+    $main.innerHTML = hh;
+    document.getElementById('tPlay').addEventListener('click', () => speak(cur.word.fr, 0.85));
+    document.getElementById('tPlaySlow').addEventListener('click', () => speak(cur.word.fr, 0.5));
+    $main.querySelectorAll('[data-a]').forEach(b => b.addEventListener('click', () => {
+        if (t.answered) return;
+        t.answered = true;
+        const sel = parseInt(b.dataset.a, 10), ok = cur.choices[sel] === cur.word.pron;
+        if (ok) t.score++;
+        $main.querySelectorAll('[data-a]').forEach((bb, bi) => {
+            bb.disabled = true;
+            if (cur.choices[bi] === cur.word.pron) bb.classList.add('correct');
+            else if (bi === sel && !ok) bb.classList.add('wrong');
+        });
+        document.getElementById('tFeedback').innerHTML =
+            '<div class="explain-box ' + (ok ? 'good' : 'bad') + '"><div class="eb-head">' + (ok ? '⭕ 정답!' : '❌ 아쉬워요!') + '</div>' +
+            '<div class="eb-answer"><span class="native">' + esc(cur.word.fr) + '</span> → <b>' + esc(cur.word.pron) + '</b> (' + esc(cur.word.ko) + ')</div>' +
+            '💡 ' + esc(cur.word.why) + '</div>' +
+            '<button class="btn block" id="tNext">' + (t.i + 1 >= TOTAL ? '결과 보기' : '다음 문제 →') + '</button>';
+        speak(cur.word.fr, 0.85);
+        document.getElementById('tNext').addEventListener('click', () => { t.i++; t.cur = null; t.answered = false; renderTrainer(); });
+    }));
 }
 
 function trainerProg(t, TOTAL) {
@@ -1728,7 +1879,7 @@ function renderSettings() {
         '</div>';
     h += '<div class="card">' +
         '<div style="font-size:14px;font-weight:700;margin-bottom:2px">📦 진도 백업 · 다른 기기로 옮기기</div>' +
-        '<div class="muted" style="margin-bottom:10px">두 언어의 진도가 모두 함께 백업돼요. 폰↔PC로 옮기거나 안전하게 백업하려면 코드를 사용하세요.</div>' +
+        '<div class="muted" style="margin-bottom:10px">배우는 모든 언어의 진도가 함께 백업돼요. 폰↔PC로 옮기거나 안전하게 백업하려면 코드를 사용하세요.</div>' +
         '<div style="display:flex;gap:8px">' +
         '<button class="btn small ghost" id="backupBtn" style="flex:1">백업 코드 만들기</button>' +
         '<button class="btn small ghost" id="restoreBtn" style="flex:1">코드로 복원하기</button>' +
