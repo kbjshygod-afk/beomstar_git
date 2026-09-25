@@ -54,6 +54,12 @@
     if (st && st.days && typeof st.days === 'object') {
       for (var k in st.days) { if (st.days[k] && st.days[k].boss) days++; }
     }
+    // 2회차(30일을 다 끝낸 뒤 Day 진행만 비움)면 30일 모두 끝낸 것으로 센다 — 헬로 영어의 가져오기와 같은 기준
+    if (st && st.srs && st.srs.cards && typeof st.srs.cards === 'object') {
+      var keyDays = {}, n = 0, c, d30 = st.days && st.days['30'];
+      for (var id in st.srs.cards) { c = st.srs.cards[id]; if (c && c.type === 'key' && c.dayId >= 1 && c.dayId <= 30 && !keyDays[c.dayId]) { keyDays[c.dayId] = 1; n++; } }
+      if (n === 30 && !(d30 && d30.s3 && !d30.boss)) days = 30;
+    }
     var xp = st && isFinite(st.totalXp) ? Math.floor(st.totalXp) : 0;
     var streak = st && isFinite(st.streak) ? Math.floor(st.streak) : 0;
     var hasRec = !!st && (days > 0 || xp > 0);

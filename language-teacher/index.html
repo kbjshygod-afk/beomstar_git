@@ -459,7 +459,7 @@
         .lock-prog { height: 5px; background: #eef2f7; border-radius: 3px; margin-top: 6px; overflow: hidden; }
         .lock-prog > div { height: 100%; background: var(--primary); }
         .cc-btn { display: inline-block; margin-top: 10px; background: white; color: var(--primary); font-weight: 900; font-size: 15px; border-radius: 999px; padding: 9px 18px; }
-        .app.big-text { zoom: 1.12; }
+        .app.big-text { zoom: 1.12; height: calc(94vh / 1.12); max-height: calc(860px / 1.12); }
         .fail-screen .btn { margin-top: 12px; }
         /* ── 오늘의 목표 · 레벨 ─────────────── */
         .today-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 12px 14px; margin-bottom: 12px; display: flex; gap: 14px; align-items: center; }
@@ -510,6 +510,7 @@
         .boss-preview { font-size: 11.5px; color: var(--primary); font-weight: 700; margin-top: 3px; }
         .fc-hint { font-size: 14px; color: var(--primary); margin-top: 8px; font-weight: 700; }
         .grade-row.three .btn { padding: 12px 6px; font-size: 13.5px; }
+        .dlg-situation.sit-hidden { color: var(--text-light); font-style: italic; }
         .dlg-ctrl { position: sticky; top: -16px; z-index: 5; background: var(--bg); padding: 6px 0 4px; margin-top: -6px; }
         .unit-chip.miss { cursor: pointer; border: none; font-family: var(--native-font); }
         .seg { display: inline-flex; border: 1.5px solid var(--border); border-radius: 10px; overflow: hidden; }
@@ -572,6 +573,7 @@
             .lang-switch-btn { margin-left: 4px; padding: 6px 8px; }
             .app { border-radius: 0; height: 100vh; height: 100dvh; max-height: none; }
             .tabbar { padding-bottom: env(safe-area-inset-bottom, 0px); }
+            .app.big-text { height: calc(100vh / 1.12); height: calc(100dvh / 1.12); max-height: none; }
         }
     </style>
 </head>
@@ -721,6 +723,7 @@ function cleanLangProg(p) {
     if (p.srsV) o.srsV = clampInt(p.srsV, 0, 9, 0);
     return o;
 }
+function isLang(k) { return typeof k === 'string' && Object.prototype.hasOwnProperty.call(LANGS, k); }
 function cleanSettings(v) {
     const o = Object.assign({}, DEFAULT_SETTINGS, { voice: {}, rateByLang: {} });
     if (!isObj(v)) return o;
@@ -731,19 +734,19 @@ function cleanSettings(v) {
     const r = Number(v.rate); if (Number.isFinite(r)) o.rate = Math.max(0.6, Math.min(1.2, Math.round(r * 10) / 10));
     if ([10, 20, 30, 50, 80].includes(Number(v.dailyGoal))) o.dailyGoal = Number(v.dailyGoal);
     if (typeof v.reminderTime === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(v.reminderTime)) o.reminderTime = v.reminderTime;
-    if (isObj(v.voice)) Object.keys(v.voice).forEach(k => { if (LANGS[k] && typeof v.voice[k] === 'string') o.voice[k] = clip(v.voice[k], 120); });
-    if (isObj(v.rateByLang)) Object.keys(v.rateByLang).forEach(k => { const n = Number(v.rateByLang[k]); if (LANGS[k] && Number.isFinite(n)) o.rateByLang[k] = Math.max(0.6, Math.min(1.2, Math.round(n * 10) / 10)); });
+    if (isObj(v.voice)) Object.keys(v.voice).forEach(k => { if (isLang(k) && typeof v.voice[k] === 'string') o.voice[k] = clip(v.voice[k], 120); });
+    if (isObj(v.rateByLang)) Object.keys(v.rateByLang).forEach(k => { const n = Number(v.rateByLang[k]); if (isLang(k) && Number.isFinite(n)) o.rateByLang[k] = Math.max(0.6, Math.min(1.2, Math.round(n * 10) / 10)); });
     return o;
 }
 function normalizeStore(d) {
     d = isObj(d) ? d : {};
     const byLang = {};
-    if (isObj(d.byLang)) Object.keys(d.byLang).forEach(k => { if (LANGS[k]) { const c = cleanLangProg(d.byLang[k]); if (c) byLang[k] = c; } });
+    if (isObj(d.byLang)) Object.keys(d.byLang).forEach(k => { if (isLang(k)) { const c = cleanLangProg(d.byLang[k]); if (c) byLang[k] = c; } });
     return {
-        active: LANGS[d.active] ? d.active : null,  // 마지막으로 고른 언어 코드
+        active: isLang(d.active) ? d.active : null,  // 마지막으로 고른 언어 코드
         byLang,                                     // code → {completed, srs, streak, lastPos, xp, daily, boss, mistakes …}
         settings: cleanSettings(d.settings),
-        seen: cleanMap(d.seen, v => (typeof v === 'string' || typeof v === 'boolean') ? v : undefined, 200),   // 한 번만 보여 줄 안내
+        seen: cleanMap(d.seen, v => (typeof v === 'boolean' || isDate(v)) ? v : (typeof v === 'string' && /^[a-z]{1,12}$/.test(v)) ? v : undefined, 200),   // 한 번만 보여 줄 안내
         streak: normalizeStreak(d),                 // 전 언어 통합 연속 학습 {last, count, best, shields, frozen}
         badges: cleanMap(d.badges, v => isDate(v) ? v : undefined, 100),   // 배지 id → 획득일
         flags: cleanMap(d.flags, v => (isDate(v) || typeof v === 'number') ? v : undefined, 50),   // 배지 판정용 기록
@@ -754,21 +757,89 @@ function normalizeStreak(d) {
         const x = d.streak;
         return { last: isDate(x.last) ? x.last : '', count: clampInt(x.count, 0, 100000, 0), best: clampInt(x.best, 0, 100000, 0), shields: clampInt(x.shields, 0, 2, 0), frozen: Array.isArray(x.frozen) ? x.frozen.filter(isDate).slice(-60) : [] };
     }
-    // 이전 버전: 언어별 streak 중 가장 최근 것을 전역으로 옮긴다
-    let st = { last: '', count: 0, best: 0, shields: 0, frozen: [] };
+    // 이전 버전: 언어별 streak을 하나로 합쳐 전역으로 옮긴다(어느 언어든 하루 1번이면 인정)
+    const list = [];
+    let best = 0;
     Object.values(isObj(d.byLang) ? d.byLang : {}).forEach(p => {
         const s2 = isObj(p) && p.streak;
         if (!isObj(s2) || !isDate(s2.last)) return;
-        if (s2.last > st.last) { st.last = s2.last; st.count = clampInt(s2.count, 0, 100000, 0); }
-        st.best = Math.max(st.best, clampInt(s2.count, 0, 100000, 0));
+        const c = clampInt(s2.count, 0, 100000, 0);
+        list.push({ last: s2.last, count: c });
+        best = Math.max(best, c);
     });
-    st.best = Math.max(st.best, st.count);
-    return st;
+    const u = streakUnion(list);
+    return { last: u.last, count: u.count, best: Math.max(best, u.count), shields: 0, frozen: [] };
+}
+// [{last, count}] 여러 연속 기록 중 가장 늦게 끝난 것부터, 이어지거나 겹치는 것들을 한 줄로 합친다
+function streakUnion(list) {
+    const xs = list.filter(x => x && isDate(x.last) && x.count > 0).sort((a, b) => (a.last < b.last ? 1 : a.last > b.last ? -1 : b.count - a.count));
+    if (!xs.length) return { last: '', count: 0 };
+    const end = xs[0].last;
+    let span = xs[0].count;   // end에서 거슬러 올라가며 덮인 날 수
+    for (let i = 1; i < xs.length; i++) {
+        const off = dayDiff(xs[i].last, end);
+        if (off > span) break;   // 하루 이상 비면 이어지지 않음
+        span = Math.max(span, off + xs[i].count);
+    }
+    return { last: end, count: span };
+}
+// 다른 탭(또는 예전에 열어 둔 탭)이 그사이 저장했으면, 덮어쓰기 전에 두 기록을 합친다(진도는 늘어나는 쪽으로)
+let lastRaw = null;
+try { lastRaw = localStorage.getItem(LS_KEY); } catch (e) { lastRaw = null; }
+function maxBy(a, b, f) { return (a === undefined) ? b : (b === undefined) ? a : (f(b) >= f(a) ? b : a); }
+function mergeLang(a, b) {   // b = 이 탭(우선), a = 다른 탭
+    if (!a) return b; if (!b) return a;
+    const o = Object.assign({}, a, b);
+    o.completed = Object.assign({}, a.completed);
+    Object.entries(b.completed || {}).forEach(([k, v]) => { const x = o.completed[k]; o.completed[k] = !x ? v : Object.assign({}, x, v, { score: Math.max(x.score, v.score), date: x.date < v.date ? x.date : v.date }); });
+    o.srs = Object.assign({}, a.srs);
+    Object.entries(b.srs || {}).forEach(([k, v]) => { const x = o.srs[k]; o.srs[k] = !x ? v : ((v.due >= x.due) ? v : x); });
+    o.daily = Object.assign({}, a.daily);
+    Object.entries(b.daily || {}).forEach(([d, v]) => { const x = o.daily[d]; if (!x) { o.daily[d] = v; return; } const m = Object.assign({}, x); Object.keys(v).forEach(k => { m[k] = typeof v[k] === 'number' ? Math.max(v[k], x[k] || 0) : v[k]; }); o.daily[d] = m; });
+    ['boss', 'storiesRead', 'roleplay', 'steps', 'spoke', 'heard', 'warm', 'lf', 'ear'].forEach(f => { o[f] = Object.assign({}, a[f] || {}, b[f] || {}); });
+    o.xp = Math.max(a.xp || 0, b.xp || 0);
+    o.streak = maxBy(a.streak, b.streak, s2 => (s2 && s2.last) || '');
+    return o;
+}
+function mergeStores(other, mine) {
+    const m = Object.assign({}, mine);
+    m.byLang = Object.assign({}, other.byLang);
+    Object.keys(mine.byLang).forEach(k => { m.byLang[k] = mergeLang(other.byLang[k], mine.byLang[k]); });
+    const so = other.streak, sm = mine.streak;
+    m.streak = (so.last > sm.last) ? Object.assign({}, so, { best: Math.max(so.best, sm.best) }) : Object.assign({}, sm, { best: Math.max(so.best, sm.best), count: so.last === sm.last ? Math.max(so.count, sm.count) : sm.count });
+    m.badges = Object.assign({}, other.badges, mine.badges);
+    m.flags = Object.assign({}, other.flags, mine.flags);
+    m.seen = Object.assign({}, other.seen, mine.seen);
+    return m;
 }
 function save() {
-    try { localStorage.setItem(LS_KEY, JSON.stringify(store)); }
+    try {
+        const cur = localStorage.getItem(LS_KEY);
+        if (cur && lastRaw !== null && cur !== lastRaw) {
+            let other = null; try { other = normalizeStore(JSON.parse(cur)); } catch (e) { other = null; }
+            if (other) store = mergeStores(other, store);
+        }
+        const raw = JSON.stringify(store);
+        localStorage.setItem(LS_KEY, raw);
+        lastRaw = raw;
+    }
     catch (e) { if (!storageFailed) { storageFailed = true; renderStorageWarning(); } }
 }
+// 다른 탭에서 저장하면 바로 반영(합쳐서), 탭으로 돌아왔을 때도 다시 확인
+function syncFromStorage() {
+    let cur = null; try { cur = localStorage.getItem(LS_KEY); } catch (e) { return; }
+    if (!cur || cur === lastRaw) return;
+    let other = null; try { other = normalizeStore(JSON.parse(cur)); } catch (e) { return; }
+    store = mergeStores(other, store);
+    lastRaw = cur;
+    if (typeof CUR !== 'undefined' && CUR && DATA) {
+        updateHeader(); updateTabs();
+        const root = document.getElementById('modalRoot');
+        if (['home', 'history', 'story', 'settings', 'guide'].includes(S.view) && !(root && root.innerHTML)) render();
+    }
+}
+window.addEventListener('storage', e => { if (e.key === LS_KEY) syncFromStorage(); });
+document.addEventListener('visibilitychange', () => { if (!document.hidden) syncFromStorage(); });
 function renderStorageWarning() {
     const el = document.getElementById('storageWarn');
     if (!el) return;
@@ -792,6 +863,7 @@ function dayDiff(a, b) { return Math.round((new Date(b + 'T00:00:00') - new Date
 function dateAdd(ds, n) { const d = new Date(ds + 'T00:00:00'); d.setDate(d.getDate() + n); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
 // 연속 학습은 모든 언어를 합쳐 하루에 활동 1개면 인정. 7일마다 방패(최대 2개)를 받고, 빠진 날은 방패가 자동으로 지켜 준다.
 function touchStreak() {
+    setTimeout(() => { try { checkQuests(); } catch (e) { } }, 40);
     const t = todayStr(), st = store.streak;
     const lp = CUR && prog().streak; if (lp && lp.last !== t) { lp.count = (lp.last === todayStr(-1)) ? lp.count + 1 : 1; lp.last = t; }
     if (st.last === t) return;
@@ -1313,14 +1385,15 @@ function openSpeak(cfg) {
         (boss ? '<button class="btn small gray" id="micHint1">💡 첫 단어</button><button class="btn small gray" id="micReveal">👀 전체 보기</button>' : '') + '</div>' +
         (boss ? '<div class="fc-hint" id="micHintTxt" style="text-align:center"></div>' : '') +
         '<div id="micStage"></div>';
-    let passedOnce = false;
+    let passedOnce = false, usedHelp = false, selfReport = false;
     const sheet = openModal(html, reason => { stopRecog(); stopRec(); if (cfg.onClose) cfg.onClose(passedOnce, reason); });
     const stage = sheet.querySelector('#micStage');
-    sheet.querySelector('#micListen').addEventListener('click', () => { stopRecog(); speak(target, 0.9); reveal(); });
+    sheet.querySelector('#micListen').addEventListener('click', () => { stopRecog(); speak(target, 0.9); if (!revealed) usedHelp = true; reveal(); });
     const rv = sheet.querySelector('#micReveal');
-    if (rv) rv.addEventListener('click', reveal);
+    if (rv) rv.addEventListener('click', () => { usedHelp = true; reveal(); });
     const h1 = sheet.querySelector('#micHint1');
-    if (h1) h1.addEventListener('click', () => { sheet.querySelector('#micHintTxt').textContent = '💡 ' + firstChunk(target) + ' …'; h1.remove(); });
+    if (h1) h1.addEventListener('click', () => {
+        usedHelp = true; sheet.querySelector('#micHintTxt').textContent = '💡 ' + firstChunk(target) + ' …'; h1.remove(); });
     function reveal() {
         if (revealed) return; revealed = true;
         sheet.querySelector('#micTarget').classList.remove('hidden-text');
@@ -1456,7 +1529,8 @@ function openSpeak(cfg) {
             dl.speakXp = (dl.speakXp || 0) + give;
             save();
             if (give) addXp(give, '말하기'); else touchStreak();
-            if (cfg.onPass) cfg.onPass(res ? res.score : null);
+            if (!res) selfReport = true;
+            if (cfg.onPass) cfg.onPass(res ? res.score : null, { help: usedHelp, self: selfReport });
         }
     }
     ready();
@@ -1690,9 +1764,12 @@ function parseDeqState(d) {
     const cardsMap = (isObj(d.srs) && isObj(d.srs.cards)) ? d.srs.cards : {};
     const num = v => (Number.isFinite(Number(v)) && Number(v) > 0) ? Math.floor(Number(v)) : 0;
     const bossDays = Object.keys(days).map(Number).filter(n => n >= 1 && n <= 30 && isObj(days[String(n)]) && days[String(n)].boss);
-    // 2회차를 시작하면 days가 비워지므로, 핵심 문장 카드가 있는 Day도 학습한 Day로 본다
-    const cardDays = Object.values(cardsMap).filter(c => isObj(c) && c.type === 'key').map(c => Number(c.dayId)).filter(n => n >= 1 && n <= 30);
-    const cleared = Array.from(new Set(bossDays.concat(cardDays))).sort((a, b) => a - b);
+    // 2회차는 30일을 다 끝내야 시작되고 이때 days가 비워진다(빈 Day로 다시 채워짐). 30일 모두 핵심 문장 카드가 있고
+    // Day 30이 '3단계 끝·보스 전' 상태가 아니면 2회차로 보고 30일 전부 완료로 인정. 1회차에선 보스 클리어한 Day만
+    const cardDays = new Set(Object.values(cardsMap).filter(c => isObj(c) && c.type === 'key').map(c => Number(c.dayId)).filter(n => n >= 1 && n <= 30));
+    const d30 = days['30'];
+    const round2 = cardDays.size === 30 && !(isObj(d30) && d30.s3 && !d30.boss);
+    const cleared = round2 ? Array.from({ length: 30 }, (_, i) => i + 1) : bossDays.slice().sort((a, b) => a - b);
     const touched = Object.keys(days).filter(k => { const x = days[k]; return isObj(x) && (x.s1 || x.s2 || x.s3 || x.boss); }).length;
     const cards = Object.keys(cardsMap).length;
     if (!touched && !num(d.totalXp) && !cards) return null;
@@ -1762,8 +1839,11 @@ function importDeq(info) {
     // 연속 학습은 전 언어 통합 기록에 합친다(DEQ 연속이 더 길고 아직 살아 있으면 이어받기)
     const gs = store.streak;
     gs.best = Math.max(gs.best || 0, info.streak);
-    if (isDate(d.lastBossDate) && (d.lastBossDate === todayStr() || d.lastBossDate === todayStr(-1)) && info.streak > curStreak()) {
-        gs.last = d.lastBossDate; gs.count = info.streak;
+    if (isDate(d.lastBossDate) && (d.lastBossDate === todayStr() || d.lastBossDate === todayStr(-1)) && info.streak > 0) {
+        // 새 앱에서 오늘(또는 어제) 이미 공부했으면 두 기록을 이어 붙인다 — 오늘 기록이 어제로 되돌아가지 않게
+        const cur = curStreak();
+        const u = streakUnion([{ last: d.lastBossDate, count: info.streak }].concat(cur ? [{ last: gs.last, count: cur }] : []));
+        if (u.count > cur) { gs.last = u.last; gs.count = u.count; gs.best = Math.max(gs.best, u.count); }
     }
     // 읽기 속도·알림 시각도 옮긴다(속도는 영어에만)
     const RATE = { slow: 0.8, normal: 1, native: 1.1 };
@@ -2074,7 +2154,7 @@ function quickSentence() {
 function startQuick() {
     const item = quickSentence();
     if (!item) return;
-    speakSeq([nativeText(item), nativeText(item)]);
+    setTimeout(() => speakSeq([nativeText(item), nativeText(item)]), 300);   // 창을 먼저 연 뒤 두 번 들려준다(창을 열 때 재생이 끊기지 않게)
     openSpeak({
         item, title: '⚡ 오늘의 한 문장 (1분 모드)',
         onClose: (passed, reason) => {
@@ -2308,7 +2388,7 @@ function renderStep() {
         const firstVisit = !(((prog().steps || {})[l.id] || {})[2]) && !isDone(l.id) && turns.length > 0;
         const asItem = t => ({ text: nativeText(t), speaker: t.speaker, part: t.part });
         let h = '';
-        if (d.situation) h += '<div class="dlg-situation">🎬 ' + esc(d.situation) + '</div>';
+        if (d.situation) h += '<div class="dlg-situation' + (firstVisit ? ' sit-hidden' : '') + '" id="dlgSit">🎬 ' + (firstVisit ? '상황 설명은 먼저 듣기가 끝나면 보여 드려요 👂' : esc(d.situation)) + '</div>';
         h += '<div class="dlg-ctrl" style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">' +
             '<button class="btn small ghost" id="playAll">🔊 전체 대화 듣기</button>' +
             (hasMe ? '<button class="btn small ghost" id="rolePlay">🎭 역할극' + (function () { const nm = (turns.find(t => t.speaker === 'A') || {}).name; return nm && nm !== '나' ? ' (내가 ' + esc(nm) + ')' : ' (내 대사 말하기)'; })() + '</button>' : '') +
@@ -2370,6 +2450,7 @@ function renderStep() {
             showToast('👂 글자 없이 들어 보세요. 무슨 상황일까요?');
             speakSeq(turns.map(asItem), () => {
                 const revealScript = () => {
+                    const sb = document.getElementById('dlgSit'); if (sb) { sb.classList.remove('sit-hidden'); sb.textContent = '🎬 ' + d.situation; }
                     const w = document.getElementById('dlgWrap'); if (w) w.classList.remove('blind');
                     const bb = document.getElementById('blindBtn'); if (bb) { bb.textContent = '🙈 가리고 듣기'; bb.setAttribute('aria-pressed', 'false'); }
                 };
@@ -2379,6 +2460,8 @@ function renderStep() {
                     const pick2 = seededShuffle(others, hashStr(l.id + todayStr())).slice(0, 2);
                     const opts = seededShuffle([d.situation].concat(pick2), hashStr(l.id));
                     lf.outerHTML = '<div class="card" id="sitQuiz"><b>🤔 무슨 상황이었을까요?</b>' + opts.map(o => '<button class="choice-btn" data-sit="' + (o === d.situation ? 1 : 0) + '" style="margin-top:8px;font-size:13px">' + esc(o) + '</button>').join('') + '</div>';
+                    const sq = document.getElementById('sitQuiz');
+                    if (sq) { sq.scrollIntoView({ block: 'center', behavior: 'smooth' }); showToast('🤔 방금 들은 대화, 무슨 상황이었을까요?'); }
                     document.querySelectorAll('[data-sit]').forEach(b => b.addEventListener('click', () => {
                         const ok = b.dataset.sit === '1';
                         document.querySelectorAll('[data-sit]').forEach(x => { x.disabled = true; if (x.dataset.sit === '1') x.classList.add('correct'); else if (x === b) x.classList.add('wrong'); });
@@ -2391,7 +2474,7 @@ function renderStep() {
             }, (x, i) => hilite(i));
         });
         document.getElementById('playAll').addEventListener('click', () => speakSeq(turns.map(asItem), () => { body.querySelectorAll('[data-sec-toggle]').forEach(tg => markHeard(parseInt(tg.dataset.secToggle, 10))); }, (x, i) => hilite(i)));
-        document.getElementById('stopAll').addEventListener('click', () => { seqPlaying = false; stopSpeak(); });
+        document.getElementById('stopAll').addEventListener('click', () => { seqPlaying = false; if (S.rpActive) { rolePlayToken++; S.rpActive = null; showToast('🎭 역할극을 멈췄어요'); } stopSpeak(); });
         document.getElementById('blindBtn').addEventListener('click', e => {
             const w = document.getElementById('dlgWrap'), on = !w.classList.contains('blind');
             w.classList.toggle('blind', on);
@@ -2400,7 +2483,10 @@ function renderStep() {
             if (on) { showToast('👂 글자 없이 먼저 들어 보세요. 무슨 상황일까요?'); speakSeq(turns.map(asItem), null, (x, i) => hilite(i)); }
         });
         body.querySelectorAll('[data-turn]').forEach(b => {
-            const say = () => { const i = parseInt(b.dataset.turn, 10), t = turns[i]; if (t) { speak(nativeText(t), 0.92, t.speaker); } };
+            const say = () => {
+                if (S.rpActive && S.rpActive === rolePlayToken) { showToast('🎭 역할극 중이에요 — ⏹ 정지를 누른 뒤 다시 들을 수 있어요'); return; }
+                const i = parseInt(b.dataset.turn, 10), t = turns[i]; if (t) { speak(nativeText(t), 0.92, t.speaker); }
+            };
             b.addEventListener('click', say);
         });
         const rp = document.getElementById('rolePlay');
@@ -2408,12 +2494,21 @@ function renderStep() {
         if (rp && challenge) rp.textContent = '🎭 역할극 도전 (대본 가림)';
         if (rp) rp.addEventListener('click', () => {
             // 역할극: 상대 대사는 앱이 읽고, 내 차례(A)가 오면 말하기 창이 열린다
-            let i = 0, mine = 0, spoke = 0;
+            // 해설(N) 줄은 건너뛰고, 내 첫 대사가 있는 파트부터 시작해 내 마지막 대사에서 끝낸다
+            const firstA = turns.findIndex(t => t.speaker === 'A');
+            let lastA = -1; turns.forEach((t, k) => { if (t.speaker === 'A') lastA = k; });
+            let startAt = firstA;
+            while (startAt > 0 && !turns[startAt].part) startAt--;
+            let i = startAt, mine = 0;
+            const spokeSet = new Set();
             const total = turns.filter(t => t.speaker === 'A').length;
             const tok = ++rolePlayToken;
+            S.rpActive = tok;
             const step = () => {
                 if (tok !== rolePlayToken || S.view !== 'lesson' || S.step !== 2) return;
-                if (i >= turns.length) {
+                const spoke = spokeSet.size;
+                if (i > lastA || i >= turns.length) {
+                    S.rpActive = null;
                     showToast('🎭 역할극 완료! ' + total + '개 대사 중 ' + spoke + '개 통과', 'gold', 2600);
                     const p = prog(); if (!p.roleplay) p.roleplay = {};
                     if (!p.roleplay[l.id] && spoke >= Math.ceil(total / 2)) { p.roleplay[l.id] = todayStr(); save(); addXp(5, '역할극'); celebrate(); }
@@ -2422,17 +2517,19 @@ function renderStep() {
                 if (turns[i].speaker === 'A') {
                     const idx = i++; mine++;
                     clearPlaying(); hilite(idx);
-                    openSpeak({ item: turns[idx], mode: challenge ? 'boss' : 'repeat', title: (challenge ? '🎭 도전! 내 차례 (' : '🎭 내 차례 (') + mine + '/' + total + ')', onPass: () => { spoke++; },
+                    openSpeak({ item: turns[idx], mode: challenge ? 'boss' : 'repeat', title: (challenge ? '🎭 도전! 내 차례 (' : '🎭 내 차례 (') + mine + '/' + total + ')', onPass: () => { spokeSet.add(idx); },
                         onClose: (passed, reason) => {
                             if (reason === 'done') { setTimeout(step, 250); return; }
-                            rolePlayToken++; clearPlaying(); showToast('🎭 역할극을 멈췄어요');
+                            rolePlayToken++; S.rpActive = null; clearPlaying(); showToast('🎭 역할극을 멈췄어요');
                         } });
                     return;
                 }
                 const chunk = [];
                 const start = i;
-                while (i < turns.length && turns[i].speaker !== 'A') chunk.push(turns[i++]);
-                speakSeq(chunk.map(asItem), step, (x, k) => hilite(start + k));
+                const idxs = [];
+                while (i < turns.length && turns[i].speaker !== 'A') { if (turns[i].speaker !== 'N') idxs.push(i); i++; }
+                if (!idxs.length) { step(); return; }
+                speakSeq(idxs.map(k => asItem(turns[k])), step, (x, k) => hilite(idxs[k]));
             };
             step();
         });
@@ -2486,7 +2583,7 @@ function renderStep() {
             item,
             onPass: () => { const p = prog(); if (!p.spoke) p.spoke = {}; if (!p.spoke[l.id]) p.spoke[l.id] = {}; p.spoke[l.id][si] = 1; save(); },
             onFail: () => addSentCard(item, 0),
-            onClose: () => { if (S.view === 'lesson' && S.step === 1) renderStep(); },
+            onClose: () => { if (S.view === 'lesson' && S.step === 1) { const st = $main.scrollTop; renderStep(); $main.scrollTop = st; } },
         });
     }));
     const nb = document.getElementById('nextStepBtn');
@@ -2581,7 +2678,7 @@ function renderQuiz(body, l) {
             h += '<button class="choice-btn' + (q.half && q.half.includes(ci) ? ' halved' : '') + '" data-choice="' + ci + '"' + (q.half && q.half.includes(ci) ? ' disabled' : '') + '><span class="native">' + esc(c) + '</span></button>';
         });
         h += '</div>';
-        if (item.choices.length >= 4 && !q.half) h += '<button class="btn small gray" id="qHalf" style="margin-bottom:8px">💡 반반 힌트 (보기 2개 지우기)</button>';
+        if (item.choices.length >= 4 && !q.half && !q.answered) h += '<button class="btn small gray" id="qHalf" style="margin-bottom:8px">💡 반반 힌트 (보기 2개 지우기)</button>';
     }
     h += '<div id="qFeedback"></div>';
     body.innerHTML = h;
@@ -2590,6 +2687,7 @@ function renderQuiz(body, l) {
     if (qp) { qp.addEventListener('click', () => { q.plays = (q.plays || 0) + 1; speak(itemText, q.plays >= 3 ? 0.7 : 0.95); }); }
     const qh = document.getElementById('qHalf');
     if (qh) qh.addEventListener('click', () => {
+        if (q.answered) return;
         const wrongs = item.choices.map((_, ci) => ci).filter(ci => ci !== item.answer);
         q.half = seededShuffle(wrongs, seed + 7).slice(0, 2);
         renderQuiz(body, l);
@@ -2680,6 +2778,7 @@ function renderQuiz(body, l) {
             p.mistakes[mk] = { date: todayStr(), n: ((p.mistakes[mk] && p.mistakes[mk].n) || 0) + 1, ok: 0 };
         }
         save();
+        const qhb = document.getElementById('qHalf'); if (qhb) qhb.remove();
         sfx(ok ? ([3, 5, 10].includes(q.combo) ? 'level' : 'ok') : 'bad');
         try { if (navigator.vibrate) navigator.vibrate(ok ? 15 : [30, 40, 30]); } catch (e) { }
         announce(ok ? '정답' : '오답');
@@ -2776,7 +2875,7 @@ function renderQuizResult(body, l) {
         (fixed ? '<div class="muted">첫 시도 ' + firstScore + '개 + 다시 풀어 맞힌 ' + fixed + '개</div>' : '') +
         (!partial && pass ? '<div class="stars" style="font-size:22px;margin-top:4px">' + starStr(firstScore / total >= 1 ? 3 : firstScore / total >= 0.85 ? 2 : 1) + '</div>' : '') +
         '<div class="r-msg">' + (l.warm ? '워밍업 끝! 머리가 풀렸으니 새 레슨을 시작해 볼까요?' : skipUnit !== undefined ? (pass ? '⏩ 합격! ' + skipUnit + '단계를 건너뛰었어요 (레슨 ' + skipped + '개 통과 처리 · 단어는 복습함에 나눠 담았어요)' : '80% 이상이면 합격이에요. 이 단계는 차근차근 배워 봐요 — 이미 아는 부분은 금방 지나가요!') :
-            partial ? (q.score === total ? '틀렸던 문제를 전부 맞혔어요! 이제 진짜 내 것 👏' : '두 번 연속 맞힌 문제는 오답 노트에서 졸업해요. 남은 건 다음에 또!') :
+            partial ? (q.score === total ? (Object.keys(prog().mistakes || {}).length ? '전부 맞혔어요! 👏 다른 날 한 번 더 맞히면 노트에서 졸업해요' : '전부 맞혔어요! 오답 노트를 모두 졸업했어요 🎓') : '다른 날 한 번 더 맞힌 문제는 오답 노트에서 졸업해요. 남은 건 다음에 또!') :
             pass ? (firstScore === total ? '완벽해요! 한 번에 전부 맞혔어요' : '통과! 잘하고 있어요 👏') + '<br>이 레슨 단어들이 내일부터 복습 카드로 나와요.' :
             (Math.ceil(items.length * PASS_RATE) - shown <= 1 ? '거의 다 왔어요, 1문제만 더! 💪' : Math.ceil(items.length * PASS_RATE) + '문제 이상 맞히면 통과예요.') + '<br>단어와 회화를 한 번 더 보고 다시 도전해 보세요!') +
         (gained ? '<br><b style="color:var(--primary)">+' + gained + ' XP' + (!pass && !partial ? ' (노력 보상)' : '') + '</b>' : '') + '</div></div>';
@@ -2920,7 +3019,9 @@ function renderReview() {
             const boxes = [0, 0, 0, 0, 0, 0, 0];
             Object.values(prog().srs).forEach(c => boxes[Math.max(0, Math.min(6, c.box - 1))]++);
             const tomorrow = Object.values(prog().srs).filter(c => !c.mastered && c.due === todayStr(1)).length;
-            h += '<div class="empty-state" style="padding:30px 20px 16px"><div class="es-emoji">🎉</div><b>오늘 복습 끝!</b><br>모든 단어를 복습했어요. 내일 또 만나요.<br><br>' +
+            const reviewedToday = (dayLog().reviews || 0) > 0;
+            h += '<div class="empty-state" style="padding:30px 20px 16px"><div class="es-emoji">' + (reviewedToday ? '🎉' : '🌙') + '</div><b>' + (reviewedToday ? '오늘 복습 끝!' : '오늘은 복습할 카드가 없어요') + '</b><br>' +
+                (reviewedToday ? '모든 카드를 복습했어요. 내일 또 만나요.' : '방금 배운 단어는 잊어버릴 때쯤인 <b>내일부터</b> 복습 카드로 나와요.') + '<br><br>' +
                 '<div class="muted">단어함 현황 — 총 ' + totalCards + '장<br>' +
                 boxes.map((b, i) => '⭐' + (i + 1) + ' ' + b + '장').join(' · ') + '<br>🎓 졸업 ' + Object.values(prog().srs).filter(c => c.mastered).length + '장 · 내일 예정 ' + tomorrow + '장</div></div>';
         } else {
@@ -2934,7 +3035,7 @@ function renderReview() {
                 (due.length > sessionCap() ? '<div class="muted" style="margin-top:8px">한 번에 ' + sessionCap() + '장씩! 나머지 ' + (due.length - sessionCap()) + '장은 다음 세션에서 이어져요.</div>' : '') + '</div>';
         }
         h += '<div class="card"><b style="font-size:14px">📝 오답 노트</b>' +
-            '<div class="muted" style="margin:6px 0 10px">' + (mistakes.length ? '퀴즈에서 틀린 문제 <b>' + mistakes.length + '개</b>가 모여 있어요. 두 번 연속 맞히면 노트에서 졸업해요.' : '틀린 문제가 생기면 자동으로 여기에 모여요. 지금은 깨끗해요! ✨') + '</div>' +
+            '<div class="muted" style="margin:6px 0 10px">' + (mistakes.length ? '퀴즈에서 틀린 문제 <b>' + mistakes.length + '개</b>가 모여 있어요. 오늘 한 번, 다른 날 한 번 더 맞히면 노트에서 졸업해요.' : '틀린 문제가 생기면 자동으로 여기에 모여요. 지금은 깨끗해요! ✨') + '</div>' +
             '<button class="btn block ghost" id="startRedo"' + (mistakes.length ? '' : ' disabled') + '>오답만 다시 풀기' + (mistakes.length ? ' (' + Math.min(10, mistakes.length) + '문제)' : '') + '</button></div>';
         h += '<div class="card"><b style="font-size:14px">🧩 짝 맞추기 게임</b>' +
             '<div class="muted" style="margin:6px 0 10px">' + (totalCards >= 4 ? '배운 단어와 뜻을 빠르게 짝지어 보세요. 게임처럼 가볍게 머리를 깨워요! (+' + XP.match + ' XP)' : '레슨을 하나 통과하면 열려요.') + '</div>' +
@@ -2964,11 +3065,10 @@ function renderReview() {
     }
     const r = S.review;
     if (r.i >= r.queue.length || r.stopped) {
-        touchStreak();
         if (!r.rewarded) {
             r.rewarded = true;
-            if (r.graded) showToast('🃏 복습 ' + r.graded + '장 · +' + r.graded * XP.review + ' XP', 'gold', 2600);
-            if (r.quick) finishQuick();
+            if (r.graded) { touchStreak(); showToast('🃏 복습 ' + r.graded + '장 · +' + r.graded * XP.review + ' XP', 'gold', 2600); }
+            if (r.quick && r.graded) finishQuick();
         }
         const tomorrow = Object.values(prog().srs).filter(c => !c.mastered && c.due === todayStr(1)).length;
         $main.innerHTML = '<div class="result-hero"><div class="r-emoji">🎉</div>' +
@@ -3024,7 +3124,7 @@ function renderReview() {
     const fs = document.getElementById('fcSpeak');
     if (fs) fs.addEventListener('click', () => openSpeak({
         item, mode: 'boss', title: '🎤 뜻 보고 말하기',
-        onPass: () => { r.spoken = true; },
+        onPass: (score, info) => { r.spoken = !(info && (info.help || info.self)); },   // 정답을 보거나 듣고 말한 경우는 스스로 채점
         onClose: () => { if (S.review !== r) return; if (r.spoken) { r.spoken = false; grade('ok'); } else { r.flipped = true; renderReview(); } },
     }));
     if (!rev && !r.flipped && r.autoFor !== r.i) { r.autoFor = r.i; setTimeout(() => { if (S.review === r && r.i === r.autoFor && !r.flipped) speak(c.native, 0.95); }, 300); }
@@ -3260,6 +3360,7 @@ function renderToneTrainer() {
         '<div id="tFeedback"></div>';
     $main.innerHTML = h;
     document.getElementById('tPlay').addEventListener('click', () => speak(cur.syl.h, 0.9));
+    if (t.autoFor !== t.i) { t.autoFor = t.i; setTimeout(() => { if (S.trainer === t && !t.answered) speak(cur.syl.h, 0.9); }, 350); }
     document.getElementById('tPlaySlow').addEventListener('click', () => speak(cur.syl.h, 0.7));
     $main.querySelectorAll('[data-a]').forEach(b => b.addEventListener('click', () => {
         if (t.answered) return;
@@ -3684,7 +3785,7 @@ function renderTrainerResult(t, TOTAL, msg) {
         '<div class="r-score" style="color:var(--primary)">' + t.score + ' / ' + TOTAL + '</div>' +
         '<div class="r-msg">' + msg + '</div></div>' +
         '<div style="display:flex;gap:10px"><button class="btn block" id="trAgain">한 번 더!</button><button class="btn block ghost" id="trExit">그만하기</button></div>';
-    document.getElementById('trAgain').addEventListener('click', () => { S.trainer = { i: 0, score: 0, cur: null, answered: false }; renderTrainer(); });
+    document.getElementById('trAgain').addEventListener('click', () => { S.trainer = { i: 0, score: 0, cur: null, answered: false, scope: t.scope }; renderTrainer(); });
     document.getElementById('trExit').addEventListener('click', () => { S.trainer = null; renderTrainer(); });
 }
 
@@ -3909,7 +4010,7 @@ function renderHistory() {
 
     let h = subnavHtml('history');
     const totalDone = Object.values(store.byLang).reduce((a, p) => a + Object.keys((p && p.completed) || {}).length, 0);
-    if (totalDone >= 5 && !(store.seen.lastBackup && dayDiff(store.seen.lastBackup, todayStr()) < 30)) h += '<div class="muted" style="margin:-4px 0 10px" id="backupHint">💾 마지막 백업: ' + (store.seen.lastBackup || '없음') + ' — 기기를 바꿀 때 필요해요 <button class="btn small gray" id="goBackup" style="padding:4px 8px">백업하기</button></div>';
+    if (totalDone >= 5 && !(store.seen.lastBackup && dayDiff(store.seen.lastBackup, todayStr()) < 30)) h += '<div class="muted" style="margin:-4px 0 10px" id="backupHint">💾 마지막 백업: ' + esc(store.seen.lastBackup || '없음') + ' — 기기를 바꿀 때 필요해요 <button class="btn small gray" id="goBackup" style="padding:4px 8px">백업하기</button></div>';
     h += badgeShelfHtml();
     h += weekReportHtml();
     h += '<div class="hist-stats">' +
@@ -4234,7 +4335,7 @@ function renderSettings() {
             try { obj = parseBackup(code); } catch (e) { showToast('복원하지 못했어요: ' + e.message, '', 3600); return; }
             const incoming = normalizeStore(obj.data);
             const sheet = openModal('<div class="sheet-head"><b>이 백업으로 바꿀까요?</b><button class="sheet-close" data-close-overlay aria-label="닫기">✕</button></div>' +
-                '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px"><div class="card" style="margin:0"><b>📦 백업</b>' + storeSummary(incoming, obj.exportedAt ? obj.exportedAt.slice(0, 10) : '날짜 모름') + '</div>' +
+                '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px"><div class="card" style="margin:0"><b>📦 백업</b>' + storeSummary(incoming, typeof obj.exportedAt === 'string' ? esc(obj.exportedAt.slice(0, 10)) : '날짜 모름') + '</div>' +
                 '<div class="card" style="margin:0"><b>📱 지금 이 기기</b>' + storeSummary(store) + '</div></div>' +
                 '<div class="muted" style="margin-bottom:10px">바꾸기 전 기록은 7일 동안 보관돼서 설정에서 되돌릴 수 있어요.</div>' +
                 '<div style="display:flex;gap:8px"><button class="btn block gray" data-close-overlay>취소</button><button class="btn block" id="restoreYes">바꾸기</button></div>');
