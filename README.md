@@ -34,6 +34,7 @@ beomstar_git/
 │   ├── cloud-config.js   # Firebase 웹 설정(null이면 로그인·통계·의견 기능 숨김)
 │   ├── manifest.webmanifest, icons/   # 홈 화면 설치
 │   └── vendor/firebase/  # 직접 묶은 Firebase SDK(필요할 때만 불러옴)
+├── tools/tts/            # 자연 음성 녹음 도구(Google Cloud TTS → language-teacher/audio/) — docs/voice-setup.md
 ├── tools/firebase/       # SDK 묶기 스크립트(build.mjs — FB_VER도 자동으로 적음) · Firestore 보안 규칙(firestore.rules)
 ├── docs/cloud-setup.md   # 구글 로그인·클라우드 저장 켜는 방법(주인용)
 ├── daily-english-quest/  # 옛 주소 → 헬로 영어 안내(DEQ 기록 가져오기)
@@ -49,6 +50,7 @@ beomstar_git/
 - 서비스 워커 캐시 이름: 데이터 캐시(`lt-data`)는 바꾸지 마세요(바꾸면 모든 언어의 오프라인 자료가 사라져요). 화면 쪽을 비워야 할 때만 `SHELL`(`lt-shell-vN`)의 번호를 올리세요.
 - `sw.js`를 바꿔 배포하면, 열어 둔 화면(홈 화면 앱 포함)에 ‘🆕 새 버전이 나왔어요 · 누르면 새로고침’ 안내가 떠요. `index.html`만 바꾼 배포는 다음에 열 때 바로 새 화면이 됩니다.
 - 저장 형식(store 칸)을 바꾸면 `index.html`의 `SCHEMA`를 올리세요. 옛 화면은 더 새 형식의 기록을 덮어쓰지 않고 새로고침을 권합니다.
+- 문장·단어를 고쳤다면 `node tools/tts/generate.mjs`로 새 문장만 녹음하고(키 필요, [음성 설정 안내](docs/voice-setup.md)) `--prune`으로 안 쓰는 파일을 지우세요. 녹음이 없는 문장은 기기 음성으로 읽으니 잊어도 앱은 동작해요.
 - 서비스 워커(`language-teacher/sw.js`)에 문제가 생기면 `tools/sw-killswitch.js`를 `language-teacher/sw.js`로 복사해 배포하세요. 모든 사용자의 캐시를 지우고 서비스 워커를 해제합니다.
 - 문의 링크: `language-teacher/cloud-config.js`의 `SITE_CONTACT`에 구글 설문지·오픈채팅 주소를 넣으면 허브·설정·도움말·개인정보 안내에 한꺼번에 나타나요.
 

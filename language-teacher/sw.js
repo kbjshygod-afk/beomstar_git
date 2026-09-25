@@ -10,6 +10,8 @@
                                    DATA_VER는 tools/stamp-data-ver.mjs 가 파일 내용으로 자동으로 정함
    - 그 밖(아이콘·manifest·Firebase 묶음) : 저장본을 먼저 주고 뒤에서 갱신
                                    Firebase 묶음의 ?v=FB_VER 는 tools/firebase/build.mjs 가 내용 해시로 적음
+   - audio/{언어}/index.json(녹음 목록) : 네트워크 우선, 못 받으면 저장본 / audio/{언어}/{id}.mp3 : 캐시 우선(AUDIO)
+                                   ?v= 는 목소리가 바뀔 때만 바뀐다(앱이 index.json의 목소리로 정함) — 옛 버전 칸은 정리
    - 다른 사이트(구글 로그인·Firestore·통계)는 건드리지 않음
    캐시 이름
    - DATA('lt-data')는 바꾸지 않는다. 항목이 ?v= 로 나뉘어 이름을 올릴 필요가 없고, 바꾸면 모든 언어의 오프라인 자료가 사라진다
@@ -19,6 +21,7 @@
    비상 정지: tools/sw-killswitch.js 를 이 파일 자리에 복사해 배포(캐시를 모두 지우고 서비스 워커 해제) */
 const SHELL = 'lt-shell-v2';
 const DATA = 'lt-data';
+const AUDIO = 'lt-audio';   // 녹음된 자연 음성(들은 문장만 담긴다)
 const SCOPE = self.registration.scope;              // .../language-teacher/
 const SCOPE_PATH = new URL(SCOPE).pathname;
 const HTML_KEY = SCOPE;                              // ?lang= 이 붙어도 같은 화면이므로 한 칸에 저장
@@ -31,6 +34,8 @@ const isAppPage = u => { const p = new URL(u).pathname; return p === SCOPE_PATH 
 const isHtml = res => /^text\/html/i.test(res.headers.get('content-type') || '');
 const isData = path => /\/(data|stories)-[a-z]{2}\.js$/.test(path);
 const isConfig = path => /\/cloud-config\.js$/.test(path);
+const isAudioIndex = path => /\/audio\/[a-z]{2}\/index\.json$/.test(path);
+const isClip = path => /\/audio\/[a-z]{2}\/[0-9a-f]{12}\.mp3$/.test(path);
 function dataKey(u) { const x = new URL(u); if (x.searchParams.has('r')) x.searchParams.delete('r'); return x.href; }
 function samePath(a, b) { return new URL(a).pathname === new URL(b).pathname; }
 async function dropOtherVersions(cache, key) {
@@ -61,7 +66,7 @@ self.addEventListener('install', e => {
 self.addEventListener('activate', e => e.waitUntil((async () => {
   const data = await caches.open(DATA);
   for (const k of await caches.keys()) {
-    if (!k.startsWith('lt-') || k === SHELL || k === DATA) continue;
+    if (!k.startsWith('lt-') || k === SHELL || k === DATA || k === AUDIO) continue;
     if (k.startsWith('lt-data')) {   // 예전 이름의 오프라인 자료는 버리지 않고 옮겨 담는다
       try {
         const old = await caches.open(k);
@@ -126,6 +131,24 @@ async function dataCacheFirst(req, ev) {
   // 새 버전을 못 받았으면(서버 오류·오프라인) 옛 버전이라도
   return (await cache.match(key, { ignoreSearch: true })) || res || Response.error();
 }
+async function audioIndex(req) {
+  const cache = await caches.open(AUDIO);
+  try {
+    const res = await fetch(req, { cache: 'no-cache' });
+    if (res.ok && res.type === 'basic') await cache.put(req.url.split('?')[0], res.clone());
+    else if (res.status === 404) await cache.delete(req.url.split('?')[0]);
+    return res;
+  } catch (err) { return (await cache.match(req.url.split('?')[0])) || Response.error(); }
+}
+async function clipFirst(req) {
+  const cache = await caches.open(AUDIO);
+  const hit = await cache.match(req.url);
+  if (hit) return hit;
+  let res = null;
+  try { res = await fetch(req); } catch (err) { res = null; }
+  if (res && res.status === 200 && res.type === 'basic') { await cache.put(req.url, res.clone()); await dropOtherVersions(cache, req.url); return res; }
+  return res || (await cache.match(req.url, { ignoreSearch: true })) || Response.error();
+}
 async function staleWhileRevalidate(req) {
   const cache = await caches.open(SHELL);
   const hit = await cache.match(req);
@@ -143,6 +166,8 @@ self.addEventListener('fetch', e => {
   }
   if (isConfig(url.pathname)) return e.respondWith(configFirst(req, e));
   if (isData(url.pathname)) return e.respondWith(dataCacheFirst(req, e));
+  if (isAudioIndex(url.pathname)) return e.respondWith(audioIndex(req));
+  if (isClip(url.pathname)) { if (req.headers.has('range')) return; return e.respondWith(clipFirst(req)); }
   if (/\/sw\.js$/.test(url.pathname)) return;
   e.respondWith(staleWhileRevalidate(req));
 });

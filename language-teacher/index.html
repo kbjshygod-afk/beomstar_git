@@ -798,6 +798,7 @@ function cleanSettings(v) {
     if (typeof v.sfx === 'boolean') o.sfx = v.sfx;
     if (typeof v.bigText === 'boolean') o.bigText = v.bigText;
     if (typeof v.stats === 'boolean') o.stats = v.stats;
+    if (v.voiceMode === 'device' || v.voiceMode === 'natural') o.voiceMode = v.voiceMode;
     const r = Number(v.rate); if (Number.isFinite(r)) o.rate = Math.max(0.6, Math.min(1.2, Math.round(r * 10) / 10));
     if ([10, 20, 30, 50, 80].includes(Number(v.dailyGoal))) o.dailyGoal = Number(v.dailyGoal);
     if (typeof v.reminderTime === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(v.reminderTime)) o.reminderTime = v.reminderTime;
@@ -1237,7 +1238,7 @@ if ('speechSynthesis' in window) {
     Object.keys(LANGS).forEach(pickVoice);
 }
 function ttsAvailable() { return 'speechSynthesis' in window; }
-function stopSpeak() { seqToken++; if (ttsAvailable()) speechSynthesis.cancel(); clearPlaying(); }
+function stopSpeak() { seqToken++; stopClip(); if (ttsAvailable()) speechSynthesis.cancel(); clearPlaying(); }
 function tuneFor(speaker) {
     const vc = voiceCache[CUR.code] || {};
     let a = vc.a || null, b = vc.b || null;
@@ -1273,7 +1274,7 @@ function ttsFail(why) {
     if (TTS_HEALTH.bad || (why === 'timeout' && TTS_HEALTH.fails < 2)) return;
     TTS_HEALTH.bad = true; renderTtsWarning(); track('tts_fail', { why: String(why).slice(0, 30) });
 }
-function ttsBadNow() { return !ttsAvailable() || TTS_HEALTH.bad; }
+function ttsBadNow() { if (clipsReady()) return false; return !ttsAvailable() || TTS_HEALTH.bad; }   // 녹음 음성이 있으면 기기 음성 상태와 관계없음
 function watchUtter(u, tok) {
     u.onstart = ttsGood;
     const active = !navigator.userActivation || navigator.userActivation.isActive;   // 사용자가 누르지 않은 자동 재생은 판정에서 뺀다
@@ -1298,7 +1299,7 @@ function renderTtsWarning() {
 }
 let ttsWarned = false;
 function ttsCheck() {
-    if (ttsWarned || !CUR) return;
+    if (ttsWarned || !CUR || clipsReady()) return;
     if (!ttsAvailable()) { ttsWarned = true; showToast('🔇 이 브라우저는 발음 듣기를 지원하지 않아요. 크롬·사파리로 열어 주세요', '', 3800); return; }
     if (!voiceCache[CUR.code]) {
         pickVoice(CUR.code);
@@ -1315,7 +1316,89 @@ function remoteFailed(u, ev) {
     pickVoice(CUR.code);
     return true;
 }
+/* ═══════════════════ 녹음된 자연 음성(있으면 먼저) ═══════════════════ */
+// tools/tts/generate.mjs 로 미리 녹음한 audio/{언어}/{id}.mp3 — id = clipId(목소리 칸, 문장 그대로).
+// 녹음이 없는 문장(채점 조각·예전 카드 등)이나 받지 못한 경우는 기기 음성(speechSynthesis)으로 읽는다.
+const CLIPS = {};   // code → { ids: Set, rate: 녹음 속도, rev } · null(이 언어는 녹음 없음) · 'loading'
+// FNV-1a 64비트의 앞 12자리(16진) — tools/tts/clips.mjs 의 clipId와 같아야 한다(시험 값: ('a','Hello') → c390128b4c43)
+function clipId(slot, text) {
+    const bytes = new TextEncoder().encode(slot + '|' + text);
+    let hi = 0xcbf29ce4, lo = 0x84222325;
+    for (let i = 0; i < bytes.length; i++) {
+        lo = (lo ^ bytes[i]) >>> 0;
+        const l = lo * 0x1b3;
+        const carry = Math.floor(l / 4294967296);
+        hi = (Math.imul(hi, 0x1b3) + carry + ((lo << 8) >>> 0)) >>> 0;
+        lo = l >>> 0;
+    }
+    return ('00000000' + hi.toString(16)).slice(-8) + ('0000' + (lo >>> 16).toString(16)).slice(-4);
+}
+function clipSlot(speaker) { return speaker === 'B' || speaker === 'D' ? 'b' : 'a'; }   // tuneFor()가 두 번째 목소리를 쓰는 화자
+function loadClips(code) {
+    const c = CLIPS[code];
+    if (c === 'loading' || c === null || (c && c.ids)) return;
+    if (location.protocol === 'file:') { CLIPS[code] = null; return; }   // 파일로 열면 받을 수 없음(기기 음성)
+    CLIPS[code] = 'loading';
+    fetch('audio/' + code + '/index.json', { cache: 'no-cache' }).then(r => r.status === 404 ? null : r.ok ? r.json() : Promise.reject(new Error('audio index ' + r.status))).then(j => {
+        CLIPS[code] = (isObj(j) && Array.isArray(j.ids) && j.ids.length) ? { ids: new Set(j.ids), rate: Number(j.rate) > 0 ? Number(j.rate) : 0.95, rev: (hashStr(JSON.stringify(j.voices || '') + '|' + (j.rate || '')) >>> 0).toString(36) } : null;
+        if (CLIPS[code] && CUR && CUR.code === code && S.view === 'settings' && !document.getElementById('modalRoot').innerHTML) renderSettings();
+    }).catch(() => { CLIPS[code] = undefined; });   // 오프라인 등 — 다음에 다시
+}
+function clipsReady() { const c = CUR && CLIPS[CUR.code]; return !!(c && c.ids) && store.settings.voiceMode !== 'device'; }
+function clipUrl(text, speaker) {
+    if (typeof text !== 'string' || !text || !clipsReady()) return '';
+    const c = CLIPS[CUR.code], slot = clipSlot(speaker);
+    let id = clipId(slot, text);
+    if (!c.ids.has(id)) { if (slot !== 'b') return ''; id = clipId('a', text); if (!c.ids.has(id)) return ''; }
+    return 'audio/' + CUR.code + '/' + id + '.mp3?v=' + c.rev;
+}
+// 파일은 fetch로 받아(서비스 워커가 캐시 → 오프라인에서도) 한 개의 <audio>로 재생한다
+let clipEl = null, clipTok = 0;
+const clipBlobs = new Map();   // 주소 → Promise<blob 주소> (최근 60개)
+function clipAudio() {
+    if (!clipEl) {
+        clipEl = new Audio(); clipEl.preload = 'auto';
+        try { clipEl.preservesPitch = true; clipEl.webkitPreservesPitch = true; clipEl.mozPreservesPitch = true; } catch (e) { }
+    }
+    return clipEl;
+}
+function clipBlob(url) {
+    if (clipBlobs.has(url)) return clipBlobs.get(url);
+    const p = fetch(url).then(r => { if (!r.ok) throw new Error('clip ' + r.status); return r.blob(); }).then(b => URL.createObjectURL(b));
+    clipBlobs.set(url, p);
+    p.catch(() => clipBlobs.delete(url));
+    if (clipBlobs.size > 60) { const k = clipBlobs.keys().next().value, old = clipBlobs.get(k); clipBlobs.delete(k); old.then(u => setTimeout(() => URL.revokeObjectURL(u), 30000), () => { }); }
+    return p;
+}
+function playClip(url, rate, onEnd, onFail) {
+    const tok = ++clipTok;
+    const c = CLIPS[CUR.code];
+    const r = Math.max(0.5, Math.min(2, rate / ((c && c.rate) || 0.95) * curRate()));
+    clipBlob(url).then(src => {
+        if (tok !== clipTok) return;
+        const a = clipAudio();
+        a.onended = a.onerror = null;
+        a.src = src;
+        a.defaultPlaybackRate = r; a.playbackRate = r;
+        let done = false;
+        const fin = ok => { if (done || tok !== clipTok) return; done = true; a.onended = a.onerror = null; const f = ok ? onEnd : onFail; if (f) f(); };
+        a.onended = () => fin(true);
+        a.onerror = () => fin(false);
+        const p = a.play();
+        if (p && p.catch) p.catch(() => fin(false));
+    }, () => { if (tok === clipTok && onFail) onFail(); });
+}
+function stopClip() { clipTok++; if (clipEl) { clipEl.onended = clipEl.onerror = null; try { clipEl.pause(); } catch (e) { } } }
+// 아이폰·아이패드: 첫 터치 때 같은 <audio>를 소리 없이 한 번 재생해 두면, 뒤이은 자동 이어 읽기도 막히지 않는다
+const SILENT_WAV = 'data:audio/wav;base64,UklGRsQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YaAAAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA';
+function unlockClip() {
+    document.removeEventListener('touchend', unlockClip, true); document.removeEventListener('click', unlockClip, true);
+    try { const a = clipAudio(); if (a.src && !a.paused) return; a.src = SILENT_WAV; const p = a.play(); if (p && p.catch) p.catch(() => { }); } catch (e) { }
+}
+document.addEventListener('touchend', unlockClip, true); document.addEventListener('click', unlockClip, true);
 function speak(text, rate = 1, speaker, retried) {
+    const url = !retried && CUR ? clipUrl(text, speaker) : '';
+    if (url) { stopSpeak(); playClip(url, rate, null, () => speak(text, rate, speaker, true)); return; }   // 녹음을 못 틀면 기기 음성으로
     ttsCheck();
     if (!ttsAvailable() || !CUR || !text) return;
     stopSpeak();
@@ -1335,7 +1418,7 @@ function clearPlaying() { document.querySelectorAll('.playing').forEach(el => el
 // items: 문자열 또는 {text, speaker, part} — 문장·화자·파트가 바뀔 때 사람처럼 쉬는 시간을 다르게 둔다.
 // iOS 사파리는 한꺼번에 큐에 넣으면 멈추므로 한 문장씩 이어 읽는다.
 function speakSeq(items, onDone, onStep) {
-    if (!ttsAvailable() || !CUR) { if (onDone) setTimeout(onDone, 0); return; }
+    if ((!ttsAvailable() && !clipsReady()) || !CUR) { if (onDone) setTimeout(onDone, 0); return; }
     stopSpeak(); seqPlaying = true;
     const my = seqToken;
     const list = items.map(x => typeof x === 'string' ? { text: x } : x).filter(x => x && x.text);
@@ -1349,26 +1432,36 @@ function speakSeq(items, onDone, onStep) {
         clearPlaying();
         if (onStep) onStep(cur, idx);
         if (my !== seqToken) return;     // onStep에서 멈췄으면(소리 안 남 등) 이 문장은 읽지 않는다
-        let u;
-        try { u = makeUtter(cur.text, 0.92, cur.speaker); } catch (e) { setTimeout(next, 0); return; }
         let gap = 420;
         if (nx) {
             if (nx.part) gap = 1000;
             else if ((cur.speaker || '') !== (nx.speaker || '')) gap = 650;
             if (/[?？]\s*$/.test(cur.text)) gap += 150;
         }
-        let advanced = false;
+        let advanced = false, dog = 0;
         const go = () => { if (advanced) return; advanced = true; clearTimeout(dog); setTimeout(next, gap); };
-        // 멈춤 감시: 끝·오류 이벤트가 안 오는 기기(목소리 0개 등)에서도 다음 문장으로 넘어간다
         const perChar = /[\u3040-\u30ff\u4e00-\u9fff]/.test(cur.text) ? 380 : 130;   // 한자·가나는 한 글자가 길다
+        const url = clipUrl(cur.text, cur.speaker);
+        if (url) {
+            dog = setTimeout(() => { if (!advanced && my === seqToken) go(); }, Math.max(6000, cur.text.length * perChar * 3) + 4000);
+            playClip(url, 0.92, go, () => { if (my === seqToken && !advanced) { clearTimeout(dog); ttsLine(); } });
+            const nx2 = list[i]; if (nx2) { const nu = clipUrl(nx2.text, nx2.speaker); if (nu) clipBlob(nu).catch(() => { }); }   // 다음 문장 미리 받기
+            return;
+        }
+        ttsLine();
+        function ttsLine() {
+        let u;
+        try { u = makeUtter(cur.text, 0.92, cur.speaker); } catch (e) { go(); return; }
+        // 멈춤 감시: 끝·오류 이벤트가 안 오는 기기(목소리 0개 등)에서도 다음 문장으로 넘어간다
         // '소리 안 남'으로 판정된 뒤에는 읽을 시간만큼만 짧게 기다린다(대사마다 몇 초씩 멈춘 것처럼 보이지 않게)
         const waitMs = TTS_HEALTH.bad ? Math.max(1200, cur.text.length * perChar * 0.5)
             : Math.max(3000, cur.text.length * perChar / Math.max(0.5, curRate())) * (TTS_HEALTH.ok ? 3 : 1) + 1500;
-        const dog = setTimeout(() => { if (!advanced && my === seqToken) { if (!TTS_HEALTH.ok) ttsFail('timeout'); go(); } }, waitMs);
+        dog = setTimeout(() => { if (!advanced && my === seqToken) { if (!TTS_HEALTH.ok) ttsFail('timeout'); go(); } }, waitMs);
         u.onend = () => { u.__ended = true; ttsGood(); go(); };
         u.onerror = ev => { u.__ended = true; if (!cur.retried && remoteFailed(u, ev)) { cur.retried = true; i = idx; advanced = true; setTimeout(next, 50); return; } if (ttsErrorIsReal(ev)) ttsFail(ev.error); go(); };
         watchUtter(u, my);
         try { speechSynthesis.speak(u); } catch (e) { go(); }
+        }
     };
     next();
 }
@@ -1980,6 +2073,7 @@ async function activateLanguage(code, opts) {
     if (!L) return;
     const gen = ++langGen;
     stopSpeak(); closeModal(true); resetTransient();
+    loadClips(code);   // 녹음된 자연 음성 목록(있으면) — 학습 데이터와 함께
     applyTheme(L);
     S.view = 'loading';
     document.getElementById('appHeader').style.display = 'flex';
@@ -3235,7 +3329,7 @@ function renderQuiz(body, l) {
             });
             answerFeedback(ok, item, '');
             if ((item.type === 'listen' || item.type === 'tone') && itemText) setTimeout(() => speak(itemText, 0.9), 250);
-            else if (ok && !/[가-힣]/.test(item.choices[item.answer])) setTimeout(() => speak(item.choices[item.answer], 0.95), 250);
+            else if (ok && !/[ㄱ-ㅎㅏ-ㅣ가-힣]/.test(item.choices[item.answer])) setTimeout(() => speak(item.choices[item.answer], 0.95), 250);
         }));
     }
 
@@ -4731,7 +4825,9 @@ function addReminder(t) {
 function renderSettings() {
     const hasTTS = ttsAvailable();
     let h = subnavHtml('settings');
-    if (!hasTTS) h += '<div class="notice">⚠️ 이 브라우저는 음성 합성(TTS)을 지원하지 않아 발음 듣기를 쓸 수 없어요. 크롬/엣지/사파리 최신 버전을 추천합니다.</div>';
+    const hasClips = !!(CLIPS[CUR.code] && CLIPS[CUR.code].ids);
+    if (hasClips && clipsReady()) { /* 녹음 음성으로 들으므로 기기 음성 안내는 생략 */ }
+    else if (!hasTTS) h += '<div class="notice">⚠️ 이 브라우저는 음성 합성(TTS)을 지원하지 않아 발음 듣기를 쓸 수 없어요. 크롬/엣지/사파리 최신 버전을 추천합니다.</div>';
     else if (!voiceCache[CUR.code]) h += '<div class="notice">ℹ️ ' + esc(CUR.name) + ' 음성이 아직 준비되지 않았어요. 발음 버튼을 한 번 누르면 준비되는 경우가 많아요.</div>';
     h += cloudCardHtml('settings');
     h += '<div class="card">' +
@@ -4742,7 +4838,8 @@ function renderSettings() {
             const near = [0.8, 1, 1.1].reduce((a, b) => Math.abs(b - curRate()) < Math.abs(a - curRate()) ? b : a, 1);
             return '<button data-rate="' + v + '" aria-pressed="' + (near === v) + '">' + t + '</button>';
         }).join('') + '</div>') +
-        setRow('목소리', voiceDesc(), voiceSelectHtml()) +
+        (hasClips ? setRow('🎙️ 자연 음성', '원어민에 가까운 녹음 목소리로 들어요 · 녹음이 없는 문장은 기기 목소리', '<label class="switch"><input type="checkbox" id="setNatural"' + (store.settings.voiceMode !== 'device' ? ' checked' : '') + '><span class="slider"></span></label>') : '') +
+        setRow(hasClips ? '기기 목소리' : '목소리', voiceDesc(), voiceSelectHtml()) +
         setRow('글씨 크게', '화면 전체 글씨와 버튼을 조금 크게', '<label class="switch"><input type="checkbox" id="setBig"' + (store.settings.bigText ? ' checked' : '') + '><span class="slider"></span></label>') +
         setRow('효과음', '정답·오답·레벨 업 때 짧은 소리', '<label class="switch"><input type="checkbox" id="setSfx"' + (store.settings.sfx ? ' checked' : '') + '><span class="slider"></span></label>') +
         setRow('자유 탐색 모드', '순서 잠금을 풀고 모든 레슨·읽기 열기 (추천하지 않아요!)', '<label class="switch"><input type="checkbox" id="setFree"' + (store.settings.freeNav ? ' checked' : '') + '><span class="slider"></span></label>') +
@@ -4805,6 +4902,8 @@ function renderSettings() {
     document.getElementById('setGoal').addEventListener('change', e => { store.settings.dailyGoal = parseInt(e.target.value, 10) || 30; save(); showToast('🎯 하루 목표: ' + store.settings.dailyGoal + ' XP'); });
     document.getElementById('setBig').addEventListener('change', e => { store.settings.bigText = e.target.checked; save(); applyBigText(); });
     document.getElementById('setSfx').addEventListener('change', e => { store.settings.sfx = e.target.checked; save(); if (e.target.checked) sfx('ok'); });
+    const sn = document.getElementById('setNatural');
+    if (sn) sn.addEventListener('change', e => { store.settings.voiceMode = e.target.checked ? 'natural' : 'device'; save(); track('voice_mode', { mode: store.settings.voiceMode }); speak(CUR.sampleWord, 0.95); });
     const vs = document.getElementById('setVoice');
     if (vs) vs.addEventListener('change', e => {
         if (!store.settings.voice) store.settings.voice = {};
