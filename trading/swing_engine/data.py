@@ -511,14 +511,32 @@ def _wiki_tables(url: str) -> list[pd.DataFrame]:
     return pd.read_html(io.StringIO(html))
 
 
+def _col_name(c) -> str:
+    """Column label as lower-case text; MultiIndex headers are joined with spaces."""
+    parts = c if isinstance(c, tuple) else (c,)
+    return " ".join(dict.fromkeys(str(x).strip() for x in parts if str(x).strip())).lower()
+
+
 def _pick_symbol_column(tables, min_rows: int, max_rows: int) -> list[str]:
-    for t in tables:
-        cols = {str(c).strip().lower(): c for c in t.columns}
-        for key in ("symbol", "ticker", "ticker symbol"):
-            if key in cols and min_rows <= len(t) <= max_rows:
-                vals = [str(v) for v in t[cols[key]].dropna()]
+    """The ticker column of the first table whose row count fits the index size.
+    Exact names ('symbol', 'ticker', 'ticker symbol') win; otherwise any column whose
+    name contains 'ticker' or 'symbol'. MultiIndex headers are flattened."""
+    seen = []
+    for exact in (True, False):
+        for t in tables:
+            cols = {_col_name(c): c for c in t.columns}
+            if exact:
+                seen.append((len(t), list(cols)[:6]))
+            if not (min_rows <= len(t) <= max_rows):
+                continue
+            if exact:
+                hit = next((cols[k] for k in ("symbol", "ticker", "ticker symbol") if k in cols), None)
+            else:
+                hit = next((c for n, c in cols.items() if "ticker" in n or "symbol" in n), None)
+            if hit is not None:
+                vals = [str(v) for v in t[hit].dropna()]
                 return [yahoo_us_symbol(v) for v in vals if v and v.lower() != "nan"]
-    raise ValueError("no constituent table with a Symbol/Ticker column found")
+    raise ValueError(f"no constituent table with a Symbol/Ticker column found; tables (rows, columns): {seen}")
 
 
 def fetch_sp500() -> list[str]:

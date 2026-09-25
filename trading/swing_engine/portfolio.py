@@ -269,7 +269,8 @@ def simulate(frames: dict, cfg: PortfolioConfig) -> PortfolioResult:
         m = machines[j]
         mark = last_close[j]
         open_positions.append({
-            "symbol": syms[j], "entry_date": tr["entry_date"], "entry_price": tr["entry_price"],
+            "symbol": syms[j], "signal_date": tr["signal_date"], "exit_signal_date": tr.get("exit_signal_date"),
+            "entry_date": tr["entry_date"], "entry_price": tr["entry_price"],
             "qty": qty[j], "stop_price": m.stop_price, "last_close": float(mark),
             "exit_ma": float(frames[syms[j]]["exit_ma"].iloc[-1]),
             "unrealized_pnl": qty[j] * mark * (1 - c_rate) - tr["cost_basis"],

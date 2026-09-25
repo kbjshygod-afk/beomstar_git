@@ -407,3 +407,17 @@ def test_fetch_krx_top_keeps_letter_coded_common_stocks(monkeypatch):
     })
     monkeypatch.setattr(D, "_fdr_stock_listing", lambda m: listing)
     assert D.fetch_krx_top("KOSPI", 10) == ["005930.KS", "000660.KS", "0126Z0.KS"]
+
+
+def test_pick_symbol_column_multiindex_and_substring():
+    import pandas as pd
+    from swing_engine.data import _pick_symbol_column
+    n = 101
+    mi = pd.DataFrame({("Company", "Company"): ["x"] * n, ("Ticker", "Ticker"): [f"T{i}" for i in range(n)]})
+    assert _pick_symbol_column([mi], 90, 110)[:2] == ["T0", "T1"]
+    sub = pd.DataFrame({"Company": ["x"] * n, "Ticker (NASDAQ)": ["BRK.B"] + [f"A{i}" for i in range(n - 1)]})
+    assert _pick_symbol_column([sub], 90, 110)[0] == "BRK-B"
+    small = pd.DataFrame({"Ticker": ["A", "B"]})
+    import pytest
+    with pytest.raises(ValueError, match="tables"):
+        _pick_symbol_column([small], 90, 110)
