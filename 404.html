@@ -28,14 +28,16 @@
 </main>
 <script>
   // 비슷한 주소면 알맞은 곳으로 바로 보내기(대소문자·옛 이름)
+  // 고를 때는 소문자로 비교하고, 이미 그 폴더 안인지는 원래 주소(대소문자 그대로)로 본다.
+  // 그래야 Language-Teacher/ 같은 주소는 옮기고, language-teacher/없는파일.html 은 되돌이 이동 없이 이 화면에 머문다
   (function () {
-    var p = location.pathname.toLowerCase();
+    var path = location.pathname, p = path.toLowerCase();
     var to = /language-?teacher|starter/.test(p) ? '/beomstar_git/language-teacher/'
       : /daily-?english|quest/.test(p) ? '/beomstar_git/daily-english-quest/'
       : /chinese|nihao/.test(p) ? '/beomstar_git/chinese-teacher/'
       : /spanish|hola/.test(p) ? '/beomstar_git/spanish-teacher/'
       : /english-?teacher|emma/.test(p) ? '/beomstar_git/english-teacher/' : '';
-    if (to && p.indexOf(to) !== 0) location.replace(to + location.search);
+    if (to && path.indexOf(to) !== 0) location.replace(to + location.search + location.hash);
   })();
 </script>
 </body>

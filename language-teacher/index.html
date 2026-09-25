@@ -608,6 +608,18 @@
         .faq details:last-of-type { border-bottom: none; }
         .faq summary { font-weight: 700; font-size: 14px; cursor: pointer; }
         .faq-a { font-size: 13px; line-height: 1.7; margin-top: 6px; color: var(--text); }
+        /* 한국어는 어절 단위로 줄바꿈(좁은 화면에서 '말문이 / 트여요'처럼 끊기지 않게) */
+        .lang-card .lc-desc, .choice-btn .muted, .inapp-note, .storage-warn, .notice, .set-row .s-title, .set-row .s-desc, .lang-pick .muted { word-break: keep-all; overflow-wrap: break-word; }
+        .continue-card:focus-visible, .guide-banner:focus-visible, .quick-card:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+        /* 휴대폰 화면: 설정 줄의 버튼 묶음이 길면 설명 아래로 내려서 설명이 눌리지 않게(설명 폭이 130px보다 좁아지면 내림) */
+        @media (max-width: 480px) {
+            .set-row { flex-wrap: wrap; row-gap: 8px; }
+            .set-row > div:first-child { flex: 1 1 130px; min-width: 0; }
+        }
+        /* 아이폰 사파리는 16px보다 작은 입력칸을 누르면 화면을 확대하므로, 글자를 넣는 칸은 16px로(체크박스·범위 등은 그대로) */
+        @supports (-webkit-touch-callout: none) {
+            textarea, select, input:not([type]), input[type=text], input[type=email], input[type=search], input[type=tel], input[type=url], input[type=number], input[type=password], input[type=time] { font-size: 16px !important; }
+        }
     </style>
 </head>
 <body>
@@ -1278,8 +1290,9 @@ function renderTtsWarning() {
         : /iPhone|iPad|iPod/.test(ua) ? '🔕 옆면 무음 스위치를 끄고 음량을 올려 보세요. 그래도 안 되면 설정 › 손쉬운 사용 › 읽기 및 말하기 › 음성에서 ' + esc(CUR ? CUR.name : '') + ' 음성을 내려받아 보세요.'
         : '크롬·엣지·사파리 최신 버전으로 열거나, 컴퓨터의 소리·음성 설정을 확인해 주세요.') +
         ' 듣기 문제는 <b>🔇 글자로 보기</b>로 풀 수 있어요.' +
-        '<div style="display:flex;gap:8px;margin-top:6px">' + (href ? '<a class="btn small" href="' + esc(href) + '" style="text-decoration:none">👉 기본 브라우저로 열기</a>' : '') + '<button class="btn small gray" id="ttsWarnClose">닫기</button></div>';
+        '<div style="display:flex;gap:8px;margin-top:6px">' + (href ? '<a class="btn small" id="ttsWarnOpen" href="' + esc(href) + '" style="text-decoration:none">👉 기본 브라우저로 열기</a>' : '') + '<button class="btn small gray" id="ttsWarnClose">닫기</button></div>';
     el.hidden = false;
+    carryLink(document.getElementById('ttsWarnOpen'));
     const x = document.getElementById('ttsWarnClose');
     if (x) x.addEventListener('click', () => { TTS_HEALTH.dismissed = true; el.hidden = true; });
 }
@@ -1335,6 +1348,7 @@ function speakSeq(items, onDone, onStep) {
         const idx = i, cur = list[i++], nx = list[i];
         clearPlaying();
         if (onStep) onStep(cur, idx);
+        if (my !== seqToken) return;     // onStep에서 멈췄으면(소리 안 남 등) 이 문장은 읽지 않는다
         let u;
         try { u = makeUtter(cur.text, 0.92, cur.speaker); } catch (e) { setTimeout(next, 0); return; }
         let gap = 420;
@@ -1347,7 +1361,10 @@ function speakSeq(items, onDone, onStep) {
         const go = () => { if (advanced) return; advanced = true; clearTimeout(dog); setTimeout(next, gap); };
         // 멈춤 감시: 끝·오류 이벤트가 안 오는 기기(목소리 0개 등)에서도 다음 문장으로 넘어간다
         const perChar = /[\u3040-\u30ff\u4e00-\u9fff]/.test(cur.text) ? 380 : 130;   // 한자·가나는 한 글자가 길다
-        const dog = setTimeout(() => { if (!advanced && my === seqToken) { if (!TTS_HEALTH.ok) ttsFail('timeout'); go(); } }, Math.max(3000, cur.text.length * perChar / Math.max(0.5, curRate())) * (TTS_HEALTH.ok ? 3 : 1) + 1500);
+        // '소리 안 남'으로 판정된 뒤에는 읽을 시간만큼만 짧게 기다린다(대사마다 몇 초씩 멈춘 것처럼 보이지 않게)
+        const waitMs = TTS_HEALTH.bad ? Math.max(1200, cur.text.length * perChar * 0.5)
+            : Math.max(3000, cur.text.length * perChar / Math.max(0.5, curRate())) * (TTS_HEALTH.ok ? 3 : 1) + 1500;
+        const dog = setTimeout(() => { if (!advanced && my === seqToken) { if (!TTS_HEALTH.ok) ttsFail('timeout'); go(); } }, waitMs);
         u.onend = () => { u.__ended = true; ttsGood(); go(); };
         u.onerror = ev => { u.__ended = true; if (!cur.retried && remoteFailed(u, ev)) { cur.retried = true; i = idx; advanced = true; setTimeout(next, 50); return; } if (ttsErrorIsReal(ev)) ttsFail(ev.error); go(); };
         watchUtter(u, my);
@@ -1389,7 +1406,8 @@ document.addEventListener('keydown', e => {
     if (!root || !root.innerHTML) return;
     if (e.key === 'Escape') { e.preventDefault(); closeModal(false, 'cancel'); return; }
     if (e.key === 'Tab') {
-        const els = Array.from(root.querySelectorAll('button:not([disabled]), select, input, textarea, [tabindex]'));
+        const els = Array.from(root.querySelectorAll('button:not([disabled]), select:not([disabled]), input:not([disabled]):not([type="hidden"]), textarea:not([disabled]), a[href], summary, [tabindex]:not([tabindex="-1"])'))
+            .filter(el => el.getClientRects().length);   // 닫힌 <details> 안이나 숨은 칸은 빼고
         if (!els.length) return;
         const first = els[0], last = els[els.length - 1];
         if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
@@ -1398,7 +1416,7 @@ document.addEventListener('keydown', e => {
 });
 
 /* ═══════════════════ 말하기 채점 (음성 인식) ═══════════════════ */
-const MIC_BLOCKED = { on: false };   // 이번 세션에 마이크 권한·장치 문제가 있었는지
+const MIC_BLOCKED = { on: false, hangs: 0 };   // 이번 세션에 마이크 권한·장치 문제가 있었는지 · 음성 인식이 응답 없이 멈춘 횟수
 function micHelpText(code) {
     const ua = navigator.userAgent || '', ios = /iPhone|iPad|iPod/.test(ua);
     if (IN_APP) return '앱 안의 브라우저에서는 마이크 채점이 잘 안 돼요. 기본 브라우저(크롬·사파리)로 열면 채점돼요.';
@@ -1584,7 +1602,10 @@ function openSpeak(cfg) {
         // 녹음 비교: 원어민 소리와 내 목소리를 번갈아 듣고 스스로 확인(서버·인식기 없이 오프라인에서도 됨)
         stage.innerHTML = (msg ? '<div class="notice">' + esc(msg) + '</div>' : (!SR ? '<div class="muted" style="text-align:center;margin-bottom:6px">🎙 이 브라우저는 자동 채점이 안 돼요. 녹음해서 원어민 소리와 비교해 보세요.</div>' : '')) +
             (REC_OK ? '<button class="mic-circle" id="recGo" aria-label="녹음 시작">🎙</button><div class="mic-hint" id="recHint">눌러서 녹음(최대 6초) — 녹음은 이 기기 안에서만 쓰고 저장하지 않아요</div><div id="recOut"></div>' : '') +
-            '<button class="btn block' + (REC_OK ? ' ghost' : '') + '" id="micSelf" style="margin-top:8px">🗣️ 소리 내어 3번 말했어요</button>';
+            '<button class="btn block' + (REC_OK ? ' ghost' : '') + '" id="micSelf" style="margin-top:8px">🗣️ 소리 내어 3번 말했어요</button>' +
+            (SR ? '<div style="text-align:center;margin-top:8px"><button class="btn small gray" id="micBackSR">🎤 자동 채점 다시 해 보기</button></div>' : '');
+        const mb = stage.querySelector('#micBackSR');
+        if (mb) mb.addEventListener('click', () => { stopRec(); MIC_BLOCKED.on = false; MIC_BLOCKED.hangs = 0; useRec = false; ready(); });
         const rg = stage.querySelector('#recGo');
         if (rg) rg.addEventListener('click', () => recordOnce(rg));
         stage.querySelector('#micSelf').addEventListener('click', () => { reveal(); finish(null, ''); });
@@ -1619,7 +1640,7 @@ function openSpeak(cfg) {
     function listen() {
         if (recog) {   // ⏹를 누름: 멈추고, 1.2초 안에 끝나지 않으면 강제로 끊고 들린 만큼으로 채점
             const r0 = recog; try { r0.stop(); } catch (e) { }
-            setTimeout(() => { if (recog === r0 && r0.__finishNow) r0.__finishNow(); }, 1200);
+            setTimeout(() => { if (recog === r0 && r0.__finishNow) r0.__finishNow(true); }, 1200);
             return;
         }
         stopSpeak();
@@ -1633,6 +1654,7 @@ function openSpeak(cfg) {
         btn.classList.add('listening'); btn.textContent = '⏹'; hint.textContent = '듣고 있어요... 다 말하면 잠시 기다리거나 ⏹를 누르세요';
         r.onresult = ev => {
             if (recog !== r) return;
+            MIC_BLOCKED.hangs = 0;   // 결과가 오면 음성 인식은 살아 있다
             let interim = '';
             for (let i = ev.resultIndex; i < ev.results.length; i++) {
                 const res = ev.results[i];
@@ -1661,24 +1683,35 @@ function openSpeak(cfg) {
                 : '다시 시도해 주세요.');
         };
         r.onend = () => {
+            r.__gotEnd = true;   // 늦게 와도 '인식기는 살아 있다'는 표시
             if (recog !== r) return;
             stopRecog();
             const said = finalText.trim() || lastInterim;   // 끝 결과가 없으면 마지막 중간 결과로
             if (said) finish(scoreSpeechItem(CUR.code, item, said), said);
             else if (!errored) ready('소리가 안 들렸어요. 조금 더 크게 다시 말해 보세요.');
         };
-        // 브라우저가 끝(onend)을 주지 않고 멈추는 경우(아이폰 등): 강제로 끊고 들린 만큼 채점, 아무것도 없으면 스스로 확인으로
-        r.__finishNow = () => {
+        // 브라우저가 끝(onend)을 주지 않고 멈추는 경우(아이폰 등): 강제로 끊고 들린 만큼 채점.
+        // 들린 게 없으면 '멈춤'으로 세고, 두 번째 멈춤부터 이 세션은 소리 내어 말하고 스스로 확인으로.
+        // 내가 누른 ⏹ 뒤에 끝 신호가 조금 늦는 건 흔하니, 몇 초 더 기다려도 끝내 오지 않을 때만 멈춤으로 센다
+        r.__finishNow = userStop => {
             if (recog !== r) return;
             try { r.abort(); } catch (e) { }
             stopRecog();
             const said = finalText.trim() || lastInterim;
             if (said) { finish(scoreSpeechItem(CUR.code, item, said), said); return; }
-            MIC_BLOCKED.on = true; useRec = true;
-            ready('음성 인식이 응답하지 않아요. 지금은 소리 내어 말하고 스스로 확인해요.');
+            if (!userStop) { micHang(true); return; }
+            ready('소리가 안 들렸어요. 조금 더 크게 다시 말해 보세요.');
+            setTimeout(() => { if (!r.__gotEnd) micHang(false); }, 4000);
         };
         try { r.start(); } catch (e) { stopRecog(); ready('음성 인식을 시작하지 못했어요. 잠시 후 다시 시도해 주세요.'); return; }
         recogTimer = setTimeout(() => { try { r.stop(); } catch (e) { } setTimeout(() => { if (recog === r) r.__finishNow(); }, 1500); }, 10000);
+    }
+    function micHang(now) {
+        MIC_BLOCKED.hangs++;
+        if (MIC_BLOCKED.hangs < 2) { if (now) ready('음성 인식이 응답하지 않았어요. 🎤를 다시 눌러 말해 보세요.'); return; }
+        MIC_BLOCKED.on = true; useRec = true;
+        // 나중에 알게 된 경우엔 🎤 대기 화면일 때만 바꾼다(듣는 중·결과 화면은 다음 차례에 바뀜)
+        if (now || (!recog && stage.isConnected && stage.querySelector('#micGo'))) ready('음성 인식이 응답하지 않아요. 지금은 소리 내어 말하고 스스로 확인해요.');
     }
     function finish(res, said) {
         reveal();
@@ -1985,8 +2018,8 @@ async function activateLanguage(code, opts) {
     // 동화 데이터는 있으면 쓰고, 못 받았으면 읽기 탭에서 다시 시도
     const storyRes = await storyP;
     const stories = (window[L.storyGlobal] && window[L.storyGlobal].stories) || [];
+    if (gen !== langGen) return;     // 늦게 끝난 이전 언어 요청은 전역 상태를 건드리지 않는다
     STORIES_FAILED = storyRes === 'fail' && !stories.length;
-    if (gen !== langGen) return;
     CUR = L; DATA = data;
     UNITS = DATA.units || [];
     ALL = UNITS.flatMap(u => u.lessons.map(l => ({ ...l, unitId: u.unitId, unitTitle: u.title, unitIcon: u.icon })));
@@ -2229,7 +2262,7 @@ function showWelcome(code, deqInfo) {
     h += '<div class="muted" style="margin-bottom:12px;line-height:1.7">① 레슨: 단어 → 문장 → 회화 → 문법 → 퀴즈<br>② 🎤 ' + (SR && !IN_APP ? '따라 말하면 잘 알아듣는지 점수로 알려 줘요' : '따라 말하고 내 녹음과 비교해요(점수 채점은 크롬·사파리에서)') + '<br>③ 매일 목표 XP를 채우고 🔥 연속 기록 이어 가기</div>' +
         '<div style="font-size:14px;font-weight:800;margin-bottom:8px">🎯 하루 목표를 골라 주세요</div>' +
         '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">' +
-        goals.map(([v, t, m]) => '<button class="choice-btn" data-goal="' + v + '" style="text-align:center;margin:0' + (store.settings.dailyGoal === v ? ';border-color:var(--primary);background:var(--red-soft);font-weight:800' : '') + '">' + t + '<br><span class="muted">' + v + ' XP · 하루 약 ' + m + '</span></button>').join('') + '</div>' +
+        goals.map(([v, t, m]) => '<button class="choice-btn" data-goal="' + v + '" style="text-align:center;margin:0' + (store.settings.dailyGoal === v ? ';border-color:var(--primary);background:var(--red-soft);font-weight:800' : '') + '">' + t + '<br><span class="muted">' + v + ' XP · <span style="white-space:nowrap">하루 약 ' + m + '</span></span></button>').join('') + '</div>' +
         '<label style="display:flex;gap:8px;align-items:center;font-size:14px;margin:-6px 0 12px"><input type="checkbox" id="wBig"' + (store.settings.bigText ? ' checked' : '') + '> 🔍 글씨를 크게 볼래요</label>';
     const places = placementChoices();
     if (places.length) {
@@ -2352,7 +2385,7 @@ function renderPicker() {
     h += '<div class="muted" style="text-align:center;margin-top:8px">언제든 오른쪽 위 🔀 언어 버튼으로 바꿀 수 있고,<br>언어마다 진도가 각각 따로 저장돼요.</div>';
     if (cloudOn() && !CLOUD.user) h += '<div style="margin-top:14px">' + cloudCardHtml('picker') + '</div>';
     h += '<div style="text-align:center;margin-top:10px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="btn small ghost" id="pickRestore">📦 다른 기기 기록 가져오기</button><button class="btn small ghost" id="pickHelp">❓ 도움말</button></div>';
-    if (statsAllowed()) h += '<div class="muted" style="text-align:center;margin-top:10px;font-size:11.5px">앱을 고치려고 쿠키로 사용 통계를 모아요(이름·이메일 없음) · ⚙️ 설정에서 끌 수 있어요 · <a href="../privacy.html" target="_blank" rel="noopener">개인정보 안내</a></div>';
+    if (statsAllowed()) h += '<div class="muted" style="text-align:center;margin-top:10px;font-size:11.5px">앱을 고치려고 쿠키로 사용 통계를 모아요(이름·이메일 없음) · 언어를 고른 뒤 👤 나 → ⚙️ 설정에서 끌 수 있어요 · <a href="../privacy.html" target="_blank" rel="noopener">개인정보 안내</a></div>';
     h += '</div>';
     $main.innerHTML = h;
     bindCloudCard('picker');
@@ -2385,7 +2418,7 @@ function renderHome() {
     let html = '';
 
     if (next) {
-        html += '<div class="continue-card" id="continueBtn">' +
+        html += '<div class="continue-card" id="continueBtn" role="button" tabindex="0">' +
             '<div class="cc-label">' + (doneCount() === 0 && resumeStep === 0 ? '🚀 학습 시작하기' : (resumeStep > 0 ? '📍 멈춘 곳부터 이어서' : '▶ 이어서 학습하기')) + '</div>' +
             '<div class="cc-title">' + esc(next.unitIcon) + ' ' + esc(next.title) + '</div>' +
             '<div class="cc-goal">' + (resumeStep > 0
@@ -2393,29 +2426,31 @@ function renderHome() {
                 : esc(next.goal || '')) + '</div>' +
             '<span class="cc-btn">▶ ' + (resumeStep > 0 ? '이어서 하기' : '시작하기') + ' · 약 ' + lessonMinutes(next) + '분</span></div>';
     } else if (placeIdx() > 0 && ALL.slice(0, placeIdx()).some(l => !isDone(l.id))) {
-        html += '<div class="continue-card" id="continueBtn"><div class="cc-label">🎉 실전 과정 수료!</div>' +
+        html += '<div class="continue-card" id="continueBtn" role="button" tabindex="0"><div class="cc-label">🎉 실전 과정 수료!</div>' +
             '<div class="cc-title">30일 생활 회화를 모두 마쳤어요</div>' +
             '<div class="cc-goal">기초 0~5단계는 원할 때 골라서 복습해 보세요. 복습 카드와 ' + CUR.trainerLabel + ' 훈련도 잊지 말고요!</div></div>';
     } else {
-        html += '<div class="continue-card" id="continueBtn"><div class="cc-label">🎉 전 과정 수료!</div>' +
+        html += '<div class="continue-card" id="continueBtn" role="button" tabindex="0"><div class="cc-label">🎉 전 과정 수료!</div>' +
             '<div class="cc-title">모든 레슨을 완료했어요</div>' +
             '<div class="cc-goal">복습과 ' + CUR.trainerLabel + ' 훈련, 쉬운 읽기로 실력을 다져 보세요.</div></div>' +
             '<button class="btn ghost block" id="bragCourse" style="margin:-4px 0 12px">🎓 친구에게 자랑하기</button>';
     }
     html += todayCardHtml(due);
-    if (!IN_APP && !CLOUD.user && !cloudNudgeDue() && doneCount() >= 2 && !(store.seen.iosNudge && dayDiff(store.seen.iosNudge, todayStr()) < 14) && !(store.seen.lastBackup && dayDiff(store.seen.lastBackup, todayStr()) < 30))
-        html += '<div class="inapp-note" id="iosNudge">📱 학습 기록은 <b>이 기기의 이 브라우저에만</b> 있어요. 휴대폰을 바꾸거나 인터넷 사용 기록(사이트 데이터)을 지우면 사라져요' + (IOS_SAFARI ? ' — 아이폰 사파리는 7일 동안 안 열면 지울 수도 있어요' : '') + '. 가끔 백업 파일을 만들어 두세요' + (cloudOn() ? ', 구글로 로그인하면 자동으로 지켜져요' : '') + '.<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap"><button class="btn small" id="iosBackup">📤 백업 파일 보내기</button>' + (IOS_SAFARI ? '<button class="btn small ghost" id="iosHomeMove">🏠 홈 화면 앱으로 옮기기</button>' : '') + (cloudOn() ? '<button class="btn small ghost" id="iosLogin">☁️ 구글로 로그인</button>' : '') + '<button class="btn small gray" id="iosClose">닫기</button></div></div>';
     if (curStreak() >= 7 && curStreak() % 7 === 0 && store.streak.last === todayStr() && store.seen.bragStreak !== todayStr()) html += '<div class="guide-banner" id="bragStreak" role="button" tabindex="0">🔥 ' + curStreak() + '일 연속 달성! 친구에게 자랑하고 같이 해요 📣</div>';
-    if (cloudNudgeDue()) html += cloudCardHtml('home');
-    else if (installDue()) html += '<div class="card" id="installCard" style="text-align:center"><b>📲 홈 화면에 설치할까요?</b><div class="muted" style="margin:4px 0 8px">아이콘을 누르면 바로 열리고, 인터넷이 끊겨도 배운 레슨을 볼 수 있어요</div><div style="display:flex;gap:8px;justify-content:center"><button class="btn small" id="installYes">설치하기</button><button class="btn small gray" id="installNo">나중에</button></div></div>';
-    else if (feedbackAskDue()) html += '<div class="card" id="fbAsk" style="text-align:center"><b>랭귀지 스타터, 써 보니 어때요?</b><div class="muted" style="margin:4px 0 8px">한 번만 눌러 주시면 앱을 고치는 데 큰 힘이 돼요</div><div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="btn small ghost" data-fbask="good">😍 좋아요</button><button class="btn small ghost" data-fbask="ok">🙂 괜찮아요</button><button class="btn small ghost" data-fbask="bad">😕 아쉬워요</button></div><button class="btn small gray" id="fbAskNo" style="margin-top:8px">다음에</button></div>';
+    // 권유 카드(로그인·설치·의견·백업)는 홈 한 번에 하나만, 그중 하나를 닫은 날에는 더 띄우지 않는다
+    const nudgedToday = [store.seen.cloudNudge, store.seen.installAsk, store.seen.feedbackAsked, store.seen.iosNudge].includes(todayStr());
+    const nudge = nudgedToday ? '' : cloudNudgeDue() ? 'cloud' : installDue() ? 'install' : feedbackAskDue() ? 'feedback' : iosNudgeDue() ? 'ios' : '';
+    if (nudge === 'cloud') html += cloudCardHtml('home');
+    else if (nudge === 'install') html += '<div class="card" id="installCard" style="text-align:center"><b>📲 홈 화면에 설치할까요?</b><div class="muted" style="margin:4px 0 8px">아이콘을 누르면 바로 열리고, 인터넷이 끊겨도 배운 레슨을 볼 수 있어요</div><div style="display:flex;gap:8px;justify-content:center"><button class="btn small" id="installYes">설치하기</button><button class="btn small gray" id="installNo">나중에</button></div></div>';
+    else if (nudge === 'feedback') html += '<div class="card" id="fbAsk" style="text-align:center"><b>랭귀지 스타터, 써 보니 어때요?</b><div class="muted" style="margin:4px 0 8px">한 번만 눌러 주시면 앱을 고치는 데 큰 힘이 돼요</div><div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="btn small ghost" data-fbask="good">😍 좋아요</button><button class="btn small ghost" data-fbask="ok">🙂 괜찮아요</button><button class="btn small ghost" data-fbask="bad">😕 아쉬워요</button></div><button class="btn small gray" id="fbAskNo" style="margin-top:8px">다음에</button></div>';
+    else if (nudge === 'ios') html += iosNudgeHtml();
     html += inAppNoteHtml();
     const dlq = dayLog(), qs = quickSentence();
-    if (qs && !dlq.quick && new Date().getHours() >= 18 && !dlq.xp && curStreak() > 0) html += '<div class="guide-banner" id="eveBanner">🌙 오늘 1분만 해도 🔥 ' + curStreak() + '일 연속을 이어 가요 →</div>';
+    if (qs && !dlq.quick && new Date().getHours() >= 18 && !dlq.xp && curStreak() > 0) html += '<div class="guide-banner" id="eveBanner" role="button" tabindex="0">🌙 오늘 1분만 해도 🔥 ' + curStreak() + '일 연속을 이어 가요 →</div>';
     if (qs && !dlq.quick) html += '<div class="quick-card" id="quickBtn" role="button" tabindex="0"><div class="qc-ico">⚡</div><div><div class="qc-t">바쁜 날엔 1분만!</div><div class="qc-d">오늘의 한 문장 듣고 말하기' + (Object.keys(prog().srs).length >= 4 ? ' + 짝 맞추기 5쌍' : '') + ' — 연속 기록이 이어져요</div></div></div>';
-    if (deqPending()) html += '<div class="guide-banner" id="deqBanner">📦 Daily English Quest 기록이 있어요 — 가져와서 이어 하기 →</div>';
-    if (doneCount() === 0) html += '<div class="guide-banner" id="guideBanner">👋 처음이신가요? 학습 가이드 먼저 보기 →</div>';
-    if (due > 0) html += '<div class="guide-banner" id="reviewBanner">🃏 잊어버릴 때쯤 다시 보는 단어 카드 ' + Math.min(due, sessionCap()) + '장이 기다려요 →</div>';
+    if (deqPending()) html += '<div class="guide-banner" id="deqBanner" role="button" tabindex="0">📦 Daily English Quest 기록이 있어요 — 가져와서 이어 하기 →</div>';
+    if (doneCount() === 0) html += '<div class="guide-banner" id="guideBanner" role="button" tabindex="0">👋 처음이신가요? 학습 가이드 먼저 보기 →</div>';
+    if (due > 0) html += '<div class="guide-banner" id="reviewBanner" role="button" tabindex="0">🃏 잊어버릴 때쯤 다시 보는 단어 카드 ' + Math.min(due, sessionCap()) + '장이 기다려요 →</div>';
 
     html += '<div class="section-title">학습 경로 — 순서대로 배우면 됩니다</div>';
     UNITS.forEach(u => {
@@ -2503,6 +2538,16 @@ function renderHome() {
 
     function stat(e, n, l) { return '<div class="stat"><div class="num">' + e + ' ' + n + '</div><div class="lbl">' + l + '</div></div>'; }
 }
+function iosNudgeDue() {
+    return !IN_APP && !CLOUD.user && !cloudNudgeDue() && doneCount() >= 2 && !(store.seen.iosNudge && dayDiff(store.seen.iosNudge, todayStr()) < 14) && !(store.seen.lastBackup && dayDiff(store.seen.lastBackup, todayStr()) < 30);
+}
+function iosNudgeHtml() {
+    // 로그인 권유를 최근(10일 안)에 미뤘다면 여기서 다시 로그인을 권하지 않는다
+    const login = cloudOn() && !(store.seen.cloudNudge && dayDiff(store.seen.cloudNudge, todayStr()) < 10);
+    return '<div class="inapp-note" id="iosNudge">📱 학습 기록은 <b>이 기기의 이 브라우저에만</b> 있어요. 휴대폰을 바꾸거나 인터넷 사용 기록(사이트 데이터)을 지우면 사라져요' + (IOS_SAFARI ? ' — 아이폰 사파리는 7일 동안 안 열면 지울 수도 있어요' : '') + '. ' +
+        (login ? '가끔 백업 파일을 만들어 두거나 구글로 로그인해 두면 기록이 지켜져요.' : '가끔 백업 파일을 만들어 두면 기록이 지켜져요.') +
+        '<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap"><button class="btn small" id="iosBackup">📤 백업 파일 보내기</button>' + (IOS_SAFARI ? '<button class="btn small ghost" id="iosHomeMove">🏠 홈 화면 앱으로 옮기기</button>' : '') + (login ? '<button class="btn small ghost" id="iosLogin">☁️ 구글로 로그인</button>' : '') + '<button class="btn small gray" id="iosClose">닫기</button></div></div>';
+}
 
 const IN_APP_RE = /KAKAOTALK|NAVER\(inapp|Instagram|FBAN|FBAV|Line\/|DaumApps|everytimeApp|BAND\/|Barcelona|musical_ly|BytedanceWebview|; wv\)/i;
 const IOS_SAFARI = /iPhone|iPad|iPod/.test(navigator.userAgent || '') && navigator.standalone !== true && !/CriOS|FxiOS|EdgiOS|Whale|OPT\/|NAVER|DaumApps/i.test(navigator.userAgent || '') && !IN_APP_RE.test(navigator.userAgent || '');
@@ -2527,6 +2572,22 @@ function inAppNoteHtml() {
         '<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">' + (href ? '<a class="btn small" id="inAppOpen" href="' + esc(href) + '" style="text-decoration:none">' + (carry ? '📦 기록 들고 기본 브라우저로 열기' : '👉 기본 브라우저로 열기') + '</a>' : '') + '<button class="btn small ghost" id="inAppCopy">🔗 주소 복사</button>' + (has ? '<button class="btn small ghost" id="inAppCopyCode">📋 기록 코드 복사</button>' : '') + '</div>' +
         (has ? '<div class="muted" style="margin-top:6px">여기서 한 기록은 기본 브라우저로 저절로 옮겨지지 않아요. ' + (carry ? '📦 버튼은 기록을 함께 가져가요. 안 되면 ' : '') + '📋 기록 코드 복사 → 기본 브라우저 첫 화면 아래 「📦 다른 기기 기록 가져오기」 → 📋 붙여넣기.</div>' : '') + '</div>';
 }
+// 카톡·라인 인앱: '기본 브라우저로 열기' 링크에 기록(#imp=…)을 실어 보낸다. 실을 수 있으면 true(다른 곳의 링크에도 carryLink(a)로 쓴다)
+function carryLink(a) {
+    if (!a || !hasProgress(store) || !/KAKAOTALK|Line\//i.test(navigator.userAgent || '')) return Promise.resolve(false);
+    return exportProgressCode().then(c => {
+        if (!(c.startsWith('LS3:') && c.length <= 20000 && a.isConnected)) return false;
+        a.href = openExternalHref('#imp=' + c);
+        a.textContent = '📦 기록 들고 기본 브라우저로 열기';
+        return true;
+    }).catch(() => false);
+}
+// 소리 배너는 소리가 안 나는 순간에 한 번만 그려지므로, 화면을 새로 그릴 때 링크(지금 언어·쌓인 기록)를 다시 맞춘다
+function refreshTtsWarnLink() {
+    const el = document.getElementById('ttsWarn'), a = document.getElementById('ttsWarnOpen');
+    if (!el || el.hidden || !a) return;
+    carryLink(a).then(ok => { if (!ok && a.isConnected) { a.href = openExternalHref(); a.textContent = '👉 기본 브라우저로 열기'; } });
+}
 function bindInAppNote() {
     const c = document.getElementById('inAppCopy');
     if (c) c.addEventListener('click', () => copyText(shareUrl((CUR && CUR.code) || store.active || '', 'inapp_copy'), '🔗 주소를 복사했어요! 사파리·크롬 주소창에 붙여넣어 주세요'));
@@ -2536,7 +2597,8 @@ function bindInAppNote() {
         if (/^intent:/.test(o.getAttribute('href') || '')) setTimeout(() => { if (!document.hidden) showToast('크롬이 없나요? 🔗 주소 복사 후 쓰는 브라우저 주소창에 붙여넣어 주세요', '', 4000); }, 1500);
     });
     // 카톡·라인은 주소에 기록을 실어 보낼 수 있다(클릭 때 바로 열리도록 미리 바꿔 둠)
-    if (o && hasProgress(store) && /KAKAOTALK|Line\//i.test(navigator.userAgent || '')) exportProgressCode().then(c => { if (c.startsWith('LS3:') && c.length <= 20000 && o.isConnected) o.href = openExternalHref('#imp=' + c); }).catch(() => { });
+    carryLink(o);
+    refreshTtsWarnLink();
     const cc = document.getElementById('inAppCopyCode');
     if (cc) cc.addEventListener('click', () => exportProgressCode().then(c => copyText(c, '📋 기록 코드를 복사했어요! 기본 브라우저 첫 화면 아래 「📦 다른 기기 기록 가져오기」에 붙여넣으세요' + CODE_TIP)));
 }
@@ -2868,7 +2930,16 @@ function renderStep() {
                         showToast(ok ? '⭕ 귀로 알아들었어요! 이제 대본으로 확인해 보세요' : '👀 대본을 보며 다시 들어 보세요', '', 3000);
                     }));
                 } else { revealScript(); lf.remove(); showToast('👀 이제 대본을 보며 맞게 들었는지 확인해 보세요!', '', 3000); }
-            }, (x, i) => hilite(i));
+            }, (x, i) => {
+                // 듣는 중에 '소리 안 남'으로 판정되면 끝까지 기다리지 않고 바로 대본을 연다
+                if (ttsBadNow()) {
+                    stopSpeak(); seqPlaying = false; revealScript();
+                    if (lf.isConnected) lf.remove();
+                    showToast('🔇 소리가 나지 않아 대본을 바로 보여 드려요', '', 3200);
+                    return;
+                }
+                hilite(i);
+            });
         });
         document.getElementById('playAll').addEventListener('click', () => speakSeq(turns.map(asItem), () => { body.querySelectorAll('[data-sec-toggle]').forEach(tg => markHeard(parseInt(tg.dataset.secToggle, 10))); }, (x, i) => hilite(i)));
         document.getElementById('stopAll').addEventListener('click', () => { seqPlaying = false; if (S.rpActive) { rolePlayToken++; S.rpActive = null; showToast('🎭 역할극을 멈췄어요'); } stopSpeak(); });
@@ -3052,8 +3123,12 @@ function renderQuiz(body, l) {
         h += '<div class="quiz-audio">' +
             '<button class="big-listen" id="qPlay" aria-label="듣기">🔊</button>' +
             '<button class="big-listen slow" id="qPlaySlow" aria-label="느리게 듣기">🐢</button></div>';
-        if (ttsBadNow() || q.noSound) h += q.noSound ? '<div class="card" style="text-align:center;margin:-4px 0 10px"><div class="native" style="font-size:24px">' + esc(itemText) + '</div>' + (romanText(item) ? '<div style="color:var(--primary);font-weight:600">' + esc(romanText(item)) + '</div>' : '') + '<div class="muted">🔇 소리 대신 글자로 풀어요</div></div>'
-            : '<div style="text-align:center;margin:-4px 0 10px"><button class="btn small gray" id="qNoSound">🔇 소리가 안 나요 — 글자로 보기</button></div>';
+        if (q.noSound) {
+            // 글자를 보여 주면 답이 드러나는 문제: 성조는 병음(성조 부호)을 빼고 한자만, 보기에 같은 단어가 있는 문제는 점수에서 뺄 수 있게
+            if (item.type === 'tone') h += '<div class="card" style="text-align:center;margin:-4px 0 10px"><div class="native" style="font-size:24px">' + esc(itemText) + '</div><div class="muted">🔇 글자를 보고 성조를 떠올려 골라 보세요</div></div>';
+            else if (item.choices.includes(itemText)) h += '<div class="card" style="text-align:center;margin:-4px 0 10px"><div class="muted">🔇 이 문제는 소리를 들어야 풀 수 있어요</div>' + (q.answered ? '' : '<button class="btn small gray" id="qExcuse" style="margin-top:8px">건너뛰기(점수에서 빼기)</button>') + '</div>';
+            else h += '<div class="card" style="text-align:center;margin:-4px 0 10px"><div class="native" style="font-size:24px">' + esc(itemText) + '</div>' + (romanText(item) ? '<div style="color:var(--primary);font-weight:600">' + esc(romanText(item)) + '</div>' : '') + '<div class="muted">🔇 소리 대신 글자로 풀어요</div></div>';
+        } else if (ttsBadNow()) h += '<div style="text-align:center;margin:-4px 0 10px"><button class="btn small gray" id="qNoSound">🔇 소리가 안 나요 — 글자로 보기</button></div>';
     }
     if (item.type === 'arrange') {
         h += '<div class="arrange-area" id="arrArea">' +
@@ -3095,6 +3170,14 @@ function renderQuiz(body, l) {
     if (qps) { qps.addEventListener('click', () => speak(itemText, 0.7)); }
     const qns = document.getElementById('qNoSound');
     if (qns) qns.addEventListener('click', () => { q.noSound = true; renderQuiz(body, l); });
+    const qex = document.getElementById('qExcuse');
+    if (qex) qex.addEventListener('click', () => {   // 소리 없이는 풀 수 없는 문제: 맞힌 수에도 전체 문항 수에도 넣지 않는다
+        if (q.answered) return;
+        if (!q.excused) q.excused = [];
+        if (!q.excused.includes(qIdx)) q.excused.push(qIdx);
+        q.i++; q.answered = false; q.sel = []; q.selSrc = []; q.half = null; q.plays = 0; q.hints = 0; q.usedHint = false;
+        renderQuiz(body, l);
+    });
     if (qp && !q.answered && q.autoFor !== q.i + ':' + (q.phase2 ? 2 : 1)) {
         q.autoFor = q.i + ':' + (q.phase2 ? 2 : 1);
         setTimeout(() => { if (S.quiz === q && !q.answered) speak(itemText, 0.95); }, 350);
@@ -3180,6 +3263,7 @@ function renderQuiz(body, l) {
         }
         save();
         const qhb = document.getElementById('qHalf'); if (qhb) qhb.remove();
+        const qxb = document.getElementById('qExcuse'); if (qxb) qxb.remove();
         sfx(ok ? ([3, 5, 10].includes(q.combo) ? 'level' : 'ok') : 'bad');
         try { if (navigator.vibrate) navigator.vibrate(ok ? 15 : [30, 40, 30]); } catch (e) { }
         announce(ok ? '정답' : '오답');
@@ -3219,13 +3303,14 @@ function newQuizState(only, attempt) { return { i: 0, score: 0, answered: false,
 function renderQuizResult(body, l) {
     const q = S.quiz;
     const items = l.quiz || [];
-    const total = (l.redo || l.skipUnit !== undefined) ? items.length : items.length;
+    const excused = (q.excused || []).length;       // 소리가 안 나서 '건너뛰기(점수에서 빼기)'한 문제는 전체 문항 수에서도 뺀다
+    const total = Math.max(0, items.length - excused);
     const skipUnit = l.skipUnit;
     const partial = !!(l.redo || skipUnit !== undefined);   // 오답 노트 · 건너뛰기 시험은 레슨 진도와 따로
     const firstScore = q.phase2 ? q.firstScore : q.score;
     const fixed = q.phase2 ? (q.corrected || 0) : 0;
-    const shown = partial ? q.score : Math.min(items.length, firstScore + fixed);
-    const pass = (partial ? q.score / total : shown / items.length) >= (skipUnit !== undefined ? 0.8 : PASS_RATE);
+    const shown = partial ? q.score : Math.min(total, firstScore + fixed);
+    const pass = total > 0 && (partial ? q.score : shown) / total >= (skipUnit !== undefined ? 0.8 : PASS_RATE);
     let skipped = 0;
     if (skipUnit !== undefined && pass && !q.settled) skipped = applySkipPass(skipUnit);
     let gained = 0;
@@ -3259,7 +3344,7 @@ function renderQuizResult(body, l) {
             const dl = dayLog(); const give = Math.max(0, Math.min(q.score * 2, 10 - (dl.redoXp || 0)));
             dl.redoXp = (dl.redoXp || 0) + give; gained += give;
         }
-        if (!pass && !partial) {       // 떨어져도 노력은 보상 (레슨당 하루 1번)
+        if (!pass && !partial && total) {       // 떨어져도 노력은 보상 (레슨당 하루 1번)
             const dl = dayLog(); if (!dl.effort) dl.effort = {};
             if (!dl.effort[l.id]) { dl.effort[l.id] = 1; gained += 3; }
         }
@@ -3274,11 +3359,12 @@ function renderQuizResult(body, l) {
         '<div class="r-emoji">' + (pass ? (q.score === total ? '🏆' : '🎉') : '💪') + '</div>' +
         '<div class="r-score" style="color:' + (pass ? 'var(--success)' : 'var(--error)') + '">' + shown + ' / ' + total + '</div>' +
         (fixed ? '<div class="muted">첫 시도 ' + firstScore + '개 + 다시 풀어 맞힌 ' + fixed + '개</div>' : '') +
+        (excused ? '<div class="muted">🔇 소리를 들어야 풀 수 있는 ' + excused + '문제는 점수에서 뺐어요</div>' : '') +
         (!partial && pass ? '<div class="stars" style="font-size:22px;margin-top:4px">' + starStr(firstScore / total >= 1 ? 3 : firstScore / total >= 0.85 ? 2 : 1) + '</div>' : '') +
-        '<div class="r-msg">' + (l.warm ? '워밍업 끝! 머리가 풀렸으니 새 레슨을 시작해 볼까요?' : skipUnit !== undefined ? (pass ? '⏩ 합격! ' + skipUnit + '단계를 건너뛰었어요 (레슨 ' + skipped + '개 통과 처리 · 단어는 복습함에 나눠 담았어요)' : '80% 이상이면 합격이에요. 이 단계는 차근차근 배워 봐요 — 이미 아는 부분은 금방 지나가요!') :
+        '<div class="r-msg">' + (l.warm ? '워밍업 끝! 머리가 풀렸으니 새 레슨을 시작해 볼까요?' : !total ? '🔇 모두 소리를 들어야 풀 수 있는 문제였어요. 소리가 나는 기기에서 다시 풀어 보세요.' : skipUnit !== undefined ? (pass ? '⏩ 합격! ' + skipUnit + '단계를 건너뛰었어요 (레슨 ' + skipped + '개 통과 처리 · 단어는 복습함에 나눠 담았어요)' : '80% 이상이면 합격이에요. 이 단계는 차근차근 배워 봐요 — 이미 아는 부분은 금방 지나가요!') :
             partial ? (q.score === total ? (Object.keys(prog().mistakes || {}).length ? '전부 맞혔어요! 👏 다른 날 한 번 더 맞히면 노트에서 졸업해요' : '전부 맞혔어요! 오답 노트를 모두 졸업했어요 🎓') : '다른 날 한 번 더 맞힌 문제는 오답 노트에서 졸업해요. 남은 건 다음에 또!') :
             pass ? (firstScore === total ? '완벽해요! 한 번에 전부 맞혔어요' : '통과! 잘하고 있어요 👏') + '<br>이 레슨 단어들이 내일부터 복습 카드로 나와요.' :
-            (Math.ceil(items.length * PASS_RATE) - shown <= 1 ? '거의 다 왔어요, 1문제만 더! 💪' : Math.ceil(items.length * PASS_RATE) + '문제 이상 맞히면 통과예요.') + '<br>단어와 회화를 한 번 더 보고 다시 도전해 보세요!') +
+            (Math.ceil(total * PASS_RATE) - shown <= 1 ? '거의 다 왔어요, 1문제만 더! 💪' : Math.ceil(total * PASS_RATE) + '문제 이상 맞히면 통과예요.') + '<br>단어와 회화를 한 번 더 보고 다시 도전해 보세요!') +
         (gained ? '<br><b style="color:var(--primary)">+' + gained + ' XP' + (!pass && !partial ? ' (노력 보상)' : '') + '</b>' : '') + '</div></div>';
     h += '@@ACTIONS@@';
     if (boss) {
@@ -4529,7 +4615,7 @@ function openHomeMove() {
         '<div style="font-size:14px;line-height:1.8">홈 화면 아이콘은 사파리와 기록을 따로 저장해요. 아래 순서대로 하면 지금 기록을 그대로 가져가요.<br>' +
         '<b>①</b> <button class="btn small" id="hmCopy">📋 기록 복사하기</button><br>' +
         '<b>②</b> 화면 아래 공유 버튼(□↑) → 「홈 화면에 추가」 → 추가<br>' +
-        '<b>③</b> 홈 화면의 🌍 랭귀지 스타터 아이콘을 열고, 첫 화면의 <b>📋 사파리 기록 붙여넣기</b>를 누르세요.</div>' +
+        '<b>③</b> 홈 화면에 생긴 「랭귀지 스타터」 아이콘(파란 바탕에 가·A 말풍선)을 열고, 첫 화면의 <b>📋 사파리 기록 붙여넣기</b>를 누르세요.</div>' +
         '<div class="muted" style="margin-top:8px">※ 옮긴 뒤에는 홈 화면 아이콘으로만 여세요. 사파리 기록은 7일 동안 안 열면 지워질 수 있어요.</div>');
     sheet.querySelector('#hmCopy').addEventListener('click', () => exportProgressCode().then(c => copyText(c, '📋 기록을 복사했어요. 이제 공유 → 홈 화면에 추가' + CODE_TIP)));
     track('home_move_open');
@@ -4581,7 +4667,14 @@ function voiceDesc() {
     if (!ttsAvailable()) return '이 브라우저는 음성 합성을 지원하지 않아요';
     if (!vc) return CUR.name + ' 음성이 없어요 — 기기 설정에서 ' + CUR.name + ' 음성을 내려받으면 들을 수 있어요';
     const best = vc.a && scoreVoiceFor(vc.a, CUR.ttsLang) >= 60;
-    return (best ? '고품질 음성을 자동으로 골랐어요' : '더 자연스러운 목소리: 기기 설정 → 손쉬운 사용 → 음성 콘텐츠에서 "향상된/고품질" 음성을 내려받으세요') + (vc.b ? ' · 대화는 두 목소리로' : '');
+    // 음성을 내려받는 곳은 기기마다 달라요(소리 배너 안내와 같은 경로)
+    const ua = navigator.userAgent || '', mac = /Macintosh/.test(ua);
+    const how = /Android/i.test(ua) ? '휴대폰 설정 → 일반(또는 접근성) → 텍스트 음성 변환(TTS) → Google 음성 엔진 → 음성 데이터 설치에서 ' + CUR.name + ' 음성을 내려받으세요'
+        : (/iPhone|iPad|iPod/.test(ua) || (mac && navigator.maxTouchPoints > 1)) ? '설정 → 손쉬운 사용 → 읽기 및 말하기 → 음성에서 ' + CUR.name + '의 "향상된/고품질" 음성을 내려받으세요'
+            : mac ? '시스템 설정 → 손쉬운 사용 → 읽기 및 말하기 → 시스템 음성에서 ' + CUR.name + '의 "향상된/고품질" 음성을 내려받으세요'
+                : /Windows/.test(ua) ? 'Windows 설정 → 시간 및 언어 → 음성에서 ' + CUR.name + ' 음성을 추가하세요'
+                    : '컴퓨터의 음성(TTS) 설정에서 ' + CUR.name + ' 음성을 추가하세요';
+    return (best ? '고품질 음성을 자동으로 골랐어요' : '더 자연스러운 목소리: ' + how) + (vc.b ? ' · 대화는 두 목소리로' : '');
 }
 function voiceSelectHtml() {
     const vc = voiceCache[CUR.code];
@@ -4725,8 +4818,20 @@ function renderSettings() {
         try { downloadIcs(t); } catch (err) { showToast('파일을 만들지 못했어요.'); }
     });
     document.getElementById('resetBtn').addEventListener('click', () => {
-        if (confirm('정말 ' + CUR.name + '의 학습 기록을 지울까요?\n(완료한 레슨, 복습 단어장, XP가 사라져요. 다른 언어의 진도와 전체 연속 기록은 유지됩니다)')) {
+        // '복원 전 기록'에 이 언어의 진도가 있으면, 되돌리기로 지운 진도가 살아나지 않게 그 사본도 함께 지운다
+        const snapKey = LS_KEY + '_before_restore';
+        let dropSnap = false, snapShown = false;
+        try {
+            const raw = localStorage.getItem(snapKey);
+            if (raw) {
+                const snap = JSON.parse(raw), old = JSON.parse((snap && snap.raw) || 'null'), op = old && old.byLang && old.byLang[CUR.code];
+                dropSnap = !old || !!(op && (Object.keys(op.completed || {}).length || Object.keys(op.srs || {}).length || op.xp));
+                snapShown = !!(snap && snap.at) && (Date.now() - Date.parse(snap.at)) <= 7 * 86400000;
+            }
+        } catch (e) { dropSnap = true; }
+        if (confirm('정말 ' + CUR.name + '의 학습 기록을 지울까요?\n(완료한 레슨, 복습 단어장, XP가 사라져요. 다른 언어의 진도와 전체 연속 기록은 유지됩니다)' + (dropSnap && snapShown ? '\n\n아래 「↩ 복원 전 기록으로 되돌리기」도 함께 사라져요(되돌리면 지운 기록이 다시 살아나기 때문이에요).' : ''))) {
             store.byLang[CUR.code] = { gen: ((store.byLang[CUR.code] || {}).gen || 0) + 1, genAt: todayStr(), completed: {}, srs: {}, streak: { last: '', count: 0 }, lastPos: null }; delete store.seen['welcome_' + CUR.code]; if (CUR.code === 'en') delete store.seen.deqOfferShown; save();
+            if (dropSnap) { try { localStorage.removeItem(snapKey); } catch (e) { } }
             go('home');
         }
     });
@@ -4847,7 +4952,7 @@ async function restoreFromCode(code, opts) {
 //  · fb-core: 앱 + 사용 통계(Analytics) — 설정에 measurementId가 있고 통계를 끄지 않았을 때
 //  · fb-sync: 로그인(Auth) + 저장(Firestore lite) — 로그인했던 기기이거나 로그인·의견 보내기를 누를 때
 // 클라우드에는 users/{uid} 문서 하나에 전체 기록(store)을 넣는다. 합치기는 여러 탭 합치기와 같은 mergeStores.
-const FB_VER = '12.19.0';
+const FB_VER = 'f73157e4';
 const CLOUD_HINT_KEY = 'lang_starter_cloud';   // {uid, rev, at, lastUid} — 이 기기가 어느 계정과 이어졌는지(이름·이메일은 저장하지 않음)
 const CLOUD_JSON_LIMIT = 600000;                // 이보다 크면 gzip으로 줄여 저장(Firestore 문서 1MB 한도)
 const CLOUD_DOC_LIMIT = 900000;
@@ -5607,16 +5712,49 @@ applyBigText();
 cloudBoot();
 // 서비스 워커: 한 번 연 언어는 오프라인에서도 열리게(https에서만, file://은 지금처럼)
 if ('serviceWorker' in navigator && window.isSecureContext && /^https?:$/.test(location.protocol)) {
+    // 새 서비스 워커가 열어 둔 화면을 넘겨받았을 때(= 새 배포) 계속 떠 있는 새로고침 안내
+    const showSwUpdateBar = () => {
+        if (document.getElementById('swUpdateBar')) return;
+        const css = document.createElement('style');
+        css.textContent = '.sw-update-bar{position:fixed;left:0;right:0;top:calc(8px + env(safe-area-inset-top,0px));margin:0 auto;width:max-content;max-width:calc(100vw - 16px);z-index:70;display:flex;align-items:center;gap:2px;background:var(--text,#1e293b);color:var(--card,#fff);border:1px solid rgba(255,255,255,.35);border-radius:999px;box-shadow:0 8px 24px rgba(0,0,0,.28);animation:swBarIn .3s ease-out}@keyframes swBarIn{from{opacity:0}to{opacity:1}}' +
+            '.sw-update-bar button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;min-height:44px;border-radius:999px}' +
+            '.sw-update-bar .sw-go{font-size:13.5px;font-weight:800;padding:8px 6px 8px 16px;text-align:left;word-break:keep-all}' +
+            '.sw-update-bar .sw-x{font-size:15px;min-width:40px;padding:0 12px 0 6px;opacity:.75}' +
+            '.sw-update-bar button:focus-visible{outline:3px solid var(--gold,#f0a500);outline-offset:2px}' +
+            '@media (prefers-color-scheme:dark){.sw-update-bar{border-color:rgba(255,255,255,.55)}}@media print{.sw-update-bar{display:none}}';
+        document.head.appendChild(css);
+        const bar = document.createElement('div');
+        bar.id = 'swUpdateBar'; bar.className = 'sw-update-bar'; bar.setAttribute('role', 'status');
+        bar.innerHTML = '<button type="button" class="sw-go">🆕 새 버전이 나왔어요 · 누르면 새로고침</button><button type="button" class="sw-x" aria-label="새 버전 안내 닫기">✕</button>';
+        bar.querySelector('.sw-go').addEventListener('click', () => location.reload());
+        bar.querySelector('.sw-x').addEventListener('click', () => bar.remove());
+        document.body.appendChild(bar);
+    };
     window.addEventListener('load', () => {
+        // 처음 맡은 워커가 생기는 것(첫 설치)은 새 배포가 아니므로 안내하지 않는다 — 이미 맡은 워커가 있던 화면에서만
+        let hadCtl = !!navigator.serviceWorker.controller, lastCheck = 0, asked = false;
+        const loadedAt = Date.now();
         navigator.serviceWorker.register('sw.js').then(reg => {
             const warm = () => {
                 const sw = navigator.serviceWorker.controller || reg.active; if (!sw) return;
                 const urls = performance.getEntriesByType('resource').map(e => e.name).filter(u => /\/language-teacher\/((data|stories)-[a-z]{2}\.js|cloud-config\.js|vendor\/|icons\/)/.test(u));
-                sw.postMessage({ type: 'warm', urls: [location.href.split('?')[0]].concat(urls) });
+                // 앱 화면은 처음 들어온 주소(?lang= 포함, 시작 코드가 지우기 전) — 방금 받은 그 주소라 HTTP 캐시에서 나온다
+                sw.postMessage({ type: 'warm', urls: [ENTRY_URL.split('#')[0]].concat(urls) });
             };
             if (reg.active) warm(); else navigator.serviceWorker.addEventListener('controllerchange', warm, { once: true });
             // 언어를 새로 불러오면 그것도 담아 둔다
             setInterval(() => { if (navigator.serviceWorker.controller) warm(); }, 60000);
+            // 새 배포 확인: 화면으로 돌아올 때마다(30초에 한 번까지) sw.js가 바뀌었는지 본다(홈 화면 앱은 새로고침 수단이 없음)
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden || Date.now() - lastCheck < 30000) return;
+                lastCheck = Date.now(); asked = true; reg.update().catch(() => { });
+            });
+            // 새 워커가 이 화면을 넘겨받으면 화면 코드는 옛것 → 새로고침 안내. 열자마자(20초 안) 브라우저가 스스로 확인해
+            // 바뀐 경우는 방금 네트워크에서 받은 화면이 이미 새것이라 안내하지 않는다
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                if (hadCtl && (asked || Date.now() - loadedAt > 20000)) showSwUpdateBar();
+                hadCtl = true;
+            });
         }).catch(() => { });
     });
 }

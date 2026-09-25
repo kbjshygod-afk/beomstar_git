@@ -81,8 +81,15 @@
     var hasRec = !!st && (days > 0 || xp > 0);
 
     if (inApp) {
-      document.getElementById('extra').innerHTML = '<div class="note" style="margin-top:12px">📱 지금은 앱 안의 브라우저예요. 예전 기록은 <b>평소 쓰던 크롬·사파리</b>에 있어요. 오른쪽 위 메뉴(⋮)에서 <b>다른 브라우저로 열기</b>를 눌러 주세요.' +
-        (/KAKAOTALK/i.test(ua) ? '<br><a href="kakaotalk://web/openExternal?url=' + encodeURIComponent(location.href) + '">👉 기본 브라우저로 열기</a>' : '') + '</div>';
+      // 기록이 바로 이 앱 안 브라우저에 있으면, 옛 주소를 기본 브라우저로 열게 하지 않는다(그쪽엔 기록이 없어 0부터 시작하게 됨).
+      // 먼저 헬로 영어로 옮겨 이어받은 뒤, 앱 화면의 안내 버튼으로 기록을 들고 기본 브라우저로 간다
+      var carry = /KAKAOTALK|Line\//i.test(ua);
+      document.getElementById('extra').innerHTML = hasRec
+        ? '<div class="note" style="margin-top:12px">📱 지금은 앱 안의 브라우저라서, 예전 기록은 <b>바로 이 브라우저</b>에 있어요. 위 버튼으로 헬로 영어로 이동해 기록을 먼저 가져온 뒤, ' +
+          (carry ? '앱 화면의 <b>📦 기록 들고 기본 브라우저로 열기</b>를 누르면 크롬·사파리로 기록이 함께 옮겨져요.'
+            : '앱 화면의 <b>📋 기록 코드 복사</b>를 눌러 크롬·사파리 첫 화면 아래 「📦 다른 기기 기록 가져오기」에 붙여넣으면 기록이 옮겨져요.') + '</div>'
+        : '<div class="note" style="margin-top:12px">📱 지금은 앱 안의 브라우저예요. 예전 기록이 있다면 <b>평소 쓰던 크롬·사파리</b>에 있을 거예요. 메뉴에서 <b>다른 브라우저로 열기</b>를 눌러 주세요.' +
+          (/KAKAOTALK/i.test(ua) ? '<br><a href="kakaotalk://web/openExternal?url=' + encodeURIComponent(location.href) + '">👉 기본 브라우저로 열기</a>' : '') + '</div>';
       if (!hasRec) return;
     }
     if (!hasRec) { location.replace(go.href); return; }
