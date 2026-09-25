@@ -907,9 +907,9 @@ function warnOldTab() {   // 업데이트 전에 열어 둔 탭이 저장함 —
     if (warnOldTab.shown) return; warnOldTab.shown = true;
     setTimeout(() => { try { showToast('🔄 다른 탭에 예전 화면이 열려 있어요. 그 탭을 새로고침해 주세요', '', 6000); } catch (e) { } }, 300);
 }
-function warnNewer() {
+function warnNewer() {   // 계속 보이는 안내(홈 화면 앱에는 새로고침 버튼이 없다)
     if (warnNewer.shown) return; warnNewer.shown = true;
-    setTimeout(() => { try { showToast('🆕 앱이 새 버전으로 바뀌었어요. 새로고침하면 이어서 저장돼요', '', 6000); } catch (e) { } }, 300);
+    setTimeout(() => { try { renderStorageWarning(); } catch (e) { } }, 0);
 }
 function save() {
     if (newerSchema) { warnNewer(); return; }
@@ -930,7 +930,7 @@ function save() {
 function syncFromStorage() {
     let cur = null; try { cur = localStorage.getItem(LS_KEY); } catch (e) { return; }
     if (!cur || cur === lastRaw) return;
-    let other = null, oldFmt = false; try { const o = JSON.parse(cur); oldFmt = isObj(o) && o.schema === undefined && isObj(o.byLang); if (oldFmt) warnOldTab(); other = normalizeStore(o); } catch (e) { return; }
+    let other = null, oldFmt = false; try { const o = JSON.parse(cur); if (isObj(o) && Number(o.schema) > SCHEMA) { newerSchema = true; warnNewer(); return; } oldFmt = isObj(o) && o.schema === undefined && isObj(o.byLang); if (oldFmt) warnOldTab(); other = normalizeStore(o); } catch (e) { return; }
     store = mergeStores(other, store, false, oldFmt);
     lastRaw = cur;
     if (oldFmt) save();   // 옛 화면이 지운 세대·새 칸을 바로 다시 적는다
@@ -940,12 +940,20 @@ function syncFromStorage() {
         if (['home', 'history', 'story', 'settings', 'guide'].includes(S.view) && !(root && root.innerHTML)) render();
     }
 }
-window.addEventListener('storage', e => { if (e.key === LS_KEY) syncFromStorage(); });
+window.addEventListener('storage', e => { if (e.key === LS_KEY) syncFromStorage(); else if (e.key === RELOAD_KEY && e.newValue) location.reload(); });
+// 계정 바꾸기·지우고 로그아웃처럼 기록을 통째로 바꿀 때: 같은 기기의 다른 탭이 옛 기록을 다시 섞지 않게 새로고침시킨다
+const RELOAD_KEY = LS_KEY + '_reload';
+function reloadOtherTabs() { try { localStorage.setItem(RELOAD_KEY, String(Date.now())); } catch (e) { } }
 document.addEventListener('visibilitychange', () => { if (!document.hidden) syncFromStorage(); });
 function renderStorageWarning() {
     const el = document.getElementById('storageWarn');
     if (!el) return;
-    if (storageFailed) {
+    if (newerSchema) {
+        el.innerHTML = '🆕 앱이 새 버전으로 바뀌었어요 — 이 화면에서 한 공부는 저장되지 않아요. <button class="btn small" id="swReload">새로고침</button>';
+        el.hidden = false;
+        document.getElementById('swReload').addEventListener('click', () => location.reload());
+    }
+    else if (storageFailed) {
         el.innerHTML = esc(storageFailReason === 'quota' ? '⚠️ 저장 공간이 가득 차 학습 기록을 저장하지 못했어요.' : '⚠️ 이 브라우저에서는 학습 기록을 저장할 수 없어요(비공개 창이거나 저장이 막혀 있어요).') + ' 새로고침하면 사라지니 지금 백업해 두세요. <button class="btn small" id="swBackup">💾 지금 기록 백업 코드 복사</button>';
         el.hidden = false;
         const b = document.getElementById('swBackup');
@@ -4806,7 +4814,7 @@ async function restoreFromCode(code, opts) {
         const sheet = openModal('<div class="sheet-head"><b>' + esc(opts.title || '백업 기록을 어떻게 가져올까요?') + '</b><button class="sheet-close" data-close-overlay aria-label="닫기">✕</button></div>' +
             '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px"><div class="card" style="margin:0"><b>📦 백업</b>' + storeSummary(incoming, typeof obj.exportedAt === 'string' ? esc(obj.exportedAt.slice(0, 10)) : '날짜 모름') + '</div>' +
             '<div class="card" style="margin:0"><b>📱 지금 이 기기</b>' + storeSummary(store) + '</div></div>' +
-            '<div class="muted" style="margin-bottom:10px">' + (hasNow ? '<b>합치기</b>는 두 기록의 진도를 모두 남기고, <b>바꾸기</b>는 이 기기 기록을 백업 내용으로 바꿔요. ' : '') + '지금 기록은 7일 동안 보관돼서 설정에서 되돌릴 수 있어요.</div>' +
+            (hasNow ? '<div class="muted" style="margin-bottom:10px"><b>합치기</b>는 두 기록의 진도를 모두 남기고, <b>바꾸기</b>는 ' + (cloudLinked() ? '<b>이 기기와 구글 계정(로그인한 모든 기기)</b>의 기록을' : '이 기기 기록을') + ' 백업 내용으로 바꿔요. 지금 기록은 7일 동안 보관돼서 설정에서 되돌릴 수 있어요.</div>' : '') +
             (hasNow ? '<button class="btn block" id="restoreMerge">🔗 합치기 (추천)</button>' : '') +
             '<div style="display:flex;gap:8px;margin-top:8px"><button class="btn block gray" data-close-overlay>취소</button><button class="btn block' + (hasNow ? ' ghost' : '') + '" id="restoreYes">' + (hasNow ? '바꾸기' : '가져오기') + '</button></div>');
         const finishRestore = (msg) => {
@@ -4891,16 +4899,6 @@ function hasProgress(st) {
 /* ── 기록 묶기(필요하면 gzip) ── */
 function b64FromBytes(u8) { let s = ''; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); }
 function bytesFromB64(b) { const s = atob(b); const u8 = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u8[i] = s.charCodeAt(i); return u8; }
-async function packStore(st) {
-    const json = JSON.stringify(st);
-    const bytes = new TextEncoder().encode(json);
-    if (bytes.length <= CLOUD_JSON_LIMIT) return { enc: 'json', data: json };
-    if (typeof CompressionStream !== 'function') throw new Error('too-big');
-    const gz = new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer());
-    const data = b64FromBytes(gz);
-    if (data.length > CLOUD_DOC_LIMIT) throw new Error('too-big');
-    return { enc: 'gz', data };
-}
 async function unpackStore(d) {
     if (!isObj(d) || typeof d.data !== 'string') throw new Error('bad-doc');
     let json = d.data;
@@ -4914,21 +4912,26 @@ async function unpackStore(d) {
 }
 
 /* ── 로그인 상태 ── */
+// 이 기기가 지금 로그인한 계정과 이어져 있는가 — 처음 맞추기(또는 사용자의 선택)가 끝나기 전에는 올리기·내려받기를 하지 않는다
+function cloudLinked() { return !!(CLOUD.user && CLOUD.sync && !CLOUD.choosing && !CLOUD.deleting && cloudHint().lastUid === CLOUD.user.uid); }
 function onCloudAuth(u) {
     const prev = CLOUD.user;
     CLOUD.user = u || null;
     CLOUD.ready = true;
     if (u) {
         CLOUD.state = 'in';
+        CLOUD.signingOut = false;
         const h = cloudHint();
-        if (h.uid !== u.uid) cloudHint({ uid: u.uid, rev: '', at: '' });
+        if (h.uid !== u.uid) cloudHint({ uid: u.uid, rev: '', at: '', base: null });
         if ('name' in h || 'email' in h) { const x = cloudHint(); delete x.name; delete x.email; try { localStorage.setItem(CLOUD_HINT_KEY, JSON.stringify(x)); } catch (e) { } }
         if (!prev || prev.uid !== u.uid) cloudFirstSync(u);
         track('login_state', { signed_in: 1 });
     } else {
         const h = cloudHint();
         CLOUD.state = 'out';
-        if (h.uid) { cloudHint({ uid: '', lastUid: h.uid, rev: '' }); if (!CLOUD.signingOut) showToast('☁️ 로그인이 풀렸어요. 설정에서 다시 로그인해 주세요', '', 3600); }
+        if (CLOUD.choosing) { CLOUD.choosing = false; closeModal(true); }
+        clearTimeout(CLOUD.pushTimer); CLOUD.firstDirty = 0;
+        if (h.uid) { cloudHint({ uid: '', lastUid: h.uid, rev: '', base: null }); if (!CLOUD.signingOut) showToast('☁️ 로그인이 풀렸어요. 설정에서 다시 로그인해 주세요', '', 3600); }
         CLOUD.signingOut = false;
     }
     refreshCloudUi();
@@ -4941,7 +4944,11 @@ function cloudBoot() {
         CLOUD.state = 'loading';
         setTimeout(() => { loadFbSync().catch(() => { CLOUD.state = 'error'; refreshCloudUi(); }); }, 1200);
     }
-    window.addEventListener('online', () => { if (CLOUD.user) { cloudPull(); scheduleCloudPush(500); } });
+    window.addEventListener('online', () => {
+        if (!CLOUD.user) return;
+        if (CLOUD.firstPending && !CLOUD.syncing && !CLOUD.choosing) { cloudFirstSync(CLOUD.user); return; }
+        cloudPull(); scheduleCloudPush(500);
+    });
     document.addEventListener('visibilitychange', () => {
         if (!CLOUD.user) return;
         if (document.hidden) { if (CLOUD.dirty) cloudPush(); }
@@ -4988,49 +4995,140 @@ async function cloudLogin() {
         else showToast('로그인하지 못했어요' + (code ? ' (' + code.replace('auth/', '') + ')' : ''), '', 3600);
     }
 }
-function showInAppLoginHelp() {
-    const ua = navigator.userAgent || '';
-    openModal('<div class="sheet-head"><b>🔐 구글 로그인은 기본 브라우저에서</b><button class="sheet-close" data-close-overlay aria-label="닫기">✕</button></div>' +
-        '<div style="font-size:14px;line-height:1.7">카카오톡·네이버·인스타그램처럼 <b>앱 안에서 열린 브라우저</b>에서는 구글이 로그인을 막아 두었어요.<br>오른쪽 위(또는 아래) 메뉴 <b>⋮</b> → <b>다른 브라우저로 열기</b>(Chrome·Safari)를 누른 뒤 로그인해 주세요.</div>' +
-        (/KAKAOTALK/i.test(ua) ? '<a class="btn block" style="margin-top:12px;text-align:center;text-decoration:none" href="kakaotalk://web/openExternal?url=' + encodeURIComponent(shareUrl('', 'kakao_inapp')) + '">👉 기본 브라우저로 열기</a>' : '') +
-        '<button class="btn gray block" data-close-overlay style="margin-top:8px">닫기</button>');
+// 앱 안 브라우저에서 기본 브라우저로 옮기는 방법(아이폰은 ⋯·공유 → Safari, 그 밖은 메뉴 ⋮)
+function inAppHowTo() {
+    return IOS_UA ? '오른쪽 아래(또는 위) <b>⋯ · 공유</b> 메뉴 → <b>Safari로 열기</b>' : '오른쪽 위(또는 아래) 메뉴 <b>⋮</b> → <b>다른 브라우저로 열기</b>';
 }
+function showInAppLoginHelp() {
+    const href = openExternalHref();
+    const sheet = openModal('<div class="sheet-head"><b>🔐 구글 로그인은 기본 브라우저에서</b><button class="sheet-close" data-close-overlay aria-label="닫기">✕</button></div>' +
+        '<div style="font-size:14px;line-height:1.7">카카오톡·네이버·인스타그램처럼 <b>앱 안에서 열린 브라우저</b>에서는 구글이 로그인을 막아 두었어요.<br>' + (href ? '아래 버튼으로 기본 브라우저(Chrome·Safari)에서 연 뒤 로그인해 주세요.' : inAppHowTo() + '를 누른 뒤 로그인해 주세요.') + '</div>' +
+        (href ? '<a class="btn block" id="inAppLoginOpen" style="margin-top:12px;text-align:center;text-decoration:none" href="' + esc(href) + '">👉 기본 브라우저로 열기</a>' : '') +
+        '<button class="btn gray block" data-close-overlay style="margin-top:8px">닫기</button>');
+    const a = sheet.querySelector('#inAppLoginOpen');
+    if (a && typeof carryLink === 'function') carryLink(a);   // 카톡·라인은 기록을 함께 들고 간다
+}
+function sleepMs(ms) { return new Promise(r => setTimeout(r, ms)); }
 async function cloudLogout(wipeLocal) {
     if (!CLOUD.sync || !CLOUD.auth) return;
-    if (CLOUD.dirty) { try { await cloudPush(); } catch (e) { } }
+    clearTimeout(CLOUD.pushTimer); CLOUD.firstDirty = 0;
+    if (cloudLinked()) {
+        // 아직 못 올린 공부가 있으면 먼저 올린다(올리는 중이면 끝날 때까지 기다림)
+        const until = Date.now() + (wipeLocal ? 10000 : 3000);
+        if (wipeLocal && (CLOUD.pushing || JSON.stringify(store) !== CLOUD.lastPushedRaw)) showToast('☁️ 계정에 저장하는 중…', '', 2000);
+        for (let k = 0; k < 3; k++) {
+            while (CLOUD.pushing && Date.now() < until) await sleepMs(100);
+            if (CLOUD.pushing || JSON.stringify(store) === CLOUD.lastPushedRaw) break;
+            await cloudPush();
+            if (CLOUD.error) break;
+        }
+        clearTimeout(CLOUD.pushTimer);
+        if (wipeLocal && (CLOUD.pushing || JSON.stringify(store) !== CLOUD.lastPushedRaw)) {
+            showToast('⚠️ 아직 계정에 올리지 못한 기록이 있어서 지우지 않았어요. 인터넷에 연결한 뒤 다시 해 보거나, 먼저 백업 코드를 만들어 두세요', '', 5200);
+            if (!CLOUD.pushing) scheduleCloudPush(3000);
+            return;
+        }
+    }
     CLOUD.signingOut = true;
     try { await CLOUD.sync.signOut(CLOUD.auth); } catch (e) { CLOUD.signingOut = false; showToast('로그아웃하지 못했어요'); return; }
+    clearTimeout(CLOUD.pushTimer);
+    CLOUD.dirty = false; CLOUD.lastPushedRaw = ''; CLOUD.fails = 0; CLOUD.firstDirty = 0; CLOUD.error = ''; CLOUD.firstPending = null;
     if (wipeLocal) {
         const g = nextGen(store);
         store = normalizeStore({ gen: g, genAt: todayStr() }); save();
-        try { [LS_KEY + '_before_restore', LS_KEY + '_corrupt_backup', CLOUD_HINT_KEY, STATS_OFF_KEY, LEGACY_DONE_KEY, 'nihao_zh_v1', 'hola_es_v1', DEQ_KEY].forEach(k => localStorage.removeItem(k)); } catch (e) { }
-        CLOUD.lastPushedRaw = '';
+        // 통계 끄기 선택(STATS_OFF_KEY)은 기기 설정이라 남긴다
+        try { [LS_KEY + '_before_restore', LS_KEY + '_corrupt_backup', CLOUD_HINT_KEY, LEGACY_DONE_KEY, 'nihao_zh_v1', 'hola_es_v1', DEQ_KEY].forEach(k => localStorage.removeItem(k)); } catch (e) { }
+        reloadOtherTabs();
         showToast('👋 로그아웃하고 이 기기의 기록을 지웠어요');
         setTimeout(() => location.reload(), 600);
         return;
     }
+    store.seen.cloudNudge = todayStr(); save();   // 방금 로그아웃한 사람에게 바로 로그인을 권하지 않게
     showToast('👋 로그아웃했어요. 이 기기의 기록은 그대로 남아 있어요', '', 3200);
     if (S.view === 'settings') renderSettings();
 }
 
+/* ── 합치기: 세대(초기화·바꾸기)와 두 기기가 따로 모은 XP ── */
+// 마지막으로 맞춘 기록의 XP(언어별 총 XP와 최근 7일 XP) — 다음 합치기에서 두 기기가 그사이 따로 모은 XP를 더하는 기준
+function xpBase(st) {
+    const o = {};
+    Object.keys((st && st.byLang) || {}).forEach(k => {
+        const p = st.byLang[k]; if (!isObj(p)) return;
+        const d = {}; Object.keys(p.daily || {}).sort().slice(-7).forEach(x => { d[x] = (p.daily[x] && p.daily[x].xp) || 0; });
+        o[k] = { g: p.gen || 0, xp: p.xp || 0, d };
+    });
+    return o;
+}
+// 두 쪽 모두 base에서 늘었으면 늘어난 만큼을 더한다(base가 어긋나면 큰 쪽)
+function addSince(c, l, b) { c = c || 0; l = l || 0; if (typeof b !== 'number' || b > c || b > l) return Math.max(c, l); return Math.max(c, l, c + l - b); }
+function langHas(p) { return !!p && !!(Object.keys(p.completed || {}).length || Object.keys(p.srs || {}).length || (p.xp || 0) > 0); }
+// 클라우드 기록(cs)과 이 기기 기록(local) 합치기. 세대가 다르면(어느 기기에서 '바꾸기'·언어 초기화를 함) 높은 세대를 그대로 쓴다 —
+// 날짜만으로는 초기화 전후의 공부를 가를 수 없어서, 밀려나는 쪽 기기에는 되돌리기용 사본을 남긴다(lost).
+// base: 마지막으로 맞춘 때의 xpBase — 두 기기가 그사이 따로 모은 XP를 더한다
+function cloudMerge(cs, local, base) {
+    const cg = cs.gen || 0, lg = local.gen || 0;
+    let m, lost = false;
+    if (cg !== lg) {
+        const hi = cg > lg ? cs : local, lo = hi === cs ? local : cs;
+        m = Object.assign({}, hi);
+        m.settings = local.settings;
+        m.seen = Object.assign({}, lo.seen, hi.seen);
+        m.badges = Object.assign({}, lo.badges, hi.badges);
+        lost = hi === cs && hasProgress(local);
+        return { store: m, lost };
+    }
+    m = mergeStores(cs, local);
+    m.byLang = Object.assign({}, m.byLang);
+    Object.keys(m.byLang).forEach(k => {
+        const a = cs.byLang[k], b = local.byLang[k];
+        if (!a || !b) return;
+        const ag = a.gen || 0, bg = b.gen || 0;
+        if (ag !== bg) { if (ag > bg && langHas(b)) lost = true; return; }   // 한쪽에서 이 언어를 초기화함 — 높은 세대(mergeLang이 고름)
+        const bx = isObj(base) && isObj(base[k]) && (base[k].g || 0) === ag ? base[k] : null;
+        if (!bx) return;
+        const o = m.byLang[k] = Object.assign({}, m.byLang[k]);
+        o.xp = addSince(a.xp, b.xp, bx.xp);
+        if (isObj(bx.d)) {
+            o.daily = Object.assign({}, o.daily);
+            Object.keys(bx.d).forEach(d => { const x = a.daily && a.daily[d], y = b.daily && b.daily[d]; if (x && y && o.daily[d]) o.daily[d] = Object.assign({}, o.daily[d], { xp: addSince(x.xp, y.xp, bx.d[d]) }); });
+        }
+    });
+    return { store: m, lost };
+}
+const LOST_TOAST = '☁️ 다른 기기에서 기록을 새로 바꿨어요. 이 기기의 이전 기록은 ⚙️ 설정에서 7일 안에 되돌릴 수 있어요';
+
 /* ── 처음 이어질 때: 계정 기록과 이 기기 기록 정리 ── */
 async function cloudFirstSync(u) {
     const m = CLOUD.sync, ref = m.doc(CLOUD.db, 'users', u.uid);
-    const interactive = !!CLOUD.loginTap; CLOUD.loginTap = false;
+    // 첫 맞추기가 실패해 다시 하는 경우에도 처음 로그인 버튼을 눌렀는지는 그대로 기억한다
+    const interactive = !!CLOUD.loginTap || !!(CLOUD.firstPending && CLOUD.firstPending.uid === u.uid && CLOUD.firstPending.interactive);
+    CLOUD.loginTap = false;
     CLOUD.syncing = true; refreshCloudUi();
+    const rev0 = cloudHint().rev;
     let snap;
     try { snap = await m.getDoc(ref); }
-    catch (e) { CLOUD.syncing = false; CLOUD.error = '기록을 불러오지 못했어요'; refreshCloudUi(); scheduleCloudPush(20000); return; }
+    catch (e) {
+        CLOUD.syncing = false; CLOUD.error = '기록을 불러오지 못했어요'; refreshCloudUi();
+        if (!CLOUD.user || CLOUD.user.uid !== u.uid) return;
+        if (cloudHint().lastUid === u.uid) { CLOUD.firstPending = null; scheduleCloudPush(20000); return; }   // 이미 이어진 계정 — 올릴 때 합친다
+        // 아직 이어지지 않은 계정: 기록을 섞지 않고 잠시 뒤 처음 맞추기를 다시 한다
+        const fp = CLOUD.firstPending = { uid: u.uid, interactive, wait: Math.min(60000, ((CLOUD.firstPending && CLOUD.firstPending.wait) || 2500) * 2) };
+        setTimeout(() => { if (CLOUD.firstPending === fp && CLOUD.user && CLOUD.user.uid === u.uid && !CLOUD.syncing && !CLOUD.choosing) cloudFirstSync(u); }, fp.wait);
+        return;
+    }
+    CLOUD.firstPending = null;
+    if (!CLOUD.user || CLOUD.user.uid !== u.uid) { CLOUD.syncing = false; refreshCloudUi(); return; }
     const h = cloudHint();
-    const localHas = hasProgress(store);
+    const linkedBefore = h.lastUid === u.uid;                  // 이 기기가 이미 이 계정과 이어져 있었음(세션 되살리기·다시 로그인)
     const otherOwner = !!(h.lastUid && h.lastUid !== u.uid);   // 이 기기 기록이 다른 계정에서 쓰던 것
+    const localHas = hasProgress(store);
+    // 그사이 올리기가 끝났거나 진행 중이면(이미 이어진 계정) 그 올리기가 합치기를 맡는다
+    if (linkedBefore && (CLOUD.pushing || h.rev !== rev0)) { CLOUD.syncing = false; refreshCloudUi(); return; }
     if (!snap.exists()) {
         CLOUD.syncing = false;
-        if (localHas && (otherOwner || (!h.lastUid && interactive))) {
-            cloudChoose(u, null, otherOwner ? 'newAccount' : 'firstUpload');
-            return;
-        }
-        cloudHint({ lastUid: u.uid, rev: '' });
+        // 이 기기의 기록을 이 계정에 처음 올릴 때는 늘 묻는다(가족·공용 기기의 다른 사람 기록일 수 있음)
+        if (localHas && !linkedBefore) { cloudChoose(u, null, otherOwner ? 'newAccount' : 'firstUpload'); return; }
+        cloudHint({ lastUid: u.uid, rev: '', base: null });
         await cloudPush(true);
         if (localHas && interactive) showToast('☁️ 이 기기의 기록을 계정에 저장했어요. 이제 다른 기기에서도 이어서 할 수 있어요', 'gold', 4200);
         else if (interactive) showToast('☁️ 로그인했어요! 이제 기록이 계정에 자동 저장돼요', 'gold', 3600);
@@ -5040,17 +5138,26 @@ async function cloudFirstSync(u) {
     const d = snap.data();
     let cloudStore;
     try { cloudStore = await unpackStore(d); }
-    catch (e) { CLOUD.syncing = false; CLOUD.error = e.message === 'old-browser' ? '이 브라우저는 기록을 풀 수 없어요. 최신 크롬·사파리를 써 주세요' : '계정 기록을 읽지 못했어요'; refreshCloudUi(); return; }
+    catch (e) { CLOUD.syncing = false; CLOUD.error = e.message === 'old-browser' ? '이 브라우저는 기록을 풀 수 없어요. 최신 크롬·사파리를 써 주세요' : e.message === 'newer' ? '앱이 새 버전으로 바뀌었어요 — 새로고침해 주세요' : '계정 기록을 읽지 못했어요'; refreshCloudUi(); return; }
     CLOUD.syncing = false;
+    if (!CLOUD.user || CLOUD.user.uid !== u.uid) { refreshCloudUi(); return; }
     const cloudHas = hasProgress(cloudStore);
-    if (localHas && cloudHas && (otherOwner || (h.lastUid !== u.uid && interactive))) { cloudChoose(u, { d, cloudStore }, otherOwner ? 'otherOwner' : 'both'); return; }
-    // 이 기기가 비어 있으면 계정 기록을 그대로, 아니면 합친다(진도는 늘어나는 쪽으로)
-    const merged = localHas ? mergeStores(cloudStore, store) : mergeStores(store, cloudStore);
-    applyCloudStore(merged, d.rev);
+    if (localHas && !linkedBefore) { cloudChoose(u, { d, cloudStore }, cloudHas ? (otherOwner ? 'otherOwner' : 'both') : (otherOwner ? 'newAccount' : 'firstUpload')); return; }
+    let merged, lost = false;
+    if (!localHas && !linkedBefore) {
+        // 빈 기기(또는 지우고 로그아웃한 기기)는 이 기기의 세대와 비교하지 않고 계정 기록을 그대로 받는다
+        merged = normalizeStore(cloudStore);
+        if (store.settings.stats === false) merged.settings.stats = false;
+    } else {
+        const r = cloudMerge(cloudStore, store, h.base); merged = r.store; lost = r.lost;
+    }
+    if (lost) snapshotBeforeRestore();
+    applyCloudStore(merged, d.rev, xpBase(cloudStore));
     cloudHint({ lastUid: u.uid });
-    if (JSON.stringify(merged) !== JSON.stringify(cloudStore)) scheduleCloudPush(300);
+    if (JSON.stringify(store) !== JSON.stringify(cloudStore)) scheduleCloudPush(300);
     else CLOUD.lastPushedRaw = JSON.stringify(store);
-    if (interactive) showToast(localHas ? '☁️ 로그인했어요! 이 기기와 계정의 기록을 합쳤어요' : '☁️ 계정 기록을 불러왔어요. 이어서 공부해요!', 'gold', 3600);
+    if (lost) showToast(LOST_TOAST, '', 5200);
+    else if (interactive) showToast(localHas ? '☁️ 로그인했어요! 이 기기와 계정의 기록을 합쳤어요' : '☁️ 계정 기록을 불러왔어요. 이어서 공부해요!', 'gold', 3600);
 }
 function cloudChoose(u, cloud, why) {
     const localSum = storeSummary(store, '');
@@ -5062,31 +5169,40 @@ function cloudChoose(u, cloud, why) {
         : why === 'otherOwner'
             ? '이 기기에는 <b>다른 계정에서 쓰던 기록</b>이 남아 있어요. 어떻게 할까요?'
             : '이 기기에도, 계정에도 기록이 있어요. 두 기록을 합칠까요?';
+    const blank = why === 'newAccount' || why === 'firstUpload';
+    CLOUD.choosing = true;   // 고르는 동안은 올리기·내려받기를 멈춘다
+    clearTimeout(CLOUD.pushTimer); CLOUD.dirty = false; CLOUD.firstDirty = 0;
+    // 고르지 않고 닫으면(바깥 누르기·Esc·뒤로 가기) '취소하고 로그아웃'과 같다
     const sheet = openModal('<div class="sheet-head"><b>☁️ 기록 이어 붙이기</b></div>' +
         '<div style="font-size:14px;line-height:1.7;margin-bottom:10px">' + intro + '</div>' +
         '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px"><div class="card" style="margin:0"><b>📱 이 기기</b>' + localSum + '</div><div class="card" style="margin:0"><b>☁️ 구글 계정</b>' + cloudSum + '</div></div>' +
-        (why === 'newAccount' || why === 'firstUpload'
+        (blank
             ? '<button class="btn block" id="ccMerge">📤 ' + (why === 'firstUpload' ? '내 기록이에요 — 계정에 저장' : '이 기기 기록 올리기') + '</button><button class="btn gray block" id="ccCloud" style="margin-top:8px">🆕 이 계정은 빈 기록으로 시작</button>'
             : '<button class="btn block" id="ccMerge">🔗 둘 다 합치기' + (why === 'both' ? ' (추천)' : '') + '</button><button class="btn ' + (why === 'otherOwner' ? '' : 'gray ') + 'block" id="ccCloud" style="margin-top:8px">☁️ 계정 기록만 쓰기</button>') +
-        '<div class="muted" style="margin-top:8px">이 기기의 지금 기록은 7일 동안 보관돼서 설정에서 되돌릴 수 있어요.</div>' +
-        '<button class="btn ghost block" id="ccCancel" style="margin-top:8px">취소하고 로그아웃</button>');
-    const done = () => closeModal(true);
+        '<div class="muted" style="margin-top:8px">' + (blank ? '빈 기록으로 시작해도 ' : '계정 기록만 쓰면 ') + '이 기기의 지금 기록은 7일 동안 보관돼서 설정에서 되돌릴 수 있어요.</div>' +
+        '<button class="btn ghost block" id="ccCancel" style="margin-top:8px">취소하고 로그아웃</button>', () => { CLOUD.choosing = false; cloudLogout(false); });
+    const done = () => { CLOUD.choosing = false; closeModal(true); };
     sheet.querySelector('#ccMerge').addEventListener('click', () => {
         done();
+        const cloudHas = !!cloud && hasProgress(cloud.cloudStore);
         const merged = cloud ? mergeStores(cloud.cloudStore, store, true) : store;
-        applyCloudStore(merged, cloud ? cloud.d.rev : '');
+        applyCloudStore(merged, cloud ? cloud.d.rev : '', cloud ? xpBase(cloud.cloudStore) : null);
         cloudHint({ lastUid: u.uid });
-        if (!cloud) track('sign_up', { method: 'google' });
+        if (!cloudHas) track('sign_up', { method: 'google' });
+        CLOUD.lastPushedRaw = '';
         scheduleCloudPush(200);
-        showToast('☁️ 기록을 합쳐서 계정에 저장해요', 'gold', 3200);
+        showToast(cloudHas ? '☁️ 두 기록을 합쳐서 계정에 저장해요' : '☁️ 이 기기 기록을 계정에 저장해요', 'gold', 3200);
     });
     sheet.querySelector('#ccCloud').addEventListener('click', async () => {
         done();
         snapshotBeforeRestore();
         const next = normalizeStore(cloud ? cloud.cloudStore : { settings: store.settings });
-        next.gen = nextGen(store, cloud && cloud.cloudStore); next.genAt = todayStr();   // 이 기기의 다른 탭·예전 기록이 다시 섞이지 않게
-        applyCloudStore(next, cloud ? cloud.d.rev : '');
+        // 계정 기록을 그대로 받는다(계정의 세대는 올리지 않음 — 다른 기기 기록을 밀어내지 않게). 계정 기록이 없으면 이 기기만 새 세대로 시작
+        if (!cloud) { next.gen = nextGen(store); next.genAt = todayStr(); }
+        if (store.settings.stats === false) next.settings.stats = false;
+        applyCloudStore(next, cloud ? cloud.d.rev : '', cloud ? xpBase(cloud.cloudStore) : null);
         cloudHint({ lastUid: u.uid });
+        reloadOtherTabs();
         showToast(cloud ? '☁️ 계정 기록으로 바꿨어요' : '🆕 빈 기록으로 시작해요', 'gold', 3200);
         try { await cloudPush(true); } catch (e) { }
         location.reload();
@@ -5096,12 +5212,12 @@ function cloudChoose(u, cloud, why) {
 function snapshotBeforeRestore() {
     try { const raw = localStorage.getItem(LS_KEY); if (raw) localStorage.setItem(LS_KEY + '_before_restore', JSON.stringify({ at: new Date().toISOString(), raw })); } catch (e) { }
 }
-// 클라우드에서 온 기록을 이 기기에 반영(저장 + 화면 갱신). rev = 그 기록의 버전
-function applyCloudStore(next, rev) {
+// 클라우드에서 온 기록을 이 기기에 반영(저장 + 화면 갱신). rev = 그 기록의 버전, base = 그 기록의 xpBase
+function applyCloudStore(next, rev, base) {
     store = normalizeStore(next);
     CLOUD.applying = true;
     try { save(); } finally { CLOUD.applying = false; }
-    if (rev !== undefined) cloudHint({ rev: rev || '', at: new Date().toISOString() });
+    if (rev !== undefined) cloudHint({ rev: rev || '', at: new Date().toISOString(), base: base || null });
     CLOUD.lastPull = Date.now();
     refreshAfterExternalChange();
 }
@@ -5118,43 +5234,67 @@ function refreshAfterExternalChange() {
 
 /* ── 동기화: 올리기(바뀐 뒤 몇 초 모아서) · 내려받기(앱으로 돌아올 때) ── */
 function cloudAfterSave() {
-    if (!CLOUD || !CLOUD.user || CLOUD.applying) return;
+    if (!CLOUD || !CLOUD.user || CLOUD.applying || !cloudLinked()) return;
     CLOUD.dirty = true;
     scheduleCloudPush(4000);
 }
 function scheduleCloudPush(ms) {
-    if (!CLOUD.user) return;
+    if (!cloudLinked()) return;
     if (!CLOUD.firstDirty) CLOUD.firstDirty = Date.now();
     const wait = Math.max(0, Math.min(ms, 20000 - (Date.now() - CLOUD.firstDirty)));
     clearTimeout(CLOUD.pushTimer);
     CLOUD.pushTimer = setTimeout(() => cloudPush(), wait);
 }
+async function packJson(json) {
+    const bytes = new TextEncoder().encode(json);
+    if (bytes.length <= CLOUD_JSON_LIMIT) return { enc: 'json', data: json };
+    if (typeof CompressionStream !== 'function') throw new Error('too-big');
+    const gz = new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer());
+    const data = b64FromBytes(gz);
+    if (data.length > CLOUD_DOC_LIMIT) throw new Error('too-big');
+    return { enc: 'gz', data };
+}
 async function cloudPush(force) {
-    if (!CLOUD.user || !CLOUD.sync) return;
+    if (!cloudLinked() || newerSchema) return;
     if (CLOUD.pushing) { CLOUD.again = true; return; }
     const raw = JSON.stringify(store);
     if (!force && raw === CLOUD.lastPushedRaw) { CLOUD.dirty = false; CLOUD.firstDirty = 0; return; }
     CLOUD.pushing = true; CLOUD.dirty = false; CLOUD.firstDirty = 0;
     const m = CLOUD.sync, uid = CLOUD.user.uid, ref = m.doc(CLOUD.db, 'users', uid);
     const newRev = randId();
-    let merged = null, wrote = null;
+    let merged = null, lost = false, sent = '', sentBase = null, localBase = null;
     try {
         await m.runTransaction(CLOUD.db, async tx => {
             const snap = await tx.get(ref);
-            merged = null;
+            merged = null; lost = false;
+            const h = cloudHint();
+            if (!snap.exists() && h.rev) throw new Error('deleted');   // 맞춘 적 있는데 문서가 없음 = 다른 기기에서 클라우드 기록을 지움(되살리지 않는다)
             // 마지막으로 맞춘 뒤 다른 기기가 올렸으면 먼저 합친다
-            if (snap.exists() && snap.data().rev && snap.data().rev !== cloudHint().rev) merged = mergeStores(await unpackStore(snap.data()), store);
-            const body = await packStore(merged || store);
-            wrote = merged || store;
+            if (snap.exists() && snap.data().rev && snap.data().rev !== h.rev) {
+                const cs = await unpackStore(snap.data());
+                localBase = xpBase(store);
+                const r = cloudMerge(cs, store, h.base); merged = normalizeStore(r.store); lost = r.lost;
+            }
+            const src = merged || store;
+            sent = JSON.stringify(src); sentBase = xpBase(src);   // 실제로 보낸 내용(보내는 사이 저장해도 바뀌지 않게 문자열로)
+            const body = await packJson(sent);
             tx.set(ref, { v: 1, enc: body.enc, data: body.data, rev: newRev, updatedAt: m.serverTimestamp(), app: APP_VERSION });
         });
         if (!CLOUD.user || CLOUD.user.uid !== uid) return;
-        if (merged) applyCloudStore(merged);
-        cloudHint({ rev: newRev, at: new Date().toISOString() });
-        CLOUD.lastPushedRaw = JSON.stringify(wrote);
+        if (merged) {
+            if (lost) snapshotBeforeRestore();
+            // 올리는 동안 이 기기에서 저장한 공부도 함께 남긴다
+            applyCloudStore(cloudMerge(merged, store, localBase).store);
+            if (lost) showToast(LOST_TOAST, '', 5200);
+        }
+        cloudHint({ rev: newRev, at: new Date().toISOString(), base: sentBase });
+        CLOUD.lastPushedRaw = sent;
         CLOUD.error = '';
         CLOUD.fails = 0;
+        if (JSON.stringify(store) !== sent) scheduleCloudPush(1000);   // 보낸 뒤 달라진 부분도 올린다
     } catch (e) {
+        if (e && e.message === 'deleted') { CLOUD.pushing = false; onRemoteDeleted(); return; }
+        if (e && e.message === 'newer') return;
         CLOUD.dirty = true;
         CLOUD.fails = (CLOUD.fails || 0) + 1;
         CLOUD.error = e && e.message === 'too-big' ? '기록이 너무 커서 클라우드에 저장하지 못했어요 — 백업 코드를 이용해 주세요' : (navigator.onLine === false ? '오프라인 — 인터넷이 연결되면 저장해요' : '클라우드 저장이 잠시 실패했어요 — 곧 다시 시도해요');
@@ -5166,37 +5306,83 @@ async function cloudPush(force) {
     }
 }
 async function cloudPull() {
-    if (!CLOUD.user || !CLOUD.sync || CLOUD.pushing) return;
+    if (!cloudLinked() || CLOUD.pushing || newerSchema) return;
     const m = CLOUD.sync, uid = CLOUD.user.uid;
+    const rev0 = cloudHint().rev;
     CLOUD.lastPull = Date.now();
     try {
         const snap = await m.getDoc(m.doc(CLOUD.db, 'users', uid));
-        if (!CLOUD.user || CLOUD.user.uid !== uid) return;
-        if (!snap.exists()) { scheduleCloudPush(500); return; }
+        if (!cloudLinked() || CLOUD.user.uid !== uid) return;
+        if (!snap.exists()) { if (cloudHint().rev) onRemoteDeleted(); else scheduleCloudPush(500); return; }
         const d = snap.data();
         if (d.rev && d.rev === cloudHint().rev) return;   // 마지막으로 맞춘 뒤 바뀐 게 없음
         const cloudStore = await unpackStore(d);
-        const merged = mergeStores(cloudStore, store);
-        applyCloudStore(merged, d.rev);
-        if (JSON.stringify(merged) !== JSON.stringify(cloudStore)) scheduleCloudPush(1500);
+        const h = cloudHint();
+        if (!cloudLinked() || CLOUD.user.uid !== uid || CLOUD.pushing || h.rev !== rev0) return;   // 그사이 올리기가 시작·완료됨 — 그쪽이 합친다
+        const r = cloudMerge(cloudStore, store, h.base);
+        if (r.lost) snapshotBeforeRestore();
+        applyCloudStore(r.store, d.rev, xpBase(cloudStore));
+        if (JSON.stringify(store) !== JSON.stringify(cloudStore)) scheduleCloudPush(1500);
         else CLOUD.lastPushedRaw = JSON.stringify(store);
         CLOUD.error = '';
+        if (r.lost) showToast(LOST_TOAST, '', 5200);
     } catch (e) { CLOUD.error = navigator.onLine === false ? '오프라인 — 인터넷이 연결되면 맞춰요' : ''; refreshCloudUi(); }
 }
-async function cloudDeleteAll() {
-    if (!CLOUD.user || !CLOUD.sync) return;
-    if (!confirm('구글 계정에 저장된 학습 기록을 모두 지우고 로그아웃할까요?\n(이 기기의 기록은 남아요. 지운 클라우드 기록은 되돌릴 수 없어요)')) return;
-    const m = CLOUD.sync;
+// 다른 기기에서 '클라우드 기록 지우기'를 함: 되살리지 않고 이 기기도 로그아웃(이 기기 기록은 그대로)
+async function onRemoteDeleted() {
+    if (CLOUD.remoteDeleted) return; CLOUD.remoteDeleted = true;
     clearTimeout(CLOUD.pushTimer);
+    CLOUD.dirty = false; CLOUD.lastPushedRaw = ''; CLOUD.firstDirty = 0; CLOUD.error = '';
+    CLOUD.signingOut = true;
+    try { await CLOUD.sync.signOut(CLOUD.auth); } catch (e) { CLOUD.signingOut = false; }
+    cloudHint({ uid: '', lastUid: '', rev: '', at: '', base: null });
+    CLOUD.remoteDeleted = false;
+    showToast('☁️ 다른 기기에서 클라우드 기록을 지워서 로그아웃했어요. 이 기기의 기록은 그대로 남아 있어요', '', 5200);
+    if (S.view === 'settings') renderSettings();
+}
+function cloudDeleteAll() {
+    if (!CLOUD.user || !CLOUD.sync) return;
+    const sheet = openModal('<div class="sheet-head"><b>🗑️ 클라우드 기록 지우기</b><button class="sheet-close" data-close-overlay aria-label="닫기">✕</button></div>' +
+        '<div style="font-size:14px;line-height:1.7;margin-bottom:12px">구글 계정에 저장된 <b>학습 기록</b>과 <b>로그인 정보</b>(이름·이메일)를 모두 지우고 로그아웃해요. 지운 클라우드 기록은 되돌릴 수 없어요.<br><span class="muted">이 기기의 기록은 그대로 남아요. 본인 확인을 위해 구글 로그인 창이 한 번 더 열려요.</span></div>' +
+        '<button class="btn block" id="delGo" style="background:#dc2626">구글로 확인하고 모두 지우기</button>' +
+        '<button class="btn gray block" data-close-overlay style="margin-top:8px">취소</button>');
+    sheet.querySelector('#delGo').addEventListener('click', () => { closeModal(true); cloudDeleteRun(); });
+}
+async function cloudDeleteRun() {
+    const m = CLOUD.sync, user = CLOUD.user;
+    if (!m || !user) return;
+    const uid = user.uid;
+    // 오래전에 로그인했으면 구글이 계정 삭제를 막으므로 먼저 다시 확인한다(팝업은 누른 순간 바로 열어야 막히지 않음)
+    let reauth = null;
     try {
-        await m.deleteDoc(m.doc(CLOUD.db, 'users', CLOUD.user.uid));
-        try { await m.deleteUser(CLOUD.user); CLOUD.signingOut = true; }   // 로그인한 지 오래됐으면 계정 연결은 남고 로그아웃만
-        catch (e) { CLOUD.signingOut = true; await m.signOut(CLOUD.auth); }
-        cloudHint({ uid: '', lastUid: '', rev: '', at: '' });
-        CLOUD.lastPushedRaw = '';
-        showToast('🗑️ 클라우드 기록을 지우고 로그아웃했어요', '', 3200);
-        track('cloud_delete');
-    } catch (e) { showToast('지우지 못했어요. 인터넷 연결을 확인해 주세요'); }
+        const em = cloudCfg().emulator;
+        if (isObj(em) && typeof window.__emuGoogleIdToken === 'string' && m.reauthenticateWithCredential) reauth = m.reauthenticateWithCredential(user, m.GoogleAuthProvider.credential(window.__emuGoogleIdToken));   // 에뮬레이터 자동 테스트 전용
+        else if (m.reauthenticateWithPopup) { const pv = new m.GoogleAuthProvider(); pv.setCustomParameters({ prompt: 'select_account' }); reauth = m.reauthenticateWithPopup(user, pv); }
+    } catch (e) { reauth = Promise.reject(e); }
+    if (reauth) {
+        try { await reauth; }
+        catch (e) {
+            const code = (e && e.code) || '';
+            if (/popup-closed-by-user|cancelled-popup-request|user-cancelled/.test(code)) showToast('취소했어요 — 아무것도 지우지 않았어요');
+            else if (/user-mismatch/.test(code)) showToast('지금 로그인한 구글 계정을 골라 주세요 — 아무것도 지우지 않았어요', '', 3600);
+            else if (/popup-blocked/.test(code)) showToast('팝업이 막혔어요. 팝업을 허용한 뒤 다시 눌러 주세요 — 아무것도 지우지 않았어요', '', 4200);
+            else showToast('본인 확인을 하지 못했어요' + (code ? ' (' + code.replace('auth/', '') + ')' : '') + ' — 아무것도 지우지 않았어요', '', 3600);
+            return;
+        }
+    }
+    if (!CLOUD.user || CLOUD.user.uid !== uid) return;
+    clearTimeout(CLOUD.pushTimer);
+    CLOUD.deleting = true; CLOUD.signingOut = true;   // 지우는 동안 올리기 금지 · 로그아웃 안내 토스트 막기(deleteUser 안의 로그아웃보다 먼저)
+    try { await m.deleteDoc(m.doc(CLOUD.db, 'users', uid)); }
+    catch (e) { CLOUD.deleting = false; CLOUD.signingOut = false; showToast('지우지 못했어요. 인터넷 연결을 확인해 주세요'); return; }
+    let gone = false;
+    try { await m.deleteUser(CLOUD.user); gone = true; }
+    catch (e) { try { await m.signOut(CLOUD.auth); } catch (e2) { } }
+    CLOUD.deleting = false;
+    cloudHint({ uid: '', lastUid: '', rev: '', at: '', base: null });
+    CLOUD.lastPushedRaw = ''; CLOUD.dirty = false; CLOUD.error = '';
+    showToast(gone ? '🗑️ 클라우드 기록과 계정 정보를 지우고 로그아웃했어요' : '🗑️ 클라우드 학습 기록은 지웠지만 계정 정보(이름·이메일)는 지우지 못했어요 — 다시 로그인한 뒤 한 번 더 눌러 주세요(지금은 로그아웃됐어요)', '', gone ? 3200 : 5600);
+    track('cloud_delete', { account: gone ? 1 : 0 });
     if (S.view === 'settings') renderSettings();
 }
 function cloudStatusText() {
@@ -5211,6 +5397,7 @@ function cloudStatusText() {
 /* ── 화면: 설정 카드 · 언어 선택 화면 안내 · 홈 권유 ── */
 function cloudCardHtml(where) {
     if (!cloudOn()) return '';
+    if (IN_APP && !CLOUD.user && where !== 'settings') return '';   // 앱 안 브라우저는 로그인이 막혀 있다 — 기본 브라우저 안내(inAppNote)가 따로 있음
     const st = CLOUD.state;
     const u = CLOUD.user;
     if (u) {
@@ -5230,7 +5417,7 @@ function cloudCardHtml(where) {
             : '로그인하면 기록이 구글 계정에 자동 저장돼서, 휴대폰·PC 어디서든 이어서 공부할 수 있어요. 로그인하지 않아도 이 기기에서는 그대로 쓸 수 있어요.';
     return '<div class="card cloud-card" id="cloudCard"><div style="font-weight:800;font-size:14.5px;margin-bottom:4px">☁️ ' + (where === 'picker' ? '기록 이어서 하기' : '기록을 안전하게 보관하기') + '</div>' +
         '<div class="muted" style="margin-bottom:10px;line-height:1.6">' + desc + '</div>' +
-        (IN_APP ? '<div class="inapp-note" style="margin:0 0 8px">앱 안의 브라우저에서는 구글 로그인이 막혀 있어요. 메뉴 ⋮ → 다른 브라우저로 열기 후 로그인해 주세요.</div>' : '') +
+        (IN_APP ? '<div class="inapp-note" style="margin:0 0 8px">앱 안의 브라우저에서는 구글 로그인이 막혀 있어요. ' + inAppHowTo() + ' 후 로그인해 주세요.</div>' : '') +
         '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn gbtn" id="cloudIn"' + (busy ? ' disabled' : '') + '><span class="g-logo" aria-hidden="true">G</span> ' + label + '</button>' +
         (where === 'home' ? '<button class="btn small gray" id="cloudLater">나중에</button>' : '') + '</div>' +
         (where !== 'home' ? '<div class="muted" style="margin-top:8px">이름·이메일과 학습 기록만 저장해요 · <a href="../privacy.html" target="_blank" rel="noopener">개인정보 안내</a></div>' : '') +
@@ -5246,7 +5433,7 @@ function bindCloudCard(where) {
     const out = document.getElementById('cloudOut');
     if (out) out.addEventListener('click', () => {
         const sheet = openModal('<div class="sheet-head"><b>로그아웃</b><button class="sheet-close" data-close-overlay aria-label="닫기">✕</button></div>' +
-            '<div style="font-size:14px;line-height:1.7;margin-bottom:12px">기록은 구글 계정에 저장돼 있어요. 이 기기의 기록은 어떻게 할까요?</div>' +
+            '<div style="font-size:14px;line-height:1.7;margin-bottom:12px">' + (cloudLinked() && !CLOUD.dirty && !CLOUD.pushing && !CLOUD.error && JSON.stringify(store) === CLOUD.lastPushedRaw ? '기록은 구글 계정에 저장돼 있어요.' : '⚠️ 아직 계정에 올리지 못한 기록이 있을 수 있어요. 로그아웃하기 전에 한 번 더 저장해 볼게요.') + ' 이 기기의 기록은 어떻게 할까요?</div>' +
             '<button class="btn block" id="outKeep">이 기기에 남겨 두기</button>' +
             '<button class="btn gray block" id="outWipe" style="margin-top:8px">이 기기에서 지우기 (함께 쓰는 기기라면)</button>');
         sheet.querySelector('#outKeep').addEventListener('click', () => { closeModal(true); cloudLogout(false); });
@@ -5269,7 +5456,7 @@ function refreshCloudUi() {
     bindCloudCard(where);
 }
 function cloudNudgeDue() {
-    if (!cloudOn() || CLOUD.user || cloudHint().uid) return false;
+    if (!cloudOn() || IN_APP || CLOUD.user || cloudHint().uid) return false;
     if (doneCount() < 2) return false;
     return !(store.seen.cloudNudge && dayDiff(store.seen.cloudNudge, todayStr()) < 10);
 }
@@ -5315,7 +5502,7 @@ function openFeedback(rating, from) {
         '<div class="seg" role="group" aria-label="만족도" style="margin-bottom:10px">' + R.map(r => '<button data-rate="' + r[0] + '" aria-pressed="' + (pick === r[0]) + '">' + r[1] + ' ' + r[2] + '</button>').join('') + '</div>' +
         '<textarea id="fbText" maxlength="1500" rows="4" style="width:100%;border:1px solid var(--border);border-radius:12px;padding:10px;font-size:14px;font-family:inherit" placeholder="좋았던 점, 불편했던 점, 이런 게 있으면 좋겠다… 무엇이든 적어 주세요"></textarea>' +
         '<input id="fbContact" maxlength="100" style="width:100%;border:1px solid var(--border);border-radius:12px;padding:10px;font-size:13px;margin-top:8px;font-family:inherit" placeholder="(선택) 답장 받을 연락처 — 이메일이나 카톡 ID">' +
-        '<div class="muted" style="margin:6px 0 10px">보내는 내용: 위에 쓴 글, 지금 배우는 언어, 앱 버전, 기기 종류(휴대폰/PC) · <a href="../privacy.html" target="_blank" rel="noopener">개인정보 안내</a></div>' +
+        '<div class="muted" style="margin:6px 0 10px">보내는 내용: 위에 쓴 글·만족도, (적었다면) 연락처, 지금 배우는 언어, 앱 버전, 기기 종류(휴대폰/PC)' + (CLOUD.user ? ', 계정 고유 번호(로그인 중)' : '') + ' · <a href="../privacy.html" target="_blank" rel="noopener">개인정보 안내</a></div>' +
         '<button class="btn block" id="fbSend">보내기</button>');
     sheet.querySelectorAll('[data-rate]').forEach(b => b.addEventListener('click', () => { pick = b.dataset.rate; sheet.querySelectorAll('[data-rate]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); }));
     sheet.querySelector('#fbSend').addEventListener('click', async () => {
@@ -5344,13 +5531,13 @@ function appBaseUrl() { return location.origin + location.pathname.replace(/[^/]
 function shareUrl(lang, src) {
     const q = new URLSearchParams();
     if (lang) q.set('lang', lang);
-    q.set('utm_source', src || 'share'); q.set('utm_medium', 'friend');
+    q.set('utm_source', src || 'share'); q.set('utm_medium', /inapp/.test(src || '') ? 'browser_switch' : 'friend');   // 앱 안 브라우저 → 기본 브라우저는 본인이 옮긴 것
     return appBaseUrl() + '?' + q.toString();
 }
 async function shareApp(kind, text) {
-    const lang = (CUR && CUR.code) || '';
+    const lang = /^brag/.test(kind || '') ? ((CUR && CUR.code) || '') : '';   // 자랑은 그 언어로, 추천은 친구가 언어를 고르게
     const url = shareUrl(lang, kind || 'share');
-    const msg = text || ((CUR ? CUR.flag + ' ' : '') + '왕초보도 하루 10분이면 되는 외국어 회화 앱이에요. 영어·중국어·일본어·스페인어·프랑스어 무료!');
+    const msg = text || ('랭귀지 스타터 — 왕초보도 하루 10분이면 되는 외국어 회화 앱이에요. 영어·중국어·일본어·스페인어·프랑스어 무료!');
     track('share', { kind: kind || 'share' });
     try {
         if (navigator.share) { await navigator.share({ title: '랭귀지 스타터', text: msg, url }); return; }
