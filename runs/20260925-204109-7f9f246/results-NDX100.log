@@ -1,0 +1,24 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/runner/work/beomstar_git/beomstar_git/trading/swing_engine/backtest.py", line 379, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/runner/work/beomstar_git/beomstar_git/trading/swing_engine/backtest.py", line 365, in main
+    res = run(args)
+          ^^^^^^^^^
+  File "/home/runner/work/beomstar_git/beomstar_git/trading/swing_engine/backtest.py", line 267, in run
+    frames, bench, cov = load_inputs(args, market, params["benchmark"])
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/beomstar_git/beomstar_git/trading/swing_engine/backtest.py", line 239, in load_inputs
+    else D.fetch_universe(market, cache_dir=cache))
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/beomstar_git/beomstar_git/trading/swing_engine/data.py", line 630, in fetch_universe
+    tickers = fetch_ndx100()
+              ^^^^^^^^^^^^^^
+  File "/home/runner/work/beomstar_git/beomstar_git/trading/swing_engine/data.py", line 529, in fetch_ndx100
+    return list(dict.fromkeys(_pick_symbol_column(_wiki_tables(WIKI_NDX100), 90, 110)))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/beomstar_git/beomstar_git/trading/swing_engine/data.py", line 521, in _pick_symbol_column
+    raise ValueError("no constituent table with a Symbol/Ticker column found")
+ValueError: no constituent table with a Symbol/Ticker column found

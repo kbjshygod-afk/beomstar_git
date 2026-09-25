@@ -1,0 +1,39 @@
+ERROR yfinance: $RAIN-USD: possibly delisted; no timezone found
+ERROR yfinance: $BTW-USD: possibly delisted; no timezone found
+ERROR yfinance: $CC-USD: possibly delisted; no timezone found
+ERROR yfinance: $HYPE-USD: possibly delisted; no timezone found
+ERROR yfinance: $FIGR_HELOC-USD: possibly delisted; no timezone found
+ERROR yfinance: 
+5 Failed downloads:
+ERROR yfinance: ['RAIN-USD', 'BTW-USD', 'CC-USD', 'HYPE-USD', 'FIGR_HELOC-USD']: possibly delisted; no timezone found
+WARNING swing_engine.data: yahoo SHIB-USD: dropped 217 row(s) with a missing or non-positive price
+ERROR yfinance: $FIGR_HELOC-USD: possibly delisted; no timezone found
+ERROR yfinance: $CC-USD: possibly delisted; no timezone found
+ERROR yfinance: $BTW-USD: possibly delisted; no timezone found
+ERROR yfinance: $RAIN-USD: possibly delisted; no timezone found
+ERROR yfinance: $HYPE-USD: possibly delisted; no timezone found
+ERROR yfinance: 
+5 Failed downloads:
+ERROR yfinance: ['FIGR_HELOC-USD', 'CC-USD', 'BTW-USD', 'RAIN-USD', 'HYPE-USD']: possibly delisted; no timezone found
+ERROR yfinance: $FIGR_HELOC-USD: possibly delisted; no timezone found
+ERROR yfinance: $CC-USD: possibly delisted; no timezone found
+ERROR yfinance: $BTW-USD: possibly delisted; no timezone found
+ERROR yfinance: $RAIN-USD: possibly delisted; no timezone found
+ERROR yfinance: $HYPE-USD: possibly delisted; no timezone found
+ERROR yfinance: 
+5 Failed downloads:
+ERROR yfinance: ['FIGR_HELOC-USD', 'CC-USD', 'BTW-USD', 'RAIN-USD', 'HYPE-USD']: possibly delisted; no timezone found
+WARNING swing_engine.data: yahoo: no data for FIGR_HELOC-USD after 3 attempts - skipped
+WARNING swing_engine.data: yahoo: no data for HYPE-USD after 3 attempts - skipped
+WARNING swing_engine.data: yahoo: no data for RAIN-USD after 3 attempts - skipped
+WARNING swing_engine.data: yahoo: no data for CC-USD after 3 attempts - skipped
+WARNING swing_engine.data: yahoo: no data for BTW-USD after 3 attempts - skipped
+WARNING swing_engine.data: yahoo SHIB-USD: dropped 1 row(s) with a missing or non-positive price
+INFO swing_engine.backtest: simulating proxy (25 symbols)
+INFO swing_engine.backtest: simulating percentile (25 symbols)
+[CRYPTO proxy] CAGR +24.0% vs 지수 +64.0% (초과 -40.0%p), MDD -33.7%, 거래 162
+[CRYPTO percentile] CAGR +25.6% vs 지수 +64.0% (초과 -38.4%p), MDD -29.8%, 거래 136
+테스트 구간 2016-09-25 ~ 2026-09-24 (10.0년, 기준일 = 마지막 확정 봉)
+로드 25/30 · 결과: results/CRYPTO
+미확인 추정값(스캐너 원본 코드 미확인): 피벗=직전 20봉 최고가(당일 제외) · 거래량 평균=직전 50일(당일 제외) · RS=지수 대비 가중 1년 수익률 ≥ 0%p(스캐너는 유니버스 백분위 ≥ 70) · 52주 고저=종가 기준 · 200일선 상승=22봉 전 대비 · 수축비=10/40일 평균 TR · 비용=편도 0.2%
+기계적 룰 출력이며 투자 자문이 아닙니다. 매수·매도 결정은 소유자 본인이 합니다.
