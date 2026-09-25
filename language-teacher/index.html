@@ -623,7 +623,7 @@
     </div>
     <div class="storage-warn" id="storageWarn" role="alert" hidden></div>
     <div class="storage-warn" id="ttsWarn" role="alert" hidden></div>
-    <div class="content" id="main"></div>
+    <div class="content" id="main"><div class="empty-state"><div class="es-emoji">🌍</div>랭귀지 스타터를 여는 중…</div></div>
     <div class="tabbar" id="tabbar" role="tablist" style="display:none"></div>
 </div>
 <div class="toast-box" id="toastBox"></div>
@@ -634,7 +634,7 @@
 <script>
 'use strict';
 /* ═══════════════════ 언어 설정 ═══════════════════ */
-const DATA_VER = '20260925';   // data-*.js / stories-*.js 를 고치면 이 값을 올릴 것(캐시 갱신)
+const DATA_VER = '039ae2bb';   // data·stories 파일 내용 해시 — 데이터를 고치면 node tools/stamp-data-ver.mjs 로 갱신
 const LANGS = {
     en: {
         code: 'en', flag: '🗽', name: '영어', appName: '헬로 영어', tag: '영어',
@@ -690,6 +690,8 @@ const STEP_NAMES = ['단어', '핵심 문장', '회화', '문법', '퀴즈'];
 const LS_KEY = 'lang_starter_v1';
 const DEFAULT_SETTINGS = { koPron: 'auto', rate: 1, freeNav: false, dailyGoal: 30, voice: {}, sfx: true, reminderTime: '21:00' };
 let storageFailed = false, storageCorrupt = false;
+const SCHEMA = 3;   // 저장 형식 번호. 칸을 바꾸면 올릴 것 — 더 높은 번호를 본 옛 화면은 저장하지 않고 새로고침을 권한다
+var newerSchema = false;
 let store = loadStore();
 const APP_VERSION = '2.1';
 const ENTRY_URL = location.href;   // 첫 주소(공유 링크의 utm 등) — 통계용, 시작 코드가 ?lang을 지우기 전에 잡아 둔다
@@ -699,7 +701,7 @@ function loadStore() {
     let d = {};
     try {
         const raw = localStorage.getItem(LS_KEY);
-        if (raw) { try { d = JSON.parse(raw) || {}; } catch (e) { d = {}; storageCorrupt = true; try { localStorage.setItem(LS_KEY + '_corrupt_backup', raw); } catch (e2) { } } }
+        if (raw) { try { d = JSON.parse(raw) || {}; if (isObj(d) && Number(d.schema) > SCHEMA) newerSchema = true; } catch (e) { d = {}; storageCorrupt = true; try { localStorage.setItem(LS_KEY + '_corrupt_backup', raw); } catch (e2) { } } }
     } catch (e) { storageFailed = true; }
     return normalizeStore(d);
 }
@@ -787,6 +789,7 @@ function normalizeStore(d) {
     const byLang = {};
     if (isObj(d.byLang)) Object.keys(d.byLang).forEach(k => { if (isLang(k)) { const c = cleanLangProg(d.byLang[k]); if (c) byLang[k] = c; } });
     return {
+        schema: SCHEMA,
         gen: clampInt(d.gen, 0, 1000000, 0),        // 세대: 복원·계정 기록으로 바꾸기처럼 통째로 바꿀 때 +1 (낮은 세대와는 합치지 않음)
         active: isLang(d.active) ? d.active : null,  // 마지막으로 고른 언어 코드
         byLang,                                     // code → {completed, srs, streak, lastPos, xp, daily, boss, mistakes …}
@@ -861,11 +864,16 @@ function mergeStores(other, mine, force) {   // force: 사용자가 '합치기'�
     return m;
 }
 function nextGen() { return Math.max(0, ...Array.from(arguments).map(x => (x && x.gen) || 0)) + 1; }
+function warnNewer() {
+    if (warnNewer.shown) return; warnNewer.shown = true;
+    setTimeout(() => { try { showToast('🆕 앱이 새 버전으로 바뀌었어요. 새로고침하면 이어서 저장돼요', '', 6000); } catch (e) { } }, 300);
+}
 function save() {
+    if (newerSchema) { warnNewer(); return; }
     try {
         const cur = localStorage.getItem(LS_KEY);
         if (cur && lastRaw !== null && cur !== lastRaw) {
-            let other = null; try { other = normalizeStore(JSON.parse(cur)); } catch (e) { other = null; }
+            let other = null; try { const o = JSON.parse(cur); if (isObj(o) && Number(o.schema) > SCHEMA) { newerSchema = true; warnNewer(); return; } other = normalizeStore(o); } catch (e) { other = null; }
             if (other) store = mergeStores(other, store);
         }
         const raw = JSON.stringify(store);
@@ -1838,14 +1846,18 @@ function importProgress(code) {
 }
 
 /* ═══════════════════ 언어 로딩 · 전환 ═══════════════════ */
-function loadScriptOnce(src, globalName) {
+function loadScriptOnce(src, globalName, retry) {
     if (window[globalName]) return Promise.resolve();
-    if (loadedScripts[src]) return loadedScripts[src];   // 같은 파일을 두 번 불러오지 않도록 약속을 캐시
+    if (loadedScripts[src] && !retry) return loadedScripts[src];   // 같은 파일을 두 번 불러오지 않도록 약속을 캐시
     const pr = new Promise((resolve, reject) => {
         const s = document.createElement('script');
-        s.src = src;
-        s.onload = () => { if (window[globalName]) resolve(); else { delete loadedScripts[src]; s.remove(); reject(new Error('데이터가 비어 있어요: ' + src)); } };
-        s.onerror = () => { delete loadedScripts[src]; s.remove(); reject(new Error('데이터를 불러오지 못했어요: ' + src)); };
+        s.src = retry ? src + (src.includes('?') ? '&' : '?') + 'r=' + Date.now() : src;   // 다시 시도는 멈춘 연결을 피해 새 주소로
+        let done = false;
+        const fail = msg => { if (done) return; done = true; clearTimeout(tm); if (loadedScripts[src] === pr) delete loadedScripts[src]; s.remove(); reject(new Error(msg + ': ' + src)); };
+        // 응답 없이 멈춘 요청(약한 신호·와이파이 전환)은 20초 뒤 실패로 → '다시 시도' 화면
+        const tm = setTimeout(() => { if (!window[globalName]) fail('시간이 너무 오래 걸려요'); }, 20000);
+        s.onload = () => { if (done) return; if (window[globalName]) { done = true; clearTimeout(tm); resolve(); } else fail('데이터가 비어 있어요'); };
+        s.onerror = () => fail('데이터를 불러오지 못했어요');
         document.head.appendChild(s);
     });
     loadedScripts[src] = pr;
@@ -1884,25 +1896,29 @@ async function activateLanguage(code, opts) {
     document.getElementById('hdrSub').textContent = L.desc;
     document.getElementById('avatarBtn').textContent = L.flag;
     document.getElementById('headerStats').innerHTML = '';
-    $main.innerHTML = '<div class="empty-state"><div class="es-emoji">⏳</div>' + esc(L.name) + ' 학습 데이터를 불러오는 중...</div>';
+    $main.innerHTML = '<div class="empty-state"><div class="es-emoji">⏳</div>' + esc(L.name) + ' 학습 데이터를 불러오는 중...<div class="muted" id="slowNote" style="margin-top:6px"></div></div>';
+    const slowT = setTimeout(() => { const n = document.getElementById('slowNote'); if (n && gen === langGen) n.textContent = '📶 연결이 느려요 · 계속 기다리는 중이에요'; }, 8000);
+    const retry = !!(opts && opts.retry);
+    const storyP = loadScriptOnce(L.storyFile, L.storyGlobal, retry).then(() => 'ok', () => 'fail');   // 동화는 데이터와 동시에
     let data;
     try {
-        await loadScriptOnce(L.dataFile, L.dataGlobal);
+        await loadScriptOnce(L.dataFile, L.dataGlobal, retry);
         data = window[L.dataGlobal];
         if (!data || !Array.isArray(data.units)) throw new Error('bad data');
     } catch (e) {
+        clearTimeout(slowT);
         if (gen !== langGen) return;
-        if (store.active === code && navigator.onLine !== false) { store.active = null; save(); }
         $main.innerHTML = '<div class="empty-state fail-screen"><div class="es-emoji">📶</div><b>' + esc(L.name) + ' 학습 자료를 불러오지 못했어요</b><br>인터넷 연결을 확인하고 잠시 후 다시 시도해 주세요.<br>' +
             '<button class="btn" id="retryLoad">🔄 다시 시도</button><br><button class="btn ghost" id="pickOther">🌍 다른 언어 고르기</button></div>';
-        document.getElementById('retryLoad').addEventListener('click', () => { delete window[L.dataGlobal]; activateLanguage(code, opts); });
+        document.getElementById('retryLoad').addEventListener('click', () => { delete window[L.dataGlobal]; activateLanguage(code, Object.assign({}, opts || {}, { retry: true })); });
         document.getElementById('pickOther').addEventListener('click', () => go('picker'));
         return;
     }
-    // 동화 데이터는 있으면 불러오고, 없으면 조용히 비워 둠
-    let stories = [];
-    try { await loadScriptOnce(L.storyFile, L.storyGlobal); stories = (window[L.storyGlobal] && window[L.storyGlobal].stories) || []; }
-    catch (e) { stories = []; }
+    clearTimeout(slowT);
+    // 동화 데이터는 있으면 쓰고, 못 받았으면 읽기 탭에서 다시 시도
+    const storyRes = await storyP;
+    const stories = (window[L.storyGlobal] && window[L.storyGlobal].stories) || [];
+    STORIES_FAILED = storyRes === 'fail' && !stories.length;
     if (gen !== langGen) return;
     CUR = L; DATA = data;
     UNITS = DATA.units || [];
@@ -4088,7 +4104,20 @@ function storyNeed(story) {
     const u = UNITS.find(x => x.unitId === story.unlockAfter);
     return full - (u ? Math.floor(u.lessons.length / 2) : 0);
 }
+let STORIES_FAILED = false;
 function renderStoryList() {
+    if (!STORIES.length && STORIES_FAILED) {
+        $main.innerHTML = '<div class="empty-state"><div class="es-emoji">📶</div><b>읽기 자료를 받지 못했어요</b><br>인터넷이 불안정했던 것 같아요.<br><button class="btn" id="storyRetry">🔄 다시 받기</button></div>';
+        document.getElementById('storyRetry').addEventListener('click', async () => {
+            const L = CUR; $main.innerHTML = '<div class="empty-state"><div class="es-emoji">⏳</div>읽기 자료를 받는 중...</div>';
+            try { await loadScriptOnce(L.storyFile, L.storyGlobal, true); } catch (e) { }
+            if (CUR !== L) return;
+            STORIES = (window[L.storyGlobal] && window[L.storyGlobal].stories) || [];
+            STORIES_FAILED = !STORIES.length;
+            if (S.view === 'story') renderStoryList();
+        });
+        return;
+    }
     if (!STORIES.length) {
         $main.innerHTML = '<div class="empty-state"><div class="es-emoji">📚</div><b>쉬운 읽기 콘텐츠 준비 중</b><br>배운 단어만으로 읽는 짧은 동화가<br>곧 이 자리에 채워질 예정이에요!</div>';
         return;
@@ -4756,7 +4785,9 @@ async function unpackStore(d) {
         if (typeof DecompressionStream !== 'function') throw new Error('old-browser');
         json = await new Response(new Blob([bytesFromB64(d.data)]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
     }
-    return normalizeStore(JSON.parse(json));
+    const obj = JSON.parse(json);
+    if (isObj(obj) && Number(obj.schema) > SCHEMA) { newerSchema = true; warnNewer(); throw new Error('newer'); }
+    return normalizeStore(obj);
 }
 
 /* ── 로그인 상태 ── */
@@ -4785,7 +4816,7 @@ function cloudBoot() {
     // 예전에 로그인했던 기기만 로그인 모듈을 미리 불러와 세션을 되살린다
     if (cloudHint().uid) {
         CLOUD.state = 'loading';
-        setTimeout(() => { loadFbSync().catch(() => { CLOUD.state = 'error'; refreshCloudUi(); }); }, 400);
+        setTimeout(() => { loadFbSync().catch(() => { CLOUD.state = 'error'; refreshCloudUi(); }); }, 1200);
     }
     window.addEventListener('online', () => { if (CLOUD.user) { cloudPull(); scheduleCloudPush(500); } });
     document.addEventListener('visibilitychange', () => {
@@ -4793,12 +4824,13 @@ function cloudBoot() {
         if (document.hidden) { if (CLOUD.dirty) cloudPush(); }
         else if (Date.now() - CLOUD.lastPull > 30000) cloudPull();
     });
-    initAnalytics();
+    // 통계는 첫 화면·학습 데이터를 다 받은 뒤(이벤트는 그동안 모아 둠)
+    const later = () => setTimeout(initAnalytics, slowNet() ? 20000 : 3000);
+    if (document.readyState === 'complete') later(); else window.addEventListener('load', later, { once: true });
 }
+function slowNet() { const c = navigator.connection; return !!(c && (c.saveData || /(^|-)(2g|3g)$/.test(c.effectiveType || ''))); }
 function prefetchFbSync() {
-    if (!cloudOn() || CLOUD.sync || fbSyncPromise) return;
-    const c = navigator.connection;
-    if (c && c.saveData) return;
+    if (!cloudOn() || CLOUD.sync || fbSyncPromise || slowNet()) return;
     const go = () => { loadFbSync().then(() => refreshCloudUi()).catch(() => { }); };
     if (window.requestIdleCallback) requestIdleCallback(go, { timeout: 2500 }); else setTimeout(go, 1200);
 }
@@ -5099,7 +5131,7 @@ function bindCloudCard(where) {
     });
     const del = document.getElementById('cloudDel');
     if (del) del.addEventListener('click', e => { e.preventDefault(); cloudDeleteAll(); });
-    if (!CLOUD.user && cloudOn() && !IN_APP) prefetchFbSync();
+    if (!CLOUD.user && cloudOn() && !IN_APP && where !== 'picker') prefetchFbSync();   // 언어 고르는 화면에선 학습 데이터가 먼저
 }
 function refreshCloudUi() {
     const card = document.getElementById('cloudCard');
