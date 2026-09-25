@@ -1,8 +1,8 @@
-INFO swing_engine.backtest: simulating proxy (101 symbols)
-INFO swing_engine.backtest: simulating percentile (101 symbols)
-[NDX100 proxy] CAGR +23.4% vs 지수 +20.3% (초과 +3.1%p), MDD -36.3%, 거래 483
-[NDX100 percentile] CAGR +22.9% vs 지수 +20.3% (초과 +2.6%p), MDD -40.4%, 거래 462
-테스트 구간 2016-09-26 ~ 2026-09-25 (10.0년, 기준일 = 마지막 확정 봉)
-로드 101/101 · 결과: results/NDX100
+INFO swing_engine.backtest: simulating proxy (150 symbols)
+INFO swing_engine.backtest: simulating percentile (150 symbols)
+[KOSDAQ proxy] CAGR +31.4% vs 지수 +2.1% (초과 +29.3%p), MDD -27.4%, 거래 936
+[KOSDAQ percentile] CAGR +26.1% vs 지수 +2.1% (초과 +24.0%p), MDD -29.8%, 거래 889
+테스트 구간 2016-09-26 ~ 2026-09-23 (10.0년, 기준일 = 마지막 확정 봉)
+로드 150/150 · 결과: results/KOSDAQ
 미확인 추정값(스캐너 원본 코드 미확인): 피벗=직전 20봉 최고가(당일 제외) · 거래량 평균=직전 50일(당일 제외) · RS=지수 대비 가중 1년 수익률 ≥ 0%p(스캐너는 유니버스 백분위 ≥ 70) · 52주 고저=종가 기준 · 200일선 상승=22봉 전 대비 · 수축비=10/40일 평균 TR · 비용=편도 0.2%
 기계적 룰 출력이며 투자 자문이 아닙니다. 매수·매도 결정은 소유자 본인이 합니다.
