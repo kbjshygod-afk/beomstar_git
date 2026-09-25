@@ -53,6 +53,10 @@
   // 예전 기록(localStorage '')은 읽기만 하고 지우지 않는다. 같은 사이트의 랭귀지 스타터가 처음 열 때 그대로 이어받는다.
   (function () {
     var KEY = '';
+    // 예전 Emma를 계속 쓰기로 고른 사람은 바로 Emma로
+    try { if (localStorage.getItem('emma_stay') === '1') { location.replace('emma.html'); return; } } catch (e) { }
+    var emmaRec = false;
+    try { emmaRec = !!(localStorage.getItem('emma_v2') || localStorage.getItem('emma_api_key') || localStorage.getItem('emma_gemini_key')); } catch (e) { }
     var go = document.getElementById('go');
     var ua = navigator.userAgent || '';
     var inApp = /KAKAOTALK|NAVER\(inapp|Instagram|FBAN|FBAV|Line\/|BAND\/|DaumApps|everytimeApp|Barcelona|musical_ly|BytedanceWebview/i.test(ua);
@@ -66,6 +70,12 @@
         (/KAKAOTALK/i.test(ua) ? '<br><a href="kakaotalk://web/openExternal?url=' + encodeURIComponent(location.href) + '">👉 기본 브라우저로 열기</a>' : '') + '</div>';
     }
     if (hasRec) document.getElementById('recBox').innerHTML = '<div class="rec">📦 이 기기에 기록이 있어요: 완료 레슨 ' + lessons + '개 · 복습 카드 ' + cards + '장<br><span style="font-weight:600">랭귀지 스타터가 처음 열 때 그대로 이어받아요</span></div>';
+    if (emmaRec) {   // Emma 기록이 있으면 자동으로 넘기지 않고 고르게 한다
+      document.getElementById('recBox').innerHTML = '<div class="rec">📦 이 기기에 Emma 기록이 있어요. 계속 Emma를 쓰려면 아래 “예전 Emma 계속 쓰기”를 눌러 주세요(다음부터 바로 열려요).</div>';
+      var st2 = document.getElementById('stayEmma');
+      if (st2) { st2.textContent = '👉 예전 Emma 계속 쓰기 (퀴즈·AI 자유 회화)'; st2.style.fontWeight = '700'; st2.addEventListener('click', function () { try { localStorage.setItem('emma_stay', '1'); } catch (e) { } }); }
+      return;
+    }
     if (inApp && hasRec) return;
     if (!hasRec && !document.getElementById('stayEmma')) { location.replace(go.href); return; }
     var left = 5, cd = document.getElementById('countdown'), timer = null;

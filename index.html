@@ -4,8 +4,6 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <meta name="theme-color" content="#0f172a" />
-<meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <title>랭귀지 스타터 · 왕초보 외국어 회화 하루 10분</title>
 <meta name="description" content="영어·중국어·일본어·스페인어·프랑스어 왕초보 회화를 하루 10분씩. 설치 없이 브라우저에서 바로 쓰는 랭귀지 스타터와 학습 앱 모음이에요." />
 <link rel="canonical" href="https://kbjshygod-afk.github.io/beomstar_git/" />
@@ -24,6 +22,7 @@
 <link rel="icon" href="language-teacher/icons/favicon-32.png" type="image/png" sizes="32x32" />
 <link rel="icon" href="language-teacher/icons/favicon.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="language-teacher/icons/apple-touch-icon.png" />
+<script src="language-teacher/cloud-config.js?v=1" defer></script>
 <style>
 /* =========================================================
    앱 목록 페이지
@@ -52,7 +51,7 @@ body {
                "Malgun Gothic", "Segoe UI", Roboto, sans-serif;
   font-size: 16px;
   line-height: 1.6;
-  padding: 28px 16px calc(48px + env(safe-area-inset-bottom));
+  padding: calc(28px + env(safe-area-inset-top)) 16px calc(48px + env(safe-area-inset-bottom));
   max-width: 640px;
   margin: 0 auto;
   -webkit-text-size-adjust: 100%;
@@ -195,11 +194,25 @@ footer a { color: var(--accent); }
 
 </main>
 
+<p class="section-label" style="text-align:center;margin-top:18px">📲 홈 화면에는 「랭귀지 스타터 시작하기」를 연 뒤 추가하세요.</p>
+
 <footer>
-  학습 기록은 기본적으로 이 기기의 브라우저에만 저장돼요. 구글로 로그인하면 기기끼리 이어져요.<br />
-  말하기 채점 음성은 브라우저 회사(구글·애플)의 음성 인식을 거칠 수 있어요 · <a href="privacy.html">개인정보 안내</a><br />
+  학습 기록은 이 기기의 브라우저에만 저장돼요(가입·설치 없음).<span id="hubCloud"></span><br />
+  말하기 채점 음성은 브라우저 회사(구글·애플)의 음성 인식을 거칠 수 있어요 · <a href="privacy.html">개인정보 안내</a><span id="hubContact"></span><br />
   예전 「니하오 중국어」「올라 스페인어」「Daily English Quest」 기록은 랭귀지 스타터가 그대로 이어받아요.
 </footer>
+<script>
+  // 클라우드(구글 로그인)·문의 링크는 language-teacher/cloud-config.js 설정을 따라 자동으로 문구를 바꾼다
+  document.addEventListener('DOMContentLoaded', function () {
+    var c = window.CLOUD_CONFIG, k = window.SITE_CONTACT;
+    if (c && c.apiKey) document.getElementById('hubCloud').textContent = ' 구글로 로그인하면 기기끼리 이어져요.';
+    if (k && typeof k.url === 'string' && /^https:\/\//.test(k.url)) {
+      var a = document.createElement('a'); a.href = k.url; a.target = '_blank'; a.rel = 'noopener';
+      a.textContent = '💬 ' + (typeof k.label === 'string' && k.label.trim() ? k.label.trim().slice(0, 30) : '문의·오류 제보');
+      var box = document.getElementById('hubContact'); box.appendChild(document.createTextNode(' · ')); box.appendChild(a);
+    }
+  });
+</script>
 
 </body>
 </html>

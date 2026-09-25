@@ -79,3 +79,9 @@ window.CLOUD_CONFIG = {
 - **`operation-not-allowed` 오류**가 나면 3-2의 Google 사용 설정을 확인하세요.
 - **요금이 나올까 걱정돼요.** Spark(무료) 요금제는 한도를 넘으면 그날만 멈추고 요금이 청구되지 않습니다.
 - **Firebase SDK 버전 올리기**: `tools/firebase`에서 `npm install && npm run build`를 실행하고, `language-teacher/index.html`의 `FB_VER`를 맞춥니다.
+
+## 켜기 전 문구 확인 (체크리스트)
+- [ ] `language-teacher/cloud-config.js`의 `SITE_CONTACT`에 문의 링크(구글 설문지나 오픈채팅, https)를 넣었나요? 허브·설정·도움말·개인정보 안내에 함께 나타나요.
+- [ ] `privacy.html` 6절 운영자 이름(닉네임 가능)을 확인했나요?
+- [ ] 통계를 켜 둘지(기본 켜짐, 사용자가 설정에서 끔) 정했나요? `measurementId`를 빼면 통계만 꺼져요.
+- [ ] 허브(index.html)와 개인정보 안내는 `CLOUD_CONFIG`가 있으면 '구글 로그인' 문구가 저절로 나타나요. 따로 고칠 필요는 없어요.

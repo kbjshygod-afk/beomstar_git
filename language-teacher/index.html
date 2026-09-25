@@ -633,6 +633,14 @@
 <script src="cloud-config.js?v=1"></script>
 <script>
 'use strict';
+// 앱 안 브라우저에서 '기록 들고 열기'로 온 경우: 주소의 #imp=LS3:… 를 먼저 떼어 둔다(통계 주소·화면에 남지 않게)
+const INCOMING_IMPORT = (() => {
+    try {
+        const m = /^#imp=(LS3:[A-Za-z0-9_-]{8,})$/.exec(location.hash);
+        if (m) { history.replaceState(null, '', location.pathname + location.search); return m[1]; }
+    } catch (e) { }
+    return null;
+})();
 /* ═══════════════════ 언어 설정 ═══════════════════ */
 const DATA_VER = '039ae2bb';   // data·stories 파일 내용 해시 — 데이터를 고치면 node tools/stamp-data-ver.mjs 로 갱신
 const LANGS = {
@@ -689,7 +697,7 @@ const STEP_NAMES = ['단어', '핵심 문장', '회화', '문법', '퀴즈'];
 /* ═══════════════════ 저장소 (언어별 진도 분리) ═══════════════════ */
 const LS_KEY = 'lang_starter_v1';
 const DEFAULT_SETTINGS = { koPron: 'auto', rate: 1, freeNav: false, dailyGoal: 30, voice: {}, sfx: true, reminderTime: '21:00' };
-let storageFailed = false, storageCorrupt = false;
+let storageFailed = false, storageCorrupt = false, storageFailReason = '';
 const SCHEMA = 3;   // 저장 형식 번호. 칸을 바꾸면 올릴 것 — 더 높은 번호를 본 옛 화면은 저장하지 않고 새로고침을 권한다
 var newerSchema = false;
 let store = loadStore();
@@ -864,6 +872,10 @@ function mergeStores(other, mine, force) {   // force: 사용자가 '합치기'�
     return m;
 }
 function nextGen() { return Math.max(0, ...Array.from(arguments).map(x => (x && x.gen) || 0)) + 1; }
+function warnOldTab() {   // 업데이트 전에 열어 둔 탭이 저장함 — 그 탭은 새 칸(초기화 표시 등)을 모른다
+    if (warnOldTab.shown) return; warnOldTab.shown = true;
+    setTimeout(() => { try { showToast('🔄 다른 탭에 예전 화면이 열려 있어요. 그 탭을 새로고침해 주세요', '', 6000); } catch (e) { } }, 300);
+}
 function warnNewer() {
     if (warnNewer.shown) return; warnNewer.shown = true;
     setTimeout(() => { try { showToast('🆕 앱이 새 버전으로 바뀌었어요. 새로고침하면 이어서 저장돼요', '', 6000); } catch (e) { } }, 300);
@@ -873,21 +885,21 @@ function save() {
     try {
         const cur = localStorage.getItem(LS_KEY);
         if (cur && lastRaw !== null && cur !== lastRaw) {
-            let other = null; try { const o = JSON.parse(cur); if (isObj(o) && Number(o.schema) > SCHEMA) { newerSchema = true; warnNewer(); return; } other = normalizeStore(o); } catch (e) { other = null; }
+            let other = null; try { const o = JSON.parse(cur); if (isObj(o) && Number(o.schema) > SCHEMA) { newerSchema = true; warnNewer(); return; } if (isObj(o) && o.schema === undefined && isObj(o.byLang)) warnOldTab(); other = normalizeStore(o); } catch (e) { other = null; }
             if (other) store = mergeStores(other, store);
         }
         const raw = JSON.stringify(store);
         localStorage.setItem(LS_KEY, raw);
         lastRaw = raw;
     }
-    catch (e) { if (!storageFailed) { storageFailed = true; renderStorageWarning(); } }
+    catch (e) { if (!storageFailed) { storageFailed = true; storageFailReason = (e && e.name === 'QuotaExceededError') ? 'quota' : 'blocked'; renderStorageWarning(); } }
     cloudAfterSave();
 }
 // 다른 탭에서 저장하면 바로 반영(합쳐서), 탭으로 돌아왔을 때도 다시 확인
 function syncFromStorage() {
     let cur = null; try { cur = localStorage.getItem(LS_KEY); } catch (e) { return; }
     if (!cur || cur === lastRaw) return;
-    let other = null; try { other = normalizeStore(JSON.parse(cur)); } catch (e) { return; }
+    let other = null; try { const o = JSON.parse(cur); if (isObj(o) && o.schema === undefined && isObj(o.byLang)) warnOldTab(); other = normalizeStore(o); } catch (e) { return; }
     store = mergeStores(other, store);
     lastRaw = cur;
     if (typeof CUR !== 'undefined' && CUR && DATA) {
@@ -901,7 +913,12 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) sync
 function renderStorageWarning() {
     const el = document.getElementById('storageWarn');
     if (!el) return;
-    if (storageFailed) { el.textContent = '⚠️ 이 브라우저에서는 학습 기록을 저장할 수 없어요. 비공개(시크릿) 창이라면 일반 창에서 열어 주세요. 지금 기록은 새로고침하면 사라집니다.'; el.hidden = false; }
+    if (storageFailed) {
+        el.innerHTML = esc(storageFailReason === 'quota' ? '⚠️ 저장 공간이 가득 차 학습 기록을 저장하지 못했어요.' : '⚠️ 이 브라우저에서는 학습 기록을 저장할 수 없어요(비공개 창이거나 저장이 막혀 있어요).') + ' 새로고침하면 사라지니 지금 백업해 두세요. <button class="btn small" id="swBackup">💾 지금 기록 백업 코드 복사</button>';
+        el.hidden = false;
+        const b = document.getElementById('swBackup');
+        if (b) b.addEventListener('click', () => exportProgressCode().then(c => copyText(c, '📋 백업 코드를 복사했어요. 카톡 「나와의 채팅」에 붙여 두세요')));
+    }
     else if (storageCorrupt) { el.textContent = '⚠️ 저장된 기록을 읽지 못해 새로 시작했어요. 백업 코드가 있다면 ⚙️ 설정 → 코드로 복원하기에서 되돌릴 수 있어요.'; el.hidden = false; }
     else el.hidden = true;
 }
@@ -1668,8 +1685,8 @@ function openSpeak(cfg) {
     }
     ready();
 }
-function copyText(text, okMsg) {
-    const done = ok => showToast(ok ? (okMsg || '📋 복사했어요!') : '복사가 안 되면 길게 눌러 직접 복사해 주세요.');
+function copyText(text, okMsg, onOk) {
+    const done = ok => { showToast(ok ? (okMsg || '📋 복사했어요!') : '복사가 안 되면 길게 눌러 직접 복사해 주세요.'); if (ok && onOk) onOk(); };
     if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(text).then(() => done(true), () => fallback()); return; }
     fallback();
     function fallback() {
@@ -1853,9 +1870,9 @@ function loadScriptOnce(src, globalName, retry) {
         const s = document.createElement('script');
         s.src = retry ? src + (src.includes('?') ? '&' : '?') + 'r=' + Date.now() : src;   // 다시 시도는 멈춘 연결을 피해 새 주소로
         let done = false;
-        const fail = msg => { if (done) return; done = true; clearTimeout(tm); if (loadedScripts[src] === pr) delete loadedScripts[src]; s.remove(); reject(new Error(msg + ': ' + src)); };
-        // 응답 없이 멈춘 요청(약한 신호·와이파이 전환)은 20초 뒤 실패로 → '다시 시도' 화면
-        const tm = setTimeout(() => { if (!window[globalName]) fail('시간이 너무 오래 걸려요'); }, 20000);
+        const fail = (msg, keep) => { if (done) return; done = true; clearTimeout(tm); if (loadedScripts[src] === pr) delete loadedScripts[src]; if (!keep) s.remove(); reject(new Error(msg + ': ' + src)); };
+        // 응답 없이 멈춘 요청(약한 신호·와이파이 전환)은 20초 뒤 '다시 시도' 화면. 요청은 살려 둬서 늦게라도 도착하면 쓴다
+        const tm = setTimeout(() => { if (!window[globalName]) fail('시간이 너무 오래 걸려요', true); }, 20000);
         s.onload = () => { if (done) return; if (window[globalName]) { done = true; clearTimeout(tm); resolve(); } else fail('데이터가 비어 있어요'); };
         s.onerror = () => fail('데이터를 불러오지 못했어요');
         document.head.appendChild(s);
@@ -1908,9 +1925,17 @@ async function activateLanguage(code, opts) {
     } catch (e) {
         clearTimeout(slowT);
         if (gen !== langGen) return;
-        $main.innerHTML = '<div class="empty-state fail-screen"><div class="es-emoji">📶</div><b>' + esc(L.name) + ' 학습 자료를 불러오지 못했어요</b><br>인터넷 연결을 확인하고 잠시 후 다시 시도해 주세요.<br>' +
+        const slowFail = /^시간이/.test((e && e.message) || '');
+        $main.innerHTML = '<div class="empty-state fail-screen"><div class="es-emoji">📶</div><b>' + esc(L.name) + ' 학습 자료를 불러오지 못했어요</b><br>' + (slowFail ? '📶 연결이 아주 느려요. 받는 중이면 다 받는 대로 저절로 열려요.' : '인터넷 연결을 확인하고 잠시 후 다시 시도해 주세요.') + '<br>' +
             '<button class="btn" id="retryLoad">🔄 다시 시도</button><br><button class="btn ghost" id="pickOther">🌍 다른 언어 고르기</button></div>';
-        document.getElementById('retryLoad').addEventListener('click', () => { delete window[L.dataGlobal]; activateLanguage(code, Object.assign({}, opts || {}, { retry: true })); });
+        document.getElementById('retryLoad').addEventListener('click', () => { const d0 = window[L.dataGlobal]; if (!(d0 && Array.isArray(d0.units))) delete window[L.dataGlobal]; activateLanguage(code, Object.assign({}, opts || {}, { retry: true })); });
+        // 시간 초과 뒤에도 원래 요청이 끝까지 받아지면 저절로 이어 간다
+        const lateT = setInterval(() => {
+            if (gen !== langGen || !document.getElementById('retryLoad')) { clearInterval(lateT); return; }
+            const d = window[L.dataGlobal];
+            if (d && Array.isArray(d.units)) { clearInterval(lateT); activateLanguage(code, opts); }
+        }, 1000);
+        setTimeout(() => clearInterval(lateT), 120000);
         document.getElementById('pickOther').addEventListener('click', () => go('picker'));
         return;
     }
@@ -2051,7 +2076,8 @@ function readLegacy(code) {
 function importLegacy(code) {
     if (!LEGACY[code]) return null;
     const p = prog();
-    if (p.legacyImport) return null;   // 한 번만(예전 앱은 이제 안내 페이지라 새 기록이 생기지 않음)
+    // 한 번만(예전 앱은 이제 안내 페이지라 새 기록이 생기지 않음). 표시는 언어 진도 밖(seen)에도 둬서 초기화해도 다시 들어오지 않게
+    if (p.legacyImport || store.seen['legacy_' + code]) return null;
     const info = readLegacy(code);
     if (!info) return null;
     const { d, L } = info;
@@ -2079,7 +2105,9 @@ function importLegacy(code) {
     }
     if (isObj(d.storiesRead)) { if (!p.storiesRead) p.storiesRead = {}; Object.keys(d.storiesRead).forEach(id => { const r = d.storiesRead[id]; if (!p.storiesRead[id] && isObj(r) && isDate(r.date)) p.storiesRead[id] = { date: r.date }; }); }
     p.legacyImport = { at: todayStr(), lessons, cards };
+    store.seen['legacy_' + code] = todayStr();
     save();
+    if (!lessons && !cards) return null;   // 이미 다 있던 기록이면 조용히 표시만
     track('legacy_import', { lessons, cards });
     return { lessons, cards, name: L.name };
 }
@@ -2146,10 +2174,11 @@ function showWelcome(code, deqInfo) {
     const goals = [[10, '🐢 가볍게', '5분'], [20, '🚶 보통', '10분'], [30, '🏃 꾸준히', '15분'], [50, '🔥 열심히', '25분']];
     let h = '<div class="sheet-head"><b>' + L.flag + ' ' + esc(L.appName) + '에 오신 걸 환영해요!</b><button class="sheet-close" data-close-overlay aria-label="닫기">✕</button></div>';
     if (deqInfo) h += deqOfferHtml(deqInfo);      // DEQ 기록이 있으면 맨 위에(놓치지 않게)
-    h += '<div class="muted" style="margin-bottom:12px;line-height:1.7">① 레슨: 단어 → 문장 → 회화 → 문법 → 퀴즈<br>② 🎤 직접 말하면 AI가 발음을 채점해요<br>③ 매일 목표 XP를 채우고 🔥 연속 기록 이어 가기</div>' +
+    h += '<div class="muted" style="margin-bottom:12px;line-height:1.7">① 레슨: 단어 → 문장 → 회화 → 문법 → 퀴즈<br>② 🎤 ' + (SR && !IN_APP ? '따라 말하면 잘 알아듣는지 점수로 알려 줘요' : '따라 말하고 내 녹음과 비교해요(점수 채점은 크롬·사파리에서)') + '<br>③ 매일 목표 XP를 채우고 🔥 연속 기록 이어 가기</div>' +
         '<div style="font-size:14px;font-weight:800;margin-bottom:8px">🎯 하루 목표를 골라 주세요</div>' +
         '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">' +
-        goals.map(([v, t, m]) => '<button class="choice-btn" data-goal="' + v + '" style="text-align:center;margin:0' + (store.settings.dailyGoal === v ? ';border-color:var(--primary);background:var(--red-soft);font-weight:800' : '') + '">' + t + '<br><span class="muted">' + v + ' XP · 하루 약 ' + m + '</span></button>').join('') + '</div>';
+        goals.map(([v, t, m]) => '<button class="choice-btn" data-goal="' + v + '" style="text-align:center;margin:0' + (store.settings.dailyGoal === v ? ';border-color:var(--primary);background:var(--red-soft);font-weight:800' : '') + '">' + t + '<br><span class="muted">' + v + ' XP · 하루 약 ' + m + '</span></button>').join('') + '</div>' +
+        '<label style="display:flex;gap:8px;align-items:center;font-size:14px;margin:-6px 0 12px"><input type="checkbox" id="wBig"' + (store.settings.bigText ? ' checked' : '') + '> 🔍 글씨를 크게 볼래요</label>';
     const places = placementChoices();
     if (places.length) {
         const cur = prog().placedAt || '';
@@ -2163,6 +2192,8 @@ function showWelcome(code, deqInfo) {
     h += '<button class="btn block" data-close-overlay style="margin-top:6px">시작하기 🚀</button>';
     const sheet = openModal(h);
     const mark = (sel, b) => sheet.querySelectorAll(sel).forEach(x => { const on = x === b; x.style.borderColor = on ? 'var(--primary)' : ''; x.style.background = on ? 'var(--red-soft)' : ''; x.style.fontWeight = on ? '800' : ''; });
+    const wb = sheet.querySelector('#wBig');
+    if (wb) wb.addEventListener('change', () => { store.settings.bigText = wb.checked; save(); applyBigText(); });
     sheet.querySelectorAll('[data-goal]').forEach(b => b.addEventListener('click', () => {
         store.settings.dailyGoal = parseInt(b.dataset.goal, 10); save();
         mark('[data-goal]', b);
@@ -2251,7 +2282,9 @@ function updateTabs() {
 
 /* ═══════════════════ 언어 선택 화면 ═══════════════════ */
 function renderPicker() {
+    const saCard = STANDALONE && IOS_UA && !hasProgress(store) && !store.seen.saImportDone;
     let h = '<div class="lang-pick">' + inAppNoteHtml() +
+        (saCard ? '<div class="inapp-note" id="saImport">🏠 홈 화면 앱은 사파리와 기록을 따로 저장해요. 사파리에서 하던 기록이 있나요?<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap"><button class="btn small" id="saPaste">📋 사파리 기록 붙여넣기</button><button class="btn small gray" id="saNew">처음이에요</button></div></div>' : '') +
         '<div class="lp-title">🌍 어떤 언어를 배울까요?</div>' +
         '<div class="lp-sub">왕초보를 위한 기초 회화 · 순서대로 따라 하면 말문이 트여요</div>';
     Object.values(LANGS).forEach(L => {
@@ -2273,6 +2306,15 @@ function renderPicker() {
     bindCloudCard('picker');
     document.getElementById('pickRestore').addEventListener('click', () => openRestore());
     document.getElementById('pickHelp').addEventListener('click', openHelp);
+    const sap = document.getElementById('saPaste');
+    if (sap) sap.addEventListener('click', async () => {
+        let text = '';
+        try { text = (await navigator.clipboard.readText() || '').trim(); } catch (e) { text = ''; }
+        if (/^LS3:/.test(text) || /^[A-Za-z0-9+/=]{40,}$/.test(text)) restoreFromCode(text, { title: '📦 사파리에서 하던 기록을 가져올까요?' });
+        else { openRestore(); showToast('복사한 기록이 없어요. 사파리에서 🏠 홈 화면 앱으로 옮기기 → 📋 기록 복사하기를 먼저 눌러 주세요', '', 4200); }
+    });
+    const san = document.getElementById('saNew');
+    if (san) san.addEventListener('click', () => { store.seen.saImportDone = todayStr(); save(); render(); });
     bindInAppNote();
     $main.querySelectorAll('[data-lang]').forEach(c => {
         c.addEventListener('click', () => { track('select_language', { language: c.dataset.lang }); activateLanguage(c.dataset.lang); });
@@ -2310,7 +2352,7 @@ function renderHome() {
     }
     html += todayCardHtml(due);
     if (!IN_APP && !CLOUD.user && !cloudNudgeDue() && doneCount() >= 2 && !(store.seen.iosNudge && dayDiff(store.seen.iosNudge, todayStr()) < 14) && !(store.seen.lastBackup && dayDiff(store.seen.lastBackup, todayStr()) < 30))
-        html += '<div class="inapp-note" id="iosNudge">📱 학습 기록은 <b>이 기기의 이 브라우저에만</b> 있어요. 휴대폰을 바꾸거나 인터넷 사용 기록(사이트 데이터)을 지우면 사라져요' + (IOS_SAFARI ? ' — 아이폰 사파리는 7일 동안 안 열면 지울 수도 있어요' : '') + '. 가끔 백업 파일을 만들어 두세요' + (cloudOn() ? ', 구글로 로그인하면 자동으로 지켜져요' : '') + '.<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap"><button class="btn small" id="iosBackup">📤 백업 파일 보내기</button>' + (cloudOn() ? '<button class="btn small ghost" id="iosLogin">☁️ 구글로 로그인</button>' : '') + '<button class="btn small gray" id="iosClose">닫기</button></div></div>';
+        html += '<div class="inapp-note" id="iosNudge">📱 학습 기록은 <b>이 기기의 이 브라우저에만</b> 있어요. 휴대폰을 바꾸거나 인터넷 사용 기록(사이트 데이터)을 지우면 사라져요' + (IOS_SAFARI ? ' — 아이폰 사파리는 7일 동안 안 열면 지울 수도 있어요' : '') + '. 가끔 백업 파일을 만들어 두세요' + (cloudOn() ? ', 구글로 로그인하면 자동으로 지켜져요' : '') + '.<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap"><button class="btn small" id="iosBackup">📤 백업 파일 보내기</button>' + (IOS_SAFARI ? '<button class="btn small ghost" id="iosHomeMove">🏠 홈 화면 앱으로 옮기기</button>' : '') + (cloudOn() ? '<button class="btn small ghost" id="iosLogin">☁️ 구글로 로그인</button>' : '') + '<button class="btn small gray" id="iosClose">닫기</button></div></div>';
     if (curStreak() >= 7 && curStreak() % 7 === 0 && store.streak.last === todayStr() && store.seen.bragStreak !== todayStr()) html += '<div class="guide-banner" id="bragStreak" role="button" tabindex="0">🔥 ' + curStreak() + '일 연속 달성! 친구에게 자랑하고 같이 해요 📣</div>';
     if (cloudNudgeDue()) html += cloudCardHtml('home');
     else if (installDue()) html += '<div class="card" id="installCard" style="text-align:center"><b>📲 홈 화면에 설치할까요?</b><div class="muted" style="margin:4px 0 8px">아이콘을 누르면 바로 열리고, 인터넷이 끊겨도 배운 레슨을 볼 수 있어요</div><div style="display:flex;gap:8px;justify-content:center"><button class="btn small" id="installYes">설치하기</button><button class="btn small gray" id="installNo">나중에</button></div></div>';
@@ -2366,6 +2408,8 @@ function renderHome() {
     if (bcs) bcs.addEventListener('click', () => shareApp('brag_course', bragText('course')));
     const ib = document.getElementById('iosBackup');
     if (ib) ib.addEventListener('click', async () => { if (IN_APP) { S.openBackup = true; go('settings'); return; } try { const r = await shareBackupFile(await exportProgressCode()); if (r !== 'cancel') { store.seen.lastBackup = todayStr(); save(); showToast(r === 'shared' ? '📤 백업 파일을 보냈어요' : '📥 백업 파일을 저장했어요'); const n = document.getElementById('iosNudge'); if (n) n.remove(); } } catch (e) { S.openBackup = true; go('settings'); } });
+    const ihm = document.getElementById('iosHomeMove');
+    if (ihm) ihm.addEventListener('click', openHomeMove);
     const il = document.getElementById('iosLogin');
     if (il) il.addEventListener('click', () => go('settings'));
     const ic = document.getElementById('iosClose');
@@ -2411,28 +2455,38 @@ function renderHome() {
 const IN_APP_RE = /KAKAOTALK|NAVER\(inapp|Instagram|FBAN|FBAV|Line\/|DaumApps|everytimeApp|BAND\/|Barcelona|musical_ly|BytedanceWebview|; wv\)/i;
 const IOS_SAFARI = /iPhone|iPad|iPod/.test(navigator.userAgent || '') && navigator.standalone !== true && !/CriOS|FxiOS|EdgiOS|Whale|OPT\/|NAVER|DaumApps/i.test(navigator.userAgent || '') && !IN_APP_RE.test(navigator.userAgent || '');
 const IN_APP = IN_APP_RE.test(navigator.userAgent || '');
+const STANDALONE = (() => { try { return navigator.standalone === true || matchMedia('(display-mode: standalone)').matches; } catch (e) { return false; } })();
+const IOS_UA = /iPhone|iPad|iPod/.test(navigator.userAgent || '');
 // 앱 안 브라우저에서 한 번에 기본 브라우저로 여는 주소(카카오톡·안드로이드·라인), 없으면 ''
-function openExternalHref() {
+function openExternalHref(hash) {
     const ua = navigator.userAgent || '', url = shareUrl((CUR && CUR.code) || store.active || '', 'inapp');
-    if (/KAKAOTALK/i.test(ua)) return 'kakaotalk://web/openExternal?url=' + encodeURIComponent(url);
-    if (/Line\//i.test(ua)) return url + '&openExternalBrowser=1';
+    hash = hash || '';
+    if (/KAKAOTALK/i.test(ua)) return 'kakaotalk://web/openExternal?url=' + encodeURIComponent(url + hash);
+    if (/Line\//i.test(ua)) return url + '&openExternalBrowser=1' + hash;
     const m = url.match(/^(https?):\/\/(.+)$/);
-    if (/Android/i.test(ua) && m) return 'intent://' + m[2] + '#Intent;scheme=' + m[1] + ';package=com.android.chrome;end';
+    if (/Android/i.test(ua) && m) return 'intent://' + m[2] + '#Intent;scheme=' + m[1] + ';package=com.android.chrome;S.browser_fallback_url=' + encodeURIComponent(url) + ';end';
     return '';
 }
 function inAppNoteHtml() {
     if (!IN_APP) return '';
-    const href = openExternalHref(), ios = /iPhone|iPad|iPod/.test(navigator.userAgent || '');
-    return '<div class="inapp-note" id="inAppNote">📱 <b>앱 안의 브라우저</b>에서는 발음 듣기·말하기 채점·구글 로그인이 잘 안 돼요. ' +
+    const href = openExternalHref(), ios = /iPhone|iPad|iPod/.test(navigator.userAgent || ''), has = hasProgress(store), carry = has && /KAKAOTALK|Line\//i.test(navigator.userAgent || '');
+    return '<div class="inapp-note" id="inAppNote">📱 <b>앱 안의 브라우저</b>에서는 발음 듣기·말하기 채점' + (cloudOn() ? '·구글 로그인' : '') + '이 잘 안 돼요. ' +
         (href ? '아래 버튼으로 기본 브라우저에서 열어 주세요.' : ios ? '오른쪽 아래(또는 위) <b>⋯ · 공유</b> 메뉴 → <b>Safari로 열기</b>를 누르거나, 주소를 복사해 사파리에 붙여넣어 주세요.' : '메뉴(⋮) → <b>다른 브라우저로 열기</b>를 눌러 주세요.') +
-        '<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">' + (href ? '<a class="btn small" id="inAppOpen" href="' + esc(href) + '" style="text-decoration:none">👉 기본 브라우저로 열기</a>' : '') + '<button class="btn small ghost" id="inAppCopy">🔗 주소 복사</button></div>' +
-        (hasProgress(store) ? '<div class="muted" style="margin-top:6px">여기서 한 기록은 다른 브라우저로 저절로 옮겨지지 않아요. ⚙️ 설정 → 📦 백업 코드로 옮길 수 있어요.</div>' : '') + '</div>';
+        '<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">' + (href ? '<a class="btn small" id="inAppOpen" href="' + esc(href) + '" style="text-decoration:none">' + (carry ? '📦 기록 들고 기본 브라우저로 열기' : '👉 기본 브라우저로 열기') + '</a>' : '') + '<button class="btn small ghost" id="inAppCopy">🔗 주소 복사</button>' + (has ? '<button class="btn small ghost" id="inAppCopyCode">📋 기록 코드 복사</button>' : '') + '</div>' +
+        (has ? '<div class="muted" style="margin-top:6px">여기서 한 기록은 기본 브라우저로 저절로 옮겨지지 않아요. ' + (carry ? '📦 버튼은 기록을 함께 가져가요. 안 되면 ' : '') + '📋 기록 코드 복사 → 기본 브라우저 첫 화면 아래 「📦 다른 기기 기록 가져오기」 → 📋 붙여넣기.</div>' : '') + '</div>';
 }
 function bindInAppNote() {
     const c = document.getElementById('inAppCopy');
     if (c) c.addEventListener('click', () => copyText(shareUrl((CUR && CUR.code) || store.active || '', 'inapp_copy'), '🔗 주소를 복사했어요! 사파리·크롬 주소창에 붙여넣어 주세요'));
     const o = document.getElementById('inAppOpen');
-    if (o) o.addEventListener('click', () => track('inapp_open_external'));
+    if (o) o.addEventListener('click', () => {
+        track('inapp_open_external');
+        if (/^intent:/.test(o.getAttribute('href') || '')) setTimeout(() => { if (!document.hidden) showToast('크롬이 없나요? 🔗 주소 복사 후 쓰는 브라우저 주소창에 붙여넣어 주세요', '', 4000); }, 1500);
+    });
+    // 카톡·라인은 주소에 기록을 실어 보낼 수 있다(클릭 때 바로 열리도록 미리 바꿔 둠)
+    if (o && hasProgress(store) && /KAKAOTALK|Line\//i.test(navigator.userAgent || '')) exportProgressCode().then(c => { if (c.startsWith('LS3:') && c.length <= 20000 && o.isConnected) o.href = openExternalHref('#imp=' + c); }).catch(() => { });
+    const cc = document.getElementById('inAppCopyCode');
+    if (cc) cc.addEventListener('click', () => exportProgressCode().then(c => copyText(c, '📋 기록 코드를 복사했어요! 기본 브라우저 첫 화면 아래 「📦 다른 기기 기록 가져오기」에 붙여넣으세요')));
 }
 function quickSentence() {
     const pool = [];
@@ -2650,7 +2704,7 @@ function renderStep() {
         const wm = document.getElementById('wordMatch');
         if (wm) wm.addEventListener('click', () => { stopSpeak(); S.match = newMatch(6, l.words); S.match.fromLesson = S.lessonIdx + 1; S.view = 'review'; updateTabs(); renderMatch(); });
     } else if (S.step === 1) {   /* 핵심 문장 */
-        let h = '<div class="muted" style="margin-bottom:10px">이 레슨의 핵심 표현이에요. ▶ 듣고 🎤 따라 말하면 AI가 발음을 채점해 줘요. 통째로 외우면 바로 써먹을 수 있어요!</div>';
+        let h = '<div class="muted" style="margin-bottom:10px">이 레슨의 핵심 표현이에요. ▶ 듣고 🎤 따라 말하면 잘 알아듣는지 점수로 알려 줘요. 통째로 외우면 바로 써먹을 수 있어요!</div>';
         const boss = bossOf(l);
         const spokeMap = (prog().spoke || {})[l.id] || {};
         const nKs = (l.keySentences || []).length, nSpoke = Object.keys(spokeMap).length;
@@ -4409,12 +4463,23 @@ function faqHtml() {
         ['🔇 소리가 안 나요', '① 무음·진동 모드를 끄고 소리를 키워 주세요(아이폰은 옆면 무음 스위치). ② 카카오톡·네이버 같은 앱 안에서 열었다면 메뉴(⋮ 또는 ⋯) → <b>다른 브라우저로 열기</b>로 크롬·사파리에서 열어 주세요. ③ 그래도 안 되면 기기에 그 언어 음성을 내려받아 주세요 — 안드로이드: 설정 → 일반(또는 접근성) → 텍스트 음성 변환 / 아이폰: 설정 → 손쉬운 사용 → 읽기 및 말하기 → 음성. 듣기 문제는 🔇 <b>글자로 보기</b>로 풀 수 있어요.'],
         ['🎤 말하기 채점(마이크)이 안 돼요', '① 🎤를 처음 누를 때 <b>허용</b>을 눌러 주세요. 이미 막았다면 주소창 왼쪽 🔒 → 권한 → 마이크 허용. ② 아이폰은 설정 → 일반 → 키보드 → <b>받아쓰기</b>를 켜야 해요. ③ 앱 안 브라우저나 인터넷이 끊긴 곳에서는 채점이 안 될 수 있어요. 그럴 땐 <b>녹음해서 비교하기</b>나 <b>소리 내어 말했어요</b>로 넘어가도 괜찮아요.'],
         ['📱 휴대폰을 바꿔요 · 기록을 옮기고 싶어요', (cloudOn() ? '가장 쉬운 방법: 두 기기에서 ⚙️ 설정 → <b>구글로 로그인</b>하면 자동으로 이어져요. 로그인 없이 옮기려면: ' : '') + '예전 기기에서 👤 나 → ⚙️ 설정 → 📦 <b>백업 코드 만들기</b> → 코드를 복사하거나 백업 파일을 카톡 「나와의 채팅」에 보내 두고, 새 기기의 첫 화면(언어 고르기) 아래 <b>📦 다른 기기 기록 가져오기</b>에 붙여넣으세요.'],
-        ['🏠 홈 화면에 앱처럼 두려면', '안드로이드 크롬: 메뉴(⋮) → <b>홈 화면에 추가</b>(또는 앱 설치) / 아이폰 사파리: 아래 공유(□↑) → <b>홈 화면에 추가</b>. 아이폰은 홈 화면 아이콘과 사파리의 기록이 따로라서, 추가한 뒤에는 ' + (cloudOn() ? '구글 로그인이나 ' : '') + '백업 코드로 기록을 옮기고 앞으로는 아이콘으로만 열어 주세요.'],
+        ['🏠 홈 화면에 앱처럼 두려면', '안드로이드 크롬: 메뉴(⋮) → <b>홈 화면에 추가</b>(또는 앱 설치) — 기록이 그대로 이어져요. / 아이폰 사파리: 홈 화면 아이콘은 사파리와 기록이 따로예요. 홈의 <b>🏠 홈 화면 앱으로 옮기기</b> → 📋 기록 복사 → 공유(□↑) → 홈 화면에 추가 → 새 아이콘 첫 화면의 <b>📋 사파리 기록 붙여넣기</b> 순서로 옮기고, 앞으로는 아이콘으로만 열어 주세요' + (cloudOn() ? '(구글 로그인해 두면 자동으로 이어져요)' : '') + '.'],
         ['🧹 기록이 사라졌어요', '기록은 이 기기의 이 브라우저에 저장돼요. 시크릿(비공개) 창, 다른 브라우저, 앱 안 브라우저에는 기록이 없어요. 인터넷 사용 기록(쿠키·사이트 데이터)을 지우면 함께 지워져요. ' + (cloudOn() ? '구글로 로그인해 두면 다시 로그인해서 되살릴 수 있어요.' : '백업 코드를 가끔 만들어 두세요.')],
         ['💰 정말 무료인가요?', '네, 무료이고 광고도 없어요. 발음은 기기에 들어 있는 음성, 채점은 브라우저의 음성 인식을 써요.'],
     ];
+    if (siteContact()) qa.push(['💬 문의하고 싶어요', '<a href="' + esc(siteContact().url) + '" target="_blank" rel="noopener">' + esc(siteContact().label) + '</a> — 어떤 폰(아이폰/갤럭시)·어떤 언어·어떤 화면이었는지 적어 주시면 빨리 고칠 수 있어요.']);
     return '<div class="card faq">' + qa.map(x => '<details><summary>' + x[0] + '</summary><div class="faq-a">' + x[1] + '</div></details>').join('') +
         '<div class="muted" style="margin-top:8px">' + (feedbackOn() ? '해결이 안 되면 ⚙️ 설정 → 💬 의견 보내기로 알려 주세요 · ' : '') + '<a href="../privacy.html" target="_blank" rel="noopener">개인정보 안내</a></div></div>';
+}
+function openHomeMove() {
+    const sheet = openModal('<div class="sheet-head"><b>🏠 아이폰 홈 화면 앱으로 옮기기</b><button class="sheet-close" data-close-overlay aria-label="닫기">✕</button></div>' +
+        '<div style="font-size:14px;line-height:1.8">홈 화면 아이콘은 사파리와 기록을 따로 저장해요. 아래 순서대로 하면 지금 기록을 그대로 가져가요.<br>' +
+        '<b>①</b> <button class="btn small" id="hmCopy">📋 기록 복사하기</button><br>' +
+        '<b>②</b> 화면 아래 공유 버튼(□↑) → 「홈 화면에 추가」 → 추가<br>' +
+        '<b>③</b> 홈 화면의 🌍 랭귀지 스타터 아이콘을 열고, 첫 화면의 <b>📋 사파리 기록 붙여넣기</b>를 누르세요.</div>' +
+        '<div class="muted" style="margin-top:8px">※ 옮긴 뒤에는 홈 화면 아이콘으로만 여세요. 사파리 기록은 7일 동안 안 열면 지워질 수 있어요.</div>');
+    sheet.querySelector('#hmCopy').addEventListener('click', () => exportProgressCode().then(c => copyText(c, '📋 기록을 복사했어요. 이제 공유 → 홈 화면에 추가')));
+    track('home_move_open');
 }
 function openHelp() { openModal('<div class="sheet-head"><b>❓ 자주 묻는 질문</b><button class="sheet-close" data-close-overlay aria-label="닫기">✕</button></div>' + faqHtml()); track('help_open'); }
 function renderGuide() {
@@ -4563,8 +4628,8 @@ function renderSettings() {
             return '<button class="btn small gray block" id="undoRestore" style="margin-top:8px">↩ 복원 전 기록으로 되돌리기 (' + esc(snap.at.slice(0, 10)) + ')</button>';
         })() + '<div class="muted" style="margin-top:6px">마지막 백업: ' + esc(store.seen.lastBackup || '없음') + '</div><div id="backupArea"></div></div>';
     h += '<div class="card"><div style="font-size:14px;font-weight:700;margin-bottom:6px">🤝 함께 만들어요</div>' +
-        '<div style="display:flex;gap:8px;flex-wrap:wrap">' + (feedbackOn() ? '<button class="btn small" id="fbBtn">💬 의견 보내기</button>' : '') + '<button class="btn small ghost" id="shareBtn">📣 친구에게 추천하기</button></div>' +
-        (cloudOn() && cloudCfg().measurementId ? setRow('사용 통계 보내기', '쿠키로 방문·레슨 완료 같은 사용 기록만 모아 앱을 고치는 데 써요(이름·이메일 없음, 광고 없음) · <a href="../privacy.html" target="_blank" rel="noopener">자세히</a>', '<label class="switch"><input type="checkbox" id="setStats"' + (store.settings.stats !== false ? ' checked' : '') + '><span class="slider"></span></label>') : '') +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap">' + (feedbackOn() ? '<button class="btn small" id="fbBtn">💬 의견 보내기</button>' : '') + '<button class="btn small ghost" id="shareBtn">📣 친구에게 추천하기</button>' + (siteContact() ? '<a class="btn small ghost" href="' + esc(siteContact().url) + '" target="_blank" rel="noopener" style="text-decoration:none">💬 ' + esc(siteContact().label) + '</a>' : '') + '</div>' +
+        (cloudOn() && cloudCfg().measurementId ? setRow('사용 통계 보내기', '쿠키로 방문·레슨 완료 같은 사용 기록만 모아 앱을 고치는 데 써요(이름·이메일 없음, 광고 없음) · <a href="../privacy.html" target="_blank" rel="noopener">자세히</a>', '<label class="switch"><input type="checkbox" id="setStats"' + (store.settings.stats !== false && !statsOffSaved() ? ' checked' : '') + '><span class="slider"></span></label>') : '') +
         '</div>';
     h += '<div class="muted" style="text-align:center;margin-top:16px">랭귀지 스타터 v' + APP_VERSION + ' · <a href="../privacy.html" target="_blank" rel="noopener">개인정보 안내</a><br>발음은 브라우저 내장 음성(TTS), 말하기 채점은 브라우저 음성 인식을 사용합니다</div>';
     $main.innerHTML = h;
@@ -4614,13 +4679,13 @@ function renderSettings() {
     });
     const area = () => document.getElementById('backupArea');
     document.getElementById('backupBtn').addEventListener('click', () => {
-        area().innerHTML = '<div class="muted" style="margin:12px 0 6px">아래 코드 전체를 복사해서, 다른 기기의 <b>[코드로 복원하기]</b>에 붙여넣으세요.</div>' +
+        area().innerHTML = '<div class="muted" style="margin:12px 0 6px">아래 코드 전체를 복사해서, 다른 기기 첫 화면의 <b>📦 다른 기기 기록 가져오기</b>(또는 설정 → 코드로 복원하기)에 붙여넣으세요. 받는 기기에서 “코드를 읽을 수 없어요”가 나오면 그 기기에서 앱을 한 번 새로고침한 뒤 붙여넣어 주세요.</div>' +
             '<textarea id="backupCode" readonly style="width:100%;height:88px;font-size:11px;border:1px solid var(--border);border-radius:10px;padding:8px;font-family:monospace;background:#f8fafc"></textarea>' +
             '<button class="btn small block" id="copyBtn" style="margin-top:6px">📋 코드 복사하기</button>';
         const ta = document.getElementById('backupCode');
         ta.value = exportProgress();
         exportProgressCode().then(c => { ta.value = c; }).catch(() => { });
-        document.getElementById('copyBtn').addEventListener('click', () => { copyText(ta.value, '📋 백업 코드를 복사했어요!'); store.seen.lastBackup = todayStr(); save(); });
+        document.getElementById('copyBtn').addEventListener('click', () => copyText(ta.value, '📋 백업 코드를 복사했어요!', () => { store.seen.lastBackup = todayStr(); save(); }));
         area().insertAdjacentHTML('beforeend', IN_APP ? '<div class="muted" style="margin-top:6px">앱 안의 브라우저에서는 파일 저장이 안 될 수 있어요. 위 코드를 복사해 카톡 「나와의 채팅」에 보내 두세요.</div>' : '<button class="btn small ghost block" id="fileBtn" style="margin-top:6px">📤 백업 파일 보내기 · 저장하기</button>');
         if (IN_APP) return;
         document.getElementById('fileBtn').addEventListener('click', async () => {
@@ -4665,8 +4730,12 @@ function openRestore(box) {
         rd.onload = () => { document.getElementById('restoreCode').value = String(rd.result || ''); showToast('파일을 읽었어요. "기록 가져오기"를 누르세요'); };
         rd.readAsText(f);
     });
-    document.getElementById('doRestore').addEventListener('click', async () => {
-        const code = document.getElementById('restoreCode').value;
+    document.getElementById('doRestore').addEventListener('click', () => restoreFromCode(document.getElementById('restoreCode').value));
+}
+// 백업 코드(또는 DEQ 백업)로 기록 가져오기 — 늘 비교 창(합치기·바꾸기·취소)을 거친다
+async function restoreFromCode(code, opts) {
+    opts = opts || {};
+    {
         // Daily English Quest 백업(JSON)은 덮어쓰기 복원이 아니라 영어 진도로 합치기
         const t = code.trim();
         if (t.startsWith('{')) {
@@ -4682,7 +4751,7 @@ function openRestore(box) {
         try { obj = await parseBackupAny(code); } catch (e) { showToast('복원하지 못했어요: ' + e.message, '', 3600); return; }
         const incoming = normalizeStore(obj.data);
         const hasNow = hasProgress(store);
-        const sheet = openModal('<div class="sheet-head"><b>백업 기록을 어떻게 가져올까요?</b><button class="sheet-close" data-close-overlay aria-label="닫기">✕</button></div>' +
+        const sheet = openModal('<div class="sheet-head"><b>' + esc(opts.title || '백업 기록을 어떻게 가져올까요?') + '</b><button class="sheet-close" data-close-overlay aria-label="닫기">✕</button></div>' +
             '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px"><div class="card" style="margin:0"><b>📦 백업</b>' + storeSummary(incoming, typeof obj.exportedAt === 'string' ? esc(obj.exportedAt.slice(0, 10)) : '날짜 모름') + '</div>' +
             '<div class="card" style="margin:0"><b>📱 지금 이 기기</b>' + storeSummary(store) + '</div></div>' +
             '<div class="muted" style="margin-bottom:10px">' + (hasNow ? '<b>합치기</b>는 두 기록의 진도를 모두 남기고, <b>바꾸기</b>는 이 기기 기록을 백업 내용으로 바꿔요. ' : '') + '지금 기록은 7일 동안 보관돼서 설정에서 되돌릴 수 있어요.</div>' +
@@ -4709,7 +4778,7 @@ function openRestore(box) {
                 finishRestore('🎉 가져오기 완료!');
             } catch (e) { showToast('복원하지 못했어요: ' + e.message, '', 3600); }
         });
-    });
+    }
 }
 
 /* ═══════════════════ ☁️ 구글 로그인 · 클라우드 저장 · 사용 통계 · 의견 (Firebase) ═══════════════════ */
@@ -4724,6 +4793,8 @@ const CLOUD_JSON_LIMIT = 600000;                // 이보다 크면 gzip으로 �
 const CLOUD_DOC_LIMIT = 900000;
 function cloudCfg() { const c = window.CLOUD_CONFIG; return (c && typeof c === 'object' && typeof c.apiKey === 'string' && typeof c.projectId === 'string') ? c : null; }
 function cloudOn() { return !!cloudCfg(); }
+// 문의·오류 제보 링크(cloud-config.js의 SITE_CONTACT) — https 주소일 때만
+function siteContact() { const c = window.SITE_CONTACT; return (c && typeof c === 'object' && typeof c.url === 'string' && /^https:\/\//.test(c.url)) ? { url: c.url, label: typeof c.label === 'string' && c.label.trim() ? c.label.trim().slice(0, 30) : '문의·오류 제보' } : null; }
 function cloudHint(patch) {
     let h = {};
     try { h = JSON.parse(localStorage.getItem(CLOUD_HINT_KEY) || '{}') || {}; } catch (e) { h = {}; }
@@ -4880,7 +4951,7 @@ async function cloudLogout(wipeLocal) {
     if (wipeLocal) {
         const g = nextGen(store);
         store = normalizeStore({ gen: g }); save();
-        try { localStorage.removeItem(LS_KEY + '_before_restore'); localStorage.removeItem(LS_KEY + '_corrupt_backup'); localStorage.removeItem(CLOUD_HINT_KEY); } catch (e) { }
+        try { [LS_KEY + '_before_restore', LS_KEY + '_corrupt_backup', CLOUD_HINT_KEY, STATS_OFF_KEY, 'nihao_zh_v1', 'hola_es_v1', DEQ_KEY].forEach(k => localStorage.removeItem(k)); } catch (e) { }
         CLOUD.lastPushedRaw = '';
         showToast('👋 로그아웃하고 이 기기의 기록을 지웠어요');
         setTimeout(() => location.reload(), 600);
@@ -5152,7 +5223,9 @@ function cloudNudgeDue() {
 }
 
 /* ── 사용 통계(익명) ── */
-function statsAllowed() { return cloudOn() && !!cloudCfg().measurementId && store.settings.stats !== false && navigator.doNotTrack !== '1'; }
+const STATS_OFF_KEY = 'lang_starter_stats_off';
+function statsOffSaved() { try { return localStorage.getItem(STATS_OFF_KEY) === '1'; } catch (e) { return false; } }
+function statsAllowed() { return cloudOn() && !!cloudCfg().measurementId && store.settings.stats !== false && !statsOffSaved() && navigator.doNotTrack !== '1'; }
 function initAnalytics() {
     if (!statsAllowed()) return;
     const start = () => loadFbCore().then(m => m.analyticsSupported().then(ok => {
@@ -5174,6 +5247,7 @@ function track(name, params) {
 }
 function setStatsEnabled(on) {
     store.settings.stats = !!on; save();
+    try { if (on) localStorage.removeItem(STATS_OFF_KEY); else localStorage.setItem(STATS_OFF_KEY, '1'); } catch (e) { }
     if (CLOUD.ga && CLOUD.core) { try { CLOUD.core.setAnalyticsCollectionEnabled(CLOUD.ga, !!on); } catch (e) { } }
     else if (on) initAnalytics();
 }
@@ -5275,7 +5349,13 @@ document.addEventListener('click', armBack, { once: true, capture: true });
 /* ═══════════════════ 홈 화면 설치(안드로이드 크롬 등) ═══════════════════ */
 const INSTALL = { ev: null };
 window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); INSTALL.ev = e; });
-window.addEventListener('appinstalled', () => { INSTALL.ev = null; track('app_installed'); });
+window.addEventListener('appinstalled', () => { INSTALL.ev = null; track('app_installed'); askPersistAgain(); });
+// 홈 화면에 설치한 뒤에는 브라우저가 '영구 저장'을 허락하는 경우가 많아 다시 요청한다
+function askPersistAgain() {
+    if (/Firefox\//.test(navigator.userAgent || '') || !(navigator.storage && navigator.storage.persisted)) return;
+    navigator.storage.persisted().then(p => { if (!p) return navigator.storage.persist().then(ok => { store.seen.persisted = !!ok; save(); }); }).catch(() => { });
+}
+if (STANDALONE) setTimeout(askPersistAgain, 3000);
 function installDue() {
     return !!INSTALL.ev && !IN_APP && doneCount() >= 2 && !(store.seen.installAsk && dayDiff(store.seen.installAsk, todayStr()) < 14);
 }
@@ -5302,7 +5382,7 @@ if ('serviceWorker' in navigator && window.isSecureContext && /^https?:$/.test(l
     });
 }
 const QP = new URLSearchParams(location.search);
-const wantLang = QP.get('lang'), fromDeq = QP.get('from') === 'deq';
+const wantLang = INCOMING_IMPORT ? null : ((QP.get('lang') || '').trim().toLowerCase().slice(0, 2) || null), fromDeq = QP.get('from') === 'deq';
 if (wantLang) { try { history.replaceState(null, '', location.pathname); } catch (e) { } }
 let startLang = null;
 if (wantLang && isLang(wantLang)) {
@@ -5317,6 +5397,11 @@ if (wantLang && isLang(wantLang)) {
 if (startLang) activateLanguage(startLang, { fromDeq: fromDeq && startLang === 'en' });
 else if (store.active && isLang(store.active)) activateLanguage(store.active);
 else render();
+if (INCOMING_IMPORT) {   // 언어 화면을 다 불러온 뒤 비교 창으로(절대 자동으로 덮어쓰지 않음)
+    const t0 = Date.now();
+    const waitReady = () => { if (S.view === 'loading' && Date.now() - t0 < 30000) { setTimeout(waitReady, 300); return; } restoreFromCode(INCOMING_IMPORT, { title: '📦 앱 안 브라우저에서 하던 기록을 가져올까요?' }); };
+    setTimeout(waitReady, 600);
+}
 </script>
 </body>
 </html>

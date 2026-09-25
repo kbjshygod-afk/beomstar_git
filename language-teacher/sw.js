@@ -8,7 +8,7 @@
 const SHELL = 'lt-shell-v2';
 const DATA = 'lt-data-v2';
 const CONFIG_KEY = new URL('cloud-config.js', self.registration.scope).href;
-const CONFIG_FALLBACK = 'window.CLOUD_CONFIG = window.CLOUD_CONFIG || null;';
+const CONFIG_FALLBACK = 'window.CLOUD_CONFIG = window.CLOUD_CONFIG || null; window.SITE_CONTACT = window.SITE_CONTACT || null;';
 const SCOPE = self.registration.scope;              // .../language-teacher/
 const HTML_KEY = SCOPE;                              // ?lang= 이 붙어도 같은 화면이므로 한 칸에 저장
 self.addEventListener('install', e => {

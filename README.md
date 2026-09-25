@@ -14,7 +14,7 @@
 - 기록은 기본적으로 **이 기기의 이 브라우저**에만 저장돼요. ⚙️ 설정에서 **구글로 로그인**하면 휴대폰·PC 어디서든 이어져요(로그인 기능은 [설정 안내](docs/cloud-setup.md)대로 켜야 나타나요).
 - 로그인 없이 옮기려면 ⚙️ 설정 → 📦 백업 코드/파일 → 새 기기 첫 화면의 **다른 기기 기록 가져오기**.
 - 앱 안 **❓ 도움말**에 소리·마이크·기록 옮기기·홈 화면 추가 방법이 있어요.
-- [개인정보 안내](privacy.html)
+- [개인정보 안내](privacy.html) · 문의 창구는 준비되면 앱 설정·도움말에 나타나요.
 
 ## 예전 앱을 쓰던 분
 「니하오 중국어」「올라 스페인어」「Daily English Quest」「Emma 영어 선생님」은 랭귀지 스타터로 합쳐졌어요. 옛 주소는 안내 페이지이고, **같은 브라우저라면 예전 기록이 자동으로 옮겨져요**(Emma의 AI 자유 회화는 `english-teacher/emma.html`에 고급 사용자용으로 남아 있어요).
@@ -46,7 +46,8 @@ beomstar_git/
 ### 배포 전 체크
 - `data-*.js`·`stories-*.js`를 고쳤다면 `node tools/stamp-data-ver.mjs`로 `DATA_VER`(내용 해시)를 갱신하세요(`--check`로 확인만). 잊어도 서비스 워커가 뒤에서 확인해 다음 열 때 새 데이터로 바뀝니다.
 - 저장 형식(store 칸)을 바꾸면 `index.html`의 `SCHEMA`를 올리세요. 옛 화면은 더 새 형식의 기록을 덮어쓰지 않고 새로고침을 권합니다.
-- 서비스 워커(`language-teacher/sw.js`)에 문제가 생기면, 캐시를 모두 지우고 `self.registration.unregister()`만 하는 sw.js로 바꿔 배포하면 모든 사용자가 서비스 워커 없이 돌아갑니다.
+- 서비스 워커(`language-teacher/sw.js`)에 문제가 생기면 `tools/sw-killswitch.js`를 `language-teacher/sw.js`로 복사해 배포하세요. 모든 사용자의 캐시를 지우고 서비스 워커를 해제합니다.
+- 문의 링크: `language-teacher/cloud-config.js`의 `SITE_CONTACT`에 구글 설문지·오픈채팅 주소를 넣으면 허브·설정·도움말·개인정보 안내에 한꺼번에 나타나요.
 
 ### 기능 한눈에 (language-teacher)
 
