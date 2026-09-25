@@ -1,0 +1,279 @@
+//@version=5
+// =============================================================================
+// Minervini Swing Watch — '매매 스캐너' 라이브 룰의 TradingView 구현 (indicator)
+//
+// 룰 출처: 구글드라이브 '매매스캐너' 폴더의 타점표(2026-09-04판)에 적힌 라이브 룰
+//   진입  종가가 트리거(피벗) 돌파 + 당일 거래량 1.4배 + 돌파폭 15% 이내 + 레짐 ON
+//         → 다음 거래일 시가 진입 (크립토 타점표에는 돌파폭 상한이 없다)
+//   손절  진입가 대비 S&P500·코스닥·크립토 -10% / 나스닥100·코스피 -7%, 도달 즉시
+//   청산  종가가 50일선 아래로 마감하면 다음 거래일 시가 전량
+//   목표  없음 — 분할 익절은 스캐너 백테스트에서 기각(이익의 77~84%가 상위 소수 승자)
+//   후보  미너비니 트렌드 템플릿 8/8 (RS 조건은 지수 대비 가중수익률로 근사)
+//
+// 모든 판정은 확정봉(barstate.isconfirmed) 기준이라 repaint가 없고 미래 데이터를 쓰지 않는다.
+// 스캐너 원본 코드로 확인하지 못한 값(피벗 기간, 거래량 평균 기준, 수축비 정의, RS 방식)은
+// 입력값으로 빼 두었다 — README '확인이 필요한 가정' 참고. 기계적 룰 출력이며 투자 자문이 아니다.
+// =============================================================================
+indicator("Minervini Swing Watch", shorttitle = "MSW", overlay = true, max_labels_count = 500)
+
+// #############################################################################
+// 1. 입력값
+// #############################################################################
+
+grpMkt = "시장 프리셋 (스캐너 룰)"
+marketPreset   = input.string("S&P500", "시장", options = ["S&P500", "나스닥100", "코스피", "코스닥", "크립토", "직접 설정"], group = grpMkt, tooltip = "시장별 손절폭·레짐 필터·벤치마크를 스캐너 룰대로 적용합니다.\n손절: S&P500 -10% · 나스닥100 -7% · 코스피 -7% · 코스닥 -10% · 크립토 -10%\n레짐: 미국 지수 > 200일선 · 코스피 지수 > 200일선과 20일선 · 코스닥 무필터 · 크립토 BTC > 200일선\n'직접 설정'일 때만 아래 (직접 설정) 값이 쓰입니다.")
+customBench    = input.symbol("SP:SPX", "벤치마크 (직접 설정)", group = grpMkt)
+customRegime   = input.string("200일선", "레짐 필터 (직접 설정)", options = ["200일선", "200일선+20일선", "무필터"], group = grpMkt)
+customStopPct  = input.float(10.0, "손절 % (직접 설정)", minval = 1.0, maxval = 50.0, step = 0.5, group = grpMkt)
+customCapOn    = input.bool(true, "돌파폭 상한 적용 (직접 설정)", group = grpMkt)
+customYearBars = input.int(252, "1년 봉 수 (직접 설정 · 주식 252, 크립토 365)", minval = 50, group = grpMkt)
+
+grpSig = "진입 신호"
+pivotLen       = input.int(20, "트리거(피벗) = 직전 N봉 최고가", minval = 5, group = grpSig, tooltip = "스캐너 원본의 피벗 산출 기간은 확인되지 않아 20봉을 기본값으로 둡니다. 원본 코드를 확인하면 그 값으로 맞추세요.")
+volLen         = input.int(50, "거래량 평균 기간 (당일 제외)", minval = 10, group = grpSig)
+volMult        = input.float(1.4, "당일 거래량 배수", minval = 1.0, step = 0.1, group = grpSig)
+maxBreakoutPct = input.float(15.0, "돌파폭 상한 % (초과 = 추격 구간, 진입 제외)", minval = 1.0, group = grpSig)
+useTT          = input.bool(true, "트렌드 템플릿 8/8 필수", group = grpSig)
+ma200RiseBars  = input.int(22, "200일선 상승 확인 기간 (약 1개월)", minval = 1, group = grpSig)
+rsMinDiff      = input.float(0.0, "RS 프록시 최소 우위 (%p)", step = 0.5, group = grpSig, tooltip = "스캐너의 'RS 70 이상'(유니버스 백분위)은 단일 차트에서 계산할 수 없어, 종목과 벤치마크의 가중 1년 수익률(최근 1/4 구간 40% · 1/2 · 3/4 · 1년 각 20%) 차이로 근사합니다. 0이면 '지수보다 강함'.")
+
+grpExit = "청산"
+exitMaLen = input.int(50, "청산 이동평균 (종가 이탈 → 다음 시가 전량)", minval = 5, group = grpExit)
+
+grpRisk = "포지션 사이징 (참고)"
+accountSize = input.float(5000000, "계좌 금액", minval = 0.0, group = grpRisk)
+riskPct     = input.float(0.75, "1회 리스크 % (계좌 대비)", minval = 0.05, step = 0.05, group = grpRisk, tooltip = "스캐너 배분 규칙: 신호당 자본 × 0.75% 리스크 ÷ 손절폭. 손절 7%면 비중 약 10.7%, 10%면 7.5%.")
+fracQty     = input.bool(false, "소수점 수량 (미국 소수점 매매 · 크립토)", group = grpRisk)
+
+grpExtra = "스캐너 룰 밖의 보조 필터 (기본 꺼짐)"
+useValueFilter  = input.bool(false, "최소 거래대금 필터", group = grpExtra, tooltip = "스캐너 룰에는 없는 필터입니다. 켜면 스캐너와 신호가 달라질 수 있습니다.")
+minTradingValue = input.float(3000000000, "최소 거래대금 (종가×거래량)", minval = 0.0, group = grpExtra)
+
+grpShow = "표시"
+showMA       = input.bool(true, "이동평균선 (50 · 150 · 200)", group = grpShow)
+showPivot    = input.bool(true, "트리거(피벗) 선", group = grpShow)
+showExcluded = input.bool(true, "돌파했지만 제외된 이유 (레짐 OFF · 추격 · 거래량 부족)", group = grpShow)
+showTable    = input.bool(true, "상태 테이블", group = grpShow)
+
+// #############################################################################
+// 2. 시장 프리셋 → 룰 파라미터
+// #############################################################################
+
+isCrypto = marketPreset == "크립토"
+isCustom = marketPreset == "직접 설정"
+
+benchSym = switch marketPreset
+    "S&P500"    => "SP:SPX"
+    "나스닥100" => "NASDAQ:NDX"
+    "코스피"    => "KRX:KOSPI"
+    "코스닥"    => "KRX:KOSDAQ"
+    "크립토"    => "BINANCE:BTCUSDT"
+    => customBench
+
+regimeMode = switch marketPreset
+    "코스피"    => "200일선+20일선"
+    "코스닥"    => "무필터"
+    "직접 설정" => customRegime
+    => "200일선"
+
+stopPct = switch marketPreset
+    "나스닥100" => 7.0
+    "코스피"    => 7.0
+    "직접 설정" => customStopPct
+    => 10.0
+
+capOn    = isCustom ? customCapOn : not isCrypto
+yearBars = isCustom ? customYearBars : isCrypto ? 365 : 252
+
+// #############################################################################
+// 3. 조건 계산
+// #############################################################################
+
+// 가중 1년 수익률 (IBD식 RS 근사): 최근 1/4 구간 40% + 1/2 · 3/4 · 1년 각 20%
+f_weightedPerf(n) =>
+    q = math.round(n / 4)
+    h = math.round(n / 2)
+    t = math.round(n * 3 / 4)
+    0.4 * (close / close[q] - 1) + 0.2 * (close / close[h] - 1) + 0.2 * (close / close[t] - 1) + 0.2 * (close / close[n] - 1)
+
+[bClose, bMa200, bMa20, bPerf] = request.security(benchSym, timeframe.period, [close, ta.sma(close, 200), ta.sma(close, 20), f_weightedPerf(yearBars)], lookahead = barmerge.lookahead_off)
+
+// ----- 3-1. 시장 레짐 -----
+regimeOn = switch regimeMode
+    "무필터"         => true
+    "200일선+20일선" => bClose > bMa200 and bClose > bMa20
+    => bClose > bMa200
+
+// ----- 3-2. 트렌드 템플릿 8개 -----
+ma50   = ta.sma(close, 50)
+ma150  = ta.sma(close, 150)
+ma200  = ta.sma(close, 200)
+exitMa = ta.sma(close, exitMaLen)
+hi52   = ta.highest(close, yearBars)
+lo52   = ta.lowest(close, yearBars)
+rsDiff = (f_weightedPerf(yearBars) - bPerf) * 100
+
+tt1 = close > ma150 and close > ma200
+tt2 = ma150 > ma200
+tt3 = ma200 > ma200[ma200RiseBars]
+tt4 = ma50 > ma150 and ma50 > ma200
+tt5 = close > ma50
+tt6 = close >= lo52 * 1.30
+tt7 = close >= hi52 * 0.75
+tt8 = rsDiff >= rsMinDiff
+ttCount = (tt1 ? 1 : 0) + (tt2 ? 1 : 0) + (tt3 ? 1 : 0) + (tt4 ? 1 : 0) + (tt5 ? 1 : 0) + (tt6 ? 1 : 0) + (tt7 ? 1 : 0) + (tt8 ? 1 : 0)
+ttPass  = not useTT or ttCount == 8
+
+// ----- 3-3. 트리거 돌파 · 거래량 · 돌파폭 -----
+pivot       = ta.highest(high[1], pivotLen)
+volAvg      = ta.sma(volume, volLen)[1]
+volX        = volAvg > 0 ? volume / volAvg : na
+breakoutPct = (close / pivot - 1) * 100
+toPivotPct  = (pivot / close - 1) * 100
+
+breakout = close > pivot
+volOK    = volX >= volMult
+capOK    = not capOn or breakoutPct <= maxBreakoutPct
+
+liquidityOK = not useValueFilter or close * volume >= minTradingValue
+candidate   = ttPass and liquidityOK
+fullSignal  = breakout and volOK and capOK and candidate and regimeOn
+
+// ----- 3-4. 관찰용 지표 (타점표의 수축비 · 거래량비 · 52주 고점 대비) -----
+contraction = ta.sma(ta.tr(true), 10) / ta.sma(ta.tr(true), 40)
+dryUp       = ta.sma(volume, 10) / ta.sma(volume, 50)
+fromHigh52  = (close / hi52 - 1) * 100
+
+// ----- 3-5. 포지션 추적: 신호 → 다음 시가 진입 → 손절 즉시 / 50일선 종가 이탈 → 다음 시가 청산 -----
+var bool  entryPending = false
+var bool  exitPending  = false
+var float entryPrice   = na
+var float stopPrice    = na
+
+signal     = false
+flatNow    = false
+entryNow   = false
+stopHit    = false
+stopPnl    = float(na)
+stopLine   = float(na)
+exitSignal = false
+exitFilled = false
+exitPnl    = float(na)
+
+if barstate.isconfirmed
+    if exitPending
+        exitPending := false
+        exitFilled  := true
+        exitPnl     := (open / entryPrice - 1) * 100
+        entryPrice  := na
+        stopPrice   := na
+    if entryPending
+        entryPending := false
+        entryPrice   := open
+        stopPrice    := open * (1 - stopPct / 100)
+        entryNow     := true
+    if not na(entryPrice)
+        stopLine := stopPrice
+        if low <= stopPrice
+            stopHit    := true
+            stopPnl    := (math.min(open, stopPrice) / entryPrice - 1) * 100
+            entryPrice := na
+            stopPrice  := na
+        else if close < exitMa
+            exitSignal  := true
+            exitPending := true
+    if na(entryPrice)
+        flatNow      := true
+        signal       := fullSignal
+        entryPending := signal
+
+inPos     = not na(entryPrice)
+nearPivot = flatNow and not signal and candidate and regimeOn and not breakout and toPivotPct <= 1
+
+// #############################################################################
+// 4. 시각화
+// #############################################################################
+
+plot(showMA ? ma50 : na, "50일선", color.new(color.orange, 0), 2)
+plot(showMA ? ma150 : na, "150일선", color.new(color.blue, 0), 1)
+plot(showMA ? ma200 : na, "200일선", color.new(color.gray, 0), 2)
+plot(showMA and exitMaLen != 50 ? exitMa : na, "청산 이동평균", color.new(color.red, 30), 1)
+plot(showPivot ? pivot : na, "트리거(피벗)", color.new(color.teal, 40), 1, plot.style_stepline)
+plot(na(stopLine) ? stopPrice : stopLine, "손절가", color.new(color.red, 0), 1, plot.style_linebr)
+plotshape(entryNow, title = "진입 (시가)", style = shape.triangleup, location = location.belowbar, color = color.new(color.green, 0), size = size.tiny)
+
+exitMaName = str.tostring(exitMaLen) + "일선"
+
+if signal
+    label.new(bar_index, low, "BUY 신호\n다음 시가 진입", style = label.style_label_up, color = color.new(color.green, 0), textcolor = color.white, size = size.small)
+
+if stopHit
+    label.new(bar_index, low, "STOP " + str.tostring(stopPnl, "+#.#;-#.#") + "%", style = label.style_label_up, color = color.new(color.red, 0), textcolor = color.white, size = size.small)
+
+if exitSignal
+    label.new(bar_index, high, exitMaName + " 이탈\n다음 시가 청산", style = label.style_label_down, color = color.new(color.orange, 0), textcolor = color.white, size = size.small)
+
+if exitFilled
+    label.new(bar_index, high, "청산 " + str.tostring(exitPnl, "+#.#;-#.#") + "%", style = label.style_label_down, color = color.new(color.gray, 20), textcolor = color.white, size = size.tiny)
+
+if showExcluded and flatNow and not signal and breakout and candidate
+    reason = not regimeOn ? "레짐 OFF" : not capOK ? "추격 제외 +" + str.tostring(breakoutPct, "#.#") + "%" : "거래량 부족 " + str.tostring(volX, "#.##") + "배"
+    label.new(bar_index, high, reason, style = label.style_label_down, color = color.new(color.silver, 20), textcolor = color.black, size = size.tiny)
+
+// ----- 상태 테이블 (확정봉 기준) -----
+f_pct(x) =>
+    na(x) ? "-" : str.tostring(x, "+#.#;-#.#") + "%"
+
+f_num(x) =>
+    na(x) ? "-" : str.tostring(x, format.mintick)
+
+statusTxt = inPos ? "보유 중 — " + exitMaName + " 종가 이탈 시 청산" :
+     entryPending ? "신호 확정 → 다음 시가 진입" :
+     not ttPass ? "후보 아님 (트렌드 템플릿 " + str.tostring(ttCount) + "/8)" :
+     not liquidityOK ? "후보 아님 (거래대금 부족)" :
+     not regimeOn ? "레짐 OFF — 신규 진입 금지" :
+     breakout and not capOK ? "추격 제외 (돌파폭 " + f_pct(breakoutPct) + ")" :
+     breakout and not volOK ? "돌파 · 거래량 부족" :
+     toPivotPct <= 1 ? "1순위 · 임박 (피벗 1% 이내)" :
+     toPivotPct <= 3 ? "2순위 · 근접 (피벗 3% 이내)" :
+     "3순위 · 관찰"
+
+statusColor = inPos or entryPending ? color.new(color.green, 20) :
+     candidate and regimeOn and toPivotPct <= 3 ? color.new(color.orange, 20) :
+     color.new(color.gray, 40)
+
+refPrice  = inPos ? entryPrice : close
+qtyRaw    = refPrice > 0 ? accountSize * riskPct / 100 / (refPrice * stopPct / 100) : na
+qtyTxt    = na(qtyRaw) ? "-" : fracQty ? str.tostring(qtyRaw, "#.####") : str.tostring(math.floor(qtyRaw))
+weightPct = riskPct / stopPct * 100
+
+var table tbl = table.new(position.top_right, 2, 11, border_width = 1)
+
+f_row(r, k, v, c) =>
+    table.cell(tbl, 0, r, k, text_color = color.white, bgcolor = color.new(color.gray, 25), text_size = size.small)
+    table.cell(tbl, 1, r, v, text_color = color.white, bgcolor = c, text_size = size.small)
+
+if showTable and barstate.isconfirmed and (barstate.islast or barstate.islastconfirmedhistory)
+    base = color.new(color.gray, 40)
+    f_row(0, "시장 · 레짐", marketPreset + " · " + (regimeOn ? "ON" : "OFF") + " (" + regimeMode + ")", regimeOn ? color.new(color.green, 40) : color.new(color.red, 40))
+    f_row(1, "트렌드 템플릿", str.tostring(ttCount) + " / 8", ttCount == 8 ? color.new(color.green, 40) : base)
+    f_row(2, "RS 프록시 (지수 대비)", na(rsDiff) ? "-" : str.tostring(rsDiff, "+#.#;-#.#") + "%p", base)
+    f_row(3, "52주 고점 대비", f_pct(fromHigh52), base)
+    f_row(4, "수축비 10/40 · 거래량비 10/50", str.tostring(contraction, "#.##") + " · " + str.tostring(dryUp, "#.##"), base)
+    f_row(5, "트리거 · 피벗까지", f_num(pivot) + " · " + f_pct(toPivotPct), base)
+    f_row(6, "당일 거래량 배수", na(volX) ? "-" : str.tostring(volX, "#.##") + "배 (기준 " + str.tostring(volMult) + ")", base)
+    f_row(7, "상태", statusTxt, statusColor)
+    f_row(8, "진입가 · 손절가", inPos ? f_num(entryPrice) + " · " + f_num(stopPrice) : "손절 -" + str.tostring(stopPct) + "% (진입가 기준)", base)
+    f_row(9, exitMaName + " 청산선 여유", f_pct((close / exitMa - 1) * 100), base)
+    f_row(10, "권장 수량 (리스크 " + str.tostring(riskPct) + "%)", qtyTxt + " · 비중 " + str.tostring(weightPct, "#.#") + "%", base)
+
+// ----- 알림 -----
+alertcondition(signal, title = "신호 확정", message = "미너비니 스캐너 신호 확정 — 다음 거래일 시가 진입, 매수와 동시에 손절 주문")
+alertcondition(stopHit, title = "손절 (봉 마감 확인)", message = "손절가 도달 — 전량 청산 (봉 마감 기준 확인)")
+
+// 장중 손절가 터치 알림: '모든 alert() 함수 호출' 조건으로 알림을 만들면 받을 수 있다.
+// 진입 봉 당일은 진입가가 봉 마감에 기록되므로 장중 알림이 없다 — 실제 손절은 매수와 함께 건 손절 주문이 맡는다.
+if not barstate.isconfirmed and not na(stopPrice) and low <= stopPrice
+    alert("손절가 장중 도달 — 손절 주문 체결 확인", alert.freq_once_per_bar)
+alertcondition(exitSignal, title = "청산선 이탈", message = "종가가 청산 이동평균 아래로 마감 — 다음 거래일 시가 전량 청산")
+alertcondition(nearPivot, title = "피벗 임박", message = "트렌드 템플릿 통과 종목이 트리거(피벗) 1% 이내 — 돌파 감시")
