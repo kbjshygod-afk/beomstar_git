@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>랭귀지 스타터 - 영어·중국어·일본어·스페인어·프랑스어 왕초보 회화</title>
     <style>
         :root {
@@ -24,7 +24,7 @@
         body {
             font-family: 'Segoe UI', 'Malgun Gothic', system-ui, sans-serif;
             background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 45%, var(--gold) 135%);
-            min-height: 100vh;
+            min-height: 100vh; min-height: 100dvh;
             display: flex; align-items: center; justify-content: center;
             padding: 16px;
             color: var(--text);
@@ -488,8 +488,14 @@
         /* ── 대화: 내레이션 · 파트 ─────────── */
         .dlg-part { font-size: 11.5px; font-weight: 800; color: var(--primary); letter-spacing: .02em; margin: 16px 0 8px; display: flex; align-items: center; gap: 8px; }
         .dlg-part:first-child { margin-top: 0; }
-        .dlg-part::after { content: ""; flex: 1; height: 1px; background: var(--border); }
-        .narr { background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 12px; padding: 9px 12px; margin: 0 6% 8px; text-align: center; cursor: pointer; }
+        .dlg-part > .dp-t { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .narr { background: #f8fafc; border-left: 3px solid #cbd5e1; border-radius: 8px; padding: 7px 11px; margin: 0 0 6px; cursor: pointer; }
+        .dlg-sec.closed .dlg-body { display: none; }
+        .dlg-part { cursor: pointer; background: none; border: none; width: 100%; font-family: inherit; text-align: left; padding: 6px 0; }
+        .dlg-part .dp-play { margin-left: auto; font-size: 11.5px; color: var(--primary); border: 1px solid var(--border); border-radius: 999px; padding: 3px 9px; background: white; flex-shrink: 0; }
+        .dlg-part .dp-chev { flex-shrink: 0; color: var(--text-light); }
+        .dlg-part.heard .dp-t::after { content: " ✓"; color: var(--success); }
+        .lesson-row.skipped { opacity: .62; }
         .narr .native { font-size: 15px; font-weight: 600; }
         .narr .ko { font-size: 11.5px; color: var(--text-light); margin-top: 2px; }
         .narr .pron { font-size: 12.5px; color: #7a5200; margin-top: 1px; font-weight: 600; }
@@ -538,7 +544,8 @@
             .header p { display: none; }
             .avatar { width: 38px; height: 38px; font-size: 21px; }
             .lang-switch-btn { margin-left: 4px; padding: 6px 8px; }
-            .app { border-radius: 0; height: 100vh; max-height: none; }
+            .app { border-radius: 0; height: 100vh; height: 100dvh; max-height: none; }
+            .tabbar { padding-bottom: env(safe-area-inset-bottom, 0px); }
         }
     </style>
 </head>
@@ -627,28 +634,100 @@ function loadStore() {
     } catch (e) { storageFailed = true; }
     return normalizeStore(d);
 }
+// 저장소를 읽기 전에 쓰이므로 끌어올려지는 함수 선언으로 둔다
+function isObj(v) { return !!v && typeof v === 'object' && !Array.isArray(v); }
+function isDate(v) { return typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v); }
+function clampInt(v, lo, hi, dflt) { const n = Number(v); return Number.isFinite(n) ? Math.max(lo, Math.min(hi, Math.round(n))) : dflt; }
+function clip(v, max) { return typeof v === 'string' ? v.slice(0, max || 400) : ''; }
+function cleanMap(m, fn, maxKeys) {
+    const o = {};
+    if (!isObj(m)) return o;
+    Object.keys(m).slice(0, maxKeys || 5000).forEach(k => { const v = fn(m[k], k); if (v !== undefined) o[clip(k, 300)] = v; });
+    return o;
+}
+function cleanLangProg(p) {
+    if (!isObj(p)) return undefined;
+    const o = {
+        completed: cleanMap(p.completed, c => {
+            if (!isObj(c) || !isDate(c.date)) return undefined;
+            const total = clampInt(c.total, 1, 500, 1);
+            const x = { score: clampInt(c.score, 0, total, 0), total, date: c.date };
+            if (isDate(c.last)) x.last = c.last;
+            if (c.fixed) x.fixed = clampInt(c.fixed, 0, total, 0);
+            if (c.imported) x.imported = clip(String(c.imported), 20);
+            if (c.placed) x.placed = true;
+            return x;
+        }),
+        srs: cleanMap(p.srs, c => {
+            if (!isObj(c) || typeof c.native !== 'string' || !c.native) return undefined;
+            const x = { native: clip(c.native), pinyin: clip(c.pinyin), ko: clip(c.ko), koPron: clip(c.koPron), box: clampInt(c.box, 1, 7, 1), due: isDate(c.due) ? c.due : todayStr() };
+            if (c.mastered) x.mastered = isDate(c.mastered) ? c.mastered : todayStr();
+            if (c.kind === 'sent') x.kind = 'sent';
+            return x;
+        }),
+        streak: isObj(p.streak) ? { last: isDate(p.streak.last) ? p.streak.last : '', count: clampInt(p.streak.count, 0, 100000, 0) } : { last: '', count: 0 },
+        lastPos: isObj(p.lastPos) && typeof p.lastPos.id === 'string' ? { id: clip(p.lastPos.id, 40), step: clampInt(p.lastPos.step, 0, 4, 0) } : null,
+        xp: clampInt(p.xp, 0, 1e8, 0),
+        daily: cleanMap(p.daily, (v, k) => {
+            if (!isDate(k) || !isObj(v)) return undefined;
+            const x = { xp: clampInt(v.xp, 0, 1e6, 0) };
+            Object.keys(v).forEach(kk => { if (kk !== 'xp' && kk !== 'effort' && typeof v[kk] === 'number' && Number.isFinite(v[kk])) x[clip(kk, 24)] = Math.max(0, Math.round(v[kk])); });
+            if (isObj(v.effort)) x.effort = cleanMap(v.effort, () => 1, 300);
+            return x;
+        }, 3000),
+        boss: cleanMap(p.boss, c => isObj(c) && isDate(c.date) ? Object.assign({ score: c.score == null ? null : clampInt(c.score, 0, 100, 0), date: c.date }, isDate(c.last) ? { last: c.last } : {}) : undefined),
+        storiesRead: cleanMap(p.storiesRead, c => isObj(c) && isDate(c.date) ? Object.assign({ date: c.date }, c.score != null ? { score: clampInt(c.score, 0, 50, 0) } : {}, isDate(c.last) ? { last: c.last } : {}) : undefined),
+        mistakes: cleanMap(p.mistakes, c => isObj(c) ? Object.assign({ date: isDate(c.date) ? c.date : todayStr(), n: clampInt(c.n, 1, 999, 1), ok: clampInt(c.ok, 0, 9, 0) }, isDate(c.lastOk) ? { lastOk: c.lastOk } : {}) : undefined),
+        steps: cleanMap(p.steps, c => isObj(c) ? cleanMap(c, v => (v ? 1 : undefined), 20) : undefined),
+        roleplay: cleanMap(p.roleplay, v => isDate(v) ? v : undefined),
+        spoke: cleanMap(p.spoke, c => isObj(c) ? cleanMap(c, v => (v ? 1 : undefined), 50) : undefined),
+    };
+    if (typeof p.placedAt === 'string') o.placedAt = clip(p.placedAt, 40);
+    if (isObj(p.meta)) o.meta = { lessons: clampInt(p.meta.lessons, 0, 999, 0), stories: clampInt(p.meta.stories, 0, 999, 0), quest: clampInt(p.meta.quest, 0, 999, 0) };
+    if (isObj(p.deqImport)) o.deqImport = { at: isDate(p.deqImport.at) ? p.deqImport.at : '', xp: clampInt(p.deqImport.xp, 0, 1e8, 0), days: Array.isArray(p.deqImport.days) ? p.deqImport.days.map(Number).filter(n => n >= 1 && n <= 30) : [], hist: Array.isArray(p.deqImport.hist) ? p.deqImport.hist.filter(isDate) : [], declined: !!p.deqImport.declined };
+    if (p.srsV) o.srsV = clampInt(p.srsV, 0, 9, 0);
+    return o;
+}
+function cleanSettings(v) {
+    const o = Object.assign({}, DEFAULT_SETTINGS, { voice: {}, rateByLang: {} });
+    if (!isObj(v)) return o;
+    if (typeof v.koPron === 'boolean') o.koPron = v.koPron;
+    if (typeof v.freeNav === 'boolean') o.freeNav = v.freeNav;
+    if (typeof v.sfx === 'boolean') o.sfx = v.sfx;
+    if (typeof v.bigText === 'boolean') o.bigText = v.bigText;
+    const r = Number(v.rate); if (Number.isFinite(r)) o.rate = Math.max(0.6, Math.min(1.2, Math.round(r * 10) / 10));
+    if ([10, 20, 30, 50, 80].includes(Number(v.dailyGoal))) o.dailyGoal = Number(v.dailyGoal);
+    if (typeof v.reminderTime === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(v.reminderTime)) o.reminderTime = v.reminderTime;
+    if (isObj(v.voice)) Object.keys(v.voice).forEach(k => { if (LANGS[k] && typeof v.voice[k] === 'string') o.voice[k] = clip(v.voice[k], 120); });
+    if (isObj(v.rateByLang)) Object.keys(v.rateByLang).forEach(k => { const n = Number(v.rateByLang[k]); if (LANGS[k] && Number.isFinite(n)) o.rateByLang[k] = Math.max(0.6, Math.min(1.2, Math.round(n * 10) / 10)); });
+    return o;
+}
 function normalizeStore(d) {
+    d = isObj(d) ? d : {};
+    const byLang = {};
+    if (isObj(d.byLang)) Object.keys(d.byLang).forEach(k => { if (LANGS[k]) { const c = cleanLangProg(d.byLang[k]); if (c) byLang[k] = c; } });
     return {
-        active: d.active || null,                 // 마지막으로 고른 언어 코드
-        byLang: d.byLang || {},                    // code → {completed, srs, streak, lastPos, xp, daily, boss, mistakes}
-        settings: Object.assign({}, DEFAULT_SETTINGS, d.settings || {}),
-        seen: d.seen || {},                        // 한 번만 보여 줄 안내(언어별 첫 방문 등)
-        streak: normalizeStreak(d),                // 전 언어 통합 연속 학습 {last, count, best, shields, frozen}
-        badges: d.badges || {},                    // 배지 id → 획득일
-        flags: d.flags || {},                      // 배지 판정용 기록(훈련소 만점 등)
+        active: LANGS[d.active] ? d.active : null,  // 마지막으로 고른 언어 코드
+        byLang,                                     // code → {completed, srs, streak, lastPos, xp, daily, boss, mistakes …}
+        settings: cleanSettings(d.settings),
+        seen: cleanMap(d.seen, v => (typeof v === 'string' || typeof v === 'boolean') ? v : undefined, 200),   // 한 번만 보여 줄 안내
+        streak: normalizeStreak(d),                 // 전 언어 통합 연속 학습 {last, count, best, shields, frozen}
+        badges: cleanMap(d.badges, v => isDate(v) ? v : undefined, 100),   // 배지 id → 획득일
+        flags: cleanMap(d.flags, v => (isDate(v) || typeof v === 'number') ? v : undefined, 50),   // 배지 판정용 기록
     };
 }
 function normalizeStreak(d) {
-    if (d.streak && typeof d.streak === 'object' && 'count' in d.streak) {
-        return Object.assign({ last: '', count: 0, best: 0, shields: 0, frozen: [] }, d.streak);
+    if (isObj(d.streak) && 'count' in d.streak) {
+        const x = d.streak;
+        return { last: isDate(x.last) ? x.last : '', count: clampInt(x.count, 0, 100000, 0), best: clampInt(x.best, 0, 100000, 0), shields: clampInt(x.shields, 0, 2, 0), frozen: Array.isArray(x.frozen) ? x.frozen.filter(isDate).slice(-60) : [] };
     }
     // 이전 버전: 언어별 streak 중 가장 최근 것을 전역으로 옮긴다
     let st = { last: '', count: 0, best: 0, shields: 0, frozen: [] };
-    Object.values(d.byLang || {}).forEach(p => {
-        const s2 = p && p.streak;
-        if (!s2 || !s2.last) return;
-        if (s2.last > st.last) { st.last = s2.last; st.count = s2.count || 0; }
-        st.best = Math.max(st.best, s2.count || 0);
+    Object.values(isObj(d.byLang) ? d.byLang : {}).forEach(p => {
+        const s2 = isObj(p) && p.streak;
+        if (!isObj(s2) || !isDate(s2.last)) return;
+        if (s2.last > st.last) { st.last = s2.last; st.count = clampInt(s2.count, 0, 100000, 0); }
+        st.best = Math.max(st.best, clampInt(s2.count, 0, 100000, 0));
     });
     st.best = Math.max(st.best, st.count);
     return st;
@@ -754,10 +833,10 @@ function allLangStats() {
         bosses += Object.keys(p.boss || {}).length;
         Object.values(p.daily || {}).forEach(d => { reviews += (d && d.reviews) || 0; speak += (d && d.speak) || 0; });
         const sr = Object.keys(p.storiesRead || {}).length;
-        stories += sr; if (sr >= 12) fullStories = true;
+        stories += sr; if (sr > 0 && sr >= ((p.meta && p.meta.stories) || 12)) fullStories = true;
         if ((p.xp || 0) > 0 || comp.length) langs++;
         maxXp = Math.max(maxXp, p.xp || 0);
-        if (p.total && comp.length >= p.total) finished = true;
+        if (p.meta && p.meta.lessons && comp.length >= p.meta.lessons) finished = true;
     });
     const en = store.byLang.en;
     const quest30 = en ? Object.keys(en.completed || {}).filter(id => /^u[678]l/.test(id)).length >= 30 : false;
@@ -773,7 +852,7 @@ const BADGES = [
     { id: 's30', ico: '🏅', name: '한 달 습관', cond: '30일 연속 학습', ok: () => store.streak.best >= 30 },
     { id: 'rev50', ico: '🃏', name: '복습왕', cond: '복습 카드 50장', ok: s => s.reviews >= 50 },
     { id: 'story1', ico: '📖', name: '첫 동화', cond: '동화 1편 완독', ok: s => s.stories >= 1 },
-    { id: 'story12', ico: '📚', name: '책벌레', cond: '한 언어 동화 12편', ok: s => s.fullStories },
+    { id: 'story12', ico: '📚', name: '책벌레', cond: '한 언어 동화 전편 완독', ok: s => s.fullStories },
     { id: 'trainer', ico: '🎯', name: '훈련소 만점', cond: '훈련소 10/10', ok: () => !!store.flags.trainerPerfect },
     { id: 'match', ico: '🧩', name: '짝 맞추기 달인', cond: '실수 없이 한 판', ok: () => !!store.flags.matchPerfect },
     { id: 'mist', ico: '🎓', name: '오답 정복', cond: '오답 10문제 졸업', ok: () => (store.flags.mistakesCleared || 0) >= 10 },
@@ -924,16 +1003,28 @@ function tuneFor(speaker) {
     if (speaker === 'N') return { voice: a, pitch: 1, rate: 0.96 };
     return { voice: a, pitch: two ? 1 : 1.06, rate: 1 };
 }
+function curRate() { const r = CUR && store.settings.rateByLang ? store.settings.rateByLang[CUR.code] : undefined; return typeof r === 'number' ? r : store.settings.rate; }
 function makeUtter(text, rate, speaker) {
     const tune = tuneFor(speaker || 'A');
     const u = new SpeechSynthesisUtterance(text);
     u.lang = CUR.ttsLang;
     try { if (tune.voice) u.voice = tune.voice; } catch (e) { /* 목소리 지정 실패 시 기기 기본 음성 */ }
     u.pitch = tune.pitch;
-    u.rate = Math.max(0.4, rate * tune.rate * store.settings.rate);
+    u.rate = Math.max(0.4, rate * tune.rate * curRate());
     return u;
 }
+let ttsWarned = false;
+function ttsCheck() {
+    if (ttsWarned || !CUR) return;
+    if (!ttsAvailable()) { ttsWarned = true; showToast('🔇 이 브라우저는 발음 듣기를 지원하지 않아요. 크롬·사파리로 열어 주세요', '', 3800); return; }
+    if (!voiceCache[CUR.code]) {
+        pickVoice(CUR.code);
+        let n = 0; try { n = speechSynthesis.getVoices().length; } catch (e) { n = 0; }
+        if (!voiceCache[CUR.code] && n > 0) { ttsWarned = true; showToast('🔇 이 기기에 ' + CUR.name + ' 음성이 없어요. 기기 설정에서 음성을 내려받거나 크롬으로 열어 주세요', '', 4200); }
+    }
+}
 function speak(text, rate = 1, speaker) {
+    ttsCheck();
     if (!ttsAvailable() || !CUR || !text) return;
     stopSpeak();
     try { speechSynthesis.speak(makeUtter(text, rate, speaker)); } catch (e) { /* 재생 실패는 무시 */ }
@@ -975,25 +1066,25 @@ function speakSeq(items, onDone, onStep) {
 
 /* ═══════════════════ 모달 (접근성: Esc 닫기 · 포커스 가두기) ═══════════════════ */
 let modalClose = null, modalReturnFocus = null;
-function openModal(html, onClose) {
+function openModal(html, onClose) {   // onClose(reason): 'done' | 'cancel'
     closeModal(true);
     modalReturnFocus = document.activeElement;
     const root = document.getElementById('modalRoot');
     root.innerHTML = '<div class="overlay" id="overlay"><div class="sheet" role="dialog" aria-modal="true">' + html + '</div></div>';
     modalClose = onClose || null;
     const ov = document.getElementById('overlay');
-    ov.addEventListener('click', e => { if (e.target === ov) closeModal(); });
-    root.querySelectorAll('[data-close-overlay]').forEach(b => b.addEventListener('click', () => closeModal()));
+    ov.addEventListener('click', e => { if (e.target === ov) closeModal(false, 'cancel'); });
+    root.querySelectorAll('[data-close-overlay]').forEach(b => b.addEventListener('click', () => closeModal(false, b.dataset.closeOverlay === 'done' ? 'done' : 'cancel')));
     const f = root.querySelector('button, [tabindex]');
     if (f) setTimeout(() => f.focus(), 30);
     return root.querySelector('.sheet');
 }
-function closeModal(silent) {
+function closeModal(silent, reason) {
     const root = document.getElementById('modalRoot');
     if (!root || !root.innerHTML) return;
     const cb = modalClose; modalClose = null;
     root.innerHTML = '';
-    if (!silent && cb) cb();
+    if (!silent && cb) cb(reason || 'cancel');
     if (modalReturnFocus && modalReturnFocus.focus && document.body.contains(modalReturnFocus)) { try { modalReturnFocus.focus(); } catch (e) { } }
 }
 // role="button" 요소(카드·말풍선 등)는 Enter/Space로도 누를 수 있게
@@ -1004,7 +1095,7 @@ document.addEventListener('keydown', e => {
 document.addEventListener('keydown', e => {
     const root = document.getElementById('modalRoot');
     if (!root || !root.innerHTML) return;
-    if (e.key === 'Escape') { e.preventDefault(); closeModal(); return; }
+    if (e.key === 'Escape') { e.preventDefault(); closeModal(false, 'cancel'); return; }
     if (e.key === 'Tab') {
         const els = Array.from(root.querySelectorAll('button:not([disabled]), select, input, textarea, [tabindex]'));
         if (!els.length) return;
@@ -1132,7 +1223,7 @@ function openSpeak(cfg) {
         (boss ? '<button class="btn small gray" id="micReveal">👀 힌트 보기</button>' : '') + '</div>' +
         '<div id="micStage"></div>';
     let passedOnce = false;
-    const sheet = openModal(html, () => { stopRecog(); if (cfg.onClose) cfg.onClose(passedOnce); });
+    const sheet = openModal(html, reason => { stopRecog(); if (cfg.onClose) cfg.onClose(passedOnce, reason); });
     const stage = sheet.querySelector('#micStage');
     sheet.querySelector('#micListen').addEventListener('click', () => { stopRecog(); speak(target, 0.9); reveal(); });
     const rv = sheet.querySelector('#micReveal');
@@ -1214,7 +1305,7 @@ function openSpeak(cfg) {
         stage.innerHTML = h;
         sfx(passed ? 'ok' : 'bad');
         stage.querySelector('#micRetry').addEventListener('click', () => ready());
-        stage.querySelector('#micDone').addEventListener('click', () => closeModal());
+        stage.querySelector('#micDone').addEventListener('click', () => closeModal(false, 'done'));
         if (passed) {
             passedOnce = true;
             const dl = dayLog();
@@ -1254,11 +1345,35 @@ function isUnlocked(idx) {
 function nextLessonIdx() {
     const st = placeIdx();
     for (let i = st; i < ALL.length; i++) if (!isDone(ALL[i].id)) return i;
-    for (let i = 0; i < st; i++) if (!isDone(ALL[i].id)) return i;
-    return -1;
+    if (st === 0) return -1;
+    return -1;   // 배치 뒤를 다 끝냈으면 수료(앞 단계는 선택)
 }
+function effDone() { const st = placeIdx(); return doneCount() + ALL.slice(0, st).filter(l => !isDone(l.id)).length; }
 function doneCount() { return ALL.filter(l => isDone(l.id)).length; }
-function srsKey(w) { return nativeText(w) + '|' + (w.ko || ''); }
+function srsKeyOf(native, roman) { return native + '|' + (roman || ''); }
+function srsKey(w) { return srsKeyOf(nativeText(w), romanText(w)); }
+// 예전 키(원문|뜻)로 쌓인 중복 카드를 원문 기준으로 합친다(낮은 상자·이른 복습일 유지, 뜻은 이어 붙임)
+function migrateSrsKeys(p) {
+    if (p.srsV >= 2) return;
+    const out = {};
+    Object.values(p.srs || {}).forEach(c => {
+        const k = srsKeyOf(c.native, c.pinyin);
+        const o = out[k];
+        if (!o) { out[k] = Object.assign({}, c); return; }
+        o.box = Math.min(o.box, c.box);
+        if (c.due < o.due) o.due = c.due;
+        if (c.ko && !o.ko.split(' / ').includes(c.ko)) o.ko = o.ko + ' / ' + c.ko;
+        if (!(o.mastered && c.mastered)) delete o.mastered;
+    });
+    p.srs = out; p.srsV = 2;
+}
+function addSrsCard(p, card) {
+    const k = srsKeyOf(card.native, card.pinyin);
+    const o = p.srs[k];
+    if (!o) { p.srs[k] = card; return true; }
+    if (card.ko && !o.ko.split(' / ').includes(card.ko)) o.ko = o.ko + ' / ' + card.ko;
+    return false;
+}
 function dueCards() {
     const t = todayStr();
     // 오래 밀린 카드 → 낮은 상자 순. 세션 상한 때문에 밀린 카드가 영영 안 나오는 일을 막는다.
@@ -1267,10 +1382,14 @@ function dueCards() {
 }
 function sessionCap() { return 20; }
 function addWordsToSrs(lesson) {
-    const t = todayStr(), p = prog();
+    const p = prog();
+    // 새 카드는 내일부터. 하루에 예정된 새 카드가 12장을 넘으면 다음 날로 넘겨 복습이 몰리지 않게 한다
+    const perDay = {};
+    Object.values(p.srs).forEach(c => { if (c.box === 1 && !c.mastered) perDay[c.due] = (perDay[c.due] || 0) + 1; });
+    const slot = () => { let d = 1; while ((perDay[todayStr(d)] || 0) >= 12 && d < 30) d++; const ds = todayStr(d); perDay[ds] = (perDay[ds] || 0) + 1; return ds; };
     (lesson.words || []).forEach(w => {
-        const k = srsKey(w);
-        if (!p.srs[k]) p.srs[k] = { native: nativeText(w), pinyin: romanText(w), ko: w.ko, koPron: w.koPron || '', box: 1, due: todayStr(1) };
+        if (!p.srs[srsKey(w)]) addSrsCard(p, { native: nativeText(w), pinyin: romanText(w), ko: w.ko, koPron: w.koPron || '', box: 1, due: slot() });
+        else addSrsCard(p, { native: nativeText(w), pinyin: romanText(w), ko: w.ko });
     });
     save();
 }
@@ -1314,14 +1433,17 @@ function importProgress(code) {
 
 /* ═══════════════════ 언어 로딩 · 전환 ═══════════════════ */
 function loadScriptOnce(src, globalName) {
-    return new Promise((resolve, reject) => {
-        if (window[globalName]) return resolve();
+    if (window[globalName]) return Promise.resolve();
+    if (loadedScripts[src]) return loadedScripts[src];   // 같은 파일을 두 번 불러오지 않도록 약속을 캐시
+    const pr = new Promise((resolve, reject) => {
         const s = document.createElement('script');
         s.src = src;
-        s.onload = () => window[globalName] ? resolve() : reject(new Error('데이터가 비어 있어요: ' + src));
-        s.onerror = () => { s.remove(); reject(new Error('데이터를 불러오지 못했어요: ' + src)); };
+        s.onload = () => { if (window[globalName]) resolve(); else { delete loadedScripts[src]; s.remove(); reject(new Error('데이터가 비어 있어요: ' + src)); } };
+        s.onerror = () => { delete loadedScripts[src]; s.remove(); reject(new Error('데이터를 불러오지 못했어요: ' + src)); };
         document.head.appendChild(s);
     });
+    loadedScripts[src] = pr;
+    return pr;
 }
 function applyBigText() { const a = document.querySelector('.app'); if (a) a.classList.toggle('big-text', !!store.settings.bigText); }
 function applyTheme(L) {
@@ -1332,92 +1454,134 @@ function applyTheme(L) {
     r.setProperty('--gold-light', L.goldLight);
     r.setProperty('--red-soft', L.redSoft);
 }
-async function activateLanguage(code) {
+function resetTransient() { S.review = null; S.redo = null; S.match = null; S.trainer = null; S.story = null; S.storyIdx = null; S.quiz = null; S.skip = null; S.histSel = null; }
+let langGen = 0;
+// 데이터를 다 불러온 뒤에야 CUR·DATA·진도 대상을 한꺼번에 바꾼다. 늦게 도착한 이전 요청은 버린다.
+async function activateLanguage(code, opts) {
     const L = LANGS[code];
-    CUR = L;
+    if (!L) return;
+    const gen = ++langGen;
+    stopSpeak(); closeModal(true); resetTransient();
     applyTheme(L);
+    S.view = 'loading';
     document.getElementById('appHeader').style.display = 'flex';
-    document.getElementById('tabbar').style.display = 'flex';
+    document.getElementById('tabbar').style.display = 'none';
     document.getElementById('hdrTitle').textContent = L.appName;
     document.getElementById('hdrSub').textContent = L.desc;
     document.getElementById('avatarBtn').textContent = L.flag;
+    document.getElementById('headerStats').innerHTML = '';
     $main.innerHTML = '<div class="empty-state"><div class="es-emoji">⏳</div>' + esc(L.name) + ' 학습 데이터를 불러오는 중...</div>';
+    let data;
     try {
         await loadScriptOnce(L.dataFile, L.dataGlobal);
-        DATA = window[L.dataGlobal];
-        UNITS = DATA.units || [];
-        ALL = UNITS.flatMap(u => u.lessons.map(l => ({ ...l, unitId: u.unitId, unitTitle: u.title, unitIcon: u.icon })));
-        LESSON_BY_ID = Object.fromEntries(ALL.map((l, i) => [l.id, i]));
+        data = window[L.dataGlobal];
+        if (!data || !Array.isArray(data.units)) throw new Error('bad data');
     } catch (e) {
+        if (gen !== langGen) return;
         if (store.active === code) { store.active = null; save(); }
         $main.innerHTML = '<div class="empty-state fail-screen"><div class="es-emoji">📶</div><b>' + esc(L.name) + ' 학습 자료를 불러오지 못했어요</b><br>인터넷 연결을 확인하고 잠시 후 다시 시도해 주세요.<br>' +
             '<button class="btn" id="retryLoad">🔄 다시 시도</button><br><button class="btn ghost" id="pickOther">🌍 다른 언어 고르기</button></div>';
-        document.getElementById('retryLoad').addEventListener('click', () => { delete window[L.dataGlobal]; activateLanguage(code); });
+        document.getElementById('retryLoad').addEventListener('click', () => { delete window[L.dataGlobal]; activateLanguage(code, opts); });
         document.getElementById('pickOther').addEventListener('click', () => go('picker'));
         return;
     }
-    store.active = code; save();
-    // 동화 데이터는 있으면 불러오고, 없으면 조용히 비워 둠(추후 추가 예정)
-    try { await loadScriptOnce(L.storyFile, L.storyGlobal); STORIES = (window[L.storyGlobal] && window[L.storyGlobal].stories) || []; }
-    catch (e) { STORIES = []; }
+    // 동화 데이터는 있으면 불러오고, 없으면 조용히 비워 둠
+    let stories = [];
+    try { await loadScriptOnce(L.storyFile, L.storyGlobal); stories = (window[L.storyGlobal] && window[L.storyGlobal].stories) || []; }
+    catch (e) { stories = []; }
+    if (gen !== langGen) return;
+    CUR = L; DATA = data;
+    UNITS = DATA.units || [];
+    ALL = UNITS.flatMap(u => u.lessons.map(l => ({ ...l, unitId: u.unitId, unitTitle: u.title, unitIcon: u.icon })));
+    LESSON_BY_ID = Object.fromEntries(ALL.map((l, i) => [l.id, i]));
+    STORIES = stories;
+    store.active = code;
+    const p = prog();
+    p.meta = { lessons: ALL.length, stories: STORIES.length, quest: ALL.filter(l => l.day).length };
+    migrateSrsKeys(p);
+    save();
+    document.getElementById('tabbar').style.display = 'flex';
     S.openUnit = null; S.view = 'home';
     render();
-    afterActivate(code);
+    afterActivate(code, opts || {});
 }
 
 /* ═══════════════════ 첫 방문 환영 · 영어 레벨 선택 · Daily English Quest 기록 가져오기 ═══════════════════ */
 const DEQ_KEY = 'daily-english-quest-v1';
+function parseDeqState(d) {
+    if (!isObj(d)) return null;
+    const days = isObj(d.days) ? d.days : {};
+    const cardsMap = (isObj(d.srs) && isObj(d.srs.cards)) ? d.srs.cards : {};
+    const num = v => (Number.isFinite(Number(v)) && Number(v) > 0) ? Math.floor(Number(v)) : 0;
+    const bossDays = Object.keys(days).map(Number).filter(n => n >= 1 && n <= 30 && isObj(days[String(n)]) && days[String(n)].boss);
+    // 2회차를 시작하면 days가 비워지므로, 핵심 문장 카드가 있는 Day도 학습한 Day로 본다
+    const cardDays = Object.values(cardsMap).filter(c => isObj(c) && c.type === 'key').map(c => Number(c.dayId)).filter(n => n >= 1 && n <= 30);
+    const cleared = Array.from(new Set(bossDays.concat(cardDays))).sort((a, b) => a - b);
+    const touched = Object.keys(days).filter(k => { const x = days[k]; return isObj(x) && (x.s1 || x.s2 || x.s3 || x.boss); }).length;
+    const cards = Object.keys(cardsMap).length;
+    if (!touched && !num(d.totalXp) && !cards) return null;
+    return { raw: d, cleared, bossDays, touched, xp: num(d.totalXp), streak: num(d.streak), cards };
+}
 function readDeq() {
     try {
         const raw = localStorage.getItem(DEQ_KEY);
         if (!raw) return null;
-        const d = JSON.parse(raw);
-        if (!d || typeof d !== 'object') return null;
-        const days = d.days || {};
-        const num = v => (isFinite(Number(v)) && Number(v) > 0) ? Math.floor(Number(v)) : 0;
-        const cleared = Object.keys(days).map(Number).filter(n => n >= 1 && n <= 30 && days[String(n)] && days[String(n)].boss).sort((a, b) => a - b);
-        const touched = Object.keys(days).filter(k => { const x = days[k]; return x && (x.s1 || x.s2 || x.s3 || x.boss); }).length;
-        const cards = Object.keys((d.srs && d.srs.cards) || {}).length;
-        if (!touched && !num(d.totalXp) && !cards) return null;
-        return { raw: d, cleared, touched, xp: num(d.totalXp), streak: num(d.streak), cards };
+        return parseDeqState(JSON.parse(raw));
     } catch (e) { return null; }
 }
-const isDate = v => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v);
+function deqPending() {   // 영어일 때: DEQ 기록이 있고 아직 가져오지도 거절하지도 않았으면 정보, 아니면 null
+    if (!CUR || CUR.code !== 'en') return null;
+    const rec = prog().deqImport;
+    const info = readDeq();
+    if (!info) return null;
+    if (rec && rec.declined) return null;
+    if (rec && rec.at && info.xp <= rec.xp && info.cleared.every(n => rec.days.includes(n))) return null;
+    return info;
+}
 function importDeq(info) {
     const d = info.raw, p = prog();
     const dayLesson = n => ALL.find(l => l.day === n);
+    const rec = p.deqImport && p.deqImport.at ? p.deqImport : { at: '', xp: 0, days: [], hist: [] };
     let lessons = 0, cards = 0;
     if (!p.boss) p.boss = {};
-    info.cleared.forEach((n, k) => {
-        const l = dayLesson(n), day = d.days[String(n)] || {};
+    const days = isObj(d.days) ? d.days : {};
+    const freshDays = info.cleared.filter(n => !rec.days.includes(n));
+    const recent = info.cleared.slice(-3);   // 단어 카드는 최근 3일치만(복습 폭주 방지), 나머지는 레슨을 다시 볼 때 채워짐
+    freshDays.forEach((n, k) => {
+        const l = dayLesson(n), day = isObj(days[String(n)]) ? days[String(n)] : {};
         if (!l) return;
         const date = isDate(day.bossDate) ? day.bossDate : todayStr();
-        if (!p.completed[l.id]) { const t = (l.quiz || []).length; p.completed[l.id] = { score: t, total: t, date, imported: 'deq' }; lessons++; }
-        if (!p.boss[l.id]) p.boss[l.id] = { score: isFinite(day.bossScore) ? Number(day.bossScore) : null, date };
-        (l.words || []).forEach((w, wi) => {
-            const key = srsKey(w);
-            if (!p.srs[key]) { p.srs[key] = { native: nativeText(w), pinyin: '', ko: w.ko, koPron: w.koPron || '', box: 2, due: todayStr(1 + ((k + wi) % 7)) }; cards++; }
+        if (!p.completed[l.id]) { const t = (l.quiz || []).length; p.completed[l.id] = { score: t, total: t, date, imported: day.boss ? 'deq' : 'deq-srs' }; lessons++; }
+        if (day.boss && !p.boss[l.id]) p.boss[l.id] = { score: Number.isFinite(Number(day.bossScore)) && day.bossScore !== null ? clampInt(day.bossScore, 0, 100, 0) : null, date };
+        if (recent.includes(n)) (l.words || []).forEach((w, wi) => {
+            if (addSrsCard(p, { native: nativeText(w), pinyin: '', ko: w.ko, koPron: w.koPron || '', box: 2, due: todayStr(1 + ((k + wi) % 7)) })) cards++;
         });
     });
-    // DEQ 문장 카드(핵심 문장·반복 문장)는 문장 카드로 옮긴다 — 상자·복습일 그대로
-    Object.values((d.srs && d.srs.cards) || {}).forEach(c => {
-        const l = c && dayLesson(Number(c.dayId));
+    // DEQ 문장 카드는 상자·졸업 여부 그대로 문장 카드로. 한참 밀린 카드는 오늘~6일 뒤로 나눈다
+    let spread = 0;
+    Object.values((isObj(d.srs) && isObj(d.srs.cards)) ? d.srs.cards : {}).forEach(c => {
+        if (!isObj(c)) return;
+        const l = dayLesson(Number(c.dayId));
         if (!l || !l.deq) return;
-        const s = (c.type === 'repeat' ? l.deq.repeat : l.deq.key || [])[c.index];
+        const s = (c.type === 'repeat' ? l.deq.repeat : l.deq.key || [])[clampInt(c.index, 0, 20, 0)];
         if (!s || !s.en) return;
-        const key = s.en + '|' + (s.ko || '');
-        if (p.srs[key]) return;
-        const box = c.mastered ? 5 : Math.max(1, Math.min(5, Number(c.box) || 1));
-        p.srs[key] = { native: s.en, pinyin: '', ko: s.ko || '', koPron: s.koPron || '', box, due: isDate(c.due) ? c.due : todayStr() };
-        cards++;
+        let due = isDate(c.due) ? c.due : todayStr();
+        if (due < todayStr()) due = todayStr(spread++ % 7);
+        const card = { native: s.en, pinyin: '', ko: s.ko || '', koPron: s.koPron || '', box: clampInt(c.box, 1, 5, 1), due, kind: 'sent' };
+        if (c.mastered) card.mastered = todayStr();
+        if (addSrsCard(p, card)) cards++;
     });
-    p.xp = (p.xp || 0) + info.xp;
+    // XP·기록은 지난번에 가져온 뒤 늘어난 만큼만(두 번 가져와도 두 배가 되지 않게). 오늘 XP는 오늘 목표 링에 넣지 않는다
+    const dXp = Math.max(0, info.xp - (rec.xp || 0));
+    p.xp = (p.xp || 0) + dXp;
     if (!p.daily) p.daily = {};
-    Object.entries(d.history || {}).forEach(([date, e]) => {
-        if (!isDate(date) || !e) return;
+    const hist = [];
+    Object.entries(isObj(d.history) ? d.history : {}).forEach(([date, e]) => {
+        if (!isDate(date) || !isObj(e) || date === todayStr() || rec.hist.includes(date)) return;
         const dl = p.daily[date] || (p.daily[date] = { xp: 0 });
-        dl.xp += Number(e.xp) || 0;
-        if (e.reviews) dl.reviews = (dl.reviews || 0) + (Number(e.reviews) || 0);
+        dl.xp += clampInt(e.xp, 0, 1000, 0);
+        if (e.reviews) dl.reviews = (dl.reviews || 0) + clampInt(e.reviews, 0, 1000, 0);
+        hist.push(date);
     });
     // 연속 학습은 전 언어 통합 기록에 합친다(DEQ 연속이 더 길고 아직 살아 있으면 이어받기)
     const gs = store.streak;
@@ -1425,71 +1589,95 @@ function importDeq(info) {
     if (isDate(d.lastBossDate) && (d.lastBossDate === todayStr() || d.lastBossDate === todayStr(-1)) && info.streak > curStreak()) {
         gs.last = d.lastBossDate; gs.count = info.streak;
     }
+    // 읽기 속도·알림 시각도 옮긴다(속도는 영어에만)
+    const RATE = { slow: 0.8, normal: 1, native: 1.1 };
+    if (RATE[d.speechRate] && d.speechRate !== 'normal') store.settings.rateByLang.en = RATE[d.speechRate];
+    if (typeof d.reminderTime === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(d.reminderTime) && store.settings.reminderTime === '21:00') store.settings.reminderTime = d.reminderTime;
     const firstQuest = ALL.find(l => l.day === 1);
     if (firstQuest && !p.placedAt) p.placedAt = firstQuest.id;
-    store.seen.deqImported = todayStr();
+    p.deqImport = { at: todayStr(), xp: Math.max(rec.xp || 0, info.xp), days: Array.from(new Set(rec.days.concat(info.cleared))), hist: rec.hist.concat(hist).slice(-400), declined: false };
+    store.seen['welcome_en'] = store.seen['welcome_en'] || todayStr();
     save();
     checkBadges(true);
-    return { lessons, cards };
+    return { lessons, cards, xp: dXp, streak: curStreak() };
 }
-function afterActivate(code) {
-    const wantDeq = code === 'en' && !store.seen.deqImported && readDeq();
-    if (!store.seen['welcome_' + code]) { showWelcome(code, wantDeq); return; }
-    if (wantDeq && !store.seen.deqAsked) showDeqOffer(wantDeq);
+function afterActivate(code, opts) {
+    const deq = code === 'en' ? deqPending() : null;
+    if (!store.seen['welcome_' + code]) { showWelcome(code, deq); return; }
+    if (deq && (opts.fromDeq || !store.seen.deqOfferShown)) showDeqOffer(deq);
 }
 function deqOfferHtml(info) {
     return '<div class="card" style="border:2px solid var(--gold)"><b>📦 Daily English Quest 기록을 찾았어요!</b>' +
-        '<div class="muted" style="margin:6px 0 10px">보스 클리어 ' + info.cleared.length + '일 · ' + info.xp + ' XP · 복습 문장 ' + info.cards + '개 — Daily English Quest는 이제 이 앱의 영어 6~8단계(30일 생활 회화)로 합쳐졌어요. 기록을 그대로 옮겨 이어서 하세요.</div>' +
-        '<button class="btn block" id="deqImport">기록 가져와서 이어 하기</button></div>';
+        '<div class="muted" style="margin:6px 0 10px">Day ' + info.cleared.length + '개 학습 · ' + info.xp + ' XP · 🔥' + info.streak + '일 · 복습 문장 ' + info.cards + '개<br>Daily English Quest는 이제 이 앱의 영어 6~8단계(30일 생활 회화)예요. 기록을 그대로 옮겨 이어서 하세요.</div>' +
+        '<button class="btn block" id="deqImport">기록 가져와서 이어 하기</button>' +
+        '<button class="btn block gray" id="deqDecline" style="margin-top:6px">가져오지 않고 새로 시작</button></div>';
 }
 function bindDeqImport(sheet, info) {
     const b = sheet.querySelector('#deqImport');
-    if (!b) return;
-    b.addEventListener('click', () => {
+    if (b) b.addEventListener('click', () => {
         const r = importDeq(info);
         closeModal(true);
         S.openUnit = null; render();
         celebrate();
-        showToast('📦 가져오기 완료! 레슨 ' + r.lessons + '개 · 카드 ' + r.cards + '장', 'gold', 3600);
+        showToast('📦 가져오기 완료! 레슨 ' + r.lessons + '개 · 카드 ' + r.cards + '장 · 🔥' + r.streak + '일 연속', 'gold', 3800);
+    });
+    const dcl = sheet.querySelector('#deqDecline');
+    if (dcl) dcl.addEventListener('click', () => {
+        const p = prog(); p.deqImport = Object.assign({ at: '', xp: 0, days: [], hist: [] }, p.deqImport || {}, { declined: true }); save();
+        const card = dcl.closest('.card'); if (card) card.remove();
+        showToast('나중에라도 설정 → "DEQ 기록 가져오기"에서 가져올 수 있어요');
+        if (!sheet.querySelector('[data-place]')) closeModal(true);
+        render();
     });
 }
 function showDeqOffer(info) {
-    store.seen.deqAsked = todayStr(); save();
+    store.seen.deqOfferShown = todayStr(); save();
     const sheet = openModal('<div class="sheet-head"><b>🗽 영어 기록 이어 하기</b><button class="sheet-close" data-close-overlay aria-label="닫기">✕</button></div>' + deqOfferHtml(info));
     bindDeqImport(sheet, info);
+}
+function placementChoices() {
+    const fq = ALL.find(l => l.day === 1);
+    return fq ? [{ at: '', ico: '🌱', label: '완전 처음이에요', desc: '알파벳 소리·인사부터 차근차근 (0단계부터)' }, { at: fq.id, ico: '🚀', label: '기초는 알아요', desc: '30일 생활 회화(Daily English Quest) Day 1부터 — 앞 단계는 언제든 열어 볼 수 있어요' }] : [];
+}
+function showPlacement() {
+    const cur = prog().placedAt || '';
+    const sheet = openModal('<div class="sheet-head"><b>📍 어디서부터 시작할까요?</b><button class="sheet-close" data-close-overlay aria-label="닫기">✕</button></div>' +
+        placementChoices().map(c => '<button class="choice-btn" data-place="' + c.at + '"' + (c.at === cur ? ' style="border-color:var(--primary);background:var(--red-soft)"' : '') + '><b>' + c.ico + ' ' + c.label + '</b><br><span class="muted">' + c.desc + '</span></button>').join(''));
+    sheet.querySelectorAll('[data-place]').forEach(b => b.addEventListener('click', () => { setPlacement(b.dataset.place); closeModal(true); render(); }));
+}
+function setPlacement(at) {
+    const p = prog();
+    if (at) p.placedAt = at; else delete p.placedAt;
+    save(); S.openUnit = null;
+    showToast(at ? '🚀 30일 생활 회화 Day 1부터 시작해요!' : '🌱 0단계부터 차근차근 시작해요!');
 }
 function showWelcome(code, deqInfo) {
     const L = LANGS[code];
     store.seen['welcome_' + code] = todayStr(); save();
     const goals = [[10, '🐢 가볍게', '5분'], [20, '🚶 보통', '10분'], [30, '🏃 꾸준히', '15분'], [50, '🔥 열심히', '25분']];
-    let h = '<div class="sheet-head"><b>' + L.flag + ' ' + esc(L.appName) + '에 오신 걸 환영해요!</b><button class="sheet-close" data-close-overlay aria-label="닫기">✕</button></div>' +
-        '<div class="muted" style="margin-bottom:12px;line-height:1.7">① 레슨: 단어 → 문장 → 회화 → 문법 → 퀴즈<br>② 🎤 직접 말하면 AI가 발음을 채점해요<br>③ 매일 목표 XP를 채우고 🔥 연속 기록 이어 가기</div>' +
+    let h = '<div class="sheet-head"><b>' + L.flag + ' ' + esc(L.appName) + '에 오신 걸 환영해요!</b><button class="sheet-close" data-close-overlay aria-label="닫기">✕</button></div>';
+    if (deqInfo) h += deqOfferHtml(deqInfo);      // DEQ 기록이 있으면 맨 위에(놓치지 않게)
+    h += '<div class="muted" style="margin-bottom:12px;line-height:1.7">① 레슨: 단어 → 문장 → 회화 → 문법 → 퀴즈<br>② 🎤 직접 말하면 AI가 발음을 채점해요<br>③ 매일 목표 XP를 채우고 🔥 연속 기록 이어 가기</div>' +
         '<div style="font-size:14px;font-weight:800;margin-bottom:8px">🎯 하루 목표를 골라 주세요</div>' +
         '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">' +
         goals.map(([v, t, m]) => '<button class="choice-btn" data-goal="' + v + '" style="text-align:center;margin:0' + (store.settings.dailyGoal === v ? ';border-color:var(--primary);background:var(--red-soft);font-weight:800' : '') + '">' + t + '<br><span class="muted">' + v + ' XP · 하루 약 ' + m + '</span></button>').join('') + '</div>';
-    if (code === 'en') {
+    const places = placementChoices();
+    if (places.length) {
+        const cur = prog().placedAt || '';
         h += '<div style="font-size:14px;font-weight:800;margin-bottom:8px">📍 어디서부터 시작할까요?</div>' +
-            '<button class="choice-btn" data-place="0"><b>🌱 완전 처음이에요</b><br><span class="muted">알파벳 소리·인사부터 차근차근 (0단계부터)</span></button>' +
-            '<button class="choice-btn" data-place="quest"><b>🚀 기초는 알아요</b><br><span class="muted">30일 생활 회화(Daily English Quest)부터 — 앞 단계는 언제든 열어 볼 수 있어요</span></button>';
-        if (deqInfo) h += deqOfferHtml(deqInfo);
-    } else {
-        h += '<button class="btn block" data-close-overlay>시작하기 🚀</button>';
+            places.map(c => '<button class="choice-btn" data-place="' + c.at + '"' + (c.at === cur ? ' style="border-color:var(--primary);background:var(--red-soft)"' : '') + '><b>' + c.ico + ' ' + c.label + '</b><br><span class="muted">' + c.desc + '</span></button>').join('');
     }
+    h += '<button class="btn block" data-close-overlay style="margin-top:6px">시작하기 🚀</button>';
     const sheet = openModal(h);
+    const mark = (sel, b) => sheet.querySelectorAll(sel).forEach(x => { const on = x === b; x.style.borderColor = on ? 'var(--primary)' : ''; x.style.background = on ? 'var(--red-soft)' : ''; x.style.fontWeight = on ? '800' : ''; });
     sheet.querySelectorAll('[data-goal]').forEach(b => b.addEventListener('click', () => {
         store.settings.dailyGoal = parseInt(b.dataset.goal, 10); save();
-        sheet.querySelectorAll('[data-goal]').forEach(x => { const on = x === b; x.style.borderColor = on ? 'var(--primary)' : ''; x.style.background = on ? 'var(--red-soft)' : ''; x.style.fontWeight = on ? '800' : ''; });
+        mark('[data-goal]', b);
         showToast('🎯 하루 목표: ' + store.settings.dailyGoal + ' XP');
         render();
     }));
-    sheet.querySelectorAll('[data-place]').forEach(b => b.addEventListener('click', () => {
-        const p = prog();
-        if (b.dataset.place === 'quest') { const fq = ALL.find(l => l.day === 1); if (fq) p.placedAt = fq.id; }
-        else delete p.placedAt;
-        save(); closeModal(true); S.openUnit = null; render();
-        showToast(b.dataset.place === 'quest' ? '🚀 30일 생활 회화 Day 1부터 시작해요!' : '🌱 0단계부터 차근차근 시작해요!');
-    }));
-    if (deqInfo) { store.seen.deqAsked = todayStr(); save(); bindDeqImport(sheet, deqInfo); }
+    sheet.querySelectorAll('[data-place]').forEach(b => b.addEventListener('click', () => { setPlacement(b.dataset.place); mark('[data-place]', b); render(); }));
+    if (deqInfo) { store.seen.deqOfferShown = todayStr(); save(); bindDeqImport(sheet, deqInfo); }
 }
 
 /* ═══════════════════ 라우터 ═══════════════════ */
@@ -1503,6 +1691,17 @@ function subnavHtml(cur) {
 }
 function bindSubnav() { $main.querySelectorAll('[data-sub]').forEach(b => b.addEventListener('click', () => { S.histSel = null; go(b.dataset.sub); })); }
 function render() {
+    try { renderView(); }
+    catch (e) {
+        try { console.warn('render failed', e); } catch (e2) { }
+        $main.innerHTML = '<div class="empty-state fail-screen"><div class="es-emoji">😵</div><b>화면을 그리다 문제가 생겼어요</b><br>기록은 그대로예요. 홈으로 돌아가 다시 시도해 주세요.<br>' +
+            '<button class="btn" id="errHome">🏠 홈으로</button><br><button class="btn ghost" id="errPick">🌍 언어 선택</button></div>';
+        document.getElementById('errHome').addEventListener('click', () => { resetTransient(); S.view = 'home'; try { renderView(); } catch (e3) { go('picker'); } });
+        document.getElementById('errPick').addEventListener('click', () => go('picker'));
+    }
+}
+function renderView() {
+    if (S.view === 'loading') return;
     if (S.view === 'picker') {
         document.getElementById('appHeader').style.display = 'none';
         document.getElementById('tabbar').style.display = 'none';
@@ -1595,6 +1794,10 @@ function renderHome() {
                 ? '지난번 「' + STEP_NAMES[resumeStep] + '」 단계까지 보셨어요 — 여기서 이어집니다'
                 : esc(next.goal || '')) + '</div>' +
             '<span class="cc-btn">▶ ' + (resumeStep > 0 ? '이어서 하기' : '시작하기') + ' · 약 ' + lessonMinutes(next) + '분</span></div>';
+    } else if (placeIdx() > 0 && ALL.slice(0, placeIdx()).some(l => !isDone(l.id))) {
+        html += '<div class="continue-card" id="continueBtn"><div class="cc-label">🎉 실전 과정 수료!</div>' +
+            '<div class="cc-title">30일 생활 회화를 모두 마쳤어요</div>' +
+            '<div class="cc-goal">기초 0~5단계는 원할 때 골라서 복습해 보세요. 복습 카드와 ' + CUR.trainerLabel + ' 훈련도 잊지 말고요!</div></div>';
     } else {
         html += '<div class="continue-card" id="continueBtn"><div class="cc-label">🎉 전 과정 수료!</div>' +
             '<div class="cc-title">모든 레슨을 완료했어요</div>' +
@@ -1605,6 +1808,7 @@ function renderHome() {
     const dlq = dayLog(), qs = quickSentence();
     if (qs && !dlq.quick && new Date().getHours() >= 18 && !dlq.xp && curStreak() > 0) html += '<div class="guide-banner" id="eveBanner">🌙 오늘 1분만 해도 🔥 ' + curStreak() + '일 연속을 이어 가요 →</div>';
     if (qs && !dlq.quick) html += '<div class="quick-card" id="quickBtn" role="button" tabindex="0"><div class="qc-ico">⚡</div><div><div class="qc-t">바쁜 날엔 1분만!</div><div class="qc-d">오늘의 한 문장 듣고 말하기' + (Object.keys(prog().srs).length >= 4 ? ' + 짝 맞추기 5쌍' : '') + ' — 연속 기록이 이어져요</div></div></div>';
+    if (deqPending()) html += '<div class="guide-banner" id="deqBanner">📦 Daily English Quest 기록이 있어요 — 가져와서 이어 하기 →</div>';
     if (doneCount() === 0) html += '<div class="guide-banner" id="guideBanner">👋 처음이신가요? 학습 가이드 먼저 보기 →</div>';
     if (due > 0) html += '<div class="guide-banner" id="reviewBanner">🃏 잊어버릴 때쯤 다시 보는 단어 카드 ' + Math.min(due, sessionCap()) + '장이 기다려요 →</div>';
 
@@ -1628,8 +1832,10 @@ function renderHome() {
                 const gi = LESSON_BY_ID[l.id];
                 const done_ = isDone(l.id), unlocked = isUnlocked(gi);
                 const atHere = !done_ && prog().lastPos && prog().lastPos.id === l.id;
-                const cls = done_ ? 'done' : (unlocked ? 'current' : 'locked');
-                const stateIco = done_ ? ((prog().boss && prog().boss[l.id] ? '👑' : '') + '<div class="stars" aria-label="별 ' + starsOf(l.id) + '개">' + starStr(starsOf(l.id)) + '</div>') : (unlocked ? (atHere ? '📍' : '▶') : '🔒');
+                const skipped = !done_ && gi < placeIdx();
+                const cls = done_ ? 'done' : skipped ? 'current skipped' : (unlocked ? 'current' : 'locked');
+                const imp = done_ && prog().completed[l.id].imported;
+                const stateIco = done_ ? ((prog().boss && prog().boss[l.id] ? '👑' : '') + (imp ? '<div class="stars" style="color:var(--text-light)">📦 DEQ</div>' : '<div class="stars" aria-label="별 ' + starsOf(l.id) + '개">' + starStr(starsOf(l.id)) + '</div>')) : skipped ? '<span class="muted" style="font-size:11px">⏭ 선택</span>' : (unlocked ? (atHere ? '📍' : '▶') : '🔒');
                 html += '<div class="lesson-row ' + cls + '" data-lesson="' + gi + '" ' + (unlocked ? '' : 'data-locked="1"') + ' role="button" tabindex="0">' +
                     '<div class="lesson-num">' + (li + 1) + '</div>' +
                     '<div><div class="l-title">' + esc(l.title) + '</div><div class="l-goal">' + esc(l.goal || '') + '</div></div>' +
@@ -1642,16 +1848,22 @@ function renderHome() {
     $main.innerHTML = html;
 
     const cb = document.getElementById('continueBtn');
-    if (cb) cb.addEventListener('click', () => { if (nextIdx >= 0) openLesson(nextIdx, resumeStep); else go('review'); });
+    if (cb) cb.addEventListener('click', () => { if (nextIdx >= 0) openLesson(nextIdx, resumeStep); else { resetTransient(); go('review'); } });
     const gb = document.getElementById('guideBanner');
     if (gb) gb.addEventListener('click', () => go('guide'));
+    const dqb = document.getElementById('deqBanner');
+    if (dqb) dqb.addEventListener('click', () => { const i = deqPending(); if (i) showDeqOffer(i); });
     ['quickBtn', 'eveBanner'].forEach(id => { const el = document.getElementById(id); if (el) el.addEventListener('click', startQuick); });
     const rb = document.getElementById('reviewBanner');
-    if (rb) rb.addEventListener('click', () => go('review'));
+    if (rb) rb.addEventListener('click', () => { resetTransient(); go('review'); });
     $main.querySelectorAll('.unit-head').forEach(h => h.addEventListener('click', () => {
         const uid = parseInt(h.dataset.unit, 10);
         S.openUnit = (S.openUnit === uid) ? -1 : uid;
-        render();
+        const st = $main.scrollTop;
+        renderHome();
+        $main.scrollTop = st;
+        const nh = $main.querySelector('.unit-head[data-unit="' + uid + '"]');
+        if (nh && S.openUnit === uid) nh.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     }));
     $main.querySelectorAll('.lesson-row').forEach(r => r.addEventListener('click', () => {
         if (r.dataset.locked) { showToast('🔒 바로 앞 레슨 퀴즈를 통과하면 열려요!', '', 2600); return; }
@@ -1675,7 +1887,8 @@ function startQuick() {
     speakSeq([nativeText(item), nativeText(item)]);
     openSpeak({
         item, title: '⚡ 오늘의 한 문장 (1분 모드)',
-        onClose: () => {
+        onClose: (passed, reason) => {
+            if (reason !== 'done') return;
             if (Object.keys(prog().srs).length >= 4) { S.match = newMatch(5, null, true); S.view = 'review'; updateTabs(); renderMatch(); }
             else finishQuick();
         },
@@ -1883,6 +2096,8 @@ function renderStep() {
             b.addEventListener('click', say);
         });
         const rp = document.getElementById('rolePlay');
+        const challenge = !!(prog().roleplay && prog().roleplay[l.id]);   // 한 번 끝낸 역할극은 대본을 가린 도전 모드로
+        if (rp && challenge) rp.textContent = '🎭 역할극 도전 (대본 가림)';
         if (rp) rp.addEventListener('click', () => {
             // 역할극: 상대 대사는 앱이 읽고, 내 차례(A)가 오면 말하기 창이 열린다
             let i = 0, mine = 0, spoke = 0;
@@ -1899,7 +2114,11 @@ function renderStep() {
                 if (turns[i].speaker === 'A') {
                     const idx = i++; mine++;
                     clearPlaying(); hilite(idx);
-                    openSpeak({ item: turns[idx], title: '🎭 내 차례 (' + mine + '/' + total + ')', onPass: () => { spoke++; }, onClose: () => setTimeout(step, 250) });
+                    openSpeak({ item: turns[idx], mode: challenge ? 'boss' : 'repeat', title: (challenge ? '🎭 도전! 내 차례 (' : '🎭 내 차례 (') + mine + '/' + total + ')', onPass: () => { spoke++; },
+                        onClose: (passed, reason) => {
+                            if (reason === 'done') { setTimeout(step, 250); return; }
+                            rolePlayToken++; clearPlaying(); showToast('🎭 역할극을 멈췄어요');
+                        } });
                     return;
                 }
                 const chunk = [];
@@ -2006,7 +2225,8 @@ function renderQuiz(body, l) {
             const used = q.selSrc && q.selSrc.includes(b.i);
             return '<span class="token' + (used ? ' used' : '') + '" data-bank="' + b.i + '">' + esc(b.t) + '</span>';
         }).join('') + '</div>';
-        h += '<div style="display:flex;gap:8px"><button class="btn gray" id="arrHint" title="다음 단어 힌트"' + (q.sel.length >= item.tokens.length ? ' disabled' : '') + '>💡 힌트</button>' +
+        const hintLeft = Math.max(1, Math.floor(item.tokens.length / 2)) - (q.hints || 0);
+        h += '<div style="display:flex;gap:8px"><button class="btn gray" id="arrHint" title="다음 단어 힌트"' + (q.sel.length >= item.tokens.length || hintLeft <= 0 ? ' disabled' : '') + '>💡 힌트 ' + Math.max(0, hintLeft) + '</button>' +
             '<button class="btn block" id="arrCheck"' + (q.sel.length === item.tokens.length ? '' : ' disabled') + ' style="flex:1">확인하기</button></div>';
     } else {
         const tone = item.type === 'tone';
@@ -2062,7 +2282,7 @@ function renderQuiz(body, l) {
             q.sel = q.sel.slice(0, k); q.selSrc = q.selSrc.slice(0, k);
             const bi = item.tokens.findIndex((t, ti) => t === item.tokens[k] && !q.selSrc.includes(ti));
             if (bi >= 0) { q.sel.push(item.tokens[bi]); q.selSrc.push(bi); }
-            q.hints = (q.hints || 0) + 1;
+            q.hints = (q.hints || 0) + 1; q.usedHint = true;
             renderQuiz(body, l);
         });
         const ck = document.getElementById('arrCheck');
@@ -2104,9 +2324,11 @@ function renderQuiz(body, l) {
             if (!q.phase2) q.score++;
             q.combo = (q.combo || 0) + 1;
             const dl = dayLog(); dl.maxCombo = Math.max(dl.maxCombo || 0, q.combo);
-            if (p.mistakes[mk]) {
-                p.mistakes[mk].ok = (p.mistakes[mk].ok || 0) + 1;
-                if (p.mistakes[mk].ok >= 2) { delete p.mistakes[mk]; graduated = true; store.flags.mistakesCleared = (store.flags.mistakesCleared || 0) + 1; }
+            const mm = p.mistakes[mk];
+            if (mm && !q.half && !q.usedHint && mm.lastOk !== todayStr()) {
+                mm.ok = (mm.ok || 0) + 1; mm.lastOk = todayStr();
+                // 틀린 그날의 교정 1번 + 다른 날에 1번 더 맞혀야 졸업(간격 두고 확인)
+                if (mm.ok >= 2) { delete p.mistakes[mk]; graduated = true; store.flags.mistakesCleared = (store.flags.mistakesCleared || 0) + 1; }
             }
         } else {
             q.combo = 0; if (!q.phase2) q.wrong.push({ item, idx: qIdx });
@@ -2128,7 +2350,7 @@ function renderQuiz(body, l) {
         const arr = document.getElementById('arrArea');
         if (arr) arr.classList.add(ok ? 'ok' : 'bad');
         document.getElementById('qNext').addEventListener('click', () => {
-            q.i++; q.answered = false; q.sel = []; q.selSrc = []; q.half = null; q.plays = 0;
+            q.i++; q.answered = false; q.sel = []; q.selSrc = []; q.half = null; q.plays = 0; q.hints = 0; q.usedHint = false;
             renderQuiz(body, l);
         });
         fb.scrollIntoView({ behavior: 'smooth', block: 'end' });
@@ -2166,14 +2388,20 @@ function renderQuizResult(body, l) {
             const prev = p.completed[l.id];
             if (!prev) gained += XP.lesson;
             if (firstScore === total && !(prev && prev.score === prev.total)) gained += XP.perfect;
-            if (!prev || firstScore > prev.score) p.completed[l.id] = { score: firstScore, fixed: fixed, total, date: todayStr(), first: (prev && prev.first) || (prev && prev.date) || todayStr() };
-            else p.completed[l.id].date = todayStr();
+            if (!prev) p.completed[l.id] = { score: firstScore, fixed: fixed, total, date: todayStr() };
+            else {
+                if (firstScore > prev.score || prev.imported || prev.placed) { prev.score = firstScore; prev.fixed = fixed; prev.total = total; delete prev.imported; delete prev.placed; }
+                prev.last = todayStr();
+            }
             const dl = dayLog(); dl.lessons = (dl.lessons || 0) + 1;
             addWordsToSrs(l);
             touchStreak();
             save();
         }
-        if (partial && q.score) gained += Math.min(10, q.score * 2);
+        if (partial && q.score && l.redo) {
+            const dl = dayLog(); const give = Math.max(0, Math.min(q.score * 2, 10 - (dl.redoXp || 0)));
+            dl.redoXp = (dl.redoXp || 0) + give; gained += give;
+        }
         if (!pass && !partial) {       // 떨어져도 노력은 보상 (레슨당 하루 1번)
             const dl = dayLog(); if (!dl.effort) dl.effort = {};
             if (!dl.effort[l.id]) { dl.effort[l.id] = 1; gained += 3; }
@@ -2263,7 +2491,8 @@ function renderQuizResult(body, l) {
             const p = prog();
             if (!p.boss) p.boss = {};
             const first = !p.boss[l.id];
-            if (first || (score || 0) > (p.boss[l.id].score || 0)) p.boss[l.id] = { score: score, date: todayStr() };
+            if (first) p.boss[l.id] = { score: score, date: todayStr() };
+            else { if ((score || 0) > (p.boss[l.id].score || 0)) p.boss[l.id].score = score; p.boss[l.id].last = todayStr(); }
             save();
             const dl = dayLog(); dl.boss = (dl.boss || 0) + 1; save();
             if (first) { addXp(XP.boss, '보스 클리어 👑'); celebrate(); } else checkQuests();
@@ -2425,8 +2654,7 @@ function applySkipPass(unitId) {
         const t = (l.quiz || []).length;
         p.completed[l.id] = { score: Math.ceil(t * 0.8), total: t, date: todayStr(), placed: true };
         (l.words || []).forEach((w, wi) => {
-            const k = srsKey(w);
-            if (!p.srs[k]) p.srs[k] = { native: nativeText(w), pinyin: romanText(w), ko: w.ko, koPron: w.koPron || '', box: 2, due: todayStr(1 + ((li * 3 + wi) % 14)) };
+            addSrsCard(p, { native: nativeText(w), pinyin: romanText(w), ko: w.ko, koPron: w.koPron || '', box: 2, due: todayStr(1 + ((li * 3 + wi) % 14)) });
         });
         n++;
     });
@@ -2525,12 +2753,11 @@ const SOUND_SETS = [
     { label: '묵음 h', words: ['hola', 'hotel', 'hermano', 'hasta'] },
 ];
 
+const TRAINERS = { tone: () => renderToneTrainer(), verb: () => renderVerbTrainer(), kana: () => renderKanaTrainer(), sound: () => renderSoundTrainer(), ear: () => renderEarTrainer() };
 function renderTrainer() {
-    if (CUR.code === 'zh') renderToneTrainer();
-    else if (CUR.code === 'es') renderVerbTrainer();
-    else if (CUR.code === 'ja') renderKanaTrainer();
-    else if (CUR.code === 'en') renderEarTrainer();
-    else renderSoundTrainer();
+    const fn = TRAINERS[CUR.trainerTab];
+    if (fn) fn();
+    else $main.innerHTML = '<div class="empty-state"><div class="es-emoji">🛠️</div>' + esc(CUR.name) + ' 훈련소는 준비 중이에요.</div>';
 }
 
 function renderToneTrainer() {
@@ -2880,20 +3107,20 @@ const EAR_SETS = [
     { id: 'fp', label: 'F / P', tip: 'F는 윗니로 아랫입술을 살짝 물고 바람을 내보내요. P는 두 입술을 붙였다 터뜨려요.', pairs: [['fan', '선풍기', 'pan', '팬(냄비)'], ['fine', '좋은', 'pine', '소나무'], ['coffee', '커피', 'copy', '복사'], ['fork', '포크', 'pork', '돼지고기'], ['fast', '빠른', 'past', '과거'], ['full', '배부른', 'pull', '당기다'], ['wife', '아내', 'wipe', '닦다']] },
     { id: 'vb', label: 'V / B', tip: 'V는 F처럼 아랫입술을 물고 목을 울려요. B는 두 입술을 붙였다 떼요.', pairs: [['very', '매우', 'berry', '딸기류 열매'], ['vest', '조끼', 'best', '최고'], ['van', '승합차', 'ban', '금지'], ['vote', '투표하다', 'boat', '배'], ['curve', '곡선', 'curb', '연석'], ['vet', '수의사', 'bet', '내기하다']] },
     { id: 'th', label: 'TH / S', tip: 'TH는 혀끝을 윗니와 아랫니 사이로 살짝 내밀어요. S는 혀를 이 뒤에 숨겨요.', pairs: [['think', '생각하다', 'sink', '싱크대'], ['thank', '고마워하다', 'sank', '가라앉았다'], ['mouth', '입', 'mouse', '쥐'], ['thick', '두꺼운', 'sick', '아픈'], ['path', '오솔길', 'pass', '지나가다'], ['thing', '것', 'sing', '노래하다']] },
-    { id: 'ii', label: '짧은 i / 긴 ee', tip: '짧은 i는 힘을 빼고 "이"와 "에" 사이로 짧게, 긴 ee는 입을 옆으로 당겨 "이~" 하고 길게.', pairs: [['ship', '배', 'sheep', '양'], ['live', '살다', 'leave', '떠나다'], ['sit', '앉다', 'seat', '좌석'], ['hit', '치다', 'heat', '열기'], ['fill', '채우다', 'feel', '느끼다'], ['chip', '감자칩', 'cheap', '싼']] },
+    { id: 'ii', label: '짧은 i / 긴 ee', tip: '짧은 i는 힘을 빼고 "이"와 "에" 사이로 짧게, 긴 ee는 입을 옆으로 당겨 "이~" 하고 길게.', pairs: [['ship', '배', 'sheep', '양'], ['bit', '조금', 'beat', '이기다'], ['sit', '앉다', 'seat', '좌석'], ['hit', '치다', 'heat', '열기'], ['fill', '채우다', 'feel', '느끼다'], ['chip', '감자칩', 'cheap', '싼']] },
     { id: 'ae', label: '애 / 에', tip: 'a(æ)는 입을 크게 벌려 "애", e는 입을 덜 벌려 "에".', pairs: [['bad', '나쁜', 'bed', '침대'], ['man', '남자', 'men', '남자들'], ['pan', '냄비', 'pen', '펜'], ['sad', '슬픈', 'said', '말했다'], ['bag', '가방', 'beg', '빌다'], ['had', '가졌다', 'head', '머리']] },
     { id: 'uu', label: '짧은 u / 긴 oo', tip: '짧은 u(full)는 입술 힘을 빼고 짧게, 긴 oo(fool)는 입술을 내밀고 "우~" 길게.', pairs: [['full', '가득 찬', 'fool', '바보'], ['pull', '당기다', 'pool', '수영장'], ['look', '보다', 'Luke', '루크(이름)'], ['foot', '발', 'food', '음식']] },
 ];
 // 연음·축약: 글자대로가 아니라 이렇게 들려요
 const EAR_LINKS = [
     { en: 'Check it out.', pron: '체키라웃', ko: '한번 봐 봐.' },
-    { en: 'What do you want to do?', pron: '왓 두 유 워너 두', ko: '뭐 하고 싶어?' },
-    { en: "I'm going to eat.", pron: '아임 거너 잇', ko: '먹을 거예요.' },
+    { en: 'What do you want to do?', say: 'What do you wanna do?', pron: '왓 두 유 워너 두', ko: '뭐 하고 싶어?' },
+    { en: "I'm going to eat.", say: "I'm gonna eat.", pron: '아임 거너 잇', ko: '먹을 거예요.' },
     { en: 'Nice to meet you.', pron: '나이스 투 미츄', ko: '만나서 반가워요.' },
     { en: 'Did you eat?', pron: '디쥬 잇', ko: '밥 먹었어요?' },
-    { en: 'Give me a minute.', pron: '기미 어 미닛', ko: '잠깐만요.' },
+    { en: 'Give me a minute.', say: 'Gimme a minute.', pron: '기미 어 미닛', ko: '잠깐만요.' },
     { en: 'Got it.', pron: '가릿', ko: '알겠어요.' },
-    { en: 'Let me see.', pron: '레미 씨', ko: '어디 보자.' },
+    { en: 'Let me see.', say: 'Lemme see.', pron: '레미 씨', ko: '어디 보자.' },
     { en: 'Can I get a water?', pron: '캐나이 게러 워러', ko: '물 한 잔 주시겠어요?' },
     { en: 'Not at all.', pron: '나래롤', ko: '천만에요.' },
 ];
@@ -2916,12 +3143,15 @@ function renderEarTrainer() {
             '<div class="muted" style="margin:6px 0 10px">원어민은 단어를 이어 붙여 말해요. 글자대로가 아니라 이렇게 들린다는 걸 알면 귀가 확 트여요.</div>' +
             EAR_LINKS.map((l, i) => '<div class="fr-liaison" data-link="' + i + '" role="button" tabindex="0">' +
                 '<div><span class="native">' + esc(l.en) + '</span> <span class="fr-li-pron">[' + esc(l.pron) + ']</span>' +
-                '<div class="fr-li-ko">' + esc(l.ko) + '</div></div><span class="fr-li-play">🔊</span></div>').join('') + '</div>';
+                '<div class="fr-li-ko">' + esc(l.ko) + '</div></div><span class="fr-li-play">🔊</span>' +
+                '<button class="btn small gray" data-slow-link="' + i + '" style="margin-left:6px;padding:6px 8px" aria-label="또박또박 듣기">🐢</button></div>').join('') +
+            '<div class="muted" style="margin-top:6px">🔊 원어민처럼 이어서 · 🐢 또박또박 천천히</div></div>';
         $main.innerHTML = h;
         document.getElementById('trainerStart').addEventListener('click', () => { S.trainer = { i: 0, score: 0, cur: null, answered: false, scope }; renderTrainer(); });
         $main.querySelectorAll('[data-scope]').forEach(b => b.addEventListener('click', () => { S.earScope = b.dataset.scope; renderTrainer(); }));
         $main.querySelectorAll('[data-word]').forEach(b => b.addEventListener('click', () => speak(b.dataset.word, 0.85)));
-        $main.querySelectorAll('[data-link]').forEach(el => el.addEventListener('click', () => speak(EAR_LINKS[parseInt(el.dataset.link, 10)].en, 0.9)));
+        $main.querySelectorAll('[data-link]').forEach(el => el.addEventListener('click', () => { const x = EAR_LINKS[parseInt(el.dataset.link, 10)]; speak(x.say || x.en, 1); }));
+        $main.querySelectorAll('[data-slow-link]').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); speak(EAR_LINKS[parseInt(b.dataset.slowLink, 10)].en, 0.6); }));
         return;
     }
     const t = S.trainer, TOTAL = 10;
@@ -2940,7 +3170,8 @@ function renderEarTrainer() {
         '<div id="tFeedback"></div>';
     $main.innerHTML = h;
     document.getElementById('tPlay').addEventListener('click', () => speak(cur.word, 0.85));
-    document.getElementById('tPlaySlow').addEventListener('click', () => speak(cur.word, 0.55));
+    // 모음 길이가 단서인 짝은 너무 느리게 읽으면 짧은 모음도 길어져서 0.75까지만
+    document.getElementById('tPlaySlow').addEventListener('click', () => speak(cur.word, /ii|uu|ae/.test(cur.set.id) ? 0.75 : 0.6));
     if (t.autoFor !== t.i) { t.autoFor = t.i; setTimeout(() => { if (S.trainer === t && !t.answered) speak(cur.word, 0.85); }, 350); }
     $main.querySelectorAll('[data-a]').forEach(b => b.addEventListener('click', () => {
         if (t.answered) return;
@@ -2985,7 +3216,7 @@ function renderTrainerResult(t, TOTAL, msg) {
 }
 
 /* ═══════════════════ 읽기 (쉬운 동화) ═══════════════════ */
-function storyUnlocked(story) { return store.settings.freeNav || doneCount() >= storyNeed(story); }
+function storyUnlocked(story) { return store.settings.freeNav || effDone() >= storyNeed(story); }
 function STORIES_REQUIRED_COUNT(afterUnit) {
     // afterUnit(예: 3)까지의 유닛에 속한 레슨 수를 합산 — 그 단계 전체를 완료해야 열림
     let n = 0;
@@ -3009,13 +3240,13 @@ function renderStoryList() {
         '<div class="muted" style="margin-bottom:12px">배운 단어만으로 쓰인 짧은 이야기예요. 진도가 쌓일수록 새 이야기가 열립니다.</div>';
     STORIES.forEach((s, i) => {
         const need = storyNeed(s);
-        const unlocked = store.settings.freeNav || doneCount() >= need;
+        const unlocked = store.settings.freeNav || effDone() >= need;
         const readDone = prog().storiesRead && prog().storiesRead[s.id];
         h += '<div class="story-card' + (unlocked ? '' : ' locked') + '" data-story="' + i + '" role="button" tabindex="0">' +
             '<div class="st-emoji">' + esc(s.emoji || '📖') + '</div>' +
             '<div style="flex:1;min-width:0"><div class="st-title">' + (readDone ? '✅ ' : '') + esc(s.title) + '</div>' +
-            '<div class="st-desc">' + esc(unlocked ? (s.summary || '') : '🔒 레슨 ' + (need - doneCount()) + '개만 더 하면 열려요') + '</div>' +
-            (unlocked ? '' : '<div class="lock-prog"><div style="width:' + Math.round(doneCount() / need * 100) + '%"></div></div>') + '</div>' +
+            '<div class="st-desc">' + esc(unlocked ? (s.summary || '') : '🔒 레슨 ' + (need - effDone()) + '개만 더 하면 열려요') + '</div>' +
+            (unlocked ? '' : '<div class="lock-prog"><div style="width:' + Math.round(effDone() / need * 100) + '%"></div></div>') + '</div>' +
             '<div class="st-lv">Lv.' + s.level + '</div></div>';
     });
     $main.innerHTML = h;
@@ -3023,7 +3254,7 @@ function renderStoryList() {
         const i = parseInt(c.dataset.story, 10);
         const s = STORIES[i];
         const need = storyNeed(s);
-        if (!(store.settings.freeNav || doneCount() >= need)) { showToast('🔒 레슨 ' + (need - doneCount()) + '개만 더 끝내면 열려요!', '', 2800); return; }
+        if (!(store.settings.freeNav || effDone() >= need)) { showToast('🔒 레슨 ' + (need - effDone()) + '개만 더 끝내면 열려요!', '', 2800); return; }
         S.storyIdx = i; S.story = { i: 0, showKo: {} };
         go('storyRead');
     }));
@@ -3074,7 +3305,16 @@ function renderStoryRead() {
             const p = prog();
             if (!p.storiesRead) p.storiesRead = {};
             const firstRead = !p.storiesRead[s.id];
-            if (!q.rewarded) { q.rewarded = true; p.storiesRead[s.id] = { date: todayStr(), score: q.score }; const dls = dayLog(); dls.stories = (dls.stories || 0) + 1; save(); touchStreak(); addXp(firstRead ? XP.story : XP.storyAgain, firstRead ? '새 이야기 완독 📖' : '다시 읽기'); if (firstRead) celebrate(); }
+            if (!q.rewarded) {
+                q.rewarded = true;
+                if (firstRead) p.storiesRead[s.id] = { date: todayStr(), score: q.score };
+                else { p.storiesRead[s.id].last = todayStr(); p.storiesRead[s.id].score = Math.max(p.storiesRead[s.id].score || 0, q.score); }
+                const dls = dayLog(); dls.stories = (dls.stories || 0) + 1;
+                const again = firstRead ? 0 : Math.max(0, Math.min(XP.storyAgain, 9 - (dls.storyXp || 0)));   // 다시 읽기 XP는 하루 9까지
+                dls.storyXp = (dls.storyXp || 0) + again;
+                save(); touchStreak();
+                if (firstRead) { addXp(XP.story, '새 이야기 완독 📖'); celebrate(); } else if (again) addXp(again, '다시 읽기');
+            }
             $main.innerHTML = '<div class="result-hero"><div class="r-emoji">📖</div>' +
                 '<div class="r-score" style="color:var(--success)">' + q.score + ' / ' + items.length + '</div>' +
                 '<div class="r-msg">다 읽었어요! 이 이야기는 완료로 기록됐어요.</div></div>' +
@@ -3114,13 +3354,15 @@ function histAllEntries() {
     const read = prog().storiesRead || {};
     Object.entries(comp).forEach(([id, v]) => {
         if (!v || !v.date) return;
-        out.push({ date: v.date, type: 'lesson', ico: '✅', title: histLessonTitle(id), score: v.score + '/' + v.total + '점' });
+        out.push({ date: v.date, type: 'lesson', ico: v.imported ? '📦' : v.placed ? '⏩' : '✅', title: histLessonTitle(id), score: v.imported ? 'DEQ에서 완료' : v.placed ? '건너뛰기 시험' : v.score + '/' + v.total + '점' });
     });
     Object.entries(read).forEach(([id, v]) => {
         const date = (v && typeof v === 'object') ? v.date : null;
         if (!date) return;
         out.push({ date, type: 'story', ico: '📖', title: histStoryTitle(id), score: '완료' });
     });
+    const dqi = prog().deqImport;
+    if (dqi && dqi.at) out.push({ date: dqi.at, type: 'act', ico: '📦', title: 'Daily English Quest에서 가져옴 (Day ' + dqi.days.length + '개)', score: dqi.xp + ' XP' });
     Object.entries(prog().boss || {}).forEach(([id, v]) => {
         if (v && v.date) out.push({ date: v.date, type: 'boss', ico: '👑', title: histLessonTitle(id) + ' 보스 미션', score: v.score != null ? v.score + '%' : '클리어' });
     });
@@ -3337,12 +3579,19 @@ function renderSettings() {
         setRow('현재 학습 언어', CUR.flag + ' ' + esc(CUR.name), '<button class="btn small ghost" id="switchLangBtn">바꾸기</button>') +
         setRow('하루 목표', '오늘의 목표 XP (레슨 1개 통과 = 20 XP)', '<select class="sel" id="setGoal" aria-label="하루 목표 XP">' + [[10, '가볍게 10'], [20, '보통 20'], [30, '꾸준히 30'], [50, '열심히 50'], [80, '불타게 80']].map(([v, t]) => '<option value="' + v + '"' + (store.settings.dailyGoal === v ? ' selected' : '') + '>' + t + ' XP</option>').join('') + '</select>') +
         setRow('한글 발음 표기', '외국어 아래에 한글 독음 [' + esc(CUR.koPronSample || '') + '] 표시', '<label class="switch"><input type="checkbox" id="setKoPron"' + (store.settings.koPron ? ' checked' : '') + '><span class="slider"></span></label>') +
-        setRow('말하기 속도', '발음 재생 기본 속도 (' + store.settings.rate.toFixed(1) + '배)', '<input type="range" id="setRate" min="0.6" max="1.2" step="0.1" value="' + store.settings.rate + '" aria-label="말하기 속도">') +
+        setRow('말하기 속도', '이 언어의 발음 재생 속도 (' + curRate().toFixed(1) + '배)', '<input type="range" id="setRate" min="0.6" max="1.2" step="0.1" value="' + curRate() + '" aria-label="말하기 속도">') +
         setRow('목소리', voiceDesc(), voiceSelectHtml()) +
         setRow('글씨 크게', '화면 전체 글씨와 버튼을 조금 크게', '<label class="switch"><input type="checkbox" id="setBig"' + (store.settings.bigText ? ' checked' : '') + '><span class="slider"></span></label>') +
         setRow('효과음', '정답·오답·레벨 업 때 짧은 소리', '<label class="switch"><input type="checkbox" id="setSfx"' + (store.settings.sfx ? ' checked' : '') + '><span class="slider"></span></label>') +
         setRow('자유 탐색 모드', '순서 잠금을 풀고 모든 레슨·읽기 열기 (추천하지 않아요!)', '<label class="switch"><input type="checkbox" id="setFree"' + (store.settings.freeNav ? ' checked' : '') + '><span class="slider"></span></label>') +
         '</div>';
+    if (CUR.code === 'en') {
+        const di = readDeq(), rec = prog().deqImport;
+        h += '<div class="card">' +
+            (placementChoices().length ? setRow('📍 시작 위치', prog().placedAt ? '30일 생활 회화(Day 1)부터' : '0단계(왕초보)부터', '<button class="btn small ghost" id="placeBtn">바꾸기</button>') : '') +
+            setRow('📦 Daily English Quest 기록', di ? (rec && rec.at ? rec.at + '에 가져옴 · 새 기록이 있으면 더 가져와요' : 'Day ' + di.cleared.length + '개 · ' + di.xp + ' XP 기록이 이 기기에 있어요') : '이 브라우저엔 기록이 없어요 — 다른 기기의 DEQ 백업은 아래 "코드로 복원"에 붙여넣기', di ? '<button class="btn small" id="deqBtn">가져오기</button>' : '') +
+            '</div>';
+    }
     h += '<div class="card">' +
         setRow('⏰ 매일 알림', '휴대폰 캘린더에 매일 반복 일정을 넣어 알림 받기', '<input type="time" id="setRemind" value="' + esc(store.settings.reminderTime) + '" aria-label="알림 시각"> <button class="btn small ghost" id="icsBtn">📅 만들기</button>') +
         '</div>';
@@ -3363,8 +3612,17 @@ function renderSettings() {
 
     document.getElementById('switchLangBtn').addEventListener('click', () => go('picker'));
     document.getElementById('setKoPron').addEventListener('change', e => { store.settings.koPron = e.target.checked; save(); });
-    document.getElementById('setRate').addEventListener('change', e => { store.settings.rate = parseFloat(e.target.value); save(); renderSettings(); speak(CUR.sampleWord, 0.95); });
+    document.getElementById('setRate').addEventListener('change', e => { store.settings.rateByLang[CUR.code] = Math.max(0.6, Math.min(1.2, parseFloat(e.target.value) || 1)); save(); renderSettings(); speak(CUR.sampleWord, 0.95); });
     document.getElementById('setFree').addEventListener('change', e => { store.settings.freeNav = e.target.checked; save(); });
+    const pb = document.getElementById('placeBtn');
+    if (pb) pb.addEventListener('click', showPlacement);
+    const db = document.getElementById('deqBtn');
+    if (db) db.addEventListener('click', () => {
+        const info = readDeq(); if (!info) return;
+        const r = importDeq(info); celebrate();
+        showToast('📦 가져오기 완료! 레슨 ' + r.lessons + '개 · 카드 ' + r.cards + '장 · +' + r.xp + ' XP', 'gold', 3600);
+        renderSettings();
+    });
     document.getElementById('setGoal').addEventListener('change', e => { store.settings.dailyGoal = parseInt(e.target.value, 10) || 30; save(); showToast('🎯 하루 목표: ' + store.settings.dailyGoal + ' XP'); });
     document.getElementById('setBig').addEventListener('change', e => { store.settings.bigText = e.target.checked; save(); applyBigText(); });
     document.getElementById('setSfx').addEventListener('change', e => { store.settings.sfx = e.target.checked; save(); if (e.target.checked) sfx('ok'); });
@@ -3388,8 +3646,8 @@ function renderSettings() {
         } catch (err) { showToast('파일을 만들지 못했어요.'); }
     });
     document.getElementById('resetBtn').addEventListener('click', () => {
-        if (confirm('정말 ' + CUR.name + '의 학습 기록을 지울까요?\n(완료한 레슨, 복습 단어장, 연속 기록이 사라져요. 다른 언어의 진도는 유지됩니다)')) {
-            delete store.byLang[CUR.code]; save();
+        if (confirm('정말 ' + CUR.name + '의 학습 기록을 지울까요?\n(완료한 레슨, 복습 단어장, XP가 사라져요. 다른 언어의 진도와 전체 연속 기록은 유지됩니다)')) {
+            delete store.byLang[CUR.code]; delete store.seen['welcome_' + CUR.code]; if (CUR.code === 'en') delete store.seen.deqOfferShown; save();
             go('home');
         }
     });
@@ -3404,10 +3662,27 @@ function renderSettings() {
     });
     document.getElementById('restoreBtn').addEventListener('click', () => {
         area().innerHTML = '<div class="muted" style="margin:12px 0 6px">다른 기기에서 만든 백업 코드를 붙여넣으세요.<br>⚠️ 지금 이 기기의 진도는 코드의 내용으로 <b>덮어써집니다.</b></div>' +
-            '<textarea id="restoreCode" placeholder="여기에 백업 코드를 붙여넣으세요" style="width:100%;height:88px;font-size:11px;border:1px solid var(--border);border-radius:10px;padding:8px;font-family:monospace"></textarea>' +
+            '<textarea id="restoreCode" placeholder="여기에 백업 코드(또는 Daily English Quest 백업)를 붙여넣으세요" style="width:100%;height:88px;font-size:11px;border:1px solid var(--border);border-radius:10px;padding:8px;font-family:monospace"></textarea>' +
+            '<label class="muted" style="display:block;margin-top:4px">또는 백업 파일(.json) 고르기: <input type="file" id="restoreFile" accept=".json,application/json,text/plain"></label>' +
             '<button class="btn small block" id="doRestore" style="margin-top:6px">진도 복원하기</button>';
+        document.getElementById('restoreFile').addEventListener('change', ev => {
+            const f = ev.target.files && ev.target.files[0]; if (!f) return;
+            const rd = new FileReader();
+            rd.onload = () => { document.getElementById('restoreCode').value = String(rd.result || ''); showToast('파일을 읽었어요. "진도 복원하기"를 누르세요'); };
+            rd.readAsText(f);
+        });
         document.getElementById('doRestore').addEventListener('click', () => {
             const code = document.getElementById('restoreCode').value;
+            // Daily English Quest 백업(JSON)은 덮어쓰기 복원이 아니라 영어 진도로 합치기
+            const t = code.trim();
+            if (t.startsWith('{')) {
+                let obj = null; try { obj = JSON.parse(t); } catch (e) { obj = null; }
+                const info = obj && obj.app === 'daily-english-quest' ? parseDeqState(obj.data) : null;
+                if (!info) { showToast('이 파일은 읽을 수 없어요. 랭귀지 스타터 백업 코드나 Daily English Quest 백업을 넣어 주세요', '', 3600); return; }
+                const run = () => { const r = importDeq(info); celebrate(); showToast('📦 DEQ 기록을 영어로 가져왔어요! 레슨 ' + r.lessons + '개 · 카드 ' + r.cards + '장', 'gold', 3600); S.openUnit = null; go('home'); };
+                if (CUR.code === 'en') run(); else { showToast('영어로 바꾼 뒤 가져올게요'); activateLanguage('en').then(() => { if (CUR && CUR.code === 'en') { closeModal(true); run(); } }); }
+                return;
+            }
             try {
                 const r = importProgress(code);
                 showToast('🎉 복원 완료! 완료 ' + r.lessons + '레슨 · 단어장 ' + r.cards + '장', 'gold', 3400);
@@ -3427,7 +3702,7 @@ let backArmed = false;
 function armBack() { if (backArmed) return; try { history.pushState({ lt: 1 }, ''); backArmed = true; } catch (e) { } }
 function handleBack() {
     const root = document.getElementById('modalRoot');
-    if (root && root.innerHTML) { closeModal(); return true; }
+    if (root && root.innerHTML) { closeModal(false, 'cancel'); return true; }
     if (S.view === 'lesson') {
         if (S.quiz && S.step === 4 && S.quiz.i > 0 && !confirm('퀴즈를 그만할까요? 푼 문제는 저장되지 않아요.')) return true;
         S.quiz = null; go('home'); return true;
@@ -3452,8 +3727,9 @@ document.getElementById('avatarBtn').addEventListener('click', () => go('picker'
 renderStorageWarning();
 applyBigText();
 const QP = new URLSearchParams(location.search);
-const wantLang = QP.get('lang');
-if (wantLang && LANGS[wantLang]) activateLanguage(wantLang);
+const wantLang = QP.get('lang'), fromDeq = QP.get('from') === 'deq';
+if (wantLang) { try { history.replaceState(null, '', location.pathname); } catch (e) { } }
+if (wantLang && LANGS[wantLang]) activateLanguage(wantLang, { fromDeq });
 else if (store.active && LANGS[store.active]) activateLanguage(store.active);
 else render();
 </script>
