@@ -1,0 +1,29 @@
+{
+ "market": "CRYPTO",
+ "start_date": "2026-09-24",
+ "as_of": "2026-09-24",
+ "days": 1,
+ "signal_files": 1,
+ "missing_days": [],
+ "late": [
+  "2026-09-24"
+ ],
+ "uncommitted": [],
+ "mismatched": [],
+ "revised": [],
+ "rows": [
+  {
+   "date": "2026-09-24",
+   "committed_at": "2026-09-25T20:50:37Z",
+   "deadline": "2026-09-25T03:00:00Z",
+   "on_time": false,
+   "entries_match": true,
+   "exits_match": true,
+   "entries_only_committed": [],
+   "entries_only_recomputed": [],
+   "exits_only_committed": [],
+   "exits_only_recomputed": [],
+   "revisions": []
+  }
+ ]
+}
