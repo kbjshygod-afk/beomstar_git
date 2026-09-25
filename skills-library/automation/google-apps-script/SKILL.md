@@ -1,547 +1,217 @@
 ---
 name: google-apps-script
-description: "Build Google Apps Script automation for Sheets and Workspace. Custom menus, triggers (onEdit / time-driven / form submit), dialogs, sidebars, email batches, PDF export, external API, and changes to existing team web apps (doGet / google.script.run). Use whenever the user wants to automate a Google Sheet, build a Sheets menu / sidebar / dialog, hit a Sheets row from email or a webhook, schedule a Sheets workflow, or asks 'how do I script this in Sheets'. Also use for install, setup, or trigger instructions on an existing sheet, even when no code is requested. Korean triggers: 구글 시트 자동화, 앱스 스크립트, Apps Script, 시트 트리거, 시트 메뉴, 시트에서 메일 보내기, 웹앱 수정."
+description: "Build Google Apps Script automation for Sheets and Workspace. Custom menus, triggers (onEdit / time-driven / form submit), dialogs, sidebars, email batches, PDF export, Slack/Chat notifications, external API, and changes to existing team web apps (doGet / google.script.run). Use whenever the user wants to automate a Google Sheet, build a Sheets menu / sidebar / dialog, hit a Sheets row from email or a webhook, schedule a Sheets workflow, or asks 'how do I script this in Sheets'. Also use for install, setup, or trigger instructions on an existing sheet, even when no code is requested. Korean triggers: 구글 시트 자동화, 앱스 스크립트, Apps Script, 시트 트리거, 시트 메뉴, 시트에서 메일 보내기, 웹앱 수정."
+license: MIT (see LICENSE)
 ---
 
 # Google Apps Script
 
-Build automation scripts for Google Sheets and Workspace apps. Scripts run server-side on Google's infrastructure with a generous free tier.
+Build automation for Google Sheets and Workspace. Scripts run on Google's servers, on a schedule or on events, with no AI in the loop, so one good script saves time every week.
 
-## What You Produce
+## Reference files
 
-- Apps Script code pasted into Extensions > Apps Script
-- Custom menus, dialogs, sidebars
-- Automated triggers (on edit, time-driven, form submit)
-- Email notifications, PDF exports, API integrations
+| File | Read when |
+|---|---|
+| `references/patterns.md` | Writing code: helpers, menus, dialogs, sidebars, onEdit, triggers, email, PDF, API, Slack, archive, batch email, jobs over 6 minutes, minimal web app |
+| `references/team-web-app-safety.md` (Korean) | Changing a sheet or web app other people already use: locking, deployments, bulk-delete guards |
 
 ## Workflow
 
-### Step 1: Understand the Automation
+### Step 1: Understand the automation
 
-Ask what the user wants automated. Common scenarios:
-- Custom menu with actions (report generation, data processing)
-- Auto-triggered behaviour (on edit, on form submit, scheduled)
-- Sidebar app for data entry
-- Email notifications from sheet data
-- PDF export and distribution
+Ask only what would change the result. Otherwise state the assumption and proceed, and deliver working code in the same reply.
+- **What** should happen, and **when** (menu click, edit, form submit, schedule)?
+- **Which sheet and columns?** Use the header row if the user gave it. If not, don't stop to ask: look columns up by header text at runtime (`columnIndexes_`), list the sheet and header names you assumed in the CONFIG block, and tell the user to adjust them. Never hard-code column numbers you haven't seen.
+- **Defaults when unstated:** the user's local time zone (e.g. `Asia/Seoul`); secrets and webhook URLs in Script Properties; a summary of the obvious totals, with the choice stated.
+- **Bound or standalone?** Bound (Extensions > Apps Script from the sheet) is the default.
+- **Existing project?** If the sheet already has scripts or a team web app, apply Step 3a.
+- **Is the sheet a mirror** of another source (an imported or synced Excel file, for example)? Then don't write to it unless asked, and remember that `onEdit` does not fire for imports or sync.
 
-### Step 2: Generate the Script
+### Step 2: Generate the script
 
-Follow the structure template below. Every script needs a header comment, configuration constants at top, and `onOpen()` for menu setup.
+- Start from the template below and the matching sections of `references/patterns.md`.
+- Put shared helpers (`getSheetOrThrow_`, `columnIndexes_`, `escapeHtml_`, `getSecret_`, `removeTriggers_`) in one `helpers.gs` per project.
+- Write user-facing text (menus, dialogs, emails, error messages) in the user's language. Code and comments can stay in English.
 
-### Step 3: Provide Installation Instructions
+### Step 3: Installation instructions
 
-All scripts install the same way:
-1. Open the Google Sheet (for an existing production sheet: **make a copy first** and install there until tested)
+1. Open the Google Sheet. For a sheet people already use, **make a copy first** and install there until tested.
 2. **Extensions > Apps Script**
-3. Click **+ > Script** to add a **new** file (e.g. `weeklyReport.gs`). **Never delete or replace existing files** in an existing project; an existing project may already hold the team's web app or triggers.
-4. Paste the script into the new file
-5. Click **Save**
-6. Close the Apps Script tab
-7. **Reload the spreadsheet** (onOpen runs on page load)
+3. Click **+ > Script** to add a **new** file (e.g. `weeklyReport.gs`). **Never delete or replace existing files**: the project may already hold the team's web app or triggers.
+4. Paste the script into the new file and click **Save**.
+5. If the script uses secrets (API keys, webhook URLs), add them under **Project Settings > Script Properties**.
+6. For installable triggers: select `installTriggers` in the function dropdown and click **Run** once.
+7. Reload the spreadsheet so `onOpen()` adds the menu.
 
-If the project already has an `onOpen()`, do not add a second one (only one runs). Add the new menu items inside the existing `onOpen()` instead and say so in the instructions.
+If the project already has `onOpen()`, `onEdit()`, `doGet()` or `doPost()`, **do not add a second one**. A second definition silently replaces the first. Merge the new code into the existing function and say so.
 
-### Step 3a: Existing Production Sheets and Team Web Apps
+### Step 3a: Sheets and web apps people already use
 
-Before changing a sheet or Apps Script project other people already use:
-- **Warn and get approval first** for anything that changes sheet structure (columns, sheet names, formulas other sheets reference), overwrites data, deletes rows, or changes a deployed web app. Explain what could break.
-- Read `references/team-web-app-safety.md` (Korean) and follow it for any web app (`doGet` / `doPost` / `google.script.run`), concurrent writes, deployments, and bulk deletes.
+- **Warn and get approval first** for anything that changes sheet structure (columns, sheet names, ranges other formulas reference), overwrites data, deletes rows, or changes a deployed web app. Explain what could break.
+- Follow `references/team-web-app-safety.md` for web apps, concurrent writes, deployments and bulk deletes.
 
-### Step 4: First-Time Authorisation
+### Step 4: First-time authorisation
 
-Each user gets a Google OAuth consent screen on first run. For unverified scripts (most internal scripts), users must click:
+On the first run each user sees Google's consent screen. For unverified scripts they click **Advanced > Go to [project] (unsafe) > Allow**. Tell the user this is expected. A Google Workspace admin can block unverified scripts; if the button is missing, the admin has to allow the app.
 
-**Advanced > Go to [Project Name] (unsafe) > Allow**
+### Step 5: Verify before calling it done
 
-This is a one-time step per user. Warn users about this in your output.
+- Run the main function once from the editor on the copy, then check **Executions** for errors.
+- For triggers, open **Triggers** (clock icon). Confirm there is exactly one trigger per handler, then set failure notifications to "Notify me immediately".
+- Check the result in the sheet, mailbox or Slack. Don't assume the script worked.
 
 ---
 
-## Script Structure Template
-
-Every script should follow this pattern:
+## Script template
 
 ```javascript
 /**
- * [Project Name] - [Brief Description]
- *
- * [What it does, key features]
- *
- * INSTALL: Extensions > Apps Script > paste this > Save > Reload sheet
+ * [Project name] - [what it does]
+ * Trigger: [menu / onEdit / every Monday 08:00 Asia/Seoul / ...]
+ * INSTALL: Extensions > Apps Script > + > Script (new file) > paste > Save > reload the sheet
  */
 
-// --- CONFIGURATION ---
-const SOME_SETTING = 'value';
+// --- CONFIGURATION (top-level const names must be unique across all .gs files) ---
+const REPORT_SHEET = 'Report';
 
-// --- MENU SETUP ---
+// --- MENU (merge into an existing onOpen if the project has one) ---
 function onOpen() {
-  const ui = SpreadsheetApp.getUi();
-  ui.createMenu('My Menu')
-    .addItem('Do Something', 'myFunction')
-    .addSeparator()
-    .addSubMenu(ui.createMenu('More Options')
-      .addItem('Option A', 'optionA'))
+  SpreadsheetApp.getUi()
+    .createMenu('Automation')
+    .addItem('Run report', 'runReport')
     .addToUi();
 }
 
-// --- FUNCTIONS ---
-function myFunction() {
-  // Implementation
+// --- ENTRY POINTS (public: callable from menus, triggers and dialogs) ---
+function runReport() {
+  const sheet = getSheetOrThrow_(REPORT_SHEET);
+  const values = sheet.getDataRange().getValues();   // one read
+  // ... compute ...
+  SpreadsheetApp.flush();
 }
 ```
 
 ---
 
-## Critical Rules
+## Critical rules
 
-### Public vs Private Functions
+### Name sheets explicitly
+Use `getSheetByName()` (or `getSheetOrThrow_`), never `getActiveSheet()`, in anything that runs from a trigger, a web app or a dialog. In a time-driven trigger there is no user, so the "active" sheet is simply the first tab.
 
-Functions ending with `_` (underscore) are **private** and CANNOT be called from client-side HTML via `google.script.run`. This is a silent failure -- the call simply doesn't work with no error.
+### Batch reads and writes
+Read with one `getValues()` and write with one `setValues()` or `setBackgrounds()`. Cell-by-cell loops are often 50–100× slower and hit the 6-minute limit.
 
-```javascript
-// WRONG - dialog can't call this, fails silently
-function doWork_() { return 'done'; }
+### One global scope
+All `.gs` files share one scope. Duplicate top-level `const` names stop the whole project from loading. Duplicate function names make the last file win, silently.
 
-// RIGHT - dialog can call this
-function doWork() { return 'done'; }
-```
+### Public vs private functions
+Functions ending in `_` are private. Menus fail with "Script function not found", and `google.script.run.fn_()` fails with "is not a function" in the browser console. Anything called from a menu, trigger or HTML must be public.
 
-**Also applies to**: Menu item function references must be public function names as strings.
+### UI only when a person runs it
+`SpreadsheetApp.getUi()` (alert, prompt, dialog, sidebar) throws in time-driven triggers and web apps. Code that can run from a trigger should throw or log instead of showing an alert.
 
-### Batch Operations (Critical for Performance)
+### Time zones and dates
+- Triggers and `Utilities.formatDate()` use the **script** time zone (`appsscript.json` > `timeZone`, e.g. `Asia/Seoul`). The spreadsheet has its own zone under File > Settings, and they can differ. Use `Session.getScriptTimeZone()` when formatting.
+- `getValues()` returns `Date` objects and numbers. `getDisplayValues()` returns the text the sheet shows. Use display values for emails and reports.
 
-Read/write data in bulk, never cell-by-cell. The difference is 70x.
+### Triggers
+| | Simple (`onOpen`, `onEdit`) | Installable (`ScriptApp.newTrigger`) |
+|---|---|---|
+| Authorisation | None | Required once |
+| Email, URL fetch, other files | No | Yes |
+| Runs as | The person using the sheet | The person who created the trigger |
+| Time limit | 30 seconds | 6 minutes |
 
-```javascript
-// SLOW (70 seconds on 100x100) - reads one cell at a time
-for (let i = 1; i <= 100; i++) {
-  const val = sheet.getRange(i, 1).getValue();
-}
+- `onEdit` fires only for edits a person makes in the Sheets UI. It does not fire for script, API, import or sync changes.
+- Installers must be idempotent: delete existing triggers for the handler before creating one (`removeTriggers_`). Otherwise every re-run adds a duplicate, and reports go out twice.
+- Never name an installable handler `onEdit` or `onOpen`. The simple trigger also fires, so the code runs twice.
+- `atHour(8)` runs sometime between 8 and 9 o'clock, not at an exact minute.
+- Triggers stop working when their creator's account loses access. Note in the handover who owns them.
 
-// FAST (1 second) - reads all at once
-const allData = sheet.getRange(1, 1, 100, 1).getValues();
-for (const row of allData) {
-  const val = row[0];
-}
-```
+### Concurrency
+Two people, or a person and a trigger, can run the same function at the same moment. Wrap writes that must not interleave (sending batches, archiving, numbering, saving from a web app) in `LockService.getScriptLock()` with `tryLock` and release it in `finally`. `appendRow()` on its own is atomic.
 
-Always use `getRange().getValues()` / `setValues()` for bulk reads/writes.
+### Secrets and HTML
+- API keys and webhook URLs go in Script Properties (`getSecret_`), never in code or in cells.
+- Escape anything from cells or users before it goes into HTML (`escapeHtml_`, or `<?= ?>` in templates). Unescaped `<`, `&` or quotes break emails and dialogs, and can inject markup.
 
-### V8 Runtime
+### HTTP
+Use `muteHttpExceptions: true` and treat any 2xx as success, not just 200. Retry 429, plus 5xx for GETs only. `fetchJson_` in the patterns file does this.
 
-V8 is the **only** runtime (Rhino was removed January 2026). Supports modern JavaScript: `const`, `let`, arrow functions, template literals, destructuring, classes, async/generators.
+### V8 runtime
+V8 is the only runtime. It supports modern JavaScript (`const`, arrow functions, classes, `Map`, destructuring) but not browser APIs:
 
-**NOT available** (use Apps Script alternatives):
-
-| Missing API | Apps Script Alternative |
-|-------------|------------------------|
-| `setTimeout` / `setInterval` | `Utilities.sleep(ms)` (blocking) |
+| Missing | Use instead |
+|---|---|
+| `setTimeout` / `setInterval` | `Utilities.sleep(ms)` (blocking); time-driven triggers for later work |
 | `fetch` | `UrlFetchApp.fetch()` |
-| `FormData` | Build payload manually |
-| `URL` | String manipulation |
-| `crypto` | `Utilities.computeDigest()` / `Utilities.getUuid()` |
+| `URL`, `FormData` | String building, or `payload` objects |
+| `crypto` | `Utilities.computeDigest()`, `Utilities.getUuid()` |
 
-### Flush Before Returning
+### Flush
+Call `SpreadsheetApp.flush()` before returning to a dialog and before exporting a PDF, so the writes are visible.
 
-Call `SpreadsheetApp.flush()` before returning from functions that modify the sheet, especially when called from HTML dialogs. Without it, changes may not be visible when the dialog shows "Done."
-
-### Simple vs Installable Triggers
-
-| Feature | Simple (`onEdit`) | Installable |
-|---------|-------------------|-------------|
-| Auth required | No | Yes |
-| Send email | No | Yes |
-| Access other files | No | Yes |
-| URL fetch | No | Yes |
-| Open dialogs | No | Yes |
-| Runs as | Active user | Trigger creator |
-
-Use simple triggers for lightweight reactions. Use installable triggers (via `ScriptApp.newTrigger()`) when you need email, external APIs, or cross-file access.
-
-### Custom Spreadsheet Functions
-
-Functions used as `=MY_FUNCTION()` in cells have strict limitations:
-
-```javascript
-/**
- * Calculates something custom.
- * @param {string} input The input value
- * @return {string} The result
- * @customfunction
- */
-function MY_FUNCTION(input) {
-  // Can use: basic JS, Utilities, CacheService
-  // CANNOT use: MailApp, UrlFetchApp, SpreadsheetApp.getUi(), triggers
-  return input.toUpperCase();
-}
-```
-
-- Must include `@customfunction` JSDoc tag
-- 30-second execution limit (vs 6 minutes for regular functions)
-- Cannot access services requiring authorisation
+### Custom functions (`=MY_FUNCTION()`)
+Custom functions need the `@customfunction` JSDoc tag. They have 30 seconds and cannot use services that need authorisation (MailApp, UrlFetchApp, `getUi()`, other files). They are recalculated whenever Sheets decides, so keep them pure.
 
 ---
 
-## Quotas and Limits
+## Quotas (per user; check the official quotas page for current values)
 
-| Resource | Free Account | Google Workspace |
-|----------|-------------|-----------------|
+| Resource | Consumer (gmail.com) | Google Workspace |
+|---|---|---|
 | Script runtime | 6 min / execution | 6 min / execution |
-| Triggers total daily runtime | 90 min | 6 hours |
-| Triggers total | 20 per user per script | 20 per user per script |
-| Email recipients/day | 100 | 1,500 |
-| URL Fetch calls/day | 20,000 | 100,000 |
-| Properties storage | 500 KB | 500 KB |
-| Custom function runtime | 30 seconds | 30 seconds |
+| Custom function / simple trigger runtime | 30 s | 30 s |
+| Triggers total runtime | 90 min / day | 6 h / day |
+| Triggers | 20 per user per script | 20 per user per script |
+| Email recipients | 100 / day | 1,500 / day |
+| URL fetch calls | 20,000 / day | 100,000 / day |
+| Properties | 9 KB per value, 500 KB per store | 9 KB per value, 500 KB per store |
 | Simultaneous executions | 30 | 30 |
 
 ---
 
-## Modal Progress Dialog
+## Error prevention
 
-Block user interaction during long operations with a spinner that auto-closes. Use for any operation taking more than a few seconds.
-
-**Pattern: menu function > showProgress() > dialog calls action function > auto-close**
-
-```javascript
-function showProgress(message, serverFn) {
-  const html = HtmlService.createHtmlOutput(`
-    <style>
-      body { font-family: 'Google Sans', Arial, sans-serif; display: flex;
-        flex-direction: column; align-items: center; justify-content: center;
-        height: 100%; margin: 0; padding: 20px; box-sizing: border-box; }
-      .spinner { width: 36px; height: 36px; border: 4px solid #e0e0e0;
-        border-top: 4px solid #1a73e8; border-radius: 50%;
-        animation: spin 0.8s linear infinite; margin-bottom: 16px; }
-      @keyframes spin { to { transform: rotate(360deg); } }
-      .message { font-size: 14px; color: #333; text-align: center; }
-      .done { color: #1e8e3e; font-weight: 500; }
-      .error { color: #d93025; font-weight: 500; }
-    </style>
-    <div class="spinner" id="spinner"></div>
-    <div class="message" id="msg">${message}</div>
-    <script>
-      google.script.run
-        .withSuccessHandler(function(r) {
-          document.getElementById('spinner').style.display = 'none';
-          var m = document.getElementById('msg');
-          m.className = 'message done';
-          m.innerText = 'Done! ' + (r || '');
-          setTimeout(function() { google.script.host.close(); }, 1200);
-        })
-        .withFailureHandler(function(err) {
-          document.getElementById('spinner').style.display = 'none';
-          var m = document.getElementById('msg');
-          m.className = 'message error';
-          m.innerText = 'Error: ' + err.message;
-          setTimeout(function() { google.script.host.close(); }, 3000);
-        })
-        .${serverFn}();
-    </script>
-  `).setWidth(320).setHeight(140);
-  SpreadsheetApp.getUi().showModalDialog(html, 'Working...');
-}
-
-// Menu calls this wrapper
-function menuDoWork() {
-  showProgress('Processing data...', 'doTheWork');
-}
-
-// MUST be public (no underscore) for the dialog to call it
-function doTheWork() {
-  // ... do the work ...
-  SpreadsheetApp.flush();
-  return 'Processed 50 rows';  // shown in success message
-}
-```
-
----
-
-## Common Patterns
-
-### Toast Notifications
-
-```javascript
-SpreadsheetApp.getActiveSpreadsheet().toast('Operation complete!', 'Title', 5);
-// Arguments: message, title, duration in seconds (-1 = until dismissed)
-```
-
-### Alert and Prompt Dialogs
-
-```javascript
-const ui = SpreadsheetApp.getUi();
-
-// Yes/No confirmation
-const response = ui.alert('Delete this data?', 'This cannot be undone.',
-  ui.ButtonSet.YES_NO);
-if (response === ui.Button.YES) { /* proceed */ }
-
-// Prompt for input
-const result = ui.prompt('Enter your name:', ui.ButtonSet.OK_CANCEL);
-if (result.getSelectedButton() === ui.Button.OK) {
-  const name = result.getResponseText();
-}
-```
-
-### Sidebar Apps
-
-HTML panel on the right. Use `google.script.run` to call server functions.
-
-```javascript
-function showSidebar() {
-  const html = HtmlService.createHtmlOutput(`
-    <h3>Quick Entry</h3>
-    <select id="worker"><option>Craig</option><option>Steve</option></select>
-    <input id="suburb" placeholder="Suburb">
-    <button onclick="submit()">Add Job</button>
-    <script>
-      function submit() {
-        google.script.run.withSuccessHandler(function() { alert('Added!'); })
-          .addJob(document.getElementById('worker').value,
-                  document.getElementById('suburb').value);
-      }
-    </script>
-  `).setTitle('Job Entry').setWidth(300);
-  SpreadsheetApp.getUi().showSidebar(html);
-}
-
-function addJob(worker, suburb) { // MUST be public (no underscore)
-  SpreadsheetApp.getActiveSpreadsheet().getActiveSheet().appendRow([new Date(), worker, suburb]);
-}
-```
-
-### Triggers
-
-**onEdit (simple trigger)** -- limited permissions but no auth needed:
-
-```javascript
-function onEdit(e) {
-  const sheet = e.source.getActiveSheet();
-  if (sheet.getName() !== 'Data') return;
-  if (e.range.getColumn() !== 3) return;
-  // Auto-timestamp when column C is edited
-  sheet.getRange(e.range.getRow(), 4).setValue(new Date());
-}
-```
-
-**Installable triggers** -- create via script, run setup function once manually:
-
-```javascript
-function createTriggers() {
-  // Time-driven: run every day at 8am
-  ScriptApp.newTrigger('dailyReport')
-    .timeBased().atHour(8).everyDays(1).create();
-
-  // On edit with full permissions (can send email, fetch URLs)
-  ScriptApp.newTrigger('onEditFull')
-    .forSpreadsheet(SpreadsheetApp.getActive()).onEdit().create();
-
-  // On form submit
-  ScriptApp.newTrigger('onFormSubmit')
-    .forSpreadsheet(SpreadsheetApp.getActive()).onFormSubmit().create();
-}
-```
-
-### Email from Sheets
-
-```javascript
-function emailWeeklySchedule() {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-  const data = sheet.getRange('A2:E10').getDisplayValues();
-  let body = '<h2>Weekly Schedule</h2><table border="1" cellpadding="8">';
-  body += '<tr><th>Job</th><th>Suburb</th><th>Time</th><th>Price</th></tr>';
-  for (const row of data) {
-    if (row[0]) body += '<tr>' + row.map(c => '<td>' + c + '</td>').join('') + '</tr>';
-  }
-  body += '</table>';
-  MailApp.sendEmail({ to: 'worker@example.com',
-    subject: 'Schedule - Week ' + sheet.getName(), htmlBody: body });
-}
-```
-
-### PDF Export
-
-Non-obvious URL construction -- export parameters are undocumented:
-
-```javascript
-function exportSheetAsPdf() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const url = ss.getUrl().replace(/\/edit.*$/, '')
-    + '/export?exportFormat=pdf&format=pdf&size=A4&portrait=true'
-    + '&fitw=true&sheetnames=false&printtitle=false&gridlines=false'
-    + '&gid=' + ss.getActiveSheet().getSheetId();
-  const blob = UrlFetchApp.fetch(url, {
-    headers: { 'Authorization': 'Bearer ' + ScriptApp.getOAuthToken() }
-  }).getBlob().setName('report.pdf');
-  MailApp.sendEmail({ to: 'boss@example.com', subject: 'Weekly Report PDF',
-    body: 'Attached.', attachments: [blob] });
-}
-```
-
-### External API Calls
-
-```javascript
-// GET
-function fetchData() {
-  const r = UrlFetchApp.fetch('https://api.example.com/data', {
-    headers: { 'Authorization': 'Bearer ' + getApiKey() } });
-  return JSON.parse(r.getContentText());
-}
-
-// POST (muteHttpExceptions to handle errors yourself)
-function postData(payload) {
-  const r = UrlFetchApp.fetch('https://api.example.com/submit', {
-    method: 'post', contentType: 'application/json',
-    payload: JSON.stringify(payload), muteHttpExceptions: true });
-  if (r.getResponseCode() !== 200) throw new Error('API error: ' + r.getContentText());
-  return JSON.parse(r.getContentText());
-}
-```
-
-### Data Validation Dropdowns
-
-```javascript
-// Dropdown from list
-const rule = SpreadsheetApp.newDataValidation()
-  .requireValueInList(['Option A', 'Option B', 'Option C'], true)
-  .setAllowInvalid(false).setHelpText('Select an option').build();
-sheet.getRange('C3:C50').setDataValidation(rule);
-
-// Dropdown from range (e.g. a Lookups sheet)
-const rule2 = SpreadsheetApp.newDataValidation()
-  .requireValueInRange(ss.getSheetByName('Lookups').getRange('A1:A100')).build();
-sheet.getRange('B3:B50').setDataValidation(rule2);
-```
-
-### Properties Service (Persistent Storage)
-
-Three scopes: `PropertiesService.getScriptProperties()` (shared), `.getUserProperties()` (per user), `.getDocumentProperties()` (per spreadsheet). All use `.setProperty(key, value)` / `.getProperty(key)`. 500 KB limit.
-
----
-
-## Recipes
-
-### Auto-Archive Completed Rows
-
-Move rows with "Complete" status to an Archive sheet. Processes bottom-up to avoid shifting row indices.
-
-```javascript
-function archiveCompleted() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const source = ss.getSheetByName('Active');
-  const archive = ss.getSheetByName('Archive');
-  const data = source.getDataRange().getValues();
-  const statusCol = 4; // column E (0-indexed)
-
-  for (let i = data.length - 1; i >= 1; i--) {
-    if (data[i][statusCol] === 'Complete') {
-      archive.appendRow(data[i]);
-      source.deleteRow(i + 1); // +1 for 1-indexed rows
-    }
-  }
-  SpreadsheetApp.flush();
-}
-```
-
-### Duplicate Detection and Highlighting
-
-Pattern: read column with `getValues()`, track seen values in an object, highlight both the original and duplicate rows with `setBackground('#f4cccc')`. Process all data in one `getValues()` call, then set backgrounds individually (unavoidable for scattered highlights).
-
-### Batch Email Sender
-
-Key pattern: check `MailApp.getRemainingDailyQuota()` before sending, mark status per row, wrap each send in try/catch.
-
-```javascript
-function sendBatchEmails() {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Recipients');
-  const data = sheet.getRange('A2:C' + sheet.getLastRow()).getValues(); // Email, Name, Status
-  const remaining = MailApp.getRemainingDailyQuota();
-  if (remaining < data.length) {
-    SpreadsheetApp.getUi().alert('Only ' + remaining + ' emails left. Need ' + data.length);
-    return;
-  }
-  let sent = 0;
-  for (let i = 0; i < data.length; i++) {
-    const [email, name, status] = data[i];
-    if (!email || status === 'Sent') continue;
-    try {
-      MailApp.sendEmail({ to: email, subject: 'Your Weekly Update',
-        htmlBody: '<p>Hi ' + name + ',</p><p>Here is your update...</p>' });
-      sheet.getRange(i + 2, 3).setValue('Sent'); sent++;
-    } catch (e) { sheet.getRange(i + 2, 3).setValue('Error: ' + e.message); }
-  }
-  SpreadsheetApp.flush();
-}
-```
-
-### Summary Dashboard Generator
-
-Pattern: loop numbered weekly tabs (`01`-`52`), read summary cells from each, write aggregated rows into a Summary sheet. Use `ss.getSheetByName(tabName)` to iterate, `ss.insertSheet('Summary')` if it doesn't exist, `summary.autoResizeColumns()` at end, `flush()` before return.
-
----
-
-## Error Handling
-
-Always wrap external calls in try/catch. Use `muteHttpExceptions: true` to handle HTTP errors yourself. Re-throw for dialog error handlers.
-
-```javascript
-function fetchExternalData() {
-  try {
-    const response = UrlFetchApp.fetch('https://api.example.com/data', {
-      headers: { 'Authorization': 'Bearer ' + getApiKey() },
-      muteHttpExceptions: true
-    });
-    if (response.getResponseCode() !== 200)
-      throw new Error('API returned ' + response.getResponseCode());
-    return JSON.parse(response.getContentText());
-  } catch (e) { Logger.log('Error: ' + e.message); throw e; }
-}
-```
-
----
-
-## Error Prevention
-
-| Mistake | Fix |
-|---------|-----|
-| Dialog can't call function | Remove trailing `_` from function name |
-| Script is slow on large data | Use `getValues()`/`setValues()` batch operations |
-| Changes not visible after dialog | Add `SpreadsheetApp.flush()` before return |
-| `onEdit` can't send email | Use installable trigger via `ScriptApp.newTrigger()` |
-| Custom function times out | 30s limit -- simplify or move to regular function |
-| `setTimeout` not found | Use `Utilities.sleep(ms)` (blocking) |
-| Script exceeds 6 min | Break into chunks, use time-driven trigger for batches |
-| Auth popup doesn't appear | User must click Advanced > Go to (unsafe) > Allow |
+| Symptom | Cause and fix |
+|---|---|
+| Report sent twice | Duplicate triggers (installer ran twice) or an installable handler named `onEdit`. Use `removeTriggers_`; rename the handler |
+| Trigger wrote to the wrong tab | `getActiveSheet()` in trigger code. Use `getSheetByName()` |
+| "Cannot call SpreadsheetApp.getUi() from this context" | `alert()` in trigger or web-app code. Throw or log instead |
+| "Identifier has already been declared" | Same top-level `const` in two files. Rename one |
+| Old menu or onEdit stopped working | A second `onOpen`/`onEdit` replaced it. Merge them |
+| Dialog button does nothing | Server function is private (`_`) or throws with no failure handler. Make it public; add `withFailureHandler` |
+| onEdit doesn't fire | The change came from a script, import or sync, not a person. Use a time-driven trigger |
+| Wrong time or date | Script time zone differs from the sheet. Set `timeZone` in `appsscript.json` |
+| Slow or "Exceeded maximum execution time" | Cell-by-cell calls. Batch; for real volume, split the work (see patterns) |
+| Email breaks with `<` or `&` in data | Unescaped HTML. Use `escapeHtml_` |
+| HTTP 201/204 treated as failure | Check for 2xx, not `=== 200` |
+| Auth screen missing "Advanced" | Workspace admin blocks unverified apps. Ask the admin |
 
 ## Debugging
 
-- **Logger.log()** / **console.log()** -- View > Execution Log in Apps Script editor
-- **Run manually** -- select function in editor dropdown > Run
-- **Executions tab** -- shows all recent runs with errors and stack traces
-- **Trigger failures** -- script.google.com > My Projects > Executions
-- **Always test on a copy** of the sheet before deploying
+- `console.log()` output: Apps Script editor > **Executions** (click a run).
+- Run one function: pick it in the function dropdown > **Run**.
+- Trigger failures: **Triggers** page > failure notifications, plus **Executions** filtered by trigger.
+- Always test on a copy of the sheet.
 
-## Deployment Checklist
+## Delivery checklist
 
-- [ ] All functions called from HTML dialogs are public (no trailing underscore)
-- [ ] `SpreadsheetApp.flush()` called before returning from modifying functions
-- [ ] Error handling (try/catch) around external API calls and MailApp
-- [ ] Configuration constants at the top of the file
-- [ ] Header comment with install instructions
-- [ ] Tested on a copy of the sheet
-- [ ] Considered multi-user behaviour (different permissions, different active sheet)
-- [ ] Long operations use modal progress dialogs
-- [ ] No hardcoded sheet names -- use configuration constants
-- [ ] Checked email quota before batch sends
+- [ ] New file only; existing files and functions untouched or explicitly merged
+- [ ] Sheet names are constants; columns are found by header name (`columnIndexes_`) or checked against the real header row
+- [ ] No `getActiveSheet()` or `getUi()` in trigger or web-app code
+- [ ] Batch reads and writes; nothing cell-by-cell inside large loops
+- [ ] Installers are idempotent; handlers aren't named `onEdit`/`onOpen`
+- [ ] Locks around writes that two runs could interleave
+- [ ] Secrets in Script Properties; HTML escaped
+- [ ] 2xx check and `muteHttpExceptions` on every fetch
+- [ ] User-facing text in the user's language
+- [ ] Tested on a copy: Executions clean, one trigger per handler, result checked
 
----
+## Look up in the Apps Script docs when needed
 
-## Reconstruct from Apps Script docs if needed
-
-- **Row/Column show/hide** — `sheet.hideRows()`, `showRows()`, `isRowHiddenByUser()`
-- **Formatting** — `setBackground()`, `setFontWeight()`, `setBorder()`, `setNumberFormat()`, conditional formatting
-- **Data protection** — `range.protect()`, `setUnprotectedRanges()`, editor management
-- **Multiple sheets** — `getSheetByName()`, looping numbered tabs, `copyTo()`, `insertSheet()`
-- **Auto-numbering rows** — `onEdit` trigger to auto-number column A when column B is edited
-- **Google Chat webhooks** — POST to `chat.googleapis.com` with JSON payload
+- Row/column show and hide: `hideRows()`, `showRows()`, `isRowHiddenByUser()`
+- Formatting: `setNumberFormat()`, `setFontWeight()`, `setBorder()`, conditional format rules
+- Protection: `range.protect()`, `setUnprotectedRanges()`, editor lists
+- Sheets: `copyTo()`, `insertSheet()`, `getSheets()`
+- Drive files and folders: `DriveApp`; converting Excel files needs the Drive advanced service

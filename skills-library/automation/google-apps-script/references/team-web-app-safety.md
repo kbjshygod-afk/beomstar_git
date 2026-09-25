@@ -37,6 +37,8 @@ function saveRecord(record) {
 클라이언트가 부르는 함수는 예외를 그대로 던지지 않고 `{ ok, data, error }`를 돌려준다. 화면에는 한국어 메시지를 보여 주고, 개발용 로그는 `console.log`로 남긴다.
 
 ```javascript
+const SHEET_ITEMS = 'Items';
+
 function getItems() {
   try {
     const rows = SpreadsheetApp.getActive().getSheetByName(SHEET_ITEMS)
