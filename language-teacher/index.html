@@ -773,6 +773,7 @@ function cleanLangProg(p) {
     if (isObj(p.deqImport)) o.deqImport = { at: isDate(p.deqImport.at) ? p.deqImport.at : '', xp: clampInt(p.deqImport.xp, 0, 1e8, 0), days: Array.isArray(p.deqImport.days) ? p.deqImport.days.map(Number).filter(n => n >= 1 && n <= 30) : [], hist: Array.isArray(p.deqImport.hist) ? p.deqImport.hist.filter(isDate) : [], declined: !!p.deqImport.declined };
     if (p.srsV) o.srsV = clampInt(p.srsV, 0, 9, 0);
     if (p.gen) o.gen = clampInt(p.gen, 0, 1000000, 0);   // 언어 초기화 세대
+    if (isDate(p.genAt)) o.genAt = p.genAt;
     if (isObj(p.legacyImport)) o.legacyImport = { at: isDate(p.legacyImport.at) ? p.legacyImport.at : '', lessons: clampInt(p.legacyImport.lessons, 0, 999, 0), cards: clampInt(p.legacyImport.cards, 0, 99999, 0) };
     return o;
 }
@@ -798,6 +799,7 @@ function normalizeStore(d) {
     if (isObj(d.byLang)) Object.keys(d.byLang).forEach(k => { if (isLang(k)) { const c = cleanLangProg(d.byLang[k]); if (c) byLang[k] = c; } });
     return {
         schema: SCHEMA,
+        genAt: isDate(d.genAt) ? d.genAt : '',     // 세대가 바뀐 날
         gen: clampInt(d.gen, 0, 1000000, 0),        // 세대: 복원·계정 기록으로 바꾸기처럼 통째로 바꿀 때 +1 (낮은 세대와는 합치지 않음)
         active: isLang(d.active) ? d.active : null,  // 마지막으로 고른 언어 코드
         byLang,                                     // code → {completed, srs, streak, lastPos, xp, daily, boss, mistakes …}
@@ -843,9 +845,30 @@ function streakUnion(list) {
 let lastRaw = null;
 try { lastRaw = localStorage.getItem(LS_KEY); } catch (e) { lastRaw = null; }
 function maxBy(a, b, f) { return (a === undefined) ? b : (b === undefined) ? a : (f(b) >= f(a) ? b : a); }
-function mergeLang(a, b, force) {   // b = 이 탭(우선), a = 다른 탭
+// 세대가 다를 때: 높은 세대(초기화·바꾸기 뒤)를 쓰되, 그 세대가 시작된 날(genAt) 이후 낮은 쪽에서 새로 한 공부는 살린다
+function carrySince(hi, lo, at) {
+    if (!lo || !at) return hi;
+    const o = Object.assign({}, hi);
+    o.completed = Object.assign({}, hi.completed);
+    Object.entries(lo.completed || {}).forEach(([k, v]) => { if (!o.completed[k] && ((v.date || '') >= at || (v.last || '') >= at)) o.completed[k] = v; });
+    o.srs = Object.assign({}, hi.srs);
+    Object.entries(lo.srs || {}).forEach(([k, v]) => { const x = o.srs[k]; if ((v.rv || '') >= at && (!x || (v.rv || '') > (x.rv || ''))) o.srs[k] = v; });
+    o.daily = Object.assign({}, hi.daily);
+    let extra = 0;
+    Object.entries(lo.daily || {}).forEach(([d, v]) => {
+        if (d < at || !isObj(v)) return;
+        const x = o.daily[d];
+        if (!x) { o.daily[d] = v; extra += (v.xp || 0); return; }
+        const m = Object.assign({}, x); Object.keys(v).forEach(kk => { if (typeof v[kk] === 'number') m[kk] = Math.max(v[kk], x[kk] || 0); });
+        extra += Math.max(0, (v.xp || 0) - (x.xp || 0)); o.daily[d] = m;
+    });
+    o.xp = (hi.xp || 0) + extra;
+    ['storiesRead', 'boss'].forEach(f => { o[f] = Object.assign({}, hi[f] || {}); Object.entries(lo[f] || {}).forEach(([k, v]) => { if (!o[f][k] && isObj(v) && (v.date || '') >= at) o[f][k] = v; }); });
+    return o;
+}
+function mergeLang(a, b, force, aOld) {   // b = 이 탭(우선), a = 다른 탭. aOld: a가 업데이트 전 화면이 저장한 기록
     if (!a) return b; if (!b) return a;
-    if (!force && (a.gen || 0) !== (b.gen || 0)) return (b.gen || 0) > (a.gen || 0) ? b : a;   // 초기화한 쪽(높은 세대)을 통째로
+    if (!force && (a.gen || 0) !== (b.gen || 0)) { const bHi = (b.gen || 0) > (a.gen || 0); return bHi ? (aOld ? carrySince(b, a, b.genAt) : b) : a; }
     const o = Object.assign({}, a, b);
     o.completed = Object.assign({}, a.completed);
     Object.entries(b.completed || {}).forEach(([k, v]) => { const x = o.completed[k]; o.completed[k] = !x ? v : Object.assign({}, x, v, { score: Math.max(x.score, v.score), date: x.date < v.date ? x.date : v.date }); });
@@ -858,12 +881,20 @@ function mergeLang(a, b, force) {   // b = 이 탭(우선), a = 다른 탭
     o.streak = maxBy(a.streak, b.streak, s2 => (s2 && s2.last) || '');
     return o;
 }
-function mergeStores(other, mine, force) {   // force: 사용자가 '합치기'를 고른 경우 — 세대가 달라도 합친다
-    if (!force && (other.gen || 0) !== (mine.gen || 0)) return (mine.gen || 0) > (other.gen || 0) ? mine : Object.assign({}, other);
+// force: 사용자가 '합치기'를 고른 경우 — 세대가 달라도 합친다. otherOld: other가 업데이트 전 화면(세대를 모름)이 저장한 기록
+function mergeStores(other, mine, force, otherOld) {
+    if (!force && (other.gen || 0) !== (mine.gen || 0)) {
+        if ((other.gen || 0) > (mine.gen || 0)) return Object.assign({}, other);
+        if (!otherOld || !mine.genAt) return mine;
+        // 업데이트 전 탭은 세대를 지워 버리므로, 그 탭에서 세대가 바뀐 날 이후 한 공부만 살려 합친다
+        const m0 = Object.assign({}, mine); m0.byLang = Object.assign({}, mine.byLang);
+        Object.keys(other.byLang || {}).forEach(k => { const c = carrySince(m0.byLang[k] || { completed: {}, srs: {}, daily: {}, xp: 0 }, other.byLang[k], mine.genAt); if (m0.byLang[k] || Object.keys(c.completed).length || Object.keys(c.srs).length || c.xp) m0.byLang[k] = c; });
+        return m0;
+    }
     const m = Object.assign({}, mine);
     if (force) m.gen = Math.max(other.gen || 0, mine.gen || 0);
     m.byLang = Object.assign({}, other.byLang);
-    Object.keys(mine.byLang).forEach(k => { m.byLang[k] = mergeLang(other.byLang[k], mine.byLang[k], force); });
+    Object.keys(mine.byLang).forEach(k => { m.byLang[k] = mergeLang(other.byLang[k], mine.byLang[k], force, otherOld); });
     const so = other.streak, sm = mine.streak;
     m.streak = (so.last > sm.last) ? Object.assign({}, so, { best: Math.max(so.best, sm.best) }) : Object.assign({}, sm, { best: Math.max(so.best, sm.best), count: so.last === sm.last ? Math.max(so.count, sm.count) : sm.count });
     m.badges = Object.assign({}, other.badges, mine.badges);
@@ -885,8 +916,8 @@ function save() {
     try {
         const cur = localStorage.getItem(LS_KEY);
         if (cur && lastRaw !== null && cur !== lastRaw) {
-            let other = null; try { const o = JSON.parse(cur); if (isObj(o) && Number(o.schema) > SCHEMA) { newerSchema = true; warnNewer(); return; } if (isObj(o) && o.schema === undefined && isObj(o.byLang)) warnOldTab(); other = normalizeStore(o); } catch (e) { other = null; }
-            if (other) store = mergeStores(other, store);
+            let other = null, oldFmt = false; try { const o = JSON.parse(cur); if (isObj(o) && Number(o.schema) > SCHEMA) { newerSchema = true; warnNewer(); return; } oldFmt = isObj(o) && o.schema === undefined && isObj(o.byLang); if (oldFmt) warnOldTab(); other = normalizeStore(o); } catch (e) { other = null; }
+            if (other) store = mergeStores(other, store, false, oldFmt);
         }
         const raw = JSON.stringify(store);
         localStorage.setItem(LS_KEY, raw);
@@ -899,9 +930,10 @@ function save() {
 function syncFromStorage() {
     let cur = null; try { cur = localStorage.getItem(LS_KEY); } catch (e) { return; }
     if (!cur || cur === lastRaw) return;
-    let other = null; try { const o = JSON.parse(cur); if (isObj(o) && o.schema === undefined && isObj(o.byLang)) warnOldTab(); other = normalizeStore(o); } catch (e) { return; }
-    store = mergeStores(other, store);
+    let other = null, oldFmt = false; try { const o = JSON.parse(cur); oldFmt = isObj(o) && o.schema === undefined && isObj(o.byLang); if (oldFmt) warnOldTab(); other = normalizeStore(o); } catch (e) { return; }
+    store = mergeStores(other, store, false, oldFmt);
     lastRaw = cur;
+    if (oldFmt) save();   // 옛 화면이 지운 세대·새 칸을 바로 다시 적는다
     if (typeof CUR !== 'undefined' && CUR && DATA) {
         updateHeader(); updateTabs();
         const root = document.getElementById('modalRoot');
@@ -917,7 +949,7 @@ function renderStorageWarning() {
         el.innerHTML = esc(storageFailReason === 'quota' ? '⚠️ 저장 공간이 가득 차 학습 기록을 저장하지 못했어요.' : '⚠️ 이 브라우저에서는 학습 기록을 저장할 수 없어요(비공개 창이거나 저장이 막혀 있어요).') + ' 새로고침하면 사라지니 지금 백업해 두세요. <button class="btn small" id="swBackup">💾 지금 기록 백업 코드 복사</button>';
         el.hidden = false;
         const b = document.getElementById('swBackup');
-        if (b) b.addEventListener('click', () => exportProgressCode().then(c => copyText(c, '📋 백업 코드를 복사했어요. 카톡 「나와의 채팅」에 붙여 두세요')));
+        if (b) b.addEventListener('click', () => exportProgressCode().then(c => copyText(c, '📋 백업 코드를 복사했어요. 카톡 「나와의 채팅」에 붙여 두세요' + CODE_TIP)));
     }
     else if (storageCorrupt) { el.textContent = '⚠️ 저장된 기록을 읽지 못해 새로 시작했어요. 백업 코드가 있다면 ⚙️ 설정 → 코드로 복원하기에서 되돌릴 수 있어요.'; el.hidden = false; }
     else el.hidden = true;
@@ -1817,9 +1849,10 @@ async function parseBackupAny(code) {
     try { obj = JSON.parse(await new Response(new Blob([bytesFromB64(b)]).stream().pipeThrough(new DecompressionStream('gzip'))).text()); }
     catch (e) { throw new Error('코드를 읽을 수 없어요. 전체를 빠짐없이 복사했는지 확인해 주세요.'); }
     if (!obj || !obj.data || typeof obj.data !== 'object') throw new Error('올바른 백업 코드가 아니에요.');
-    if (obj.tag && obj.tag !== '랭귀지 스타터') throw new Error('다른 앱(' + obj.tag + ')의 백업 코드예요.');
+    if (obj.tag && obj.tag !== '랭귀지 스타터') { const lg = legacyTagCode(obj.tag); if (lg) { obj.legacy = lg; return obj; } throw new Error('다른 앱(' + obj.tag + ')의 백업 코드예요.'); }
     return obj;
 }
+const CODE_TIP = ' · 받는 기기에서 읽지 못하면 그 기기의 앱을 새로고침한 뒤 붙여넣어 주세요';
 async function shareBackupFile(code) {   // 휴대폰: 공유 시트(카톡 '나와의 채팅' 등)로 파일 보내기, 안 되면 내려받기
     const name = 'language-starter-backup-' + todayStr() + '.txt';
     try {
@@ -1838,9 +1871,10 @@ function parseBackup(code) {
     try { obj = JSON.parse(b64decode(code)); }
     catch (e) { throw new Error('코드를 읽을 수 없어요. 전체를 빠짐없이 복사했는지 확인해 주세요.'); }
     if (!obj || !obj.data || typeof obj.data !== 'object') throw new Error('올바른 백업 코드가 아니에요.');
-    if (obj.tag && obj.tag !== '랭귀지 스타터') throw new Error('다른 앱(' + obj.tag + ')의 백업 코드예요.');
+    if (obj.tag && obj.tag !== '랭귀지 스타터') { const lg = legacyTagCode(obj.tag); if (lg) { obj.legacy = lg; return obj; } throw new Error('다른 앱(' + obj.tag + ')의 백업 코드예요.'); }
     return obj;
 }
+function legacyTagCode(tag) { return Object.keys(LEGACY).find(k => LEGACY[k].name === tag) || null; }
 function storeSummary(st, at) {
     const langs = Object.entries(st.byLang || {}).filter(([, p]) => p && (Object.keys(p.completed || {}).length || p.xp)).map(([k, p]) => (LANGS[k] ? LANGS[k].name : k) + ' ' + Object.keys(p.completed || {}).length);
     const cards = Object.values(st.byLang || {}).reduce((a, p) => a + Object.keys((p && p.srs) || {}).length, 0);
@@ -1855,7 +1889,7 @@ function importProgress(code) {
     if (!obj || !obj.data || typeof obj.data !== 'object') throw new Error('올바른 백업 코드가 아니에요.');
     if (obj.tag && obj.tag !== '랭귀지 스타터') throw new Error('다른 앱(' + obj.tag + ')의 백업 코드예요.');
     const g = nextGen(store, obj.data);
-    store = normalizeStore(obj.data); store.gen = g;
+    store = normalizeStore(obj.data); store.gen = g; store.genAt = todayStr();
     save();
     let lessons = 0, cards = 0;
     Object.values(store.byLang).forEach(p => { lessons += Object.keys(p.completed || {}).length; cards += Object.keys(p.srs || {}).length; });
@@ -2064,22 +2098,32 @@ function importDeq(info) {
 }
 /* ── 예전 앱(니하오 중국어 · 올라 스페인어) 기록 이어받기 — 같은 레슨 데이터라 그대로 옮겨진다 ── */
 const LEGACY = { zh: { key: 'nihao_zh_v1', name: '니하오 중국어', native: 'hanzi', roman: 'pinyin' }, es: { key: 'hola_es_v1', name: '올라 스페인어', native: 'es', roman: null } };
-function readLegacy(code) {
+const LEGACY_DONE_KEY = 'lang_starter_legacy';   // {zh: {fp, at}} — 이 기기에서 예전 앱 기록을 어디까지 이어받았는지
+function legacyDone(code, fp) {
+    let m = {}; try { m = JSON.parse(localStorage.getItem(LEGACY_DONE_KEY) || '{}') || {}; } catch (e) { m = {}; }
+    if (!isObj(m)) m = {};
+    if (fp === undefined) return m[code] || null;
+    m[code] = { fp, at: todayStr() }; try { localStorage.setItem(LEGACY_DONE_KEY, JSON.stringify(m)); } catch (e) { }
+}
+function readLegacy(code, given) {
     const L = LEGACY[code]; if (!L) return null;
-    let d = null; try { d = JSON.parse(localStorage.getItem(L.key) || 'null'); } catch (e) { d = null; }
+    let d = given || null;
+    if (!d) { try { d = JSON.parse(localStorage.getItem(L.key) || 'null'); } catch (e) { d = null; } }
     if (!isObj(d)) return null;
     const completed = isObj(d.completed) ? Object.keys(d.completed).filter(id => /^u\d+l\d+$/.test(id) && isObj(d.completed[id]) && LESSON_BY_ID[id] !== undefined) : [];
     const cards = isObj(d.srs) ? Object.values(d.srs).filter(c => isObj(c) && typeof c[L.native] === 'string' && c[L.native]) : [];
     if (!completed.length && !cards.length) return null;
-    return { d, L, completed, cards };
+    return { d, L, completed, cards, fp: completed.length + ':' + cards.length + ':' + completed.map(id => d.completed[id].score).join('') };
 }
-function importLegacy(code) {
+// given: 예전 앱의 백업 코드에서 꺼낸 기록(없으면 이 기기의 예전 앱 저장소). 합치기는 여러 번 해도 안전(레슨 합집합·새 레슨만 XP·카드 중복 없음)
+function importLegacy(code, given) {
     if (!LEGACY[code]) return null;
     const p = prog();
-    // 한 번만(예전 앱은 이제 안내 페이지라 새 기록이 생기지 않음). 표시는 언어 진도 밖(seen)에도 둬서 초기화해도 다시 들어오지 않게
-    if (p.legacyImport || store.seen['legacy_' + code]) return null;
-    const info = readLegacy(code);
+    const info = readLegacy(code, given);
     if (!info) return null;
+    // 이 기기의 예전 앱 기록은 지문이 바뀌었을 때만(초기화·'빈 기록으로 시작' 뒤에 다시 들어오지 않고, 예전 탭에서 더 한 공부는 합친다)
+    const done = legacyDone(code);
+    if (!given && done && done.fp === info.fp) return null;
     const { d, L } = info;
     let lessons = 0, cards = 0, spread = 0;
     info.completed.forEach(id => {
@@ -2105,7 +2149,7 @@ function importLegacy(code) {
     }
     if (isObj(d.storiesRead)) { if (!p.storiesRead) p.storiesRead = {}; Object.keys(d.storiesRead).forEach(id => { const r = d.storiesRead[id]; if (!p.storiesRead[id] && isObj(r) && isDate(r.date)) p.storiesRead[id] = { date: r.date }; }); }
     p.legacyImport = { at: todayStr(), lessons, cards };
-    store.seen['legacy_' + code] = todayStr();
+    if (!given) legacyDone(code, info.fp);
     save();
     if (!lessons && !cards) return null;   // 이미 다 있던 기록이면 조용히 표시만
     track('legacy_import', { lessons, cards });
@@ -2388,7 +2432,7 @@ function renderHome() {
                 const skipped = !done_ && gi < placeIdx();
                 const cls = done_ ? 'done' : skipped ? 'current skipped' : (unlocked ? 'current' : 'locked');
                 const imp = done_ && prog().completed[l.id].imported;
-                const stateIco = done_ ? ((prog().boss && prog().boss[l.id] ? '👑' : '') + (imp ? '<div class="stars" style="color:var(--text-light)">📦 DEQ</div>' : '<div class="stars" aria-label="별 ' + starsOf(l.id) + '개">' + starStr(starsOf(l.id)) + '</div>')) : skipped ? '<span class="muted" style="font-size:11px">⏭ 선택</span>' : (unlocked ? (atHere ? '📍' : '▶') : '🔒');
+                const stateIco = done_ ? ((prog().boss && prog().boss[l.id] ? '👑' : '') + (imp && imp !== 'legacy' ? '<div class="stars" style="color:var(--text-light)">📦 DEQ</div>' : '<div class="stars" aria-label="별 ' + starsOf(l.id) + '개">' + starStr(starsOf(l.id)) + '</div>')) : skipped ? '<span class="muted" style="font-size:11px">⏭ 선택</span>' : (unlocked ? (atHere ? '📍' : '▶') : '🔒');
                 html += '<div class="lesson-row ' + cls + '" data-lesson="' + gi + '" ' + (unlocked ? '' : 'data-locked="1"') + ' role="button" tabindex="0">' +
                     '<div class="lesson-num">' + (li + 1) + '</div>' +
                     '<div><div class="l-title">' + esc(l.title) + '</div><div class="l-goal">' + esc(l.goal || '') + '</div></div>' +
@@ -2486,7 +2530,7 @@ function bindInAppNote() {
     // 카톡·라인은 주소에 기록을 실어 보낼 수 있다(클릭 때 바로 열리도록 미리 바꿔 둠)
     if (o && hasProgress(store) && /KAKAOTALK|Line\//i.test(navigator.userAgent || '')) exportProgressCode().then(c => { if (c.startsWith('LS3:') && c.length <= 20000 && o.isConnected) o.href = openExternalHref('#imp=' + c); }).catch(() => { });
     const cc = document.getElementById('inAppCopyCode');
-    if (cc) cc.addEventListener('click', () => exportProgressCode().then(c => copyText(c, '📋 기록 코드를 복사했어요! 기본 브라우저 첫 화면 아래 「📦 다른 기기 기록 가져오기」에 붙여넣으세요')));
+    if (cc) cc.addEventListener('click', () => exportProgressCode().then(c => copyText(c, '📋 기록 코드를 복사했어요! 기본 브라우저 첫 화면 아래 「📦 다른 기기 기록 가져오기」에 붙여넣으세요' + CODE_TIP)));
 }
 function quickSentence() {
     const pool = [];
@@ -4294,7 +4338,8 @@ function histAllEntries() {
     const read = prog().storiesRead || {};
     Object.entries(comp).forEach(([id, v]) => {
         if (!v || !v.date) return;
-        out.push({ date: v.date, type: 'lesson', ico: v.imported ? '📦' : v.placed ? '⏩' : '✅', title: histLessonTitle(id), score: v.imported ? 'DEQ에서 완료' : v.placed ? '건너뛰기 시험' : v.score + '/' + v.total + '점' });
+        const legacy = v.imported === 'legacy';
+        out.push({ date: v.date, type: 'lesson', ico: v.imported ? '📦' : v.placed ? '⏩' : '✅', title: histLessonTitle(id), score: legacy ? '예전 「' + ((LEGACY[CUR.code] || {}).name || '앱') + '」에서 완료 · ' + v.score + '/' + v.total + '점' : v.imported ? 'DEQ에서 완료' : v.placed ? '건너뛰기 시험' : v.score + '/' + v.total + '점' });
     });
     Object.entries(read).forEach(([id, v]) => {
         const date = (v && typeof v === 'object') ? v.date : null;
@@ -4478,7 +4523,7 @@ function openHomeMove() {
         '<b>②</b> 화면 아래 공유 버튼(□↑) → 「홈 화면에 추가」 → 추가<br>' +
         '<b>③</b> 홈 화면의 🌍 랭귀지 스타터 아이콘을 열고, 첫 화면의 <b>📋 사파리 기록 붙여넣기</b>를 누르세요.</div>' +
         '<div class="muted" style="margin-top:8px">※ 옮긴 뒤에는 홈 화면 아이콘으로만 여세요. 사파리 기록은 7일 동안 안 열면 지워질 수 있어요.</div>');
-    sheet.querySelector('#hmCopy').addEventListener('click', () => exportProgressCode().then(c => copyText(c, '📋 기록을 복사했어요. 이제 공유 → 홈 화면에 추가')));
+    sheet.querySelector('#hmCopy').addEventListener('click', () => exportProgressCode().then(c => copyText(c, '📋 기록을 복사했어요. 이제 공유 → 홈 화면에 추가' + CODE_TIP)));
     track('home_move_open');
 }
 function openHelp() { openModal('<div class="sheet-head"><b>❓ 자주 묻는 질문</b><button class="sheet-close" data-close-overlay aria-label="닫기">✕</button></div>' + faqHtml()); track('help_open'); }
@@ -4673,7 +4718,7 @@ function renderSettings() {
     });
     document.getElementById('resetBtn').addEventListener('click', () => {
         if (confirm('정말 ' + CUR.name + '의 학습 기록을 지울까요?\n(완료한 레슨, 복습 단어장, XP가 사라져요. 다른 언어의 진도와 전체 연속 기록은 유지됩니다)')) {
-            store.byLang[CUR.code] = { gen: ((store.byLang[CUR.code] || {}).gen || 0) + 1, completed: {}, srs: {}, streak: { last: '', count: 0 }, lastPos: null }; delete store.seen['welcome_' + CUR.code]; if (CUR.code === 'en') delete store.seen.deqOfferShown; save();
+            store.byLang[CUR.code] = { gen: ((store.byLang[CUR.code] || {}).gen || 0) + 1, genAt: todayStr(), completed: {}, srs: {}, streak: { last: '', count: 0 }, lastPos: null }; delete store.seen['welcome_' + CUR.code]; if (CUR.code === 'en') delete store.seen.deqOfferShown; save();
             go('home');
         }
     });
@@ -4703,7 +4748,7 @@ function renderSettings() {
         try {
             const snap = JSON.parse(localStorage.getItem(LS_KEY + '_before_restore'));
             const back = normalizeStore(JSON.parse(snap.raw)), g = nextGen(store, back);
-            store = back; store.gen = g; save();
+            store = back; store.gen = g; store.genAt = todayStr(); save();
             localStorage.removeItem(LS_KEY + '_before_restore');
             showToast('↩ 복원 전 기록으로 되돌렸어요', 'gold');
             if (store.active && LANGS[store.active]) activateLanguage(store.active); else go('picker');
@@ -4749,6 +4794,13 @@ async function restoreFromCode(code, opts) {
         if (storageFailed) { showToast('이 브라우저는 기록 저장이 안 돼요. 일반 창(크롬·사파리)에서 복원해 주세요', '', 3600); return; }
         let obj;
         try { obj = await parseBackupAny(code); } catch (e) { showToast('복원하지 못했어요: ' + e.message, '', 3600); return; }
+        if (obj.legacy) {   // 예전 「니하오 중국어」「올라 스페인어」 앱의 백업 코드 → 그 언어 진도로 합치기
+            const lg = obj.legacy;
+            closeModal(true);
+            const run = () => { const r = importLegacy(lg, obj.data); S.openUnit = null; go('home'); if (r) { celebrate(); showToast('📦 예전 「' + r.name + '」 백업을 합쳤어요 · 레슨 ' + r.lessons + '개 · 카드 ' + r.cards + '장', 'gold', 4200); } else showToast('이미 모두 들어 있는 기록이에요'); };
+            if (CUR && CUR.code === lg) run(); else { store.seen['welcome_' + lg] = store.seen['welcome_' + lg] || todayStr(); activateLanguage(lg).then(() => { if (CUR && CUR.code === lg) { closeModal(true); run(); } }); }
+            return;
+        }
         const incoming = normalizeStore(obj.data);
         const hasNow = hasProgress(store);
         const sheet = openModal('<div class="sheet-head"><b>' + esc(opts.title || '백업 기록을 어떻게 가져올까요?') + '</b><button class="sheet-close" data-close-overlay aria-label="닫기">✕</button></div>' +
@@ -4774,7 +4826,7 @@ async function restoreFromCode(code, opts) {
             try {
                 snapshotBeforeRestore();
                 const g = nextGen(store, incoming);
-                store = incoming; store.gen = g; save();
+                store = incoming; store.gen = g; store.genAt = todayStr(); save();
                 finishRestore('🎉 가져오기 완료!');
             } catch (e) { showToast('복원하지 못했어요: ' + e.message, '', 3600); }
         });
@@ -4950,8 +5002,8 @@ async function cloudLogout(wipeLocal) {
     try { await CLOUD.sync.signOut(CLOUD.auth); } catch (e) { CLOUD.signingOut = false; showToast('로그아웃하지 못했어요'); return; }
     if (wipeLocal) {
         const g = nextGen(store);
-        store = normalizeStore({ gen: g }); save();
-        try { [LS_KEY + '_before_restore', LS_KEY + '_corrupt_backup', CLOUD_HINT_KEY, STATS_OFF_KEY, 'nihao_zh_v1', 'hola_es_v1', DEQ_KEY].forEach(k => localStorage.removeItem(k)); } catch (e) { }
+        store = normalizeStore({ gen: g, genAt: todayStr() }); save();
+        try { [LS_KEY + '_before_restore', LS_KEY + '_corrupt_backup', CLOUD_HINT_KEY, STATS_OFF_KEY, LEGACY_DONE_KEY, 'nihao_zh_v1', 'hola_es_v1', DEQ_KEY].forEach(k => localStorage.removeItem(k)); } catch (e) { }
         CLOUD.lastPushedRaw = '';
         showToast('👋 로그아웃하고 이 기기의 기록을 지웠어요');
         setTimeout(() => location.reload(), 600);
@@ -5032,7 +5084,7 @@ function cloudChoose(u, cloud, why) {
         done();
         snapshotBeforeRestore();
         const next = normalizeStore(cloud ? cloud.cloudStore : { settings: store.settings });
-        next.gen = nextGen(store, cloud && cloud.cloudStore);   // 이 기기의 다른 탭·예전 기록이 다시 섞이지 않게
+        next.gen = nextGen(store, cloud && cloud.cloudStore); next.genAt = todayStr();   // 이 기기의 다른 탭·예전 기록이 다시 섞이지 않게
         applyCloudStore(next, cloud ? cloud.d.rev : '');
         cloudHint({ lastUid: u.uid });
         showToast(cloud ? '☁️ 계정 기록으로 바꿨어요' : '🆕 빈 기록으로 시작해요', 'gold', 3200);
