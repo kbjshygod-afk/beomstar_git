@@ -9,8 +9,9 @@ One run per market after its close:
    BEFORE anything else, so the commit time proves the signal existed before the open.
 4. Recompute the ledger from the start and audit every committed signal file:
    on time (committed before the next session's open) and identical to the recomputation.
-5. Write trades.csv, equity.csv, positions.json, audit.json, report.md (Korean) and the
-   combined latest.json, then commit + push again.
+5. Write trades.csv, equity.csv, positions.json, status.csv (rule status of every universe
+   symbol, read by the skill), audit.json, report.md (Korean) and the combined latest.json,
+   then commit + push again.
 
 The ledger is recomputed from scratch each day, so a missed run loses nothing; the audit
 records which days had no pre-committed signal file.
@@ -39,6 +40,7 @@ from .backtest import _jsonable, warmup_bars
 from .notes import DISCLAIMER, UNCONFIRMED_LINE
 from .params import COST_PCT, RISK_PCT, normalize_preset, resolve
 from .portfolio import PortfolioConfig, prepare_frames, simulate
+from .status import status_label
 
 log = logging.getLogger("swing_engine.paper")
 
@@ -105,7 +107,8 @@ def git_root(path: Path) -> Path | None:
 
 def first_commit_time(repo: Path, file: Path) -> datetime | None:
     """Commit time of the commit that first added `file` (None if never committed)."""
-    out = _git(repo, "log", "--diff-filter=A", "--format=%cI", "--", str(file.relative_to(repo)), check=False)
+    rel = Path(file).resolve().relative_to(Path(repo).resolve())
+    out = _git(repo, "log", "--diff-filter=A", "--format=%cI", "--", str(rel), check=False)
     lines = [ln for ln in out.splitlines() if ln.strip()]
     return _utc(datetime.fromisoformat(lines[-1])) if lines else None
 
@@ -215,6 +218,44 @@ def watchlist(prepared: dict, held: set, as_of) -> list[dict]:
                     "rs": _num(r.get("rs_key"), 2)})
     out.sort(key=lambda x: (-(x["rs"] if x["rs"] is not None else -1e9), x["symbol"]))
     return out[:WATCH_MAX]
+
+
+def universe_status(prepared: dict, res, as_of, params: dict) -> pd.DataFrame:
+    """Rule status of every universe symbol at as_of, in the portfolio's state
+    (scanner RS rule when rs_mode is percentile). Read by the skill on claude.ai."""
+    ts = pd.Timestamp(as_of)
+    pos = {p["symbol"]: p for p in res.open_positions}
+    pend = {e["symbol"]: e for e in res.pending_entries}
+    stop_pct = float(params["stop_pct"])
+    rows = []
+    for s, f in sorted(prepared.items()):
+        if ts not in f.index:
+            continue
+        r = f.loc[ts]
+        p = pos.get(s)
+        label = status_label(
+            in_pos=p is not None, entry_pending=s in pend, tt_pass=bool(r["tt_pass"]),
+            tt_count=int(r["tt_count"]), liquidity_ok=bool(r["liquidity_ok"]), regime_on=bool(r["regime_on"]),
+            breakout=bool(r["breakout"]), cap_ok=bool(r["cap_ok"]), vol_ok=bool(r["vol_ok"]),
+            breakout_pct=float(r["breakout_pct"]), to_pivot_pct=float(r["to_pivot_pct"]),
+            exit_ma_len=int(params["exit_ma_len"]))
+        row = {"symbol": s, "as_of": _day(ts), "close": _num(r["close"]), "status": label,
+               "tt_count": int(r["tt_count"]), "tt_pass": bool(r["tt_pass"])}
+        row.update({f"tt{k}": bool(r[f"tt{k}"]) for k in range(1, 9)})
+        row.update({"regime_on": bool(r["regime_on"]), "rs": _num(r.get("rs_key"), 2),
+                    "rs_proxy_pp": _num(r.get("rs_diff"), 2), "pivot": _num(r.get("pivot")),
+                    "to_pivot_pct": _num(r.get("to_pivot_pct"), 2), "breakout_pct": _num(r.get("breakout_pct"), 2),
+                    "vol_x": _num(r.get("vol_x"), 2), "ma50": _num(r.get("ma50")), "exit_ma": _num(r.get("exit_ma")),
+                    "ma150": _num(r.get("ma150")), "ma200": _num(r.get("ma200")),
+                    "from_high52_pct": _num(r.get("from_high52"), 2),
+                    "in_position": p is not None, "entry_date": p["entry_date"] if p else None,
+                    "entry_price": _num(p["entry_price"]) if p else None,
+                    "stop_price": _num(p["stop_price"]) if p else None,
+                    "exit_pending": bool(p["exit_pending"]) if p else False,
+                    "entry_pending": s in pend,
+                    "stop_if_filled_at_close": _num(float(r["close"]) * (1 - stop_pct / 100))})
+        rows.append(row)
+    return pd.DataFrame(rows)
 
 
 def build_snapshot(market, as_of, res, prepared, bench, params, cov) -> dict:
@@ -406,7 +447,7 @@ def run(args) -> dict:
     market = normalize_preset(args.market)
     params = resolve(market)
     now = _utc(datetime.fromisoformat(args.now)) if args.now else datetime.now(timezone.utc)
-    ledger = Path(args.ledger_dir)
+    ledger = Path(args.ledger_dir).resolve()
     root = ledger / market
     root.mkdir(parents=True, exist_ok=True)
     repo = git_root(ledger)
@@ -450,6 +491,7 @@ def run(args) -> dict:
     eq.index.name = "date"
     eq.to_csv(root / "equity.csv")
     (root / "positions.json").write_text(json.dumps(_jsonable(res.open_positions), ensure_ascii=False, indent=1))
+    universe_status(prepared, res, as_of, params).to_csv(root / "status.csv", index=False)
     report = render_report(market, cfg, snap, perf, aud, res, params)
     (root / "report.md").write_text(report)
 
@@ -462,6 +504,7 @@ def run(args) -> dict:
         "as_of": snap["as_of"], "start_date": cfg["start_date"], "regime": snap["regime"],
         "entries_next_open": snap["entries_next_open"], "exits_next_open": snap["exits_next_open"],
         "positions": _jsonable(res.open_positions), "watchlist": snap["watchlist"], "performance": perf,
+        "status_csv": f"{market}/status.csv",
         "audit": {k: aud[k] for k in ("days", "signal_files", "missing_days", "late", "uncommitted", "mismatched", "revised")},
     }
     latest_p.write_text(json.dumps(_jsonable(latest), ensure_ascii=False, indent=1))

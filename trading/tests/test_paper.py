@@ -92,8 +92,15 @@ def test_daily_runs_commit_on_time_and_match(tmp_path, ledger_repo, monkeypatch)
     n_events = sum(len(r["snapshot"]["entries_next_open"]) + len(r["snapshot"]["exits_next_open"]) for r in results)
     assert n_events > 0
     # outputs exist
-    for f in ("report.md", "trades.csv", "equity.csv", "positions.json", "audit.json"):
+    for f in ("report.md", "trades.csv", "equity.csv", "positions.json", "audit.json", "status.csv"):
         assert (root / f).exists()
+    st = pd.read_csv(root / "status.csv")
+    assert len(st) == 40 and set(st["as_of"]) == {run_days[-1].strftime("%Y-%m-%d")}
+    held = set(json.loads((root / "positions.json").read_text()) and
+               [p["symbol"] for p in json.loads((root / "positions.json").read_text())])
+    assert set(st.loc[st["in_position"], "symbol"]) == held
+    assert st.loc[st["in_position"], "status"].str.startswith("보유 중").all()
+    assert (st.loc[~st["tt_pass"] & ~st["in_position"] & ~st["entry_pending"], "status"].str.startswith("후보 아님")).all()
     latest = json.loads((ledger_repo / "paper" / "latest.json").read_text())
     assert latest["markets"]["SP500"]["as_of"] == run_days[-1].strftime("%Y-%m-%d")
     report = (root / "report.md").read_text()
@@ -143,3 +150,22 @@ def test_revised_history_is_detected(tmp_path, ledger_repo, monkeypatch):
     assert d0 in r["audit"]["mismatched"]
     row = next(x for x in r["audit"]["rows"] if x["date"] == d0)
     assert sym in row["entries_only_committed"]
+
+
+def test_relative_ledger_dir(tmp_path, ledger_repo, monkeypatch):
+    """The workflow passes ../ledger/paper; commit times must still be found."""
+    offline = tmp_path / "data"
+    offline.mkdir()
+    days = _write_market(offline)
+    work = tmp_path / "trading"
+    work.mkdir()
+    monkeypatch.chdir(work)
+    now = _after_close(days[-1])
+    ct = now.strftime("%Y-%m-%dT%H:%M:%S+00:00")
+    monkeypatch.setenv("GIT_COMMITTER_DATE", ct)
+    monkeypatch.setenv("GIT_AUTHOR_DATE", ct)
+    args = P.build_parser().parse_args([
+        "--market", "SP500", "--ledger-dir", "../ledger/paper", "--offline-dir", str(offline),
+        "--now", now.strftime("%Y-%m-%dT%H:%M:%S")])
+    r = P.run(args)
+    assert r["audit"]["uncommitted"] == [] and r["audit"]["late"] == []

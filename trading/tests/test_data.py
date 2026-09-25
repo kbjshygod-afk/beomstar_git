@@ -421,3 +421,40 @@ def test_pick_symbol_column_multiindex_and_substring():
     import pytest
     with pytest.raises(ValueError, match="tables"):
         _pick_symbol_column([small], 90, 110)
+
+
+def test_fetch_ndx100_falls_back_to_nasdaq_api(monkeypatch):
+    rows = [{"symbol": f"N{i}", "companyName": "x"} for i in range(101)] + []
+    rows[0]["symbol"] = "BRK.B"
+    no_table = "<table><tr><th>Year</th></tr><tr><td>2020</td></tr></table>"
+
+    class J:
+        text = ""
+
+        def json(self):
+            return {"data": {"data": {"headers": {}, "rows": rows}}, "status": {"rCode": 200}}
+
+    seen = []
+
+    def fake_get(url, **kw):
+        seen.append(url)
+        return J() if url == D.NASDAQ_NDX100_API else Resp(no_table)
+
+    monkeypatch.setattr(D, "_http_get", fake_get)
+    got = D.fetch_ndx100()
+    assert seen == [D.WIKI_NDX100_LIST, D.WIKI_NDX100, D.NASDAQ_NDX100_API]
+    assert len(got) == 101 and got[0] == "BRK-B"
+
+
+def test_fetch_ndx100_all_sources_fail(monkeypatch):
+    import pytest
+
+    class J:
+        text = ""
+
+        def json(self):
+            return {"data": None}
+
+    monkeypatch.setattr(D, "_http_get", lambda url, **kw: J() if url == D.NASDAQ_NDX100_API else Resp("<table><tr><th>a</th></tr><tr><td>1</td></tr></table>"))
+    with pytest.raises(ValueError, match="Nasdaq-100 constituents not found"):
+        D.fetch_ndx100()

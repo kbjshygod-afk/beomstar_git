@@ -32,6 +32,8 @@ UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
 
 WIKI_SP500 = "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies"
 WIKI_NDX100 = "https://en.wikipedia.org/wiki/Nasdaq-100"
+WIKI_NDX100_LIST = "https://en.wikipedia.org/wiki/List_of_Nasdaq-100_companies"
+NASDAQ_NDX100_API = "https://api.nasdaq.com/api/quote/list-type/nasdaq100"
 COINGECKO_MARKETS = "https://api.coingecko.com/api/v3/coins/markets"
 
 UNIVERSE_SIZES = {"KOSPI": 200, "KOSDAQ": 150, "CRYPTO": 30}
@@ -543,8 +545,43 @@ def fetch_sp500() -> list[str]:
     return list(dict.fromkeys(_pick_symbol_column(_wiki_tables(WIKI_SP500), 400, 600)))
 
 
+def _symbols_in_json(obj, min_rows: int, max_rows: int) -> list[str] | None:
+    """First list of dicts with a 'symbol' key whose length fits the index size."""
+    if isinstance(obj, list):
+        if min_rows <= len(obj) <= max_rows and all(isinstance(x, dict) and x.get("symbol") for x in obj):
+            return [str(x["symbol"]) for x in obj]
+        items = obj
+    elif isinstance(obj, dict):
+        items = obj.values()
+    else:
+        return None
+    for v in items:
+        got = _symbols_in_json(v, min_rows, max_rows)
+        if got:
+            return got
+    return None
+
+
 def fetch_ndx100() -> list[str]:
-    return list(dict.fromkeys(_pick_symbol_column(_wiki_tables(WIKI_NDX100), 90, 110)))
+    """Nasdaq-100 constituents. The main Wikipedia article no longer carries the component
+    table (2026-09), so the list article and then Nasdaq's own list API are tried in turn."""
+    errors = []
+    for url in (WIKI_NDX100_LIST, WIKI_NDX100):
+        try:
+            return list(dict.fromkeys(_pick_symbol_column(_wiki_tables(url), 90, 110)))
+        except Exception as e:  # noqa: BLE001
+            errors.append(f"{url}: {e}")
+    try:
+        r = _http_get(NASDAQ_NDX100_API, headers={"Accept": "application/json, text/plain, */*",
+                                                  "Origin": "https://www.nasdaq.com",
+                                                  "Referer": "https://www.nasdaq.com/"})
+        syms = _symbols_in_json(r.json(), 90, 110)
+        if syms:
+            return list(dict.fromkeys(yahoo_us_symbol(x) for x in syms))
+        errors.append(f"{NASDAQ_NDX100_API}: no symbol list of 90-110 rows")
+    except Exception as e:  # noqa: BLE001
+        errors.append(f"{NASDAQ_NDX100_API}: {e}")
+    raise ValueError("Nasdaq-100 constituents not found: " + " | ".join(errors))
 
 
 def fetch_krx_top(market: str, n: int | None = None) -> list[str]:
