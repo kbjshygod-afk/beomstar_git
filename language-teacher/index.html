@@ -892,6 +892,7 @@ function mergeLang(a, b, force, aOld) {   // b = 이 탭(우선), a = 다른 탭
     ['boss', 'storiesRead', 'roleplay', 'steps', 'spoke', 'heard', 'warm', 'lf', 'ear'].forEach(f => { o[f] = Object.assign({}, a[f] || {}, b[f] || {}); });
     o.xp = Math.max(a.xp || 0, b.xp || 0);
     o.streak = maxBy(a.streak, b.streak, s2 => (s2 && s2.last) || '');
+    if (force) ['gen', 'genAt'].forEach(f => { if (b[f]) o[f] = b[f]; else delete o[f]; });   // 합치기는 이 기기(b)의 언어 세대를 유지
     return o;
 }
 // force: 사용자가 '합치기'를 고른 경우 — 세대가 달라도 합친다. otherOld: other가 업데이트 전 화면(세대를 모름)이 저장한 기록
@@ -904,8 +905,7 @@ function mergeStores(other, mine, force, otherOld) {
         Object.keys(other.byLang || {}).forEach(k => { const c = carrySince(m0.byLang[k] || { completed: {}, srs: {}, daily: {}, xp: 0 }, other.byLang[k], mine.genAt); if (m0.byLang[k] || Object.keys(c.completed).length || Object.keys(c.srs).length || c.xp) m0.byLang[k] = c; });
         return m0;
     }
-    const m = Object.assign({}, mine);
-    if (force) m.gen = Math.max(other.gen || 0, mine.gen || 0);
+    const m = Object.assign({}, mine);   // 합치기(force)도 세대는 이 기기(mine) 것 — 합친 결과는 늘어나기만 하므로 세대를 올릴 필요가 없다
     m.byLang = Object.assign({}, other.byLang);
     Object.keys(mine.byLang).forEach(k => { m.byLang[k] = mergeLang(other.byLang[k], mine.byLang[k], force, otherOld); });
     const so = other.streak, sm = mine.streak;
@@ -5039,6 +5039,7 @@ async function restoreFromCode(code, opts) {
                 snapshotBeforeRestore();
                 const g = nextGen(store, incoming);
                 store = incoming; store.gen = g; store.genAt = todayStr(); save();
+                if (cloudOn() && !CLOUD.user && cloudHint().lastUid) cloudHint({ lastUid: '', rev: '', base: null, pend: null });   // 다음 로그인 때 계정 기록과 어떻게 할지 묻는다
                 finishRestore('🎉 가져오기 완료!');
             } catch (e) { showToast('복원하지 못했어요: ' + e.message, '', 3600); }
         });
@@ -5059,11 +5060,13 @@ function cloudCfg() { const c = window.CLOUD_CONFIG; return (c && typeof c === '
 function cloudOn() { return !!cloudCfg(); }
 // 문의·오류 제보 링크(cloud-config.js의 SITE_CONTACT) — https 주소일 때만
 function siteContact() { const c = window.SITE_CONTACT; return (c && typeof c === 'object' && typeof c.url === 'string' && /^https:\/\//.test(c.url)) ? { url: c.url, label: typeof c.label === 'string' && c.label.trim() ? c.label.trim().slice(0, 30) : '문의·오류 제보' } : null; }
+// 저장 공간이 가득 찼거나 막힌 브라우저에서도 이 세션 동안은 계정과 이어진 상태를 메모리에 기억한다
+var HINT_MEM = null, hintLsBad = false;
 function cloudHint(patch) {
-    let h = {};
-    try { h = JSON.parse(localStorage.getItem(CLOUD_HINT_KEY) || '{}') || {}; } catch (e) { h = {}; }
-    if (!isObj(h)) h = {};
-    if (patch) { h = Object.assign(h, patch); try { localStorage.setItem(CLOUD_HINT_KEY, JSON.stringify(h)); } catch (e) { } }
+    let h = null;
+    if (!hintLsBad) { try { h = JSON.parse(localStorage.getItem(CLOUD_HINT_KEY) || '{}'); } catch (e) { h = null; hintLsBad = true; } }
+    if (!isObj(h)) h = Object.assign({}, HINT_MEM || {});
+    if (patch) { h = Object.assign(h, patch); HINT_MEM = Object.assign({}, h); try { localStorage.setItem(CLOUD_HINT_KEY, JSON.stringify(h)); } catch (e) { hintLsBad = true; } }
     return h;
 }
 function fbUrl(f) { return new URL('vendor/firebase/' + f + '?v=' + FB_VER, location.href).href; }
@@ -5215,6 +5218,8 @@ function showInAppLoginHelp() {
 function sleepMs(ms) { return new Promise(r => setTimeout(r, ms)); }
 async function cloudLogout(wipeLocal) {
     if (!CLOUD.sync || !CLOUD.auth) return;
+    if (wipeLocal && CLOUD.user && !cloudLinked() && hasProgress(store) &&
+        !confirm('이 기기의 기록은 아직 구글 계정에 저장되지 않았어요.\n지우면 되돌릴 수 없어요. 필요하면 취소하고 ⚙️ 설정의 백업 코드를 먼저 만들어 두세요.\n그래도 이 기기에서 지울까요? (취소하면 로그아웃도 하지 않아요)')) return;
     clearTimeout(CLOUD.pushTimer); CLOUD.firstDirty = 0;
     if (cloudLinked()) {
         // 아직 못 올린 공부가 있으면 먼저 올린다(올리는 중이면 끝날 때까지 기다림)
@@ -5259,7 +5264,7 @@ function xpBase(st) {
     Object.keys((st && st.byLang) || {}).forEach(k => {
         const p = st.byLang[k]; if (!isObj(p)) return;
         const d = {}; Object.keys(p.daily || {}).sort().slice(-7).forEach(x => { d[x] = (p.daily[x] && p.daily[x].xp) || 0; });
-        o[k] = { g: p.gen || 0, xp: p.xp || 0, d };
+        o[k] = { g: p.gen || 0, xp: p.xp || 0, d, dt: todayStr() };
     });
     return o;
 }
@@ -5293,11 +5298,24 @@ function cloudMerge(cs, local, base) {
         const o = m.byLang[k] = Object.assign({}, m.byLang[k]);
         o.xp = addSince(a.xp, b.xp, bx.xp);
         if (isObj(bx.d)) {
+            // 맞춘 날(dt, 옛 기준이면 기준에 있는 마지막 날) 이후에 두 기기 모두 공부한 날은 기준 0으로 더한다
+            const since = isDate(bx.dt) ? bx.dt : Object.keys(bx.d).sort().pop() || '';
             o.daily = Object.assign({}, o.daily);
-            Object.keys(bx.d).forEach(d => { const x = a.daily && a.daily[d], y = b.daily && b.daily[d]; if (x && y && o.daily[d]) o.daily[d] = Object.assign({}, o.daily[d], { xp: addSince(x.xp, y.xp, bx.d[d]) }); });
+            Object.keys(o.daily).forEach(d => {
+                const x = a.daily && a.daily[d], y = b.daily && b.daily[d];
+                if (!x || !y) return;
+                const bd = typeof bx.d[d] === 'number' ? bx.d[d] : (since && d >= since ? 0 : null);
+                if (bd !== null) o.daily[d] = Object.assign({}, o.daily[d], { xp: addSince(x.xp, y.xp, bd) });
+            });
         }
     });
     return { store: m, lost };
+}
+// 보내고 응답을 못 받은 올리기(pend)가 실제로 계정에 들어가 있으면(문서 rev가 같으면) 맞춘 것으로 친다 — XP를 두 번 더하지 않게
+function ownPending(docRev) {
+    const h = cloudHint();
+    if (docRev && isObj(h.pend) && h.pend.rev === docRev) return cloudHint({ rev: docRev, base: h.pend.base || null, pend: null });
+    return h;
 }
 const LOST_TOAST = '☁️ 다른 기기에서 기록을 새로 바꿨어요. 이 기기의 이전 기록은 ⚙️ 설정에서 7일 안에 되돌릴 수 있어요';
 
@@ -5307,6 +5325,7 @@ async function cloudFirstSync(u) {
     // 첫 맞추기가 실패해 다시 하는 경우에도 처음 로그인 버튼을 눌렀는지는 그대로 기억한다
     const interactive = !!CLOUD.loginTap || !!(CLOUD.firstPending && CLOUD.firstPending.uid === u.uid && CLOUD.firstPending.interactive);
     CLOUD.loginTap = false;
+    if (cloudHint().delPending === u.uid) { cloudFinishDelete(u, interactive); return; }   // 지난번에 계정 정보만 못 지웠음
     CLOUD.syncing = true; refreshCloudUi();
     const rev0 = cloudHint().rev;
     let snap;
@@ -5322,14 +5341,16 @@ async function cloudFirstSync(u) {
     }
     CLOUD.firstPending = null;
     if (!CLOUD.user || CLOUD.user.uid !== u.uid) { CLOUD.syncing = false; refreshCloudUi(); return; }
-    const h = cloudHint();
+    let h = cloudHint();
     const linkedBefore = h.lastUid === u.uid;                  // 이 기기가 이미 이 계정과 이어져 있었음(세션 되살리기·다시 로그인)
     const otherOwner = !!(h.lastUid && h.lastUid !== u.uid);   // 이 기기 기록이 다른 계정에서 쓰던 것
     const localHas = hasProgress(store);
     // 그사이 올리기가 끝났거나 진행 중이면(이미 이어진 계정) 그 올리기가 합치기를 맡는다
     if (linkedBefore && (CLOUD.pushing || h.rev !== rev0)) { CLOUD.syncing = false; refreshCloudUi(); return; }
+    if (linkedBefore) h = ownPending(snap.exists() ? snap.data().rev : '');   // 보내고 응답을 못 받은 올리기가 실제로 들어갔으면 내 것으로
     if (!snap.exists()) {
         CLOUD.syncing = false;
+        if (linkedBefore && h.rev) { refreshCloudUi(); onRemoteDeleted(); return; }   // 맞춘 적 있는데 문서가 없음 = 지워짐(되살리지 않는다)
         // 이 기기의 기록을 이 계정에 처음 올릴 때는 늘 묻는다(가족·공용 기기의 다른 사람 기록일 수 있음)
         if (localHas && !linkedBefore) { cloudChoose(u, null, otherOwner ? 'newAccount' : 'firstUpload'); return; }
         cloudHint({ lastUid: u.uid, rev: '', base: null });
@@ -5348,6 +5369,7 @@ async function cloudFirstSync(u) {
     const cloudHas = hasProgress(cloudStore);
     if (localHas && !linkedBefore) { cloudChoose(u, { d, cloudStore }, cloudHas ? (otherOwner ? 'otherOwner' : 'both') : (otherOwner ? 'newAccount' : 'firstUpload')); return; }
     let merged, lost = false;
+    const localWon = localHas && (store.gen || 0) > (cloudStore.gen || 0);   // 이 기기에서 바꾸기를 한 기록이 계정을 대신함
     if (!localHas && !linkedBefore) {
         // 빈 기기(또는 지우고 로그아웃한 기기)는 이 기기의 세대와 비교하지 않고 계정 기록을 그대로 받는다
         merged = normalizeStore(cloudStore);
@@ -5356,11 +5378,13 @@ async function cloudFirstSync(u) {
         const r = cloudMerge(cloudStore, store, h.base); merged = r.store; lost = r.lost;
     }
     if (lost) snapshotBeforeRestore();
-    applyCloudStore(merged, d.rev, xpBase(cloudStore));
+    // 빈 기기가 계정 기록을 받을 때는 이 기기의 다른 탭(지운 기록·높은 세대)이 다시 섞지 않게 통째로 바꾼다
+    applyCloudStore(merged, d.rev, xpBase(cloudStore), !localHas && !linkedBefore);
     cloudHint({ lastUid: u.uid });
     if (JSON.stringify(store) !== JSON.stringify(cloudStore)) scheduleCloudPush(300);
     else CLOUD.lastPushedRaw = JSON.stringify(store);
     if (lost) showToast(LOST_TOAST, '', 5200);
+    else if (localWon) showToast('☁️ 이 기기에서 바꾼 기록으로 계정 기록도 바꿨어요. 예전 계정 기록은 다른 기기의 ⚙️ 설정에서 7일 안에 되돌릴 수 있어요', '', 5200);
     else if (interactive) showToast(localHas ? '☁️ 로그인했어요! 이 기기와 계정의 기록을 합쳤어요' : '☁️ 계정 기록을 불러왔어요. 이어서 공부해요!', 'gold', 3600);
 }
 function cloudChoose(u, cloud, why) {
@@ -5389,8 +5413,14 @@ function cloudChoose(u, cloud, why) {
     sheet.querySelector('#ccMerge').addEventListener('click', () => {
         done();
         const cloudHas = !!cloud && hasProgress(cloud.cloudStore);
-        const merged = cloud ? mergeStores(cloud.cloudStore, store, true) : store;
-        applyCloudStore(merged, cloud ? cloud.d.rev : '', cloud ? xpBase(cloud.cloudStore) : null);
+        const cs = cloud && cloud.cloudStore;
+        let merged = cs ? mergeStores(cs, store, true) : store;
+        if (cs) {   // 합친 기록은 계정의 세대를 따른다(이 기기의 바꾸기·가져오기 세대가 계정과 다른 기기로 퍼지지 않게)
+            merged = Object.assign({}, merged, { gen: cs.gen || 0, genAt: cs.genAt || '' });
+            merged.byLang = Object.assign({}, merged.byLang);
+            Object.keys(merged.byLang).forEach(k => { const x = Object.assign({}, merged.byLang[k]), c = cs.byLang[k] || {}; ['gen', 'genAt'].forEach(f => { if (c[f]) x[f] = c[f]; else delete x[f]; }); merged.byLang[k] = x; });
+        }
+        applyCloudStore(merged, cloud ? cloud.d.rev : '', cs ? xpBase(cs) : null, !!cs);
         cloudHint({ lastUid: u.uid });
         if (!cloudHas) track('sign_up', { method: 'google' });
         CLOUD.lastPushedRaw = '';
@@ -5404,9 +5434,8 @@ function cloudChoose(u, cloud, why) {
         // 계정 기록을 그대로 받는다(계정의 세대는 올리지 않음 — 다른 기기 기록을 밀어내지 않게). 계정 기록이 없으면 이 기기만 새 세대로 시작
         if (!cloud) { next.gen = nextGen(store); next.genAt = todayStr(); }
         if (store.settings.stats === false) next.settings.stats = false;
-        applyCloudStore(next, cloud ? cloud.d.rev : '', cloud ? xpBase(cloud.cloudStore) : null);
+        applyCloudStore(next, cloud ? cloud.d.rev : '', cloud ? xpBase(cloud.cloudStore) : null, true);
         cloudHint({ lastUid: u.uid });
-        reloadOtherTabs();
         showToast(cloud ? '☁️ 계정 기록으로 바꿨어요' : '🆕 빈 기록으로 시작해요', 'gold', 3200);
         try { await cloudPush(true); } catch (e) { }
         location.reload();
@@ -5417,10 +5446,12 @@ function snapshotBeforeRestore() {
     try { const raw = localStorage.getItem(LS_KEY); if (raw) localStorage.setItem(LS_KEY + '_before_restore', JSON.stringify({ at: new Date().toISOString(), raw })); } catch (e) { }
 }
 // 클라우드에서 온 기록을 이 기기에 반영(저장 + 화면 갱신). rev = 그 기록의 버전, base = 그 기록의 xpBase
-function applyCloudStore(next, rev, base) {
+function applyCloudStore(next, rev, base, replace) {
     store = normalizeStore(next);
+    if (replace) { try { lastRaw = localStorage.getItem(LS_KEY); } catch (e) { } }   // save()가 다른 탭이 쓴 옛 기록과 합치지 않게
     CLOUD.applying = true;
     try { save(); } finally { CLOUD.applying = false; }
+    if (replace) reloadOtherTabs();
     if (rev !== undefined) cloudHint({ rev: rev || '', at: new Date().toISOString(), base: base || null });
     CLOUD.lastPull = Date.now();
     refreshAfterExternalChange();
@@ -5466,12 +5497,12 @@ async function cloudPush(force) {
     CLOUD.pushing = true; CLOUD.dirty = false; CLOUD.firstDirty = 0;
     const m = CLOUD.sync, uid = CLOUD.user.uid, ref = m.doc(CLOUD.db, 'users', uid);
     const newRev = randId();
-    let merged = null, lost = false, sent = '', sentBase = null, localBase = null;
+    let merged = null, lost = false, sent = '', sentBase = null, localBase = null, readRev = '';
     try {
         await m.runTransaction(CLOUD.db, async tx => {
             const snap = await tx.get(ref);
             merged = null; lost = false;
-            const h = cloudHint();
+            const h = ownPending(snap.exists() ? snap.data().rev : '');
             if (!snap.exists() && h.rev) throw new Error('deleted');   // 맞춘 적 있는데 문서가 없음 = 다른 기기에서 클라우드 기록을 지움(되살리지 않는다)
             // 마지막으로 맞춘 뒤 다른 기기가 올렸으면 먼저 합친다
             if (snap.exists() && snap.data().rev && snap.data().rev !== h.rev) {
@@ -5481,7 +5512,9 @@ async function cloudPush(force) {
             }
             const src = merged || store;
             sent = JSON.stringify(src); sentBase = xpBase(src);   // 실제로 보낸 내용(보내는 사이 저장해도 바뀌지 않게 문자열로)
+            readRev = h.rev;
             const body = await packJson(sent);
+            cloudHint({ pend: { rev: newRev, base: sentBase } });   // 응답이 끊겨도 이 rev는 내가 보낸 것
             tx.set(ref, { v: 1, enc: body.enc, data: body.data, rev: newRev, updatedAt: m.serverTimestamp(), app: APP_VERSION });
         });
         if (!CLOUD.user || CLOUD.user.uid !== uid) return;
@@ -5491,7 +5524,9 @@ async function cloudPush(force) {
             applyCloudStore(cloudMerge(merged, store, localBase).store);
             if (lost) showToast(LOST_TOAST, '', 5200);
         }
-        cloudHint({ rev: newRev, at: new Date().toISOString(), base: sentBase });
+        const hh = cloudHint();
+        if (!hh.rev || hh.rev === readRev || hh.rev === newRev) cloudHint({ rev: newRev, at: new Date().toISOString(), base: sentBase, pend: null });
+        else cloudHint({ pend: null });   // 그사이 이 기기의 다른 탭이 더 새 기록을 올렸음 — 그 rev를 덮지 않는다
         CLOUD.lastPushedRaw = sent;
         CLOUD.error = '';
         CLOUD.fails = 0;
@@ -5519,7 +5554,7 @@ async function cloudPull() {
         if (!cloudLinked() || CLOUD.user.uid !== uid) return;
         if (!snap.exists()) { if (cloudHint().rev) onRemoteDeleted(); else scheduleCloudPush(500); return; }
         const d = snap.data();
-        if (d.rev && d.rev === cloudHint().rev) return;   // 마지막으로 맞춘 뒤 바뀐 게 없음
+        if (d.rev && d.rev === ownPending(d.rev).rev) return;   // 마지막으로 맞춘 뒤 바뀐 게 없음(응답을 못 받은 내 올리기 포함)
         const cloudStore = await unpackStore(d);
         const h = cloudHint();
         if (!cloudLinked() || CLOUD.user.uid !== uid || CLOUD.pushing || h.rev !== rev0) return;   // 그사이 올리기가 시작·완료됨 — 그쪽이 합친다
@@ -5552,13 +5587,13 @@ function cloudDeleteAll() {
         '<button class="btn gray block" data-close-overlay style="margin-top:8px">취소</button>');
     sheet.querySelector('#delGo').addEventListener('click', () => { closeModal(true); cloudDeleteRun(); });
 }
-async function cloudDeleteRun() {
+async function cloudDeleteRun(opts) {
     const m = CLOUD.sync, user = CLOUD.user;
     if (!m || !user) return;
     const uid = user.uid;
     // 오래전에 로그인했으면 구글이 계정 삭제를 막으므로 먼저 다시 확인한다(팝업은 누른 순간 바로 열어야 막히지 않음)
     let reauth = null;
-    try {
+    if (!(opts && opts.skipReauth)) try {
         const em = cloudCfg().emulator;
         if (isObj(em) && typeof window.__emuGoogleIdToken === 'string' && m.reauthenticateWithCredential) reauth = m.reauthenticateWithCredential(user, m.GoogleAuthProvider.credential(window.__emuGoogleIdToken));   // 에뮬레이터 자동 테스트 전용
         else if (m.reauthenticateWithPopup) { const pv = new m.GoogleAuthProvider(); pv.setCustomParameters({ prompt: 'select_account' }); reauth = m.reauthenticateWithPopup(user, pv); }
@@ -5583,16 +5618,28 @@ async function cloudDeleteRun() {
     try { await m.deleteUser(CLOUD.user); gone = true; }
     catch (e) { try { await m.signOut(CLOUD.auth); } catch (e2) { } }
     CLOUD.deleting = false;
-    cloudHint({ uid: '', lastUid: '', rev: '', at: '', base: null });
+    cloudHint({ uid: '', lastUid: '', rev: '', at: '', base: null, pend: null, delPending: gone ? '' : uid });
     CLOUD.lastPushedRaw = ''; CLOUD.dirty = false; CLOUD.error = '';
-    showToast(gone ? '🗑️ 클라우드 기록과 계정 정보를 지우고 로그아웃했어요' : '🗑️ 클라우드 학습 기록은 지웠지만 계정 정보(이름·이메일)는 지우지 못했어요 — 다시 로그인한 뒤 한 번 더 눌러 주세요(지금은 로그아웃됐어요)', '', gone ? 3200 : 5600);
+    showToast(gone ? '🗑️ 클라우드 기록과 계정 정보를 지우고 로그아웃했어요' : '🗑️ 클라우드 학습 기록은 지웠지만 계정 정보(이름·이메일)는 지우지 못했어요 — 같은 구글 계정으로 다시 로그인하면 마저 지울 수 있어요(지금은 로그아웃됐어요)', '', gone ? 3200 : 5600);
     track('cloud_delete', { account: gone ? 1 : 0 });
     if (S.view === 'settings') renderSettings();
+}
+// 지난번 '클라우드 기록 지우기'에서 계정 정보만 못 지운 계정으로 다시 로그인함 — 기록을 올리기 전에 먼저 묻는다
+function cloudFinishDelete(u, fresh) {
+    CLOUD.choosing = true;
+    const sheet = openModal('<div class="sheet-head"><b>🗑️ 계정 정보 지우기 마치기</b></div>' +
+        '<div style="font-size:14px;line-height:1.7;margin-bottom:12px">지난번에 클라우드 학습 기록은 지웠지만 <b>로그인 정보</b>(이름·이메일)는 지우지 못했어요. 지금 마저 지울까요?<br><span class="muted">이 기기의 기록은 그대로 남아요.</span></div>' +
+        '<button class="btn block" id="fdGo" style="background:#dc2626">계정 정보 지우기</button>' +
+        '<button class="btn gray block" id="fdKeep" style="margin-top:8px">지우지 않고 이 계정 계속 쓰기</button>', () => { CLOUD.choosing = false; cloudLogout(false); });
+    sheet.querySelector('#fdGo').addEventListener('click', () => { CLOUD.choosing = false; closeModal(true); cloudDeleteRun({ skipReauth: fresh }); });
+    sheet.querySelector('#fdKeep').addEventListener('click', () => { CLOUD.choosing = false; closeModal(true); cloudHint({ delPending: '' }); cloudFirstSync(u); });
 }
 function cloudStatusText() {
     const h = cloudHint();
     if (CLOUD.syncing || CLOUD.pushing) return '☁️ 맞추는 중…';
     if (CLOUD.error) return '⚠️ ' + CLOUD.error;
+    if (CLOUD.user && !cloudLinked()) return '⚠️ 아직 계정과 맞추지 못했어요';
+    if (storageFailed) return '☁️ 계정에 저장해요 · 이 브라우저에는 저장되지 않아서 새로고침하면 다시 로그인해야 할 수 있어요';
     if (CLOUD.dirty) return '☁️ 곧 저장해요';
     if (h.at) { const mins = Math.round((Date.now() - Date.parse(h.at)) / 60000); return '☁️ 저장됨 · ' + (mins < 1 ? '방금' : mins < 60 ? mins + '분 전' : mins < 1440 ? Math.round(mins / 60) + '시간 전' : h.at.slice(0, 10)); }
     return '☁️ 저장됨';
@@ -5633,11 +5680,15 @@ function bindCloudCard(where) {
     const later = document.getElementById('cloudLater');
     if (later) later.addEventListener('click', () => { store.seen.cloudNudge = todayStr(); save(); const c = document.getElementById('cloudCard'); if (c) c.remove(); });
     const sn = document.getElementById('cloudSyncNow');
-    if (sn) sn.addEventListener('click', async () => { CLOUD.syncing = true; refreshCloudUi(); await cloudPull(); CLOUD.syncing = false; await cloudPush(true); showToast('☁️ 기록을 맞췄어요'); });
+    if (sn) sn.addEventListener('click', async () => {
+        if (!cloudLinked()) { if (CLOUD.user && !CLOUD.syncing && !CLOUD.choosing) { CLOUD.error = ''; cloudFirstSync(CLOUD.user); } return; }
+        CLOUD.error = ''; CLOUD.syncing = true; refreshCloudUi(); await cloudPull(); CLOUD.syncing = false; await cloudPush(true);
+        showToast(CLOUD.error ? '⚠️ ' + CLOUD.error : '☁️ 기록을 맞췄어요');
+    });
     const out = document.getElementById('cloudOut');
     if (out) out.addEventListener('click', () => {
         const sheet = openModal('<div class="sheet-head"><b>로그아웃</b><button class="sheet-close" data-close-overlay aria-label="닫기">✕</button></div>' +
-            '<div style="font-size:14px;line-height:1.7;margin-bottom:12px">' + (cloudLinked() && !CLOUD.dirty && !CLOUD.pushing && !CLOUD.error && JSON.stringify(store) === CLOUD.lastPushedRaw ? '기록은 구글 계정에 저장돼 있어요.' : '⚠️ 아직 계정에 올리지 못한 기록이 있을 수 있어요. 로그아웃하기 전에 한 번 더 저장해 볼게요.') + ' 이 기기의 기록은 어떻게 할까요?</div>' +
+            '<div style="font-size:14px;line-height:1.7;margin-bottom:12px">' + (!cloudLinked() ? (hasProgress(store) ? '⚠️ 이 기기의 기록은 아직 구글 계정에 저장되지 않았어요.' : '') : !CLOUD.dirty && !CLOUD.pushing && !CLOUD.error && JSON.stringify(store) === CLOUD.lastPushedRaw ? '기록은 구글 계정에 저장돼 있어요.' : '⚠️ 아직 계정에 올리지 못한 기록이 있을 수 있어요. 로그아웃하기 전에 한 번 더 저장해 볼게요.') + ' 이 기기의 기록은 어떻게 할까요?</div>' +
             '<button class="btn block" id="outKeep">이 기기에 남겨 두기</button>' +
             '<button class="btn gray block" id="outWipe" style="margin-top:8px">이 기기에서 지우기 (함께 쓰는 기기라면)</button>');
         sheet.querySelector('#outKeep').addEventListener('click', () => { closeModal(true); cloudLogout(false); });
