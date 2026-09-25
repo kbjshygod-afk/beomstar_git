@@ -358,6 +358,14 @@
         .fr-li-ko { font-size: 11.5px; color: var(--text-light); margin-top: 2px; }
         .fr-li-play { margin-left: auto; font-size: 16px; flex-shrink: 0; }
         /* ── Verb trainer (스페인어) ────────── */
+        .pair-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px; }
+        .pair-cell { display: flex; align-items: center; justify-content: space-between; gap: 6px; background: #f8fafc; border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; cursor: pointer; font-family: inherit; text-align: left; }
+        .pair-cell .pw { font-size: 15px; font-weight: 800; }
+        .pair-cell .pk { font-size: 11px; color: var(--text-light); }
+        .pair-cell .pv { font-size: 12px; color: var(--primary); }
+        .ear-chips { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0 4px; }
+        .ear-chip { border: 1.5px solid var(--border); background: white; border-radius: 999px; padding: 7px 12px; font-size: 12.5px; font-weight: 700; color: var(--text-light); cursor: pointer; font-family: inherit; }
+        .ear-chip.on { border-color: var(--primary); background: var(--primary); color: white; }
         .conj-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
         .conj-cell { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 12px; }
         .conj-cell .c-name { font-size: 13.5px; font-weight: 800; margin-bottom: 2px; color: var(--primary); }
@@ -911,6 +919,8 @@ function tuneFor(speaker) {
     const two = !!(a && b);
     if (speaker === 'B') return { voice: b || a, pitch: two ? 0.98 : 0.86, rate: 0.98 };
     if (speaker === 'C') return { voice: a, pitch: 1.18, rate: 1 };
+    if (speaker === 'D') return { voice: b || a, pitch: 1.14, rate: 1 };
+    if (speaker === 'E') return { voice: a, pitch: 0.9, rate: 0.98 };
     if (speaker === 'N') return { voice: a, pitch: 1, rate: 0.96 };
     return { voice: a, pitch: two ? 1 : 1.06, rate: 1 };
 }
@@ -1409,11 +1419,17 @@ function importDeq(info) {
         dl.xp += Number(e.xp) || 0;
         if (e.reviews) dl.reviews = (dl.reviews || 0) + (Number(e.reviews) || 0);
     });
-    if (isDate(d.lastBossDate) && (d.lastBossDate === todayStr() || d.lastBossDate === todayStr(-1)) && info.streak > (p.streak.count || 0)) p.streak = { last: d.lastBossDate, count: info.streak };
+    // 연속 학습은 전 언어 통합 기록에 합친다(DEQ 연속이 더 길고 아직 살아 있으면 이어받기)
+    const gs = store.streak;
+    gs.best = Math.max(gs.best || 0, info.streak);
+    if (isDate(d.lastBossDate) && (d.lastBossDate === todayStr() || d.lastBossDate === todayStr(-1)) && info.streak > curStreak()) {
+        gs.last = d.lastBossDate; gs.count = info.streak;
+    }
     const firstQuest = ALL.find(l => l.day === 1);
     if (firstQuest && !p.placedAt) p.placedAt = firstQuest.id;
     store.seen.deqImported = todayStr();
     save();
+    checkBadges(true);
     return { lessons, cards };
 }
 function afterActivate(code) {
@@ -1826,7 +1842,7 @@ function renderStep() {
         if (d.situation) h += '<div class="dlg-situation">🎬 ' + esc(d.situation) + '</div>';
         h += '<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">' +
             '<button class="btn small ghost" id="playAll">🔊 전체 대화 듣기</button>' +
-            (hasMe ? '<button class="btn small ghost" id="rolePlay">🎭 역할극 (내가 ' + esc((turns.find(t => t.speaker === 'A') || {}).name || 'A') + ')</button>' : '') +
+            (hasMe ? '<button class="btn small ghost" id="rolePlay">🎭 역할극' + (function () { const nm = (turns.find(t => t.speaker === 'A') || {}).name; return nm && nm !== '나' ? ' (내가 ' + esc(nm) + ')' : ' (내 대사 말하기)'; })() + '</button>' : '') +
             '<button class="btn small gray" id="blindBtn" aria-pressed="false">🙈 가리고 듣기</button>' +
             '<button class="btn small gray" id="stopAll">⏹ 정지</button></div><div class="dlg-wrap" id="dlgWrap">';
         turns.forEach((t, i) => {
@@ -1839,7 +1855,7 @@ function renderStep() {
             }
             const me = t.speaker === 'A';
             h += '<div class="bubble-row ' + (me ? 'right' : 'left') + '">' +
-                '<div class="bubble-ava">' + (me ? '🇰🇷' : (t.speaker === 'C' ? '🧑' : CUR.flag)) + '</div>' +
+                '<div class="bubble-ava">' + (me ? '🇰🇷' : ({ C: '🧑', D: '👩', E: '👮' }[t.speaker] || CUR.flag)) + '</div>' +
                 '<div class="bubble" data-turn="' + i + '" role="button" tabindex="0">' +
                 '<div class="b-name">' + esc(t.name || t.speaker) + '</div>' +
                 '<div class="native">' + esc(nativeText(t)) + '</div>' +
@@ -2513,6 +2529,7 @@ function renderTrainer() {
     if (CUR.code === 'zh') renderToneTrainer();
     else if (CUR.code === 'es') renderVerbTrainer();
     else if (CUR.code === 'ja') renderKanaTrainer();
+    else if (CUR.code === 'en') renderEarTrainer();
     else renderSoundTrainer();
 }
 
@@ -2574,22 +2591,27 @@ function renderVerbTrainer() {
         h += '<div class="conj-grid">' + VERB_BANK.slice(0, 4).map(v =>
             '<div class="conj-cell"><div class="c-name">' + esc(v.inf) + '</div><div class="c-desc">' + esc(v.ko) + ' · ' + esc(v.reg) + '</div>' +
             v.forms.map((f, i) => '<div class="conj-row"><span class="cp">' + esc(PRONOUNS[i]) + '</span><span class="cf">' + esc(f) + '</span></div>').join('') + '</div>').join('') + '</div>';
+        const vs = S.verbScope || 'reg';
         h += '<div class="card"><b style="font-size:14px">🎯 동사 변화 맞히기 게임</b>' +
-            '<div class="muted" style="margin:6px 0 12px">주어에 맞는 동사 형태를 고르세요. 10문제 도전!</div>' +
-            '<button class="btn block" id="trainerStart">훈련 시작하기</button></div>';
+            '<div class="muted" style="margin:6px 0 4px">주어에 맞는 동사 형태를 고르세요. 10문제 도전! 처음엔 규칙 동사부터.</div>' +
+            '<div class="ear-chips">' + [['reg', '규칙 동사만'], ['all', '불규칙 포함'], ['vos', '+ vosotros(스페인식)']].map(([id, t]) => '<button class="ear-chip' + (vs === id ? ' on' : '') + '" data-vscope="' + id + '" aria-pressed="' + (vs === id) + '">' + t + '</button>').join('') + '</div>' +
+            '<button class="btn block" id="trainerStart" style="margin-top:8px">훈련 시작하기</button></div>';
         h += '<div class="card"><b style="font-size:14px">🔊 발음 비교 듣기</b>' +
             '<div class="muted" style="margin:6px 0 10px">스페인어 특유의 소리를 연달아 들어 보세요.</div>' +
             SOUND_SETS.map((set, si) => '<button class="btn small ghost" data-set="' + si + '" style="margin:0 6px 8px 0">' + esc(set.label) + '</button>').join('') + '</div>';
         $main.innerHTML = h;
-        document.getElementById('trainerStart').addEventListener('click', () => { S.trainer = { i: 0, score: 0, cur: null, answered: false }; renderTrainer(); });
+        document.getElementById('trainerStart').addEventListener('click', () => { S.trainer = { i: 0, score: 0, cur: null, answered: false, scope: S.verbScope || 'reg' }; renderTrainer(); });
+        $main.querySelectorAll('[data-vscope]').forEach(b => b.addEventListener('click', () => { S.verbScope = b.dataset.vscope; renderTrainer(); }));
         $main.querySelectorAll('[data-set]').forEach(b => b.addEventListener('click', () => speakSeq(SOUND_SETS[parseInt(b.dataset.set, 10)].words)));
         return;
     }
     const t = S.trainer, TOTAL = 10;
     if (t.i >= TOTAL) { renderTrainerResult(t, TOTAL, t.score >= 8 ? '동사 마스터가 눈앞이에요! ¡Genial!' : t.score >= 5 ? '좋아요! 꾸준히 하면 입에 붙어요.' : '괜찮아요, 동사 변화는 원래 어려워요. 내일 또 도전!'); return; }
     if (!t.cur) {
-        const verb = VERB_BANK[Math.floor(Math.random() * VERB_BANK.length)];
-        const pi = Math.floor(Math.random() * 6);
+        const bank = t.scope === 'reg' ? VERB_BANK.filter(v => v.reg.includes('규칙') && !v.reg.includes('불규칙')) : VERB_BANK;
+        const verb = bank[Math.floor(Math.random() * bank.length)];
+        const persons = t.scope === 'vos' ? [0, 1, 2, 3, 4, 5] : [0, 1, 2, 3, 5];
+        const pi = persons[Math.floor(Math.random() * persons.length)];
         const others = verb.forms.filter((_, i) => i !== pi);
         const distract = [];
         while (distract.length < 3) { const c = others[Math.floor(Math.random() * others.length)]; if (!distract.includes(c)) distract.push(c); }
@@ -2649,8 +2671,11 @@ const KANA_CONFUSE_SETS = [
     { label: 'シ・ツ・ソ・ン (가타카나)', chars: ['シ', 'ツ', 'ソ', 'ン'] },
     { label: 'き・さ 비슷한 모양', chars: ['き', 'さ'] },
 ];
-function kanaPool() {
-    return [...KANA_SEION, ...KANA_DAKUON].flatMap(row => row.cells.filter(Boolean));
+const ROMAJI_KO = { a: '아', i: '이', u: '우', e: '에', o: '오', ka: '카', ki: '키', ku: '쿠', ke: '케', ko: '코', sa: '사', shi: '시', su: '스', se: '세', so: '소', ta: '타', chi: '치', tsu: '츠', te: '테', to: '토', na: '나', ni: '니', nu: '누', ne: '네', no: '노', ha: '하', hi: '히', fu: '후', he: '헤', ho: '호', ma: '마', mi: '미', mu: '무', me: '메', mo: '모', ya: '야', yu: '유', yo: '요', ra: '라', ri: '리', ru: '루', re: '레', ro: '로', wa: '와', wo: '오', n: '응', ga: '가', gi: '기', gu: '구', ge: '게', go: '고', za: '자', ji: '지', zu: '즈', ze: '제', zo: '조', da: '다', de: '데', do: '도', ba: '바', bi: '비', bu: '부', be: '베', bo: '보', pa: '파', pi: '피', pu: '푸', pe: '페', po: '포' };
+const KANA_SCOPES = [['h', '히라가나'], ['k', '가타카나'], ['all', '탁음까지 전체']];
+function kanaPool(scope) {
+    const rows = scope === 'all' ? [...KANA_SEION, ...KANA_DAKUON] : KANA_SEION;
+    return rows.flatMap(row => row.cells.filter(Boolean));
 }
 function renderKanaTrainer() {
     if (!S.trainer) {
@@ -2660,15 +2685,18 @@ function renderKanaTrainer() {
             '<div class="kana-table" style="margin-top:10px">' + kanaTableHtml(KANA_SEION) + '</div></div>';
         h += '<div class="card"><b style="font-size:14px">📖 탁음 · 반탁음</b>' +
             '<div class="kana-table" style="margin-top:10px">' + kanaTableHtml(KANA_DAKUON) + '</div></div>';
+        const ks = S.kanaScope || 'h';
         h += '<div class="card"><b style="font-size:14px">🎯 읽기 맞히기 게임</b>' +
-            '<div class="muted" style="margin:6px 0 12px">글자를 보고 알맞은 로마자 발음을 고르세요. 10문제 도전!</div>' +
-            '<button class="btn block" id="trainerStart">훈련 시작하기</button></div>';
+            '<div class="muted" style="margin:6px 0 4px">글자를 보고 알맞은 발음을 고르세요. 10문제 도전! 처음엔 히라가나부터 차근차근.</div>' +
+            '<div class="ear-chips">' + KANA_SCOPES.map(([id, t]) => '<button class="ear-chip' + (ks === id ? ' on' : '') + '" data-kscope="' + id + '" aria-pressed="' + (ks === id) + '">' + t + '</button>').join('') + '</div>' +
+            '<button class="btn block" id="trainerStart" style="margin-top:8px">훈련 시작하기</button></div>';
         h += '<div class="card"><b style="font-size:14px">🔊 헷갈리는 글자 비교 듣기</b>' +
             '<div class="muted" style="margin:6px 0 10px">모양이 비슷한 글자들을 연달아 들어 보세요.</div>' +
             KANA_CONFUSE_SETS.map((set, si) =>
                 '<button class="btn small ghost" data-set="' + si + '" style="margin:0 6px 8px 0">' + esc(set.label) + '</button>').join('') + '</div>';
         $main.innerHTML = h;
-        document.getElementById('trainerStart').addEventListener('click', () => { S.trainer = { i: 0, score: 0, cur: null, answered: false }; renderTrainer(); });
+        document.getElementById('trainerStart').addEventListener('click', () => { S.trainer = { i: 0, score: 0, cur: null, answered: false, scope: S.kanaScope || 'h' }; renderTrainer(); });
+        $main.querySelectorAll('[data-kscope]').forEach(b => b.addEventListener('click', () => { S.kanaScope = b.dataset.kscope; renderTrainer(); }));
         $main.querySelectorAll('.kana-cell[data-k]').forEach(el => el.addEventListener('click', () => speak(el.dataset.k, 0.85)));
         $main.querySelectorAll('[data-set]').forEach(b => b.addEventListener('click', () => speakSeq(KANA_CONFUSE_SETS[parseInt(b.dataset.set, 10)].chars)));
         return;
@@ -2676,7 +2704,7 @@ function renderKanaTrainer() {
     const t = S.trainer, TOTAL = 10;
     if (t.i >= TOTAL) { renderTrainerResult(t, TOTAL, t.score >= 8 ? '가나 마스터가 눈앞이에요! 한자 없이도 다 읽을 수 있어요.' : t.score >= 5 ? '좋아요! 반복할수록 눈에 익어요.' : '괜찮아요, 히라가나는 원래 처음엔 헷갈려요. 내일 또 도전!'); return; }
     if (!t.cur) {
-        const pool = kanaPool();
+        const pool = kanaPool(t.scope);
         const answer = pool[Math.floor(Math.random() * pool.length)];
         const others = pool.filter(c => c.r !== answer.r);
         const distract = [];
@@ -2685,14 +2713,14 @@ function renderKanaTrainer() {
             if (!distract.find(d => d.r === c.r)) distract.push(c);
         }
         const choices = distract.concat([answer]).sort(() => Math.random() - 0.5);
-        t.cur = { answer, script: Math.random() < 0.5 ? 'h' : 'k', choices };
+        t.cur = { answer, script: t.scope === 'k' ? 'k' : t.scope === 'all' ? (Math.random() < 0.5 ? 'h' : 'k') : 'h', choices };
     }
     const cur = t.cur;
     const glyph = cur.script === 'h' ? cur.answer.h : cur.answer.k;
     let hh = trainerProg(t, TOTAL) + '<div class="quiz-q">이 글자의 발음은?</div>' +
         '<div class="verb-q"><div class="vq-pron" style="font-size:44px">' + esc(glyph) + '</div></div>' +
         '<div class="quiz-audio"><button class="btn small" id="tPlay">🔊 듣기</button></div>' +
-        '<div class="verb-choice">' + cur.choices.map((c, i) => '<button class="choice-btn" data-a="' + i + '">' + esc(c.r) + '</button>').join('') + '</div>' +
+        '<div class="verb-choice">' + cur.choices.map((c, i) => '<button class="choice-btn" data-a="' + i + '">' + esc(ROMAJI_KO[c.r] || c.r) + ' <span class="muted">(' + esc(c.r) + ')</span></button>').join('') + '</div>' +
         '<div id="tFeedback"></div>';
     $main.innerHTML = hh;
     document.getElementById('tPlay').addEventListener('click', () => speak(glyph, 0.85));
@@ -2841,6 +2869,93 @@ function renderSoundTrainer() {
             '💡 ' + esc(cur.word.why) + '</div>' +
             '<button class="btn block" id="tNext">' + (t.i + 1 >= TOTAL ? '결과 보기' : '다음 문제 →') + '</button>';
         speak(cur.word.fr, 0.85);
+        document.getElementById('tNext').addEventListener('click', () => { t.i++; t.cur = null; t.answered = false; renderTrainer(); });
+    }));
+}
+
+/* ═══════════════════ 소리 훈련소 (영어 전용) ═══════════════════ */
+// 한국인이 헷갈리는 최소대립쌍: 한 소리 차이로 뜻이 바뀌는 단어 짝
+const EAR_SETS = [
+    { id: 'rl', label: 'R / L', tip: 'R은 혀를 입천장에 닿지 않게 뒤로 말고, L은 혀끝을 윗니 뒤에 딱 붙여요.', pairs: [['right', '오른쪽', 'light', '빛'], ['rice', '쌀, 밥', 'lice', '이(벌레)'], ['road', '도로', 'load', '짐'], ['pray', '기도하다', 'play', '놀다'], ['grass', '풀', 'glass', '유리잔'], ['rock', '바위', 'lock', '자물쇠'], ['fry', '튀기다', 'fly', '날다'], ['correct', '맞는', 'collect', '모으다']] },
+    { id: 'fp', label: 'F / P', tip: 'F는 윗니로 아랫입술을 살짝 물고 바람을 내보내요. P는 두 입술을 붙였다 터뜨려요.', pairs: [['fan', '선풍기', 'pan', '팬(냄비)'], ['fine', '좋은', 'pine', '소나무'], ['coffee', '커피', 'copy', '복사'], ['fork', '포크', 'pork', '돼지고기'], ['fast', '빠른', 'past', '과거'], ['full', '배부른', 'pull', '당기다'], ['wife', '아내', 'wipe', '닦다']] },
+    { id: 'vb', label: 'V / B', tip: 'V는 F처럼 아랫입술을 물고 목을 울려요. B는 두 입술을 붙였다 떼요.', pairs: [['very', '매우', 'berry', '딸기류 열매'], ['vest', '조끼', 'best', '최고'], ['van', '승합차', 'ban', '금지'], ['vote', '투표하다', 'boat', '배'], ['curve', '곡선', 'curb', '연석'], ['vet', '수의사', 'bet', '내기하다']] },
+    { id: 'th', label: 'TH / S', tip: 'TH는 혀끝을 윗니와 아랫니 사이로 살짝 내밀어요. S는 혀를 이 뒤에 숨겨요.', pairs: [['think', '생각하다', 'sink', '싱크대'], ['thank', '고마워하다', 'sank', '가라앉았다'], ['mouth', '입', 'mouse', '쥐'], ['thick', '두꺼운', 'sick', '아픈'], ['path', '오솔길', 'pass', '지나가다'], ['thing', '것', 'sing', '노래하다']] },
+    { id: 'ii', label: '짧은 i / 긴 ee', tip: '짧은 i는 힘을 빼고 "이"와 "에" 사이로 짧게, 긴 ee는 입을 옆으로 당겨 "이~" 하고 길게.', pairs: [['ship', '배', 'sheep', '양'], ['live', '살다', 'leave', '떠나다'], ['sit', '앉다', 'seat', '좌석'], ['hit', '치다', 'heat', '열기'], ['fill', '채우다', 'feel', '느끼다'], ['chip', '감자칩', 'cheap', '싼']] },
+    { id: 'ae', label: '애 / 에', tip: 'a(æ)는 입을 크게 벌려 "애", e는 입을 덜 벌려 "에".', pairs: [['bad', '나쁜', 'bed', '침대'], ['man', '남자', 'men', '남자들'], ['pan', '냄비', 'pen', '펜'], ['sad', '슬픈', 'said', '말했다'], ['bag', '가방', 'beg', '빌다'], ['had', '가졌다', 'head', '머리']] },
+    { id: 'uu', label: '짧은 u / 긴 oo', tip: '짧은 u(full)는 입술 힘을 빼고 짧게, 긴 oo(fool)는 입술을 내밀고 "우~" 길게.', pairs: [['full', '가득 찬', 'fool', '바보'], ['pull', '당기다', 'pool', '수영장'], ['look', '보다', 'Luke', '루크(이름)'], ['foot', '발', 'food', '음식']] },
+];
+// 연음·축약: 글자대로가 아니라 이렇게 들려요
+const EAR_LINKS = [
+    { en: 'Check it out.', pron: '체키라웃', ko: '한번 봐 봐.' },
+    { en: 'What do you want to do?', pron: '왓 두 유 워너 두', ko: '뭐 하고 싶어?' },
+    { en: "I'm going to eat.", pron: '아임 거너 잇', ko: '먹을 거예요.' },
+    { en: 'Nice to meet you.', pron: '나이스 투 미츄', ko: '만나서 반가워요.' },
+    { en: 'Did you eat?', pron: '디쥬 잇', ko: '밥 먹었어요?' },
+    { en: 'Give me a minute.', pron: '기미 어 미닛', ko: '잠깐만요.' },
+    { en: 'Got it.', pron: '가릿', ko: '알겠어요.' },
+    { en: 'Let me see.', pron: '레미 씨', ko: '어디 보자.' },
+    { en: 'Can I get a water?', pron: '캐나이 게러 워러', ko: '물 한 잔 주시겠어요?' },
+    { en: 'Not at all.', pron: '나래롤', ko: '천만에요.' },
+];
+function earPool(scope) { return EAR_SETS.filter(x => !scope || scope === 'all' || x.id === scope).flatMap(x => x.pairs.map(p => ({ set: x, p }))); }
+function renderEarTrainer() {
+    if (!S.trainer) {
+        const scope = S.earScope || 'all';
+        let h = '<div class="section-title" style="margin-top:0">👂 소리 훈련소</div>' +
+            '<div class="muted" style="margin-bottom:12px">영어 듣기가 안 되는 가장 큰 이유는 <b>한국어에 없는 소리</b> 때문이에요. right/light, think/sink처럼 소리 하나로 뜻이 바뀌는 단어 짝으로 귀를 뚫어 봐요. 단어를 누르면 들을 수 있어요.</div>';
+        h += '<div class="card"><b style="font-size:14px">🎯 듣고 고르기 게임</b>' +
+            '<div class="muted" style="margin:6px 0 4px">두 단어 중 어떤 소리가 나왔는지 맞혀 보세요. 10문제 도전!</div>' +
+            '<div class="ear-chips">' + [['all', '전체']].concat(EAR_SETS.map(x => [x.id, x.label])).map(([id, t]) => '<button class="ear-chip' + (scope === id ? ' on' : '') + '" data-scope="' + id + '" aria-pressed="' + (scope === id) + '">' + esc(t) + '</button>').join('') + '</div>' +
+            '<button class="btn block" id="trainerStart" style="margin-top:8px">훈련 시작하기</button></div>';
+        EAR_SETS.forEach(x => {
+            h += '<div class="card"><b style="font-size:14px">' + esc(x.label) + '</b><div class="muted" style="margin-top:4px">💡 ' + esc(x.tip) + '</div>' +
+                '<div class="pair-grid">' + x.pairs.map(p => [[p[0], p[1]], [p[2], p[3]]].map(([w, k]) =>
+                    '<button class="pair-cell" data-word="' + esc(w) + '"><span><span class="pw">' + esc(w) + '</span> <span class="pk">' + esc(k) + '</span></span><span class="pv">🔊</span></button>').join('')).join('') + '</div></div>';
+        });
+        h += '<div class="card"><b style="font-size:14px">🔗 연음 · 축약 듣기</b>' +
+            '<div class="muted" style="margin:6px 0 10px">원어민은 단어를 이어 붙여 말해요. 글자대로가 아니라 이렇게 들린다는 걸 알면 귀가 확 트여요.</div>' +
+            EAR_LINKS.map((l, i) => '<div class="fr-liaison" data-link="' + i + '" role="button" tabindex="0">' +
+                '<div><span class="native">' + esc(l.en) + '</span> <span class="fr-li-pron">[' + esc(l.pron) + ']</span>' +
+                '<div class="fr-li-ko">' + esc(l.ko) + '</div></div><span class="fr-li-play">🔊</span></div>').join('') + '</div>';
+        $main.innerHTML = h;
+        document.getElementById('trainerStart').addEventListener('click', () => { S.trainer = { i: 0, score: 0, cur: null, answered: false, scope }; renderTrainer(); });
+        $main.querySelectorAll('[data-scope]').forEach(b => b.addEventListener('click', () => { S.earScope = b.dataset.scope; renderTrainer(); }));
+        $main.querySelectorAll('[data-word]').forEach(b => b.addEventListener('click', () => speak(b.dataset.word, 0.85)));
+        $main.querySelectorAll('[data-link]').forEach(el => el.addEventListener('click', () => speak(EAR_LINKS[parseInt(el.dataset.link, 10)].en, 0.9)));
+        return;
+    }
+    const t = S.trainer, TOTAL = 10;
+    if (t.i >= TOTAL) { renderTrainerResult(t, TOTAL, t.score >= 8 ? '귀가 뚫렸어요! 원어민 소리가 들리기 시작해요.' : t.score >= 5 ? '좋아요! 헷갈린 짝은 표에서 여러 번 들어 보세요.' : '괜찮아요, 한국어에 없는 소리라 원래 어려워요. 매일 조금씩!'); return; }
+    if (!t.cur) {
+        const pool = earPool(t.scope);
+        const pick = pool[Math.floor(Math.random() * pool.length)];
+        const which = Math.random() < 0.5 ? 0 : 1;
+        const choices = [{ w: pick.p[0], k: pick.p[1] }, { w: pick.p[2], k: pick.p[3] }];
+        t.cur = { set: pick.set, choices, answer: which, word: choices[which].w };
+    }
+    const cur = t.cur;
+    let h = trainerProg(t, TOTAL) + '<div class="quiz-q">🎧 어떤 단어가 들리나요? <span class="muted">(' + esc(cur.set.label) + ')</span></div>' +
+        '<div class="quiz-audio"><button class="big-listen" id="tPlay" aria-label="듣기">🔊</button><button class="big-listen slow" id="tPlaySlow" aria-label="느리게 듣기">🐢</button></div>' +
+        '<div class="verb-choice">' + cur.choices.map((c, i) => '<button class="choice-btn" data-a="' + i + '"><span class="native" style="font-size:19px">' + esc(c.w) + '</span><div class="muted">' + esc(c.k) + '</div></button>').join('') + '</div>' +
+        '<div id="tFeedback"></div>';
+    $main.innerHTML = h;
+    document.getElementById('tPlay').addEventListener('click', () => speak(cur.word, 0.85));
+    document.getElementById('tPlaySlow').addEventListener('click', () => speak(cur.word, 0.55));
+    if (t.autoFor !== t.i) { t.autoFor = t.i; setTimeout(() => { if (S.trainer === t && !t.answered) speak(cur.word, 0.85); }, 350); }
+    $main.querySelectorAll('[data-a]').forEach(b => b.addEventListener('click', () => {
+        if (t.answered) return;
+        t.answered = true;
+        const sel = parseInt(b.dataset.a, 10), ok = sel === cur.answer;
+        if (ok) t.score++;
+        sfx(ok ? 'ok' : 'bad');
+        $main.querySelectorAll('[data-a]').forEach((bb, bi) => { bb.disabled = true; if (bi === cur.answer) bb.classList.add('correct'); else if (bi === sel && !ok) bb.classList.add('wrong'); });
+        document.getElementById('tFeedback').innerHTML =
+            '<div class="explain-box ' + (ok ? 'good' : 'bad') + '"><div class="eb-head">' + (ok ? '⭕ 정답! ' + cheer(true) : '❌ ' + cheer(false)) + '</div>' +
+            '<div class="eb-answer">들린 단어: <span class="native">' + esc(cur.word) + '</span> (' + esc(cur.choices[cur.answer].k) + ')</div>💡 ' + esc(cur.set.tip) + '</div>' +
+            '<button class="btn small ghost" id="tCompare" style="margin-bottom:8px">🔁 두 단어 비교 듣기</button>' +
+            '<button class="btn block" id="tNext">' + (t.i + 1 >= TOTAL ? '결과 보기' : '다음 문제 →') + '</button>';
+        document.getElementById('tCompare').addEventListener('click', () => speakSeq(cur.choices.map(c => c.w)));
+        setTimeout(() => speakSeq(cur.choices.map(c => c.w)), 250);
         document.getElementById('tNext').addEventListener('click', () => { t.i++; t.cur = null; t.answered = false; renderTrainer(); });
     }));
 }
