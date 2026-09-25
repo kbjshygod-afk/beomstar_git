@@ -3124,7 +3124,7 @@ function renderReview() {
     const fs = document.getElementById('fcSpeak');
     if (fs) fs.addEventListener('click', () => openSpeak({
         item, mode: 'boss', title: '🎤 뜻 보고 말하기',
-        onPass: (score, info) => { r.spoken = !(info && (info.help || info.self)); },   // 정답을 보거나 듣고 말한 경우는 스스로 채점
+        onPass: (score, info) => { r.spoken = !(r.hint || (info && (info.help || info.self))); },   // 힌트·정답을 보거나 듣고 말한 경우는 스스로 채점
         onClose: () => { if (S.review !== r) return; if (r.spoken) { r.spoken = false; grade('ok'); } else { r.flipped = true; renderReview(); } },
     }));
     if (!rev && !r.flipped && r.autoFor !== r.i) { r.autoFor = r.i; setTimeout(() => { if (S.review === r && r.i === r.autoFor && !r.flipped) speak(c.native, 0.95); }, 300); }
