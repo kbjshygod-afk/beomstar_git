@@ -3,7 +3,7 @@ ADA-USD,2026-09-24,0.248,후보 아님 (트렌드 템플릿 3/8),3,False,True,Fa
 AVAX-USD,2026-09-24,10.1884,후보 아님 (트렌드 템플릿 3/8),3,False,True,False,False,False,True,True,False,False,True,50.0,-4.63,11.7733,15.56,-13.46,1.49,7.5935,7.5935,7.5834,8.0242,-67.51,False,,,,False,False,9.1696
 BCH-USD,2026-09-24,337.8703,후보 아님 (트렌드 템플릿 3/8),3,False,True,False,False,False,True,True,False,False,True,45.83,-5.86,363.7539,7.66,-7.12,2.18,243.7132,243.7132,268.2099,314.6538,-48.4,False,,,,False,False,304.0833
 BNB-USD,2026-09-24,776.4987,후보 아님 (트렌드 템플릿 6/8),6,False,True,True,True,True,True,True,False,False,True,54.17,-1.26,806.5251,3.87,-3.72,1.02,690.8722,690.8722,633.8564,632.2183,-40.73,False,,,,False,False,698.8488
-BTC-USD,2026-09-24,84379.0625,후보 아님 (트렌드 템플릿 5/8),5,False,True,False,True,True,True,True,False,False,True,58.33,-0.0,87363.7578,3.54,-3.42,1.26,74927.5048,74927.5048,70535.4383,70850.9013,-32.36,False,,,,False,False,75941.1562
+BTC-USD,2026-09-24,84379.0625,후보 아님 (트렌드 템플릿 5/8),5,False,True,False,True,True,True,True,False,False,True,58.33,0.0,87363.7578,3.54,-3.42,1.26,74927.5048,74927.5048,70535.4383,70850.9013,-32.36,False,,,,False,False,75941.1562
 CRO-USD,2026-09-24,0.0628,후보 아님 (트렌드 템플릿 2/8),2,False,False,False,False,False,True,True,False,False,True,4.17,-31.81,0.069,9.85,-8.97,1.52,0.0555,0.0555,0.0598,0.0629,-71.2,False,,,,False,False,0.0565
 DOGE-USD,2026-09-24,0.0957,후보 아님 (트렌드 템플릿 3/8),3,False,True,False,False,False,True,True,False,False,True,8.33,-20.36,0.1053,9.95,-9.05,1.45,0.0825,0.0825,0.0857,0.0878,-64.05,False,,,,False,False,0.0862
 ETH-USD,2026-09-24,2687.3015,후보 아님 (트렌드 템플릿 5/8),5,False,True,False,True,True,True,True,False,False,True,66.67,10.34,2805.499,4.4,-4.21,1.0,2341.1358,2341.1358,2058.3979,2090.8537,-42.67,False,,,,False,False,2418.5714
