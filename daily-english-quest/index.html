@@ -2,39 +2,93 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<meta name="theme-color" content="#0a3161" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#0f172a" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <title>Daily English Quest → 헬로 영어</title>
 <style>
   :root { --navy: #0a3161; --red: #b31942; --bg: #f8fafc; --text: #1e293b; --muted: #64748b; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Segoe UI', 'Malgun Gothic', system-ui, sans-serif; background: linear-gradient(135deg, #061d3a, var(--navy) 55%, var(--red) 140%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 16px; color: var(--text); }
-  .card { background: var(--bg); border-radius: 22px; max-width: 440px; width: 100%; padding: 28px 22px; text-align: center; box-shadow: 0 24px 60px rgba(0,0,0,.25); }
-  .ico { font-size: 52px; }
-  h1 { font-size: 20px; margin: 10px 0 8px; }
+  body { font-family: 'Segoe UI', 'Malgun Gothic', system-ui, sans-serif; background: linear-gradient(135deg, #061d3a, var(--navy) 55%, var(--red) 140%); min-height: 100vh; min-height: 100dvh; display: flex; align-items: center; justify-content: center; padding: 16px; color: var(--text); }
+  .card { background: var(--bg); border-radius: 22px; max-width: 440px; width: 100%; padding: 26px 20px; text-align: center; box-shadow: 0 24px 60px rgba(0,0,0,.25); }
+  .ico { font-size: 50px; }
+  h1 { font-size: 19px; margin: 10px 0 8px; line-height: 1.4; }
   p { font-size: 14px; line-height: 1.7; color: var(--muted); }
-  ul { text-align: left; font-size: 13.5px; line-height: 1.8; margin: 14px 0 18px 18px; color: var(--text); }
-  a.btn { display: block; background: var(--navy); color: white; text-decoration: none; font-weight: 800; font-size: 16px; border-radius: 14px; padding: 14px; }
-  .small { font-size: 12px; margin-top: 12px; }
+  ul { text-align: left; font-size: 13.5px; line-height: 1.8; margin: 12px 0 16px 18px; }
+  .rec { background: #fff7e6; border: 1px solid #f2d98c; border-radius: 12px; padding: 10px 12px; font-size: 13.5px; font-weight: 700; margin: 0 0 14px; color: #7a5b00; }
+  a.btn, button.btn { display: block; width: 100%; border: none; background: var(--navy); color: white; text-decoration: none; font-weight: 800; font-size: 16px; border-radius: 14px; padding: 14px; cursor: pointer; font-family: inherit; }
+  button.ghost { background: white; color: var(--navy); border: 1.5px solid var(--navy); margin-top: 8px; font-size: 14px; padding: 11px; }
+  .small { font-size: 12px; margin-top: 10px; }
+  .note { background: #eef6ff; border: 1px solid #cfe3fa; border-radius: 12px; padding: 10px 12px; font-size: 12.5px; text-align: left; margin-bottom: 12px; color: var(--text); }
+  textarea { width: 100%; height: 70px; font-size: 11px; margin-top: 8px; border-radius: 10px; border: 1px solid #cbd5e1; padding: 6px; font-family: monospace; }
 </style>
 </head>
 <body>
 <main class="card">
   <div class="ico">🗽</div>
-  <h1>Daily English Quest가 <br>랭귀지 스타터 「헬로 영어」로 합쳐졌어요</h1>
+  <h1>Daily English Quest가<br>랭귀지 스타터 「헬로 영어」로 합쳐졌어요</h1>
   <p>30일 생활 회화는 그대로, 더 쉽고 재미있게 이어서 할 수 있어요.</p>
   <ul>
-    <li>30일 퀘스트 = 헬로 영어 6~8단계 (Day 1~30)</li>
+    <li>30일 퀘스트 = 헬로 영어 실전 ①~③ (Day 1~30)</li>
     <li>왕초보용 0~5단계(알파벳 소리·인사·숫자…)도 새로 생겼어요</li>
     <li>보스 미션·말하기 채점·복습함·XP·연속 기록 모두 있어요</li>
-    <li>이 기기의 Daily English Quest 기록은 처음 열 때 <b>그대로 가져올 수 있어요</b></li>
   </ul>
+  <div id="recBox"></div>
   <a class="btn" id="go" href="../language-teacher/index.html?lang=en&amp;from=deq">헬로 영어로 이동 →</a>
-  <p class="small">잠시 후 자동으로 이동해요.</p>
+  <div id="extra"></div>
+  <p class="small" id="countdown"></p>
+  <noscript><p class="small">자동 이동이 안 되면 위 버튼을 눌러 주세요.</p></noscript>
 </main>
 <script>
-  // 기록(localStorage 'daily-english-quest-v1')은 건드리지 않고, 같은 사이트의 새 앱이 읽어서 이관합니다.
-  setTimeout(function () { location.replace(document.getElementById('go').href); }, 1200);
+  // 예전 기록(localStorage 'daily-english-quest-v1')은 읽기만 하고 절대 지우지 않는다.
+  // 같은 사이트의 새 앱(헬로 영어)이 이 기록을 그대로 가져온다.
+  (function () {
+    var KEY = 'daily-english-quest-v1';
+    var go = document.getElementById('go');
+    var ua = navigator.userAgent || '';
+    var inApp = /KAKAOTALK|NAVER\(inapp|Instagram|FBAN|FBAV|Line\//i.test(ua);
+    var st = null;
+    try { var raw = localStorage.getItem(KEY); st = raw ? JSON.parse(raw) : null; } catch (e) { st = null; }
+    var days = 0;
+    if (st && st.days && typeof st.days === 'object') {
+      for (var k in st.days) { if (st.days[k] && st.days[k].boss) days++; }
+    }
+    var xp = st && isFinite(st.totalXp) ? Math.floor(st.totalXp) : 0;
+    var streak = st && isFinite(st.streak) ? Math.floor(st.streak) : 0;
+    var hasRec = !!st && (days > 0 || xp > 0);
+
+    if (inApp) {
+      document.getElementById('extra').innerHTML = '<div class="note" style="margin-top:12px">📱 지금은 앱 안의 브라우저예요. 예전 기록은 <b>평소 쓰던 크롬·사파리</b>에 있어요. 오른쪽 위 메뉴(⋮)에서 <b>다른 브라우저로 열기</b>를 눌러 주세요.' +
+        (/KAKAOTALK/i.test(ua) ? '<br><a href="kakaotalk://web/openExternal?url=' + encodeURIComponent(location.href) + '">👉 기본 브라우저로 열기</a>' : '') + '</div>';
+      if (!hasRec) return;
+    }
+    if (!hasRec) { location.replace(go.href); return; }
+
+    document.getElementById('recBox').innerHTML = '<div class="rec">📦 이 기기에 기록이 있어요: 보스 클리어 ' + days + '일 · ' + xp + ' XP · 🔥' + streak + '일<br><span style="font-weight:600">헬로 영어에서 그대로 가져올 수 있어요</span></div>';
+    go.textContent = '기록 가지고 헬로 영어로 이동 →';
+    document.getElementById('extra').insertAdjacentHTML('beforeend', '<button class="btn ghost" id="bk">💾 다른 기기용 백업 받기</button><div id="bkOut"></div>');
+    var timer = null, left = 3;
+    var cd = document.getElementById('countdown');
+    function tick() {
+      if (left <= 0) { location.replace(go.href); return; }
+      cd.textContent = left + '초 뒤 자동으로 이동해요';
+      left--; timer = setTimeout(tick, 1000);
+    }
+    if (!inApp) tick();
+    document.getElementById('bk').addEventListener('click', function () {
+      if (timer) { clearTimeout(timer); timer = null; cd.textContent = '자동 이동을 멈췄어요. 백업을 받은 뒤 위 버튼을 눌러 주세요.'; }
+      // Daily English Quest의 기존 백업 형식 그대로 — 헬로 영어 설정 → 코드로 복원하기에 붙여넣거나 파일로 불러오면 영어 진도로 합쳐져요
+      var backup = JSON.stringify({ app: 'daily-english-quest', formatVersion: 1, exportedAt: new Date().toISOString(), summary: { days: days, totalXp: xp, streak: streak }, data: st });
+      try {
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob([backup], { type: 'application/json' }));
+        a.download = 'daily-english-quest-backup.json';
+        document.body.appendChild(a); a.click(); a.remove();
+      } catch (e) { /* 파일 저장이 안 되면 아래 코드를 복사 */ }
+      document.getElementById('bkOut').innerHTML = '<p class="small">파일이 안 받아지면 아래 내용을 모두 복사해 새 기기의 헬로 영어 → ⚙️ 설정 → 코드로 복원하기에 붙여넣으세요.</p><textarea readonly>' + backup.replace(/</g, '&lt;') + '</textarea>';
+    });
+  })();
 </script>
 </body>
 </html>

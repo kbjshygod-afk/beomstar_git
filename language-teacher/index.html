@@ -4289,7 +4289,17 @@ applyBigText();
 const QP = new URLSearchParams(location.search);
 const wantLang = QP.get('lang'), fromDeq = QP.get('from') === 'deq';
 if (wantLang) { try { history.replaceState(null, '', location.pathname); } catch (e) { } }
-if (wantLang && LANGS[wantLang]) activateLanguage(wantLang, { fromDeq });
+let startLang = null;
+if (wantLang && LANGS[wantLang]) {
+    // 옛 DEQ 주소로 들어왔어도, 이미 다른 언어를 고른 사람은 가져올 기록이 남아 있을 때만 영어로
+    if (fromDeq && store.active && store.active !== wantLang) {
+        const rec = store.byLang.en && store.byLang.en.deqImport;
+        const pending = !!readDeq() && !(rec && (rec.at || rec.declined));
+        startLang = pending ? wantLang : store.active;
+        if (!pending && store.seen.deqLinkToast !== todayStr()) { store.seen.deqLinkToast = todayStr(); save(); setTimeout(() => showToast('🗽 헬로 영어는 🔀 언어 버튼에서 언제든 고를 수 있어요', '', 3200), 900); }
+    } else startLang = wantLang;
+}
+if (startLang) activateLanguage(startLang, { fromDeq: fromDeq && startLang === 'en' });
 else if (store.active && LANGS[store.active]) activateLanguage(store.active);
 else render();
 </script>
