@@ -1,0 +1,87 @@
+{
+ "market": "NDX100",
+ "as_of": "2026-09-25",
+ "regime": {
+  "benchmark": "^NDX",
+  "mode": "MA200",
+  "close": 30608.1348,
+  "ma200": 27353.8206,
+  "ma20": 29620.5933,
+  "on": true
+ },
+ "entries_next_open": [],
+ "exits_next_open": [],
+ "positions": [],
+ "watchlist": [
+  {
+   "symbol": "MU",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 1082.28,
+   "pivot": 1105.5,
+   "to_pivot_pct": 2.15,
+   "rs": 98.99
+  },
+  {
+   "symbol": "AMD",
+   "label": "1순위 · 임박 (피벗 1% 이내)",
+   "close": 630.63,
+   "pivot": 630.8,
+   "to_pivot_pct": 0.03,
+   "rs": 97.98
+  },
+  {
+   "symbol": "STX",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 916.83,
+   "pivot": 936.94,
+   "to_pivot_pct": 2.19,
+   "rs": 94.95
+  },
+  {
+   "symbol": "MRVL",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 261.935,
+   "pivot": 266.0,
+   "to_pivot_pct": 1.55,
+   "rs": 93.94
+  },
+  {
+   "symbol": "ALAB",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 364.62,
+   "pivot": 369.15,
+   "to_pivot_pct": 1.24,
+   "rs": 90.91
+  },
+  {
+   "symbol": "TER",
+   "label": "1순위 · 임박 (피벗 1% 이내)",
+   "close": 398.38,
+   "pivot": 399.4,
+   "to_pivot_pct": 0.26,
+   "rs": 84.85
+  },
+  {
+   "symbol": "ASML",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 1743.9399,
+   "pivot": 1790.0,
+   "to_pivot_pct": 2.64,
+   "rs": 81.82
+  },
+  {
+   "symbol": "AAPL",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 341.07,
+   "pivot": 345.34,
+   "to_pivot_pct": 1.25,
+   "rs": 76.77
+  }
+ ],
+ "coverage": {
+  "requested": 101,
+  "loaded": 101,
+  "failed": []
+ },
+ "generated_at": "2026-09-25T20:54:37Z"
+}
