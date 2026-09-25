@@ -82,7 +82,21 @@ Claude Code·Codex·Cursor 등에서 쓰는 Agent Skills(`SKILL.md`) 가운데 G
 3. **상시 모드 충돌**: ponytail·caveman·superpowers(`using-superpowers`)는 매 응답에 개입해서 기존 지침과 부딪칠 수 있다.
 4. **버전 변동**: `@latest`로 설치하면 업데이트 때 동작이 바뀐다. 검증한 뒤에는 버전이나 커밋을 고정한다.
 
+## 적용 현황 (2026-09-25)
+
+이 저장소의 `.claude/skills/`에 4개를 커밋 고정 버전으로 반입했다. superpowers와 mattpocock/skills는 묶음 전체를 까는 대신, 필요한 스킬만 골라 가져왔다.
+
+| 스킬 | 출처 | 켜지는 방식 |
+|---|---|---|
+| `karpathy-guidelines` | andrej-karpathy-skills | 코드 작업 시 자동 |
+| `systematic-debugging` | superpowers | 버그 발생 시 자동 |
+| `verification-before-completion` | superpowers | 완료 보고 직전 자동 |
+| `grill-me` | mattpocock/skills | `/grill-me`로 직접 호출할 때만 |
+
+- 원본 대비 수정 내역, 커밋 값, 라이선스는 [`.claude/skills/README.md`](../.claude/skills/README.md)에 정리했다.
+- 검증: 형식 검사(이름·설명·참조 파일) 4개 모두 통과. Claude Code 헤드리스 실행에서 4개 모두 로드되는 것을 확인했고, `/grill-me`는 슬래시 명령으로만 등록된 것을 확인했다.
+
 ## 의사결정 포인트
 
-- 설치 범위: 이 저장소에만 적용(`.claude/skills/`)할지, 개인 전역(`~/.claude/skills/`)에 적용할지
-- 개발 방법론 스킬을 superpowers로 할지 mattpocock/skills로 할지 (둘 중 하나만 선택)
+- 다른 저장소에도 같은 4개를 적용할지 (현재는 이 저장소에만 적용)
+- 새 앱을 만들 때 디자인 스킬(frontend-design, ui-ux-pro-max)을 추가할지
