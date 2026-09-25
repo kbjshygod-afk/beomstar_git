@@ -2166,8 +2166,15 @@ function bossOf(l) {
     if (!all.length) return null;
     const marked = all.find(x => x.boss);
     if (marked) return marked;
+    // 지정이 없으면: 메모·나열 문장은 빼고, 평균 길이의 1.6배 이하에서, 회화에도 나오는(실제로 쓰는) 문장을 우선해 가장 긴 것
     const ks = all.filter(x => !/[()（）]|연습/.test(x.ko || '')).length ? all.filter(x => !/[()（）]|연습/.test(x.ko || '')) : all;
-    return ks.reduce((a, b) => (nativeText(b).length > nativeText(a).length ? b : a), ks[0]);
+    const avg = ks.reduce((a, x) => a + nativeText(x).length, 0) / ks.length;
+    const fit = ks.filter(x => nativeText(x).length <= avg * 1.6 && (nativeText(x).match(/[,，、]/g) || []).length < 3 && !/\d[\d\s-]{5,}/.test(x.ko || ''));
+    const pool = fit.length ? fit : ks;
+    const said = new Set(((l.dialogue && l.dialogue.turns) || []).map(t => nativeText(t)));
+    const inDlg = pool.filter(x => said.has(nativeText(x)));
+    const pick = inDlg.length ? inDlg : pool;
+    return pick.reduce((a, b) => (nativeText(b).length > nativeText(a).length ? b : a), pick[0]);
 }
 function bindPlayBtns(root) {
     root.querySelectorAll('[data-say]').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); speak(b.dataset.say, 0.95); }));
@@ -2994,7 +3001,7 @@ function renderReview() {
         '<button class="play-btn slow" id="fcPlaySlow" style="width:44px;height:44px;font-size:18px" aria-label="느리게 듣기">🐢</button></div>';
     h += '</div>';
     if (!r.flipped) {
-        if (rev) h += '<div style="display:flex;gap:8px;margin-bottom:8px"><button class="btn block" id="fcSpeak">🎤 말해 보기</button>' + (r.hint ? '' : '<button class="btn gray" id="fcHintBtn">💡 첫 단어</button>') + '</div>';
+        if (rev) h += '<div style="display:flex;gap:8px;margin-bottom:8px"><button class="btn block" id="fcSpeak">🎤 말해 보기</button>' + (r.hint ? '' : '<button class="btn gray" id="fcHintBtn" style="white-space:nowrap">💡 힌트</button>') + '</div>';
         h += '<button class="btn block' + (rev ? ' ghost' : '') + '" id="fcFlip">' + (rev ? '👀 정답 보기' : '뜻 확인하기') + '</button>' +
             '<div class="muted" style="text-align:center;margin-top:10px">' + (rev ? '소리 내어 말해 본 다음 정답을 확인하세요!' : '발음을 듣고, 뜻을 먼저 떠올려 본 다음 확인하세요!') + '</div>';
     } else {
