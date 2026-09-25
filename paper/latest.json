@@ -1,0 +1,165 @@
+{
+ "markets": {
+  "SP500": {
+   "as_of": "2026-09-25",
+   "start_date": "2026-09-25",
+   "regime": {
+    "benchmark": "^GSPC",
+    "mode": "MA200",
+    "close": 7743.4102,
+    "ma200": 7205.2028,
+    "ma20": 7672.4765,
+    "on": true
+   },
+   "entries_next_open": [],
+   "exits_next_open": [],
+   "positions": [],
+   "watchlist": [
+    {
+     "symbol": "MU",
+     "label": "2순위 · 근접 (피벗 3% 이내)",
+     "close": 1082.28,
+     "pivot": 1105.5,
+     "to_pivot_pct": 2.15,
+     "rs": 99.6
+    },
+    {
+     "symbol": "AMD",
+     "label": "1순위 · 임박 (피벗 1% 이내)",
+     "close": 630.63,
+     "pivot": 630.8,
+     "to_pivot_pct": 0.03,
+     "rs": 99.2
+    },
+    {
+     "symbol": "STX",
+     "label": "2순위 · 근접 (피벗 3% 이내)",
+     "close": 916.83,
+     "pivot": 936.94,
+     "to_pivot_pct": 2.19,
+     "rs": 98.6
+    },
+    {
+     "symbol": "MRVL",
+     "label": "2순위 · 근접 (피벗 3% 이내)",
+     "close": 261.935,
+     "pivot": 266.0,
+     "to_pivot_pct": 1.55,
+     "rs": 98.2
+    },
+    {
+     "symbol": "ILMN",
+     "label": "2순위 · 근접 (피벗 3% 이내)",
+     "close": 270.0,
+     "pivot": 277.95,
+     "to_pivot_pct": 2.94,
+     "rs": 97.8
+    },
+    {
+     "symbol": "TER",
+     "label": "1순위 · 임박 (피벗 1% 이내)",
+     "close": 398.38,
+     "pivot": 399.4,
+     "to_pivot_pct": 0.26,
+     "rs": 95.8
+    },
+    {
+     "symbol": "NTAP",
+     "label": "2순위 · 근접 (피벗 3% 이내)",
+     "close": 201.145,
+     "pivot": 203.91,
+     "to_pivot_pct": 1.37,
+     "rs": 95.6
+    },
+    {
+     "symbol": "RVTY",
+     "label": "1순위 · 임박 (피벗 1% 이내)",
+     "close": 151.11,
+     "pivot": 152.26,
+     "to_pivot_pct": 0.76,
+     "rs": 95.2
+    },
+    {
+     "symbol": "ZBRA",
+     "label": "2순위 · 근접 (피벗 3% 이내)",
+     "close": 370.04,
+     "pivot": 374.94,
+     "to_pivot_pct": 1.32,
+     "rs": 95.0
+    },
+    {
+     "symbol": "ANET",
+     "label": "1순위 · 임박 (피벗 1% 이내)",
+     "close": 206.55,
+     "pivot": 208.26,
+     "to_pivot_pct": 0.83,
+     "rs": 94.2
+    },
+    {
+     "symbol": "GRMN",
+     "label": "1순위 · 임박 (피벗 1% 이내)",
+     "close": 294.14,
+     "pivot": 295.53,
+     "to_pivot_pct": 0.47,
+     "rs": 89.6
+    },
+    {
+     "symbol": "AAPL",
+     "label": "2순위 · 근접 (피벗 3% 이내)",
+     "close": 341.07,
+     "pivot": 345.34,
+     "to_pivot_pct": 1.25,
+     "rs": 87.8
+    },
+    {
+     "symbol": "BIIB",
+     "label": "1순위 · 임박 (피벗 1% 이내)",
+     "close": 227.6,
+     "pivot": 229.19,
+     "to_pivot_pct": 0.7,
+     "rs": 86.4
+    },
+    {
+     "symbol": "MET",
+     "label": "2순위 · 근접 (피벗 3% 이내)",
+     "close": 97.7,
+     "pivot": 99.25,
+     "to_pivot_pct": 1.59,
+     "rs": 83.0
+    },
+    {
+     "symbol": "APH",
+     "label": "1순위 · 임박 (피벗 1% 이내)",
+     "close": 84.09,
+     "pivot": 84.48,
+     "to_pivot_pct": 0.46,
+     "rs": 80.2
+    }
+   ],
+   "performance": {
+    "equity": 100000000.0,
+    "return_pct": 0.0,
+    "bench_return_pct": 0.0,
+    "mdd_pct": 0.0,
+    "closed_trades": 0,
+    "win_rate_pct": null,
+    "avg_win_pct": null,
+    "avg_loss_pct": null,
+    "open_positions": 0
+   },
+   "status_csv": "SP500/status.csv",
+   "audit": {
+    "days": 1,
+    "signal_files": 1,
+    "missing_days": [],
+    "late": [],
+    "uncommitted": [],
+    "mismatched": [],
+    "revised": []
+   }
+  }
+ },
+ "updated_at": "2026-09-25T20:53:50Z",
+ "disclaimer": "기계적 룰 출력이며 투자 자문이 아닙니다. 매수·매도 결정은 소유자 본인이 합니다.",
+ "unconfirmed": "미확인 추정값(스캐너 원본 코드 미확인): 피벗=직전 20봉 최고가(당일 제외) · 거래량 평균=직전 50일(당일 제외) · RS=지수 대비 가중 1년 수익률 ≥ 0%p(스캐너는 유니버스 백분위 ≥ 70) · 52주 고저=종가 기준 · 200일선 상승=22봉 전 대비 · 수축비=10/40일 평균 TR · 비용=편도 0.2%"
+}
