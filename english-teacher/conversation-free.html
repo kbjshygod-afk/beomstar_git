@@ -163,7 +163,8 @@
         </div>
         <div class="header-right">
             <span class="level-chip" id="levelChip">레벨 미설정</span>
-            <a class="home-link" href="index.html">← 퀴즈로 돌아가기</a>
+            <a class="home-link" href="emma.html">← 퀴즈로 돌아가기</a>
+            <a class="home-link" href="#" id="forgetKey" title="이 브라우저에 저장된 AI 키 지우기">🔑 키 지우기</a>
         </div>
     </div>
 
@@ -180,7 +181,7 @@
         <button class="setup-btn" id="saveKeyBtn">무료로 대화 시작 🚀</button>
         <div class="err-box" id="keyErr"></div>
         <div class="note">
-            🔒 키는 <strong>당신의 브라우저에만</strong> 저장되며 다른 곳으로 전송되지 않습니다. 개인 연습 수준이면 무료 사용량 안에서 충분히 대화할 수 있어요. (너무 빠르게 많이 보내면 잠시 "잠깐 쉬어가세요" 안내가 뜰 수 있어요.)
+            🔒 키는 <strong>이 브라우저에만</strong> 저장돼요. 대화 내용은 키와 함께 <strong>구글(Gemini) 서버</strong>로 보내져 답을 만들어요 — 무료 키로 보낸 내용은 구글이 서비스 개선에 쓸 수 있어요. 함께 쓰는 기기라면 다 쓴 뒤 오른쪽 위 <strong>🔑 키 지우기</strong>를 눌러 주세요. 개인 연습 수준이면 무료 사용량 안에서 충분히 대화할 수 있어요. (너무 빠르게 많이 보내면 잠시 "잠깐 쉬어가세요" 안내가 뜰 수 있어요.)
         </div>
     </div>
 
@@ -334,7 +335,7 @@ async function send() {
         if (!res.ok) {
             const errData = await res.json().catch(() => ({}));
             let msg = `오류가 발생했어요 (${res.status}).`;
-            if (res.status === 400) msg = '⚠️ API 키가 올바르지 않은 것 같아요. 키를 다시 확인해 주세요.';
+            if (res.status === 400) msg = '⚠️ API 키가 올바르지 않은 것 같아요. 키를 다시 확인해 주세요. (오른쪽 위 🔑 키 지우기 → 새 키 입력)';
             else if (res.status === 429) msg = '⚠️ 무료 사용량 한도에 도달했어요. 잠시(1~2분) 후 다시 시도해 주세요.';
             else if (res.status === 403) msg = '⚠️ 키 권한 문제예요. aistudio.google.com에서 키를 새로 만들어 보세요.';
             else if (errData.error) msg = '⚠️ ' + errData.error.message;
@@ -373,6 +374,7 @@ async function send() {
 document.getElementById('saveKeyBtn').addEventListener('click', saveKey);
 sendBtn.addEventListener('click', send);
 
+document.getElementById('forgetKey').addEventListener('click', e => { e.preventDefault(); if (!confirm('이 브라우저에 저장된 AI 키를 지울까요?')) return; localStorage.removeItem('emma_gemini_key'); location.reload(); });
 if (apiKey) showChat();
 </script>
 </body>

@@ -4,9 +4,25 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <meta name="theme-color" content="#0f172a" />
-<meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-<title>beomstar 학습 앱</title>
+<title>랭귀지 스타터 · 왕초보 외국어 회화 하루 10분</title>
+<meta name="description" content="영어·중국어·일본어·스페인어·프랑스어 왕초보 회화를 하루 10분씩. 설치 없이 브라우저에서 바로 쓰는 랭귀지 스타터와 학습 앱 모음이에요." />
+<link rel="canonical" href="https://kbjshygod-afk.github.io/beomstar_git/" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="랭귀지 스타터" />
+<meta property="og:title" content="랭귀지 스타터 · 왕초보 외국어 회화 하루 10분" />
+<meta property="og:description" content="영어·중국어·일본어·스페인어·프랑스어를 하루 10분씩. 설치 없이 브라우저에서 바로 시작해 보세요." />
+<meta property="og:url" content="https://kbjshygod-afk.github.io/beomstar_git/" />
+<meta property="og:locale" content="ko_KR" />
+<meta property="og:image" content="https://kbjshygod-afk.github.io/beomstar_git/assets/og-image.png" />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content="랭귀지 스타터 — 왕초보 외국어 회화 · 하루 10분 (영어·중국어·일본어·스페인어·프랑스어)" />
+<meta name="twitter:card" content="summary_large_image" />
+<link rel="icon" href="language-teacher/icons/favicon-32.png" type="image/png" sizes="32x32" />
+<link rel="icon" href="language-teacher/icons/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="language-teacher/icons/apple-touch-icon.png" />
+<script src="language-teacher/cloud-config.js?v=1" defer></script>
 <style>
 /* =========================================================
    앱 목록 페이지
@@ -35,7 +51,7 @@ body {
                "Malgun Gothic", "Segoe UI", Roboto, sans-serif;
   font-size: 16px;
   line-height: 1.6;
-  padding: 28px 16px calc(48px + env(safe-area-inset-bottom));
+  padding: calc(28px + env(safe-area-inset-top)) 16px calc(48px + env(safe-area-inset-bottom));
   max-width: 640px;
   margin: 0 auto;
   -webkit-text-size-adjust: 100%;
@@ -51,6 +67,7 @@ h1 {
 }
 
 .subtitle {
+  word-break: keep-all;
   margin: 4px 0 0;
   font-size: 13px;
   color: var(--text-dim);
@@ -127,21 +144,31 @@ footer {
   text-align: center;
   line-height: 1.7;
 }
+a.app-card.main { border-color: var(--accent); background: linear-gradient(135deg, #1e293b, #1e3a8a); }
+.app-icon img { width: 40px; height: 40px; border-radius: 11px; display: block; }
+.section-label { margin: 10px 2px 0; font-size: 13px; font-weight: 700; color: var(--text-dim); }
+.lang-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+a.lang-chip { display: flex; flex-direction: column; gap: 2px; text-decoration: none; color: inherit; background: var(--card); border: 1px solid var(--card-line); border-radius: 14px; padding: 12px; }
+a.lang-chip:hover, a.lang-chip:focus-visible { border-color: var(--accent); outline: none; }
+a.lang-chip span { font-size: 22px; }
+a.lang-chip b { font-size: 14.5px; word-break: keep-all; }
+a.lang-chip small { font-size: 11.5px; color: var(--text-dim); word-break: keep-all; }
+footer a { color: var(--accent); }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>beomstar 학습 앱</h1>
-  <p class="subtitle">설치 없이 브라우저에서 바로 쓰는 앱입니다. 기록은 사용하는 기기에만 저장됩니다.</p>
+  <h1>랭귀지 스타터</h1>
+  <p class="subtitle">왕초보 외국어 회화 · 하루 10분 · 설치 없이 브라우저에서 바로, 무료</p>
 </header>
 
 <main class="app-list">
 
-  <a class="app-card" href="language-teacher/">
+  <a class="app-card main" href="language-teacher/">
     <span class="app-head">
-      <span class="app-icon">🌍</span>
-      <span class="app-name">랭귀지 스타터</span>
+      <span class="app-icon"><img src="language-teacher/icons/icon-192.png" alt="" width="40" height="40"></span>
+      <span class="app-name">랭귀지 스타터 시작하기</span>
     </span>
     <p class="app-desc">
       영어·중국어·일본어·스페인어·프랑스어 왕초보 회화를 한 앱에서. 레슨·말하기 채점·역할극·복습·동화 읽기를
@@ -151,81 +178,41 @@ footer {
       <span class="tag">5개 언어</span>
       <span class="tag">말하기 채점</span>
       <span class="tag">역할극</span>
+      <span class="tag">복습 카드</span>
       <span class="tag">XP·연속 기록</span>
     </span>
   </a>
 
-  <a class="app-card" href="language-teacher/index.html?lang=en">
-    <span class="app-head">
-      <span class="app-icon">🗽</span>
-      <span class="app-name">헬로 영어 (Daily English Quest 통합)</span>
-    </span>
-    <p class="app-desc">
-      랭귀지 스타터의 영어 과정으로 바로 가기. 왕초보 0~5단계 + Daily English Quest 30일 생활 회화(6~8단계).
-      예전 Daily English Quest 기록도 그대로 가져올 수 있습니다.
-    </p>
-    <span class="app-tags">
-      <span class="tag">영어 회화</span>
-      <span class="tag">59레슨</span>
-      <span class="tag">30일 퀘스트</span>
-      <span class="tag">소리 훈련</span>
-    </span>
-  </a>
-
-  <a class="app-card" href="chinese-teacher/">
-    <span class="app-head">
-      <span class="app-icon">🀄</span>
-      <span class="app-name">니하오 중국어</span>
-    </span>
-    <p class="app-desc">
-      왕초보를 위한 중국어 기초 회화. 발음부터 실전 여행 회화까지
-      6단계 29레슨으로 이어집니다.
-    </p>
-    <span class="app-tags">
-      <span class="tag">중국어</span>
-      <span class="tag">29레슨</span>
-      <span class="tag">성조 훈련</span>
-      <span class="tag">복습함</span>
-    </span>
-  </a>
-
-  <a class="app-card" href="spanish-teacher/">
-    <span class="app-head">
-      <span class="app-icon">🇪🇸</span>
-      <span class="app-name">올라 스페인어</span>
-    </span>
-    <p class="app-desc">
-      왕초보를 위한 스페인어 기초 회화. 알파벳과 강세부터 실전 여행 회화까지
-      6단계 29레슨으로 이어집니다.
-    </p>
-    <span class="app-tags">
-      <span class="tag">스페인어</span>
-      <span class="tag">29레슨</span>
-      <span class="tag">동사 변화</span>
-      <span class="tag">복습함</span>
-    </span>
-  </a>
-
-  <a class="app-card" href="english-teacher/">
-    <span class="app-head">
-      <span class="app-icon">💬</span>
-      <span class="app-name">Emma</span>
-    </span>
-    <p class="app-desc">
-      AI 영어 선생님과 나누는 자유 대화 연습입니다.
-    </p>
-    <span class="app-tags">
-      <span class="tag">영어 회화</span>
-      <span class="tag">자유 대화</span>
-    </span>
-  </a>
+  <p class="section-label">바로 시작할 언어 고르기</p>
+  <nav class="lang-grid" aria-label="언어별 바로 가기">
+    <a class="lang-chip" href="language-teacher/index.html?lang=en"><span>🗽</span><b>헬로 영어</b><small>알파벳 소리 ~ 30일 생활 회화</small></a>
+    <a class="lang-chip" href="language-teacher/index.html?lang=zh"><span>🐼</span><b>니하오 중국어</b><small>성조부터 여행 회화</small></a>
+    <a class="lang-chip" href="language-teacher/index.html?lang=ja"><span>🎏</span><b>곤니치와 일본어</b><small>히라가나부터 여행 회화</small></a>
+    <a class="lang-chip" href="language-teacher/index.html?lang=es"><span>💃</span><b>올라 스페인어</b><small>강세부터 여행 회화</small></a>
+    <a class="lang-chip" href="language-teacher/index.html?lang=fr"><span>🥐</span><b>봉주르 프랑스어</b><small>발음 규칙부터 여행 회화</small></a>
+  </nav>
 
 </main>
 
+<p class="section-label" style="text-align:center;margin-top:18px">📲 홈 화면에는 「랭귀지 스타터 시작하기」를 연 뒤 추가하세요.</p>
+
 <footer>
-  학습 기록은 각자 브라우저에만 저장되며 서버로 전송되지 않습니다.<br />
-  홈 화면에 추가하면 앱처럼 전체 화면으로 쓸 수 있습니다.
+  학습 기록은 이 기기의 브라우저에만 저장돼요(가입·설치 없음).<span id="hubCloud"></span><br />
+  말하기 채점 음성은 브라우저 회사(구글·애플)의 음성 인식을 거칠 수 있어요 · <a href="privacy.html">개인정보 안내</a><span id="hubContact"></span><br />
+  예전 「니하오 중국어」「올라 스페인어」「Daily English Quest」 기록은 랭귀지 스타터가 그대로 이어받아요.
 </footer>
+<script>
+  // 클라우드(구글 로그인)·문의 링크는 language-teacher/cloud-config.js 설정을 따라 자동으로 문구를 바꾼다
+  document.addEventListener('DOMContentLoaded', function () {
+    var c = window.CLOUD_CONFIG, k = window.SITE_CONTACT;
+    if (c && c.apiKey) document.getElementById('hubCloud').textContent = ' 구글로 로그인하면 기기끼리 이어져요.';
+    if (k && typeof k.url === 'string' && /^https:\/\//.test(k.url)) {
+      var a = document.createElement('a'); a.href = k.url; a.target = '_blank'; a.rel = 'noopener';
+      a.textContent = '💬 ' + (typeof k.label === 'string' && k.label.trim() ? k.label.trim().slice(0, 30) : '문의·오류 제보');
+      var box = document.getElementById('hubContact'); box.appendChild(document.createTextNode(' · ')); box.appendChild(a);
+    }
+  });
+</script>
 
 </body>
 </html>

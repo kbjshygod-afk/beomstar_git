@@ -174,7 +174,8 @@
         </div>
         <div class="header-right">
             <span class="level-chip" id="levelChip">레벨 미설정</span>
-            <a class="home-link" href="index.html">← 퀴즈로 돌아가기</a>
+            <a class="home-link" href="emma.html">← 퀴즈로 돌아가기</a>
+            <a class="home-link" href="#" id="forgetKey" title="이 브라우저에 저장된 AI 키 지우기">🔑 키 지우기</a>
         </div>
     </div>
 
@@ -192,7 +193,7 @@
         <button class="setup-btn" id="saveKeyBtn">대화 시작하기 🚀</button>
         <div class="err-box" id="keyErr"></div>
         <div class="note">
-            🔒 키는 <strong>당신의 브라우저에만</strong> 저장되며 다른 곳으로 전송되지 않습니다. AI 사용량에 따라 소량의 요금이 청구될 수 있어요(대화 한 번에 보통 몇 원 수준).
+            🔒 키는 <strong>이 브라우저에만</strong> 저장돼요. 대화 내용은 키와 함께 <strong>Anthropic 서버</strong>로 보내져 답을 만들어요. 함께 쓰는 기기라면 다 쓴 뒤 오른쪽 위 <strong>🔑 키 지우기</strong>를 눌러 주세요. AI 사용량에 따라 소량의 요금이 청구될 수 있어요(대화 한 번에 보통 몇 원 수준).
         </div>
     </div>
 
@@ -354,7 +355,7 @@ async function send() {
         if (!res.ok) {
             const errData = await res.json().catch(() => ({}));
             let msg = `오류가 발생했어요 (${res.status}).`;
-            if (res.status === 401) msg = '⚠️ API 키가 올바르지 않아요. 키를 다시 확인해 주세요.';
+            if (res.status === 401) msg = '⚠️ API 키가 올바르지 않아요. 키를 다시 확인해 주세요. (오른쪽 위 🔑 키 지우기 → 새 키 입력)';
             else if (res.status === 429) msg = '⚠️ 요청이 너무 많아요. 잠시 후 다시 시도해 주세요.';
             else if (res.status === 400 && errData.error) msg = '⚠️ ' + errData.error.message;
             else if (errData.error) msg = '⚠️ ' + errData.error.message;
@@ -386,6 +387,7 @@ document.getElementById('saveKeyBtn').addEventListener('click', saveKey);
 sendBtn.addEventListener('click', send);
 
 // 시작
+document.getElementById('forgetKey').addEventListener('click', e => { e.preventDefault(); if (!confirm('이 브라우저에 저장된 AI 키를 지울까요?')) return; localStorage.removeItem('emma_api_key'); location.reload(); });
 if (apiKey) showChat();
 </script>
 </body>

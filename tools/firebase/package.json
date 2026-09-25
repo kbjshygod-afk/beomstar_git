@@ -1,0 +1,7 @@
+{
+  "name": "language-starter-firebase-vendor",
+  "private": true,
+  "description": "랭귀지 스타터가 쓰는 Firebase SDK를 language-teacher/vendor/firebase/ 로 묶는 빌드 도구",
+  "scripts": { "build": "node build.mjs" },
+  "devDependencies": { "esbuild": "^0.25.0", "firebase": "12.19.0" }
+}
