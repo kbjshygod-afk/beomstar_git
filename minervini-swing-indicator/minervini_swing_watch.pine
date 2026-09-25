@@ -155,6 +155,7 @@ flatNow    = false
 entryNow   = false
 stopHit    = false
 stopPnl    = float(na)
+stopLine   = float(na)
 exitSignal = false
 exitFilled = false
 exitPnl    = float(na)
@@ -172,6 +173,7 @@ if barstate.isconfirmed
         stopPrice    := open * (1 - stopPct / 100)
         entryNow     := true
     if not na(entryPrice)
+        stopLine := stopPrice
         if low <= stopPrice
             stopHit    := true
             stopPnl    := (math.min(open, stopPrice) / entryPrice - 1) * 100
@@ -197,7 +199,7 @@ plot(showMA ? ma150 : na, "150일선", color.new(color.blue, 0), 1)
 plot(showMA ? ma200 : na, "200일선", color.new(color.gray, 0), 2)
 plot(showMA and exitMaLen != 50 ? exitMa : na, "청산 이동평균", color.new(color.red, 30), 1)
 plot(showPivot ? pivot : na, "트리거(피벗)", color.new(color.teal, 40), 1, plot.style_stepline)
-plot(stopPrice, "손절가", color.new(color.red, 0), 1, plot.style_linebr)
+plot(na(stopLine) ? stopPrice : stopLine, "손절가", color.new(color.red, 0), 1, plot.style_linebr)
 plotshape(entryNow, title = "진입 (시가)", style = shape.triangleup, location = location.belowbar, color = color.new(color.green, 0), size = size.tiny)
 
 exitMaName = str.tostring(exitMaLen) + "일선"
@@ -251,7 +253,7 @@ f_row(r, k, v, c) =>
     table.cell(tbl, 0, r, k, text_color = color.white, bgcolor = color.new(color.gray, 25), text_size = size.small)
     table.cell(tbl, 1, r, v, text_color = color.white, bgcolor = c, text_size = size.small)
 
-if showTable and barstate.isconfirmed
+if showTable and barstate.isconfirmed and (barstate.islast or barstate.islastconfirmedhistory)
     base = color.new(color.gray, 40)
     f_row(0, "시장 · 레짐", marketPreset + " · " + (regimeOn ? "ON" : "OFF") + " (" + regimeMode + ")", regimeOn ? color.new(color.green, 40) : color.new(color.red, 40))
     f_row(1, "트렌드 템플릿", str.tostring(ttCount) + " / 8", ttCount == 8 ? color.new(color.green, 40) : base)
@@ -267,6 +269,11 @@ if showTable and barstate.isconfirmed
 
 // ----- 알림 -----
 alertcondition(signal, title = "신호 확정", message = "미너비니 스캐너 신호 확정 — 다음 거래일 시가 진입, 매수와 동시에 손절 주문")
-alertcondition(stopHit, title = "손절", message = "손절가 도달 — 전량 청산")
+alertcondition(stopHit, title = "손절 (봉 마감 확인)", message = "손절가 도달 — 전량 청산 (봉 마감 기준 확인)")
+
+// 장중 손절가 터치 알림: '모든 alert() 함수 호출' 조건으로 알림을 만들면 받을 수 있다.
+// 진입 봉 당일은 진입가가 봉 마감에 기록되므로 장중 알림이 없다 — 실제 손절은 매수와 함께 건 손절 주문이 맡는다.
+if not barstate.isconfirmed and not na(stopPrice) and low <= stopPrice
+    alert("손절가 장중 도달 — 손절 주문 체결 확인", alert.freq_once_per_bar)
 alertcondition(exitSignal, title = "청산선 이탈", message = "종가가 청산 이동평균 아래로 마감 — 다음 거래일 시가 전량 청산")
 alertcondition(nearPivot, title = "피벗 임박", message = "트렌드 템플릿 통과 종목이 트리거(피벗) 1% 이내 — 돌파 감시")

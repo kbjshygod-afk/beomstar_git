@@ -141,10 +141,13 @@ if signal
     qty    = fracQty ? qtyRaw : math.floor(qtyRaw)
     if qty > 0
         strategy.entry("Long", strategy.long, qty = qty, comment = "신호")
-        // 체결 봉부터 손절을 걸어두기 위해 진입과 함께 손절폭(틱)을 건다. 체결 뒤에는 실제 진입가 기준으로 다시 건다.
-        strategy.exit("STOP", "Long", loss = close * stopPct / 100 / syminfo.mintick, comment = "STOP")
+        // 체결 봉에도 손절이 걸리도록 진입과 함께 손절폭(신호봉 종가 기준 틱)을 건다.
+        // 체결가는 신호 시점에 알 수 없어, 체결 봉에서만 손절선이 '체결가 − 종가×손절%'로 약간 다를 수 있다.
+        strategy.exit("STOP0", "Long", loss = close * stopPct / 100 / syminfo.mintick, comment = "STOP")
 
 if inPos
+    // 체결 뒤에는 실제 진입가 기준 손절로 교체한다.
+    strategy.cancel("STOP0")
     strategy.exit("STOP", "Long", stop = strategy.position_avg_price * (1 - stopPct / 100), comment = "STOP")
     if barstate.isconfirmed and close < exitMa
         strategy.close("Long", comment = str.tostring(exitMaLen) + "일선 이탈")
