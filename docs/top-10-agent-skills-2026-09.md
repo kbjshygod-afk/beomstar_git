@@ -100,3 +100,7 @@ Claude Code·Codex·Cursor 등에서 쓰는 Agent Skills(`SKILL.md`) 가운데 G
 
 - 다른 저장소에도 같은 4개를 적용할지 (현재는 이 저장소에만 적용)
 - 새 앱을 만들 때 디자인 스킬(frontend-design, ui-ux-pro-max)을 추가할지
+
+## 후속: 분야별 스킬 (2026-09-25)
+
+업무 자동화, 코인 기술적 분석, 미국 주식·ETF 거시 매매 분야에서 고른 스킬 10개는 [`skills-library/README.md`](../skills-library/README.md)에 정리했다. claude.ai 업로드용 zip은 `skills-library/dist/`에 있다.
