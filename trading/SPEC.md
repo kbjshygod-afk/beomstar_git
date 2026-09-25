@@ -19,8 +19,9 @@ Everything here is a mechanical rule output, not investment advice. The engine n
 **Symbol bars.** Daily bars with `date, open, high, low, close, volume`, ascending by date with no duplicates.
 - Stocks: prices split-adjusted but **not** dividend-adjusted, which is TradingView's default. With yfinance this means `auto_adjust=False` and the `Open/High/Low/Close` columns, not `Adj Close`.
 - Volume can be missing (NaN). Missing volume means no volume confirmation.
+- Loader hygiene (data layer, before section 3): a price ≤ 0 counts as missing, and a row without a valid open, high, low and close is dropped, because TradingView prints no bar for it (Yahoo sends O=H=L=0 rows for halted days). The per-bar core itself keeps the NaN semantics of section 3.
 
-**Benchmark bars.** Daily `date, close` for the market's benchmark.
+**Benchmark bars.** Daily `date, close` for the market's benchmark. Only the close has to be valid.
 
 **Market preset.** One of `SP500`, `NDX100`, `KOSPI`, `KOSDAQ`, `CRYPTO`, `CUSTOM`.
 
@@ -133,7 +134,9 @@ from_high52  = (close / hi52 - 1) * 100
 ## 5. Position state machine (indicator semantics; one symbol)
 
 State: `entry_pending`, `exit_pending`, `entry_price` (NaN when flat), `stop_price`.
-Every bar is a confirmed daily bar. Process bars in order; within bar t, in this exact order:
+Every bar is a confirmed daily bar (Pine `barstate.isconfirmed`). A data source that returns today's still-forming bar must drop it: stocks until the session close plus 20 minutes in exchange time (US 16:00 ET, KRX 15:30 KST), crypto until its UTC day ends. A cache must never store a bar that was still forming when it was fetched.
+
+Process bars in order; within bar t, in this exact order:
 
 ```
 events = []
@@ -221,6 +224,7 @@ The scanner holds many positions and allocates cash in RS order. Its code is on 
    - share of gross profit coming from trades above +20%, and the share of trades above +20%
    - exposure (average invested %)
    - Periods: full 10 years, the last 1 year, and each calendar year
+8. **Test window:** earlier data only warms the indicators. Without an explicit test start, the window starts at the later of (a) the benchmark bar that completes the warm-up, `max(year_bars + 1, 200 + ma200_rise_bars, vol_len + 1, pivot_len + 1, exit_ma_len)` bars, and (b) the end date minus 10 years. Before (a) no signal is possible, so counting it would add forced cash against the index.
 
 **Scanner dashboard numbers to compare against** (2026-09-04, CAGR minus index CAGR):
 
