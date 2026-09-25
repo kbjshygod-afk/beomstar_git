@@ -1,0 +1,42 @@
+rules_version = '2';
+// 랭귀지 스타터 Firestore 보안 규칙
+// Firebase 콘솔 → Firestore Database → 규칙 탭에 이 내용을 그대로 붙여넣고 [게시]를 누르세요.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 학습 기록: users/{uid} 문서 하나에 전체 기록. 로그인한 본인만 읽고·쓰고·지울 수 있다.
+    match /users/{uid} {
+      allow read, delete: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['v', 'enc', 'data', 'rev', 'updatedAt', 'app'])
+        && request.resource.data.v is int
+        && request.resource.data.enc in ['json', 'gz']
+        && request.resource.data.data is string
+        && request.resource.data.data.size() < 1000000
+        && request.resource.data.rev is string && request.resource.data.rev.size() <= 40
+        && request.resource.data.updatedAt == request.time
+        && (!('app' in request.resource.data) || (request.resource.data.app is string && request.resource.data.app.size() <= 20));
+    }
+
+    // 의견 보내기: 누구나 보낼 수만 있고(로그인 불필요), 읽기·고치기·지우기는 콘솔에서 주인만.
+    match /feedback/{id} {
+      allow create: if request.resource.data.keys().hasOnly(['text', 'rating', 'lang', 'app', 'at', 'ua', 'from', 'contact', 'uid'])
+        && request.resource.data.text is string && request.resource.data.text.size() <= 1500
+        && (request.resource.data.text.size() > 0 || request.resource.data.rating != null)
+        && (request.resource.data.rating == null || request.resource.data.rating in ['good', 'ok', 'bad'])
+        && request.resource.data.lang is string && request.resource.data.lang.size() <= 5
+        && request.resource.data.app is string && request.resource.data.app.size() <= 20
+        && request.resource.data.at == request.time
+        && request.resource.data.ua in ['mobile', 'desktop']
+        && (!('from' in request.resource.data) || (request.resource.data.from is string && request.resource.data.from.size() <= 20))
+        && (!('contact' in request.resource.data) || (request.resource.data.contact is string && request.resource.data.contact.size() <= 100))
+        && (!('uid' in request.resource.data) || (request.auth != null && request.resource.data.uid == request.auth.uid));
+      allow read, update, delete: if false;
+    }
+
+    // 그 밖의 모든 경로는 막는다
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
