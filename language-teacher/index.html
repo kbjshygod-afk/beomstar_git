@@ -4,6 +4,30 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>랭귀지 스타터 - 영어·중국어·일본어·스페인어·프랑스어 왕초보 회화</title>
+    <!-- 링크 미리보기(카카오톡·페이스북·X) · 홈 화면 설치 -->
+    <meta name="description" content="영어·중국어·일본어·스페인어·프랑스어 왕초보 회화를 하루 10분씩. 레슨·말하기 채점·역할극·복습·동화 읽기를 게임처럼 이어 가는 무료 앱이에요.">
+    <link rel="canonical" href="https://kbjshygod-afk.github.io/beomstar_git/language-teacher/">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="랭귀지 스타터">
+    <meta property="og:title" content="랭귀지 스타터 · 왕초보 외국어 회화 하루 10분">
+    <meta property="og:description" content="영어·중국어·일본어·스페인어·프랑스어를 한 앱에서. 말하기 채점·역할극·복습까지 무료로 시작해 보세요.">
+    <meta property="og:url" content="https://kbjshygod-afk.github.io/beomstar_git/language-teacher/">
+    <meta property="og:locale" content="ko_KR">
+    <meta property="og:image" content="https://kbjshygod-afk.github.io/beomstar_git/assets/og-image.png">
+    <meta property="og:image:type" content="image/png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="랭귀지 스타터 — 왕초보 외국어 회화 · 하루 10분 (영어·중국어·일본어·스페인어·프랑스어)">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="theme-color" content="#1a56db">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="랭귀지 스타터">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <link rel="icon" href="icons/favicon-32.png" type="image/png" sizes="32x32">
+    <link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
     <style>
         :root {
             --primary: #d92332;
@@ -107,7 +131,7 @@
         /* ── 언어 선택 화면 ─────────────────── */
         .lang-pick { padding: 10px 4px; }
         .lang-pick .lp-title { font-size: 20px; font-weight: 900; text-align: center; margin: 10px 0 4px; }
-        .lang-pick .lp-sub { font-size: 13px; color: var(--text-light); text-align: center; margin-bottom: 22px; }
+        .lang-pick .lp-sub { font-size: 13px; color: var(--text-light); text-align: center; margin-bottom: 22px; word-break: keep-all; }
         .lang-card {
             display: flex; align-items: center; gap: 14px;
             background: var(--card); border: 2px solid var(--border); border-radius: 18px;
@@ -459,7 +483,7 @@
         .lock-prog { height: 5px; background: #eef2f7; border-radius: 3px; margin-top: 6px; overflow: hidden; }
         .lock-prog > div { height: 100%; background: var(--primary); }
         .cc-btn { display: inline-block; margin-top: 10px; background: white; color: var(--primary); font-weight: 900; font-size: 15px; border-radius: 999px; padding: 9px 18px; }
-        .app.big-text { zoom: 1.12; height: calc(94vh / 1.12); max-height: calc(860px / 1.12); }
+        @supports (zoom: 1) { .app.big-text { zoom: 1.12; height: calc(94vh / 1.12); max-height: calc(860px / 1.12); } }
         .fail-screen .btn { margin-top: 12px; }
         /* ── 오늘의 목표 · 레벨 ─────────────── */
         .today-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 12px 14px; margin-bottom: 12px; display: flex; gap: 14px; align-items: center; }
@@ -573,8 +597,17 @@
             .lang-switch-btn { margin-left: 4px; padding: 6px 8px; }
             .app { border-radius: 0; height: 100vh; height: 100dvh; max-height: none; }
             .tabbar { padding-bottom: env(safe-area-inset-bottom, 0px); }
-            .app.big-text { height: calc(100vh / 1.12); height: calc(100dvh / 1.12); max-height: none; }
+            @supports (zoom: 1) { .app.big-text { height: calc(100vh / 1.12); height: calc(100dvh / 1.12); max-height: none; } }
         }
+        /* ☁️ 계정 카드 */
+        .cloud-card .cloud-ava { width: 38px; height: 38px; border-radius: 50%; background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 17px; flex-shrink: 0; }
+        .gbtn { display: inline-flex; align-items: center; gap: 8px; background: #fff; color: #1f2937; border: 1.5px solid #d1d5db; font-weight: 700; }
+        .gbtn:disabled { opacity: .6; }
+        .g-logo { display: inline-flex; width: 22px; height: 22px; border-radius: 50%; align-items: center; justify-content: center; font-weight: 900; font-size: 14px; color: #fff; background: conic-gradient(#ea4335 0 25%, #fbbc05 0 50%, #34a853 0 75%, #4285f4 0); }
+        .faq details { border-bottom: 1px solid var(--border); padding: 8px 2px; }
+        .faq details:last-of-type { border-bottom: none; }
+        .faq summary { font-weight: 700; font-size: 14px; cursor: pointer; }
+        .faq-a { font-size: 13px; line-height: 1.7; margin-top: 6px; color: var(--text); }
     </style>
 </head>
 <body>
@@ -589,6 +622,7 @@
         <button class="lang-switch-btn" id="langSwitchBtn" aria-label="배울 언어 바꾸기">🔀 언어</button>
     </div>
     <div class="storage-warn" id="storageWarn" role="alert" hidden></div>
+    <div class="storage-warn" id="ttsWarn" role="alert" hidden></div>
     <div class="content" id="main"></div>
     <div class="tabbar" id="tabbar" role="tablist" style="display:none"></div>
 </div>
@@ -596,13 +630,15 @@
 <div class="sr-only" id="announcer" aria-live="polite"></div>
 <div id="modalRoot"></div>
 
+<script src="cloud-config.js?v=1"></script>
 <script>
 'use strict';
 /* ═══════════════════ 언어 설정 ═══════════════════ */
+const DATA_VER = '20260925';   // data-*.js / stories-*.js 를 고치면 이 값을 올릴 것(캐시 갱신)
 const LANGS = {
     en: {
         code: 'en', flag: '🗽', name: '영어', appName: '헬로 영어', tag: '영어',
-        dataFile: './data-en.js', dataGlobal: 'EN_DATA', storyFile: './stories-en.js', storyGlobal: 'STORIES_EN',
+        dataFile: './data-en.js?v=' + DATA_VER, dataGlobal: 'EN_DATA', storyFile: './stories-en.js?v=' + DATA_VER, storyGlobal: 'STORIES_EN',
         ttsLang: 'en-US', trainerTab: 'ear', trainerIco: '👂', trainerLabel: '소리',
         primary: '#0a3161', primaryDark: '#061d3a', gold: '#b31942', goldLight: '#fbe9ee', redSoft: '#eaf0f8',
         desc: '알파벳 소리부터 30일 생활 회화까지', sampleWord: 'Hello', joiner: ' ',
@@ -610,7 +646,7 @@ const LANGS = {
     },
     zh: {
         code: 'zh', flag: '🐼', name: '중국어', appName: '니하오 중국어', tag: '중국어',
-        dataFile: './data-zh.js', dataGlobal: 'ZW_DATA', storyFile: './stories-zh.js', storyGlobal: 'STORIES_ZH',
+        dataFile: './data-zh.js?v=' + DATA_VER, dataGlobal: 'ZW_DATA', storyFile: './stories-zh.js?v=' + DATA_VER, storyGlobal: 'STORIES_ZH',
         ttsLang: 'zh-CN', trainerTab: 'tone', trainerIco: '🎵', trainerLabel: '성조',
         primary: '#d92332', primaryDark: '#a01526', gold: '#f0a500', goldLight: '#fff4d6', redSoft: '#fdf0f0',
         desc: '성조와 병음부터 여행 회화까지', sampleWord: '你好', joiner: '',
@@ -618,7 +654,7 @@ const LANGS = {
     },
     es: {
         code: 'es', flag: '💃', name: '스페인어', appName: '올라 스페인어', tag: '스페인어',
-        dataFile: './data-es.js', dataGlobal: 'ES_DATA', storyFile: './stories-es.js', storyGlobal: 'STORIES_ES',
+        dataFile: './data-es.js?v=' + DATA_VER, dataGlobal: 'ES_DATA', storyFile: './stories-es.js?v=' + DATA_VER, storyGlobal: 'STORIES_ES',
         ttsLang: 'es-ES', trainerTab: 'verb', trainerIco: '🔠', trainerLabel: '동사',
         primary: '#c60b1e', primaryDark: '#8e0916', gold: '#f1bf00', goldLight: '#fdf3d0', redSoft: '#fdf0ef',
         desc: '알파벳부터 여행 회화까지', sampleWord: 'Hola', joiner: ' ',
@@ -626,7 +662,7 @@ const LANGS = {
     },
     ja: {
         code: 'ja', flag: '🎏', name: '일본어', appName: '곤니치와 일본어', tag: '일본어',
-        dataFile: './data-ja.js', dataGlobal: 'JA_DATA', storyFile: './stories-ja.js', storyGlobal: 'STORIES_JA',
+        dataFile: './data-ja.js?v=' + DATA_VER, dataGlobal: 'JA_DATA', storyFile: './stories-ja.js?v=' + DATA_VER, storyGlobal: 'STORIES_JA',
         ttsLang: 'ja-JP', trainerTab: 'kana', trainerIco: 'あ', trainerLabel: '가나',
         primary: '#bc002d', primaryDark: '#7a0020', gold: '#c9a227', goldLight: '#faf1d9', redSoft: '#fdeef1',
         desc: '히라가나·가타카나부터 여행 회화까지', sampleWord: 'こんにちは', joiner: '',
@@ -634,7 +670,7 @@ const LANGS = {
     },
     fr: {
         code: 'fr', flag: '🥐', name: '프랑스어', appName: '봉주르 프랑스어', tag: '프랑스어',
-        dataFile: './data-fr.js', dataGlobal: 'FR_DATA', storyFile: './stories-fr.js', storyGlobal: 'STORIES_FR',
+        dataFile: './data-fr.js?v=' + DATA_VER, dataGlobal: 'FR_DATA', storyFile: './stories-fr.js?v=' + DATA_VER, storyGlobal: 'STORIES_FR',
         ttsLang: 'fr-FR', trainerTab: 'sound', trainerIco: '🔤', trainerLabel: '발음',
         primary: '#0055a4', primaryDark: '#003b73', gold: '#ef4135', goldLight: '#fdeceb', redSoft: '#eaf1fa',
         desc: '알파벳과 발음 규칙부터 여행 회화까지', sampleWord: 'Bonjour', joiner: ' ',
@@ -655,6 +691,10 @@ const LS_KEY = 'lang_starter_v1';
 const DEFAULT_SETTINGS = { koPron: 'auto', rate: 1, freeNav: false, dailyGoal: 30, voice: {}, sfx: true, reminderTime: '21:00' };
 let storageFailed = false, storageCorrupt = false;
 let store = loadStore();
+const APP_VERSION = '2.1';
+const ENTRY_URL = location.href;   // 첫 주소(공유 링크의 utm 등) — 통계용, 시작 코드가 ?lang을 지우기 전에 잡아 둔다
+// ☁️ 클라우드(구글 로그인) 상태 — save()가 어디서 불려도 안전하도록 var로 끌어올린다
+var CLOUD = { state: 'off', core: null, sync: null, app: null, auth: null, db: null, user: null, ready: false, dirty: false, pushing: false, syncing: false, applying: false, pushTimer: 0, firstDirty: 0, lastPull: 0, lastPushedRaw: '', error: '', fails: 0, ga: null, gaQueue: [], log: [] };
 function loadStore() {
     let d = {};
     try {
@@ -694,6 +734,7 @@ function cleanLangProg(p) {
             if (c.kind === 'sent') x.kind = 'sent';
             if (typeof c.tts === 'string') x.tts = clip(c.tts, 80);
             if (c.keep) x.keep = clampInt(c.keep, 0, 9, 0);
+            if (isDate(c.rv)) x.rv = c.rv;   // 마지막으로 채점한 날(기기끼리 합칠 때 최신 판정)
             return x;
         }),
         streak: isObj(p.streak) ? { last: isDate(p.streak.last) ? p.streak.last : '', count: clampInt(p.streak.count, 0, 100000, 0) } : { last: '', count: 0 },
@@ -721,6 +762,8 @@ function cleanLangProg(p) {
     if (isObj(p.meta)) o.meta = { lessons: clampInt(p.meta.lessons, 0, 999, 0), stories: clampInt(p.meta.stories, 0, 999, 0), quest: clampInt(p.meta.quest, 0, 999, 0) };
     if (isObj(p.deqImport)) o.deqImport = { at: isDate(p.deqImport.at) ? p.deqImport.at : '', xp: clampInt(p.deqImport.xp, 0, 1e8, 0), days: Array.isArray(p.deqImport.days) ? p.deqImport.days.map(Number).filter(n => n >= 1 && n <= 30) : [], hist: Array.isArray(p.deqImport.hist) ? p.deqImport.hist.filter(isDate) : [], declined: !!p.deqImport.declined };
     if (p.srsV) o.srsV = clampInt(p.srsV, 0, 9, 0);
+    if (p.gen) o.gen = clampInt(p.gen, 0, 1000000, 0);   // 언어 초기화 세대
+    if (isObj(p.legacyImport)) o.legacyImport = { at: isDate(p.legacyImport.at) ? p.legacyImport.at : '', lessons: clampInt(p.legacyImport.lessons, 0, 999, 0), cards: clampInt(p.legacyImport.cards, 0, 99999, 0) };
     return o;
 }
 function isLang(k) { return typeof k === 'string' && Object.prototype.hasOwnProperty.call(LANGS, k); }
@@ -731,6 +774,7 @@ function cleanSettings(v) {
     if (typeof v.freeNav === 'boolean') o.freeNav = v.freeNav;
     if (typeof v.sfx === 'boolean') o.sfx = v.sfx;
     if (typeof v.bigText === 'boolean') o.bigText = v.bigText;
+    if (typeof v.stats === 'boolean') o.stats = v.stats;
     const r = Number(v.rate); if (Number.isFinite(r)) o.rate = Math.max(0.6, Math.min(1.2, Math.round(r * 10) / 10));
     if ([10, 20, 30, 50, 80].includes(Number(v.dailyGoal))) o.dailyGoal = Number(v.dailyGoal);
     if (typeof v.reminderTime === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(v.reminderTime)) o.reminderTime = v.reminderTime;
@@ -743,6 +787,7 @@ function normalizeStore(d) {
     const byLang = {};
     if (isObj(d.byLang)) Object.keys(d.byLang).forEach(k => { if (isLang(k)) { const c = cleanLangProg(d.byLang[k]); if (c) byLang[k] = c; } });
     return {
+        gen: clampInt(d.gen, 0, 1000000, 0),        // 세대: 복원·계정 기록으로 바꾸기처럼 통째로 바꿀 때 +1 (낮은 세대와는 합치지 않음)
         active: isLang(d.active) ? d.active : null,  // 마지막으로 고른 언어 코드
         byLang,                                     // code → {completed, srs, streak, lastPos, xp, daily, boss, mistakes …}
         settings: cleanSettings(d.settings),
@@ -787,13 +832,14 @@ function streakUnion(list) {
 let lastRaw = null;
 try { lastRaw = localStorage.getItem(LS_KEY); } catch (e) { lastRaw = null; }
 function maxBy(a, b, f) { return (a === undefined) ? b : (b === undefined) ? a : (f(b) >= f(a) ? b : a); }
-function mergeLang(a, b) {   // b = 이 탭(우선), a = 다른 탭
+function mergeLang(a, b, force) {   // b = 이 탭(우선), a = 다른 탭
     if (!a) return b; if (!b) return a;
+    if (!force && (a.gen || 0) !== (b.gen || 0)) return (b.gen || 0) > (a.gen || 0) ? b : a;   // 초기화한 쪽(높은 세대)을 통째로
     const o = Object.assign({}, a, b);
     o.completed = Object.assign({}, a.completed);
     Object.entries(b.completed || {}).forEach(([k, v]) => { const x = o.completed[k]; o.completed[k] = !x ? v : Object.assign({}, x, v, { score: Math.max(x.score, v.score), date: x.date < v.date ? x.date : v.date }); });
     o.srs = Object.assign({}, a.srs);
-    Object.entries(b.srs || {}).forEach(([k, v]) => { const x = o.srs[k]; o.srs[k] = !x ? v : ((v.due >= x.due) ? v : x); });
+    Object.entries(b.srs || {}).forEach(([k, v]) => { const x = o.srs[k]; o.srs[k] = !x ? v : ((v.rv || '') !== (x.rv || '')) ? ((v.rv || '') > (x.rv || '') ? v : x) : ((v.due >= x.due) ? v : x); });
     o.daily = Object.assign({}, a.daily);
     Object.entries(b.daily || {}).forEach(([d, v]) => { const x = o.daily[d]; if (!x) { o.daily[d] = v; return; } const m = Object.assign({}, x); Object.keys(v).forEach(k => { m[k] = typeof v[k] === 'number' ? Math.max(v[k], x[k] || 0) : v[k]; }); o.daily[d] = m; });
     ['boss', 'storiesRead', 'roleplay', 'steps', 'spoke', 'heard', 'warm', 'lf', 'ear'].forEach(f => { o[f] = Object.assign({}, a[f] || {}, b[f] || {}); });
@@ -801,10 +847,12 @@ function mergeLang(a, b) {   // b = 이 탭(우선), a = 다른 탭
     o.streak = maxBy(a.streak, b.streak, s2 => (s2 && s2.last) || '');
     return o;
 }
-function mergeStores(other, mine) {
+function mergeStores(other, mine, force) {   // force: 사용자가 '합치기'를 고른 경우 — 세대가 달라도 합친다
+    if (!force && (other.gen || 0) !== (mine.gen || 0)) return (mine.gen || 0) > (other.gen || 0) ? mine : Object.assign({}, other);
     const m = Object.assign({}, mine);
+    if (force) m.gen = Math.max(other.gen || 0, mine.gen || 0);
     m.byLang = Object.assign({}, other.byLang);
-    Object.keys(mine.byLang).forEach(k => { m.byLang[k] = mergeLang(other.byLang[k], mine.byLang[k]); });
+    Object.keys(mine.byLang).forEach(k => { m.byLang[k] = mergeLang(other.byLang[k], mine.byLang[k], force); });
     const so = other.streak, sm = mine.streak;
     m.streak = (so.last > sm.last) ? Object.assign({}, so, { best: Math.max(so.best, sm.best) }) : Object.assign({}, sm, { best: Math.max(so.best, sm.best), count: so.last === sm.last ? Math.max(so.count, sm.count) : sm.count });
     m.badges = Object.assign({}, other.badges, mine.badges);
@@ -812,6 +860,7 @@ function mergeStores(other, mine) {
     m.seen = Object.assign({}, other.seen, mine.seen);
     return m;
 }
+function nextGen() { return Math.max(0, ...Array.from(arguments).map(x => (x && x.gen) || 0)) + 1; }
 function save() {
     try {
         const cur = localStorage.getItem(LS_KEY);
@@ -824,6 +873,7 @@ function save() {
         lastRaw = raw;
     }
     catch (e) { if (!storageFailed) { storageFailed = true; renderStorageWarning(); } }
+    cloudAfterSave();
 }
 // 다른 탭에서 저장하면 바로 반영(합쳐서), 탭으로 돌아왔을 때도 다시 확인
 function syncFromStorage() {
@@ -878,6 +928,7 @@ function touchStreak() {
     } else st.count = 1;
     st.last = t;
     if (st.count > st.best) st.best = st.count;
+    if (st.count % 7 === 0) track('streak_milestone', { days: st.count });
     if (st.count % 7 === 0 && st.shields < 2) { st.shields++; setTimeout(() => showToast('🛡️ ' + st.count + '일 연속! 방패 1개를 받았어요 (빠진 날을 1번 지켜 줘요)', 'gold', 3400), 800); }
     save();
     setTimeout(checkBadges, 50);
@@ -929,7 +980,7 @@ function addXp(n, why, quiet) {
     if (!quiet) showToast('+' + n + ' XP' + (why ? ' · ' + why : ''));
     setTimeout(() => { checkQuests(); checkBadges(); }, 30);
     const after = levelOf(p.xp);
-    if (after.lv > before.lv) { celebrate(); sfx('level'); showToast(after.ico + ' 레벨 업! Lv.' + after.lv + ' ' + after.name, 'gold', 3400); }
+    if (after.lv > before.lv) { celebrate(); sfx('level'); showToast(after.ico + ' 레벨 업! Lv.' + after.lv + ' ' + after.name, 'gold', 3400); track('level_up', { level: after.lv }); }
     else if (wasBelow && dl.xp >= goal) { celebrate(); sfx('level'); showToast('🎯 오늘의 목표 달성! 🔥 ' + curStreak() + '일 연속', 'gold', 3400); }
     updateHeader();
 }
@@ -1021,10 +1072,16 @@ function celebrate() {
     setTimeout(() => box.remove(), 2100);
 }
 let audioCtx = null;
+// 아이폰: 무음(진동) 모드에서도 발음이 들리도록 첫 터치 때 오디오 세션을 '재생'으로(사파리 16.4+), 효과음도 깨운다
+document.addEventListener('pointerdown', () => {
+    try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) { }
+    try { if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); } catch (e) { }
+}, { capture: true, passive: true });
 function sfx(kind) {
     if (!store.settings.sfx) return;
     try {
         audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume().catch(() => { });
         const notes = { ok: [660, 880], bad: [220, 180], level: [523, 659, 784, 1047], tap: [520] }[kind] || [440];
         notes.forEach((f, i) => {
             const o = audioCtx.createOscillator(), g = audioCtx.createGain();
@@ -1130,6 +1187,37 @@ function makeUtter(text, rate, speaker) {
     u.rate = Math.max(0.4, rate * tune.rate * curRate());
     return u;
 }
+// 소리가 정말 나는지 지켜본다: 시작/끝 이벤트가 오면 정상, 합성 실패 오류가 나거나(또는 두 번 연속) 3.5초 안에 아무 반응이 없으면 '소리 안 남'
+const TTS_HEALTH = { ok: false, fails: 0, bad: false, dismissed: false };
+function ttsGood() { TTS_HEALTH.ok = true; TTS_HEALTH.fails = 0; if (TTS_HEALTH.bad) { TTS_HEALTH.bad = false; renderTtsWarning(); } }
+function ttsFail(why) {
+    if (TTS_HEALTH.ok) return;
+    TTS_HEALTH.fails++;
+    if (TTS_HEALTH.bad || (why === 'timeout' && TTS_HEALTH.fails < 2)) return;
+    TTS_HEALTH.bad = true; renderTtsWarning(); track('tts_fail', { why: String(why).slice(0, 30) });
+}
+function ttsBadNow() { return !ttsAvailable() || TTS_HEALTH.bad; }
+function watchUtter(u, tok) {
+    u.onstart = ttsGood;
+    const active = !navigator.userActivation || navigator.userActivation.isActive;   // 사용자가 누르지 않은 자동 재생은 판정에서 뺀다
+    if (active && !TTS_HEALTH.ok) setTimeout(() => { if (!TTS_HEALTH.ok && tok === seqToken && !u.__ended) ttsFail('timeout'); }, 3500);
+}
+function ttsErrorIsReal(ev) { const e = ev && ev.error; return !!e && !/interrupted|canceled|not-allowed/.test(e); }
+function renderTtsWarning() {
+    const el = document.getElementById('ttsWarn');
+    if (!el) return;
+    if (!TTS_HEALTH.bad || TTS_HEALTH.dismissed) { el.hidden = true; return; }
+    const ua = navigator.userAgent || '', href = IN_APP ? openExternalHref() : '';
+    el.innerHTML = '🔇 <b>소리가 나지 않아요.</b> ' + (IN_APP ? '앱 안의 브라우저는 소리가 안 나는 경우가 많아요. 기본 브라우저(크롬·사파리)로 열어 주세요.'
+        : /Android/i.test(ua) ? '휴대폰 설정 → 일반(또는 접근성) → <b>텍스트 음성 변환(TTS)</b>에서 Google 음성 엔진을 고르고, ' + esc(CUR ? CUR.name : '') + ' 음성을 내려받은 뒤 다시 열어 주세요.'
+        : /iPhone|iPad|iPod/.test(ua) ? '🔕 옆면 무음 스위치를 끄고 음량을 올려 보세요. 그래도 안 되면 설정 › 손쉬운 사용 › 읽기 및 말하기 › 음성에서 ' + esc(CUR ? CUR.name : '') + ' 음성을 내려받아 보세요.'
+        : '크롬·엣지·사파리 최신 버전으로 열거나, 컴퓨터의 소리·음성 설정을 확인해 주세요.') +
+        ' 듣기 문제는 <b>🔇 글자로 보기</b>로 풀 수 있어요.' +
+        '<div style="display:flex;gap:8px;margin-top:6px">' + (href ? '<a class="btn small" href="' + esc(href) + '" style="text-decoration:none">👉 기본 브라우저로 열기</a>' : '') + '<button class="btn small gray" id="ttsWarnClose">닫기</button></div>';
+    el.hidden = false;
+    const x = document.getElementById('ttsWarnClose');
+    if (x) x.addEventListener('click', () => { TTS_HEALTH.dismissed = true; el.hidden = true; });
+}
 let ttsWarned = false;
 function ttsCheck() {
     if (ttsWarned || !CUR) return;
@@ -1156,7 +1244,9 @@ function speak(text, rate = 1, speaker, retried) {
     try {
         const u = makeUtter(text, rate, speaker);
         const tok = seqToken;
-        u.onerror = ev => { if (!retried && tok === seqToken && remoteFailed(u, ev)) speak(text, rate, speaker, true); };
+        u.onerror = ev => { u.__ended = true; if (!retried && tok === seqToken && remoteFailed(u, ev)) { speak(text, rate, speaker, true); return; } if (ttsErrorIsReal(ev)) ttsFail(ev.error); };
+        u.onend = () => { u.__ended = true; ttsGood(); };
+        watchUtter(u, tok);
         speechSynthesis.speak(u);
     } catch (e) { /* 재생 실패는 무시 */ }
 }
@@ -1167,7 +1257,7 @@ function clearPlaying() { document.querySelectorAll('.playing').forEach(el => el
 // items: 문자열 또는 {text, speaker, part} — 문장·화자·파트가 바뀔 때 사람처럼 쉬는 시간을 다르게 둔다.
 // iOS 사파리는 한꺼번에 큐에 넣으면 멈추므로 한 문장씩 이어 읽는다.
 function speakSeq(items, onDone, onStep) {
-    if (!ttsAvailable() || !CUR) return;
+    if (!ttsAvailable() || !CUR) { if (onDone) setTimeout(onDone, 0); return; }
     stopSpeak(); seqPlaying = true;
     const my = seqToken;
     const list = items.map(x => typeof x === 'string' ? { text: x } : x).filter(x => x && x.text);
@@ -1189,9 +1279,13 @@ function speakSeq(items, onDone, onStep) {
             if (/[?？]\s*$/.test(cur.text)) gap += 150;
         }
         let advanced = false;
-        const go = () => { if (advanced) return; advanced = true; setTimeout(next, gap); };
-        u.onend = go;
-        u.onerror = ev => { if (!cur.retried && remoteFailed(u, ev)) { cur.retried = true; i = idx; advanced = true; setTimeout(next, 50); return; } go(); };
+        const go = () => { if (advanced) return; advanced = true; clearTimeout(dog); setTimeout(next, gap); };
+        // 멈춤 감시: 끝·오류 이벤트가 안 오는 기기(목소리 0개 등)에서도 다음 문장으로 넘어간다
+        const perChar = /[\u3040-\u30ff\u4e00-\u9fff]/.test(cur.text) ? 380 : 130;   // 한자·가나는 한 글자가 길다
+        const dog = setTimeout(() => { if (!advanced && my === seqToken) { if (!TTS_HEALTH.ok) ttsFail('timeout'); go(); } }, Math.max(3000, cur.text.length * perChar / Math.max(0.5, curRate())) * (TTS_HEALTH.ok ? 3 : 1) + 1500);
+        u.onend = () => { u.__ended = true; ttsGood(); go(); };
+        u.onerror = ev => { u.__ended = true; if (!cur.retried && remoteFailed(u, ev)) { cur.retried = true; i = idx; advanced = true; setTimeout(next, 50); return; } if (ttsErrorIsReal(ev)) ttsFail(ev.error); go(); };
+        watchUtter(u, my);
         try { speechSynthesis.speak(u); } catch (e) { go(); }
     };
     next();
@@ -1239,6 +1333,16 @@ document.addEventListener('keydown', e => {
 });
 
 /* ═══════════════════ 말하기 채점 (음성 인식) ═══════════════════ */
+const MIC_BLOCKED = { on: false };   // 이번 세션에 마이크 권한·장치 문제가 있었는지
+function micHelpText(code) {
+    const ua = navigator.userAgent || '', ios = /iPhone|iPad|iPod/.test(ua);
+    if (IN_APP) return '앱 안의 브라우저에서는 마이크 채점이 잘 안 돼요. 기본 브라우저(크롬·사파리)로 열면 채점돼요.';
+    if (code === 'audio-capture') return '마이크를 찾지 못했어요. 이어폰·마이크 연결을 확인해 주세요.';
+    if (ios && code === 'service-not-allowed') return '아이폰은 설정 › 일반 › 키보드 › 받아쓰기를 켜야 음성 인식이 돼요.';
+    if (ios) return '설정 › Safari › 마이크를 「허용」으로 바꾸거나, 주소창의 「aA」 → 웹 사이트 설정 → 마이크를 허용해 주세요.';
+    if (/Android/i.test(ua)) return '마이크가 막혀 있어요. 주소창 왼쪽 🔒(또는 ⓘ) → 권한 → 마이크 허용 후 새로고침해 주세요.';
+    return '마이크가 막혀 있어요. 주소창의 🔒 아이콘 → 마이크 허용 후 새로고침해 주세요.';
+}
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
 const SPEAK_PASS = 70;
 const CHAR_LANGS = { zh: true, ja: true };   // 띄어쓰기 없는 언어는 글자 단위로 채점
@@ -1400,10 +1504,12 @@ function openSpeak(cfg) {
         sheet.querySelector('#micRoman').innerHTML = romanLine(item) + pronLine(item.koPron, undefined, item);
         if (rv) rv.remove();
     }
-    let useRec = !SR;
+    let useRec = !SR || MIC_BLOCKED.on;
     function ready(msg) {
         if (!useRec) {
-            stage.innerHTML = '<button class="mic-circle" id="micGo" aria-label="말하기 시작">🎤</button><div class="mic-hint" id="micHint">' + esc(msg || (boss ? '한국어 뜻을 보고 ' + CUR.name + '로 말해 보세요.' : '버튼을 누르고 또박또박 따라 말해 보세요.')) + '</div><div class="mic-heard" id="micHeard"></div>' +
+            const privNote = !store.seen.micPrivacy ? '<div class="muted" style="font-size:11.5px;text-align:center;margin-top:4px">🔒 채점할 때 말한 소리는 브라우저 회사(크롬은 구글, 사파리는 애플)의 음성 인식으로 보내질 수 있어요. 이 앱은 저장하지 않아요' + (REC_OK ? ' · 싫으면 🎙 녹음 비교(기기 안에서만)' : '') + '</div>' : '';
+            if (privNote) { store.seen.micPrivacy = todayStr(); save(); }
+            stage.innerHTML = '<button class="mic-circle" id="micGo" aria-label="말하기 시작">🎤</button><div class="mic-hint" id="micHint">' + esc(msg || (boss ? '한국어 뜻을 보고 ' + CUR.name + '로 말해 보세요.' : '버튼을 누르고 또박또박 따라 말해 보세요.')) + '</div><div class="mic-heard" id="micHeard"></div>' + privNote +
                 (REC_OK ? '<div style="text-align:center"><button class="btn small gray" id="micToRec">🎙 녹음해서 비교하기</button></div>' : '');
             stage.querySelector('#micGo').addEventListener('click', listen);
             const tr = stage.querySelector('#micToRec');
@@ -1446,13 +1552,18 @@ function openSpeak(cfg) {
         }).catch(() => { useRec = true; ready('마이크를 쓸 수 없어요. 권한을 허용했는지 확인해 주세요.'); });
     }
     function listen() {
-        if (recog) { try { recog.stop(); } catch (e) { } return; }
+        if (recog) {   // ⏹를 누름: 멈추고, 1.2초 안에 끝나지 않으면 강제로 끊고 들린 만큼으로 채점
+            const r0 = recog; try { r0.stop(); } catch (e) { }
+            setTimeout(() => { if (recog === r0 && r0.__finishNow) r0.__finishNow(); }, 1200);
+            return;
+        }
         stopSpeak();
+        if (!store.seen.micAsk) { store.seen.micAsk = todayStr(); save(); showToast('🎤 처음 한 번은 마이크 사용을 「허용」해 주세요', '', 3000); }
         let r;
         try { r = new SR(); } catch (e) { ready('음성 인식을 시작할 수 없어요.'); return; }
         recog = r;
         r.lang = CUR.ttsLang; r.interimResults = true; r.continuous = false; r.maxAlternatives = 3;
-        let finalText = '', errored = false;
+        let finalText = '', lastInterim = '', errored = false;
         const btn = stage.querySelector('#micGo'), hint = stage.querySelector('#micHint'), heard = stage.querySelector('#micHeard');
         btn.classList.add('listening'); btn.textContent = '⏹'; hint.textContent = '듣고 있어요... 다 말하면 잠시 기다리거나 ⏹를 누르세요';
         r.onresult = ev => {
@@ -1467,28 +1578,42 @@ function openSpeak(cfg) {
                     finalText += ' ' + best;
                 } else interim += res[0].transcript;
             }
+            if (interim.trim()) lastInterim = interim.trim();
             heard.textContent = (interim || finalText).trim();
         };
         r.onerror = ev => {
             if (recog !== r) return;
             errored = true; stopRecog();
             const c = ev && ev.error;
-            ready(c === 'not-allowed' || c === 'service-not-allowed' ? '마이크 권한이 꺼져 있어요. 브라우저 설정에서 마이크를 허용해 주세요.'
-                : c === 'no-speech' ? '소리가 안 들렸어요. 조금 더 크게 다시 말해 보세요.'
-                : c === 'audio-capture' ? '마이크를 찾지 못했어요.'
+            if (c === 'not-allowed' || c === 'service-not-allowed' || c === 'audio-capture') {
+                // 권한·기기 문제는 문장마다 반복되니, 이 세션 동안은 소리 내어 말하고 스스로 확인하는 방식으로
+                MIC_BLOCKED.on = true; useRec = true; track('mic_blocked', { why: c });
+                ready(micHelpText(c) + ' 지금은 소리 내어 말하고 스스로 확인해요.');
+                return;
+            }
+            ready(c === 'no-speech' ? '소리가 안 들렸어요. 조금 더 크게 다시 말해 보세요.'
                 : c === 'network' ? (REC_OK ? (useRec = true, '음성 인식은 인터넷이 필요해요. 오프라인에서는 녹음 비교로 연습해요.') : '인터넷 연결을 확인해 주세요. 음성 인식은 온라인에서만 돼요.')
-                : c === 'service-not-allowed' && /iPhone|iPad/.test(navigator.userAgent) ? '아이폰은 설정 › 일반 › 키보드 › 받아쓰기를 켜야 음성 인식이 돼요.'
                 : '다시 시도해 주세요.');
         };
         r.onend = () => {
             if (recog !== r) return;
             stopRecog();
-            const said = finalText.trim();
+            const said = finalText.trim() || lastInterim;   // 끝 결과가 없으면 마지막 중간 결과로
             if (said) finish(scoreSpeechItem(CUR.code, item, said), said);
             else if (!errored) ready('소리가 안 들렸어요. 조금 더 크게 다시 말해 보세요.');
         };
+        // 브라우저가 끝(onend)을 주지 않고 멈추는 경우(아이폰 등): 강제로 끊고 들린 만큼 채점, 아무것도 없으면 스스로 확인으로
+        r.__finishNow = () => {
+            if (recog !== r) return;
+            try { r.abort(); } catch (e) { }
+            stopRecog();
+            const said = finalText.trim() || lastInterim;
+            if (said) { finish(scoreSpeechItem(CUR.code, item, said), said); return; }
+            MIC_BLOCKED.on = true; useRec = true;
+            ready('음성 인식이 응답하지 않아요. 지금은 소리 내어 말하고 스스로 확인해요.');
+        };
         try { r.start(); } catch (e) { stopRecog(); ready('음성 인식을 시작하지 못했어요. 잠시 후 다시 시도해 주세요.'); return; }
-        recogTimer = setTimeout(() => { try { r.stop(); } catch (e) { } }, 10000);
+        recogTimer = setTimeout(() => { try { r.stop(); } catch (e) { } setTimeout(() => { if (recog === r) r.__finishNow(); }, 1500); }, 10000);
     }
     function finish(res, said) {
         reveal();
@@ -1651,6 +1776,36 @@ function b64decode(b64) {
     const bytes = Uint8Array.from(bin, c => c.charCodeAt(0));
     return new TextDecoder().decode(bytes);
 }
+async function exportProgressCode() {   // 새 형식 'LS3:' + base64url(gzip(JSON)) — 예전 코드보다 4~5배 짧다. 압축을 못 하면 예전 형식
+    const json = JSON.stringify({ v: 3, tag: '랭귀지 스타터', app: 'language-starter', formatVersion: 3, exportedAt: new Date().toISOString(), data: store });
+    if (typeof CompressionStream === 'function') {
+        try { const gz = new Uint8Array(await new Response(new Blob([new TextEncoder().encode(json)]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer()); return 'LS3:' + b64FromBytes(gz).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); } catch (e) { }
+    }
+    return b64encode(json);
+}
+async function parseBackupAny(code) {
+    const t = String(code || '').replace(/\s+/g, '');
+    if (!t.startsWith('LS3:')) return parseBackup(code);
+    if (typeof DecompressionStream !== 'function') throw new Error('이 브라우저는 새 백업 코드를 읽지 못해요. 크롬·사파리 최신 버전에서 복원해 주세요.');
+    let b = t.slice(4).replace(/-/g, '+').replace(/_/g, '/'); while (b.length % 4) b += '=';
+    let obj;
+    try { obj = JSON.parse(await new Response(new Blob([bytesFromB64(b)]).stream().pipeThrough(new DecompressionStream('gzip'))).text()); }
+    catch (e) { throw new Error('코드를 읽을 수 없어요. 전체를 빠짐없이 복사했는지 확인해 주세요.'); }
+    if (!obj || !obj.data || typeof obj.data !== 'object') throw new Error('올바른 백업 코드가 아니에요.');
+    if (obj.tag && obj.tag !== '랭귀지 스타터') throw new Error('다른 앱(' + obj.tag + ')의 백업 코드예요.');
+    return obj;
+}
+async function shareBackupFile(code) {   // 휴대폰: 공유 시트(카톡 '나와의 채팅' 등)로 파일 보내기, 안 되면 내려받기
+    const name = 'language-starter-backup-' + todayStr() + '.txt';
+    try {
+        const f = new File([code], name, { type: 'text/plain' });
+        if (navigator.canShare && navigator.canShare({ files: [f] })) { await navigator.share({ files: [f], title: '랭귀지 스타터 백업' }); return 'shared'; }
+    } catch (e) { if (e && e.name === 'AbortError') return 'cancel'; }
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([code], { type: 'text/plain' }));
+    a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    return 'saved';
+}
 function exportProgress() { return b64encode(JSON.stringify({ v: 2, tag: '랭귀지 스타터', app: 'language-starter', formatVersion: 2, exportedAt: new Date().toISOString(), data: store })); }
 function parseBackup(code) {
     if (!code || !code.trim()) throw new Error('코드를 붙여넣어 주세요.');
@@ -1674,7 +1829,8 @@ function importProgress(code) {
     catch (e) { throw new Error('코드를 읽을 수 없어요. 전체를 빠짐없이 복사했는지 확인해 주세요.'); }
     if (!obj || !obj.data || typeof obj.data !== 'object') throw new Error('올바른 백업 코드가 아니에요.');
     if (obj.tag && obj.tag !== '랭귀지 스타터') throw new Error('다른 앱(' + obj.tag + ')의 백업 코드예요.');
-    store = normalizeStore(obj.data);
+    const g = nextGen(store, obj.data);
+    store = normalizeStore(obj.data); store.gen = g;
     save();
     let lessons = 0, cards = 0;
     Object.values(store.byLang).forEach(p => { lessons += Object.keys(p.completed || {}).length; cards += Object.keys(p.srs || {}).length; });
@@ -1696,6 +1852,12 @@ function loadScriptOnce(src, globalName) {
     return pr;
 }
 function applyBigText() { const a = document.querySelector('.app'); if (a) a.classList.toggle('big-text', !!store.settings.bigText); }
+const NATIVE_FONT = {
+    zh: '"PingFang SC", "Microsoft YaHei", "Noto Sans SC", "Malgun Gothic", sans-serif',
+    ja: '"Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", "Noto Sans JP", "Noto Sans CJK JP", "Malgun Gothic", sans-serif',
+    en: 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Malgun Gothic", sans-serif',
+};
+NATIVE_FONT.es = NATIVE_FONT.fr = NATIVE_FONT.en;
 function applyTheme(L) {
     const r = document.documentElement.style;
     r.setProperty('--primary', L.primary);
@@ -1703,6 +1865,8 @@ function applyTheme(L) {
     r.setProperty('--gold', L.gold);
     r.setProperty('--gold-light', L.goldLight);
     r.setProperty('--red-soft', L.redSoft);
+    const tc = document.querySelector('meta[name=theme-color]'); if (tc) tc.setAttribute('content', L.primary);   // 브라우저 상단 색도 언어 색으로
+    r.setProperty('--native-font', NATIVE_FONT[L.code] || NATIVE_FONT.zh);
 }
 function resetTransient() { S.review = null; S.redo = null; S.match = null; S.trainer = null; S.story = null; S.storyIdx = null; S.quiz = null; S.skip = null; S.histSel = null; }
 let langGen = 0;
@@ -1728,7 +1892,7 @@ async function activateLanguage(code, opts) {
         if (!data || !Array.isArray(data.units)) throw new Error('bad data');
     } catch (e) {
         if (gen !== langGen) return;
-        if (store.active === code) { store.active = null; save(); }
+        if (store.active === code && navigator.onLine !== false) { store.active = null; save(); }
         $main.innerHTML = '<div class="empty-state fail-screen"><div class="es-emoji">📶</div><b>' + esc(L.name) + ' 학습 자료를 불러오지 못했어요</b><br>인터넷 연결을 확인하고 잠시 후 다시 시도해 주세요.<br>' +
             '<button class="btn" id="retryLoad">🔄 다시 시도</button><br><button class="btn ghost" id="pickOther">🌍 다른 언어 고르기</button></div>';
         document.getElementById('retryLoad').addEventListener('click', () => { delete window[L.dataGlobal]; activateLanguage(code, opts); });
@@ -1857,7 +2021,60 @@ function importDeq(info) {
     checkBadges(true);
     return { lessons, cards, xp: dXp, streak: curStreak() };
 }
+/* ── 예전 앱(니하오 중국어 · 올라 스페인어) 기록 이어받기 — 같은 레슨 데이터라 그대로 옮겨진다 ── */
+const LEGACY = { zh: { key: 'nihao_zh_v1', name: '니하오 중국어', native: 'hanzi', roman: 'pinyin' }, es: { key: 'hola_es_v1', name: '올라 스페인어', native: 'es', roman: null } };
+function readLegacy(code) {
+    const L = LEGACY[code]; if (!L) return null;
+    let d = null; try { d = JSON.parse(localStorage.getItem(L.key) || 'null'); } catch (e) { d = null; }
+    if (!isObj(d)) return null;
+    const completed = isObj(d.completed) ? Object.keys(d.completed).filter(id => /^u\d+l\d+$/.test(id) && isObj(d.completed[id]) && LESSON_BY_ID[id] !== undefined) : [];
+    const cards = isObj(d.srs) ? Object.values(d.srs).filter(c => isObj(c) && typeof c[L.native] === 'string' && c[L.native]) : [];
+    if (!completed.length && !cards.length) return null;
+    return { d, L, completed, cards };
+}
+function importLegacy(code) {
+    if (!LEGACY[code]) return null;
+    const p = prog();
+    if (p.legacyImport) return null;   // 한 번만(예전 앱은 이제 안내 페이지라 새 기록이 생기지 않음)
+    const info = readLegacy(code);
+    if (!info) return null;
+    const { d, L } = info;
+    let lessons = 0, cards = 0, spread = 0;
+    info.completed.forEach(id => {
+        const c = d.completed[id], total = clampInt(c.total, 1, 500, 1), score = clampInt(c.score, 0, total, 0), date = isDate(c.date) ? c.date : todayStr();
+        const x = p.completed[id];
+        if (!x) { p.completed[id] = { score, total, date, imported: 'legacy' }; lessons++; }
+        else if (score > x.score && x.total === total) x.score = score;
+    });
+    info.cards.forEach(c => {
+        let due = isDate(c.due) ? c.due : todayStr();
+        if (due < todayStr()) due = todayStr(spread++ % 7);   // 한참 밀린 카드는 오늘~6일 뒤로 나눈다
+        if (addSrsCard(p, { native: c[L.native], pinyin: L.roman ? String(c[L.roman] || '') : '', ko: String(c.ko || ''), koPron: String(c.koPron || ''), box: clampInt(c.box, 1, 5, 1), due })) cards++;
+    });
+    if (lessons) p.xp = (p.xp || 0) + lessons * XP.lesson;
+    if (!p.lastPos && isObj(d.lastPos) && typeof d.lastPos.id === 'string' && LESSON_BY_ID[d.lastPos.id] !== undefined) p.lastPos = { id: d.lastPos.id, step: clampInt(d.lastPos.step, 0, 4, 0) };
+    if (isObj(d.streak) && isDate(d.streak.last) && clampInt(d.streak.count, 0, 100000, 0) > 0) {
+        const gs = store.streak, cur = curStreak(), cnt = clampInt(d.streak.count, 0, 100000, 0);
+        gs.best = Math.max(gs.best || 0, cnt);
+        if (dayDiff(d.streak.last, todayStr()) <= 1) {
+            const u = streakUnion([{ last: d.streak.last, count: cnt }].concat(cur ? [{ last: gs.last, count: cur }] : []));
+            if (u.count > cur) { gs.last = u.last; gs.count = u.count; gs.best = Math.max(gs.best, u.count); }
+        }
+    }
+    if (isObj(d.storiesRead)) { if (!p.storiesRead) p.storiesRead = {}; Object.keys(d.storiesRead).forEach(id => { const r = d.storiesRead[id]; if (!p.storiesRead[id] && isObj(r) && isDate(r.date)) p.storiesRead[id] = { date: r.date }; }); }
+    p.legacyImport = { at: todayStr(), lessons, cards };
+    save();
+    track('legacy_import', { lessons, cards });
+    return { lessons, cards, name: L.name };
+}
 function afterActivate(code, opts) {
+    const lg = importLegacy(code);
+    if (lg) {
+        store.seen['welcome_' + code] = store.seen['welcome_' + code] || todayStr(); save();
+        S.openUnit = null; render();
+        setTimeout(() => { celebrate(); showToast('📦 예전 「' + lg.name + '」 기록을 이어받았어요 · 레슨 ' + lg.lessons + '개 · 카드 ' + lg.cards + '장', 'gold', 4600); }, 300);
+        return;
+    }
     const deq = code === 'en' ? deqPending() : null;
     if (!store.seen['welcome_' + code]) { showWelcome(code, deq); return; }
     if (deq && (opts.fromDeq || !store.seen.deqOfferShown)) showDeqOffer(deq);
@@ -2018,7 +2235,7 @@ function updateTabs() {
 
 /* ═══════════════════ 언어 선택 화면 ═══════════════════ */
 function renderPicker() {
-    let h = '<div class="lang-pick">' +
+    let h = '<div class="lang-pick">' + inAppNoteHtml() +
         '<div class="lp-title">🌍 어떤 언어를 배울까요?</div>' +
         '<div class="lp-sub">왕초보를 위한 기초 회화 · 순서대로 따라 하면 말문이 트여요</div>';
     Object.values(LANGS).forEach(L => {
@@ -2031,10 +2248,18 @@ function renderPicker() {
             (done || (p && p.xp) ? '<div class="lc-prog">' + lv.ico + ' Lv.' + lv.lv + ' · 완료 레슨 ' + done + '개 — 이어서 하기</div>' : '') + '</div>' +
             '<div class="lc-arrow">→</div></div>';
     });
-    h += '<div class="muted" style="text-align:center;margin-top:8px">언제든 오른쪽 위 🔀 언어 버튼으로 바꿀 수 있고,<br>언어마다 진도가 각각 따로 저장돼요.</div></div>';
+    h += '<div class="muted" style="text-align:center;margin-top:8px">언제든 오른쪽 위 🔀 언어 버튼으로 바꿀 수 있고,<br>언어마다 진도가 각각 따로 저장돼요.</div>';
+    if (cloudOn() && !CLOUD.user) h += '<div style="margin-top:14px">' + cloudCardHtml('picker') + '</div>';
+    h += '<div style="text-align:center;margin-top:10px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="btn small ghost" id="pickRestore">📦 다른 기기 기록 가져오기</button><button class="btn small ghost" id="pickHelp">❓ 도움말</button></div>';
+    if (statsAllowed()) h += '<div class="muted" style="text-align:center;margin-top:10px;font-size:11.5px">앱을 고치려고 쿠키로 사용 통계를 모아요(이름·이메일 없음) · ⚙️ 설정에서 끌 수 있어요 · <a href="../privacy.html" target="_blank" rel="noopener">개인정보 안내</a></div>';
+    h += '</div>';
     $main.innerHTML = h;
+    bindCloudCard('picker');
+    document.getElementById('pickRestore').addEventListener('click', () => openRestore());
+    document.getElementById('pickHelp').addEventListener('click', openHelp);
+    bindInAppNote();
     $main.querySelectorAll('[data-lang]').forEach(c => {
-        c.addEventListener('click', () => activateLanguage(c.dataset.lang));
+        c.addEventListener('click', () => { track('select_language', { language: c.dataset.lang }); activateLanguage(c.dataset.lang); });
     });
 }
 
@@ -2064,12 +2289,17 @@ function renderHome() {
     } else {
         html += '<div class="continue-card" id="continueBtn"><div class="cc-label">🎉 전 과정 수료!</div>' +
             '<div class="cc-title">모든 레슨을 완료했어요</div>' +
-            '<div class="cc-goal">복습과 ' + CUR.trainerLabel + ' 훈련, 쉬운 읽기로 실력을 다져 보세요.</div></div>';
+            '<div class="cc-goal">복습과 ' + CUR.trainerLabel + ' 훈련, 쉬운 읽기로 실력을 다져 보세요.</div></div>' +
+            '<button class="btn ghost block" id="bragCourse" style="margin:-4px 0 12px">🎓 친구에게 자랑하기</button>';
     }
     html += todayCardHtml(due);
-    if (IOS_SAFARI && doneCount() >= 1 && !(store.seen.iosNudge && dayDiff(store.seen.iosNudge, todayStr()) < 14) && !(store.seen.lastBackup && dayDiff(store.seen.lastBackup, todayStr()) < 30))
-        html += '<div class="inapp-note" id="iosNudge">📌 아이폰 사파리는 7일 동안 안 열면 학습 기록을 지울 수 있어요. <b>공유 → 홈 화면에 추가</b>하면 안전해요.<div style="display:flex;gap:8px;margin-top:8px"><button class="btn small" id="iosBackup">💾 백업 코드 만들기</button><button class="btn small gray" id="iosClose">닫기</button></div></div>';
-    if (IN_APP) html += '<div class="inapp-note">📱 카카오톡·네이버 등 앱 안의 브라우저에서는 발음 듣기·마이크가 잘 안 될 수 있어요. 오른쪽 위 메뉴(⋮)에서 <b>다른 브라우저로 열기</b>(Chrome/Safari)를 눌러 주세요.</div>';
+    if (!IN_APP && !CLOUD.user && !cloudNudgeDue() && doneCount() >= 2 && !(store.seen.iosNudge && dayDiff(store.seen.iosNudge, todayStr()) < 14) && !(store.seen.lastBackup && dayDiff(store.seen.lastBackup, todayStr()) < 30))
+        html += '<div class="inapp-note" id="iosNudge">📱 학습 기록은 <b>이 기기의 이 브라우저에만</b> 있어요. 휴대폰을 바꾸거나 인터넷 사용 기록(사이트 데이터)을 지우면 사라져요' + (IOS_SAFARI ? ' — 아이폰 사파리는 7일 동안 안 열면 지울 수도 있어요' : '') + '. 가끔 백업 파일을 만들어 두세요' + (cloudOn() ? ', 구글로 로그인하면 자동으로 지켜져요' : '') + '.<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap"><button class="btn small" id="iosBackup">📤 백업 파일 보내기</button>' + (cloudOn() ? '<button class="btn small ghost" id="iosLogin">☁️ 구글로 로그인</button>' : '') + '<button class="btn small gray" id="iosClose">닫기</button></div></div>';
+    if (curStreak() >= 7 && curStreak() % 7 === 0 && store.streak.last === todayStr() && store.seen.bragStreak !== todayStr()) html += '<div class="guide-banner" id="bragStreak" role="button" tabindex="0">🔥 ' + curStreak() + '일 연속 달성! 친구에게 자랑하고 같이 해요 📣</div>';
+    if (cloudNudgeDue()) html += cloudCardHtml('home');
+    else if (installDue()) html += '<div class="card" id="installCard" style="text-align:center"><b>📲 홈 화면에 설치할까요?</b><div class="muted" style="margin:4px 0 8px">아이콘을 누르면 바로 열리고, 인터넷이 끊겨도 배운 레슨을 볼 수 있어요</div><div style="display:flex;gap:8px;justify-content:center"><button class="btn small" id="installYes">설치하기</button><button class="btn small gray" id="installNo">나중에</button></div></div>';
+    else if (feedbackAskDue()) html += '<div class="card" id="fbAsk" style="text-align:center"><b>랭귀지 스타터, 써 보니 어때요?</b><div class="muted" style="margin:4px 0 8px">한 번만 눌러 주시면 앱을 고치는 데 큰 힘이 돼요</div><div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="btn small ghost" data-fbask="good">😍 좋아요</button><button class="btn small ghost" data-fbask="ok">🙂 괜찮아요</button><button class="btn small ghost" data-fbask="bad">😕 아쉬워요</button></div><button class="btn small gray" id="fbAskNo" style="margin-top:8px">다음에</button></div>';
+    html += inAppNoteHtml();
     const dlq = dayLog(), qs = quickSentence();
     if (qs && !dlq.quick && new Date().getHours() >= 18 && !dlq.xp && curStreak() > 0) html += '<div class="guide-banner" id="eveBanner">🌙 오늘 1분만 해도 🔥 ' + curStreak() + '일 연속을 이어 가요 →</div>';
     if (qs && !dlq.quick) html += '<div class="quick-card" id="quickBtn" role="button" tabindex="0"><div class="qc-ico">⚡</div><div><div class="qc-t">바쁜 날엔 1분만!</div><div class="qc-d">오늘의 한 문장 듣고 말하기' + (Object.keys(prog().srs).length >= 4 ? ' + 짝 맞추기 5쌍' : '') + ' — 연속 기록이 이어져요</div></div></div>';
@@ -2116,12 +2346,31 @@ function renderHome() {
     if (cb) cb.addEventListener('click', () => { if (nextIdx >= 0) openLesson(nextIdx, resumeStep); else { resetTransient(); go('review'); } });
     const gb = document.getElementById('guideBanner');
     if (gb) gb.addEventListener('click', () => go('guide'));
+    const bcs = document.getElementById('bragCourse');
+    if (bcs) bcs.addEventListener('click', () => shareApp('brag_course', bragText('course')));
     const ib = document.getElementById('iosBackup');
-    if (ib) ib.addEventListener('click', () => { S.openBackup = true; go('settings'); });
+    if (ib) ib.addEventListener('click', async () => { if (IN_APP) { S.openBackup = true; go('settings'); return; } try { const r = await shareBackupFile(await exportProgressCode()); if (r !== 'cancel') { store.seen.lastBackup = todayStr(); save(); showToast(r === 'shared' ? '📤 백업 파일을 보냈어요' : '📥 백업 파일을 저장했어요'); const n = document.getElementById('iosNudge'); if (n) n.remove(); } } catch (e) { S.openBackup = true; go('settings'); } });
+    const il = document.getElementById('iosLogin');
+    if (il) il.addEventListener('click', () => go('settings'));
     const ic = document.getElementById('iosClose');
     if (ic) ic.addEventListener('click', () => { store.seen.iosNudge = todayStr(); save(); const n = document.getElementById('iosNudge'); if (n) n.remove(); });
     const dqb = document.getElementById('deqBanner');
     if (dqb) dqb.addEventListener('click', () => { const i = deqPending(); if (i) showDeqOffer(i); });
+    if (document.getElementById('cloudCard')) bindCloudCard('home');
+    bindInAppNote();
+    $main.querySelectorAll('[data-fbask]').forEach(b => b.addEventListener('click', () => { store.seen.feedbackAsked = todayStr(); save(); const c = document.getElementById('fbAsk'); if (c) c.remove(); track('rating', { rating: b.dataset.fbask }); openFeedback(b.dataset.fbask, 'home'); }));
+    const fan = document.getElementById('fbAskNo');
+    if (fan) fan.addEventListener('click', () => { store.seen.feedbackAsked = todayStr(); save(); const c = document.getElementById('fbAsk'); if (c) c.remove(); });
+    const iy = document.getElementById('installYes');
+    if (iy) iy.addEventListener('click', async () => {
+        const ev = INSTALL.ev; INSTALL.ev = null; const c = document.getElementById('installCard'); if (c) c.remove();
+        if (!ev) return;
+        try { ev.prompt(); const r = await ev.userChoice; track('install_prompt', { outcome: r && r.outcome }); } catch (e) { }
+    });
+    const ino = document.getElementById('installNo');
+    if (ino) ino.addEventListener('click', () => { store.seen.installAsk = todayStr(); save(); const c = document.getElementById('installCard'); if (c) c.remove(); });
+    const bs = document.getElementById('bragStreak');
+    if (bs) bs.addEventListener('click', () => { store.seen.bragStreak = todayStr(); save(); bs.remove(); shareApp('brag_streak', bragText('streak')); });
     ['quickBtn', 'eveBanner'].forEach(id => { const el = document.getElementById(id); if (el) el.addEventListener('click', startQuick); });
     const rb = document.getElementById('reviewBanner');
     if (rb) rb.addEventListener('click', () => { resetTransient(); go('review'); });
@@ -2143,8 +2392,32 @@ function renderHome() {
     function stat(e, n, l) { return '<div class="stat"><div class="num">' + e + ' ' + n + '</div><div class="lbl">' + l + '</div></div>'; }
 }
 
-const IOS_SAFARI = /iPhone|iPad|iPod/.test(navigator.userAgent || '') && navigator.standalone !== true && !/CriOS|FxiOS|KAKAOTALK|NAVER|Instagram|FBAN|FBAV|Line\//i.test(navigator.userAgent || '');
-const IN_APP = /KAKAOTALK|NAVER\(inapp|Instagram|FBAN|FBAV|Line\/|DaumApps|everytimeApp/i.test(navigator.userAgent || '');
+const IN_APP_RE = /KAKAOTALK|NAVER\(inapp|Instagram|FBAN|FBAV|Line\/|DaumApps|everytimeApp|BAND\/|Barcelona|musical_ly|BytedanceWebview|; wv\)/i;
+const IOS_SAFARI = /iPhone|iPad|iPod/.test(navigator.userAgent || '') && navigator.standalone !== true && !/CriOS|FxiOS|EdgiOS|Whale|OPT\/|NAVER|DaumApps/i.test(navigator.userAgent || '') && !IN_APP_RE.test(navigator.userAgent || '');
+const IN_APP = IN_APP_RE.test(navigator.userAgent || '');
+// 앱 안 브라우저에서 한 번에 기본 브라우저로 여는 주소(카카오톡·안드로이드·라인), 없으면 ''
+function openExternalHref() {
+    const ua = navigator.userAgent || '', url = shareUrl((CUR && CUR.code) || store.active || '', 'inapp');
+    if (/KAKAOTALK/i.test(ua)) return 'kakaotalk://web/openExternal?url=' + encodeURIComponent(url);
+    if (/Line\//i.test(ua)) return url + '&openExternalBrowser=1';
+    const m = url.match(/^(https?):\/\/(.+)$/);
+    if (/Android/i.test(ua) && m) return 'intent://' + m[2] + '#Intent;scheme=' + m[1] + ';package=com.android.chrome;end';
+    return '';
+}
+function inAppNoteHtml() {
+    if (!IN_APP) return '';
+    const href = openExternalHref(), ios = /iPhone|iPad|iPod/.test(navigator.userAgent || '');
+    return '<div class="inapp-note" id="inAppNote">📱 <b>앱 안의 브라우저</b>에서는 발음 듣기·말하기 채점·구글 로그인이 잘 안 돼요. ' +
+        (href ? '아래 버튼으로 기본 브라우저에서 열어 주세요.' : ios ? '오른쪽 아래(또는 위) <b>⋯ · 공유</b> 메뉴 → <b>Safari로 열기</b>를 누르거나, 주소를 복사해 사파리에 붙여넣어 주세요.' : '메뉴(⋮) → <b>다른 브라우저로 열기</b>를 눌러 주세요.') +
+        '<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">' + (href ? '<a class="btn small" id="inAppOpen" href="' + esc(href) + '" style="text-decoration:none">👉 기본 브라우저로 열기</a>' : '') + '<button class="btn small ghost" id="inAppCopy">🔗 주소 복사</button></div>' +
+        (hasProgress(store) ? '<div class="muted" style="margin-top:6px">여기서 한 기록은 다른 브라우저로 저절로 옮겨지지 않아요. ⚙️ 설정 → 📦 백업 코드로 옮길 수 있어요.</div>' : '') + '</div>';
+}
+function bindInAppNote() {
+    const c = document.getElementById('inAppCopy');
+    if (c) c.addEventListener('click', () => copyText(shareUrl((CUR && CUR.code) || store.active || '', 'inapp_copy'), '🔗 주소를 복사했어요! 사파리·크롬 주소창에 붙여넣어 주세요'));
+    const o = document.getElementById('inAppOpen');
+    if (o) o.addEventListener('click', () => track('inapp_open_external'));
+}
 function quickSentence() {
     const pool = [];
     ALL.forEach(l => { if (isDone(l.id)) (l.keySentences || []).forEach(x => pool.push(x)); });
@@ -2446,14 +2719,16 @@ function renderStep() {
             speakSeq(idx.map(i => ({ text: nativeText(turns[i]), speaker: turns[i].speaker })), () => markHeard(k), (x, j) => hilite(idx[j]));
         }));
         const lf = document.getElementById('listenFirst');
-        if (lf) lf.addEventListener('click', () => {
+        const revealScript = () => {
+            const sb = document.getElementById('dlgSit'); if (sb) { sb.classList.remove('sit-hidden'); sb.textContent = '🎬 ' + d.situation; }
+            const w = document.getElementById('dlgWrap'); if (w) w.classList.remove('blind');
+            const bb = document.getElementById('blindBtn'); if (bb) { bb.textContent = '🙈 가리고 듣기'; bb.setAttribute('aria-pressed', 'false'); }
+        };
+        if (lf && ttsBadNow()) { revealScript(); lf.remove(); }   // 소리가 안 나는 기기: 가리고 듣기 대신 바로 대본
+        else if (lf) lf.addEventListener('click', () => {
             showToast('👂 글자 없이 들어 보세요. 무슨 상황일까요?');
             speakSeq(turns.map(asItem), () => {
-                const revealScript = () => {
-                    const sb = document.getElementById('dlgSit'); if (sb) { sb.classList.remove('sit-hidden'); sb.textContent = '🎬 ' + d.situation; }
-                    const w = document.getElementById('dlgWrap'); if (w) w.classList.remove('blind');
-                    const bb = document.getElementById('blindBtn'); if (bb) { bb.textContent = '🙈 가리고 듣기'; bb.setAttribute('aria-pressed', 'false'); }
-                };
+                if (ttsBadNow()) { revealScript(); if (lf.isConnected) lf.remove(); showToast('🔇 소리가 나지 않아 대본을 바로 보여 드려요', '', 3200); return; }
                 // 무슨 상황이었을까요? — 이 레슨 상황 + 다른 레슨 상황 2개
                 const others = ALL.filter(x => x.id !== l.id && x.dialogue && x.dialogue.situation).map(x => x.dialogue.situation);
                 if (d.situation && others.length >= 2) {
@@ -2655,6 +2930,8 @@ function renderQuiz(body, l) {
         h += '<div class="quiz-audio">' +
             '<button class="big-listen" id="qPlay" aria-label="듣기">🔊</button>' +
             '<button class="big-listen slow" id="qPlaySlow" aria-label="느리게 듣기">🐢</button></div>';
+        if (ttsBadNow() || q.noSound) h += q.noSound ? '<div class="card" style="text-align:center;margin:-4px 0 10px"><div class="native" style="font-size:24px">' + esc(itemText) + '</div>' + (romanText(item) ? '<div style="color:var(--primary);font-weight:600">' + esc(romanText(item)) + '</div>' : '') + '<div class="muted">🔇 소리 대신 글자로 풀어요</div></div>'
+            : '<div style="text-align:center;margin:-4px 0 10px"><button class="btn small gray" id="qNoSound">🔇 소리가 안 나요 — 글자로 보기</button></div>';
     }
     if (item.type === 'arrange') {
         h += '<div class="arrange-area" id="arrArea">' +
@@ -2694,6 +2971,8 @@ function renderQuiz(body, l) {
     });
     const qps = document.getElementById('qPlaySlow');
     if (qps) { qps.addEventListener('click', () => speak(itemText, 0.7)); }
+    const qns = document.getElementById('qNoSound');
+    if (qns) qns.addEventListener('click', () => { q.noSound = true; renderQuiz(body, l); });
     if (qp && !q.answered && q.autoFor !== q.i + ':' + (q.phase2 ? 2 : 1)) {
         q.autoFor = q.i + ':' + (q.phase2 ? 2 : 1);
         setTimeout(() => { if (S.quiz === q && !q.answered) speak(itemText, 0.95); }, 350);
@@ -2835,14 +3114,14 @@ function renderQuizResult(body, l) {
             const prev = p.completed[l.id];
             if (!prev) gained += XP.lesson;
             if (firstScore === total && !(prev && prev.score === prev.total)) gained += XP.perfect;
-            if (!prev) p.completed[l.id] = { score: firstScore, fixed: fixed, total, date: todayStr() };
+            if (!prev) { p.completed[l.id] = { score: firstScore, fixed: fixed, total, date: todayStr() }; track('lesson_complete', { lesson_id: l.id, unit: l.unitId, lessons_done: doneCount() }); }
             else {
                 if (firstScore > prev.score || prev.imported || prev.placed) { prev.score = firstScore; prev.fixed = fixed; prev.total = total; delete prev.imported; delete prev.placed; }
                 prev.last = todayStr();
             }
             const dl = dayLog(); dl.lessons = (dl.lessons || 0) + 1;
             addWordsToSrs(l);
-            if (!store.seen.persistAsked && navigator.storage && navigator.storage.persist) {
+            if (!store.seen.persistAsked && navigator.storage && navigator.storage.persist && !/Firefox\//.test(navigator.userAgent || '')) {
                 store.seen.persistAsked = todayStr();
                 navigator.storage.persist().then(ok => { store.seen.persisted = !!ok; save(); }).catch(() => { });
             }
@@ -2885,7 +3164,7 @@ function renderQuizResult(body, l) {
             '<div style="font-size:15px;font-weight:800">' + (bossDone ? '👑 보스 클리어! (' + (bossDone.score != null ? bossDone.score + '%' : '완료') + ')' : '🔥 보스 미션') + '</div>' +
             '<div class="muted" style="margin:4px 0 10px">' + (bossDone ? '다시 도전해서 점수를 올려 보세요.' : '한국어 뜻만 보고 오늘의 보스 문장을 말해 보세요! (+' + XP.boss + ' XP)') + '</div>' +
             '<div style="font-size:14px;font-weight:700;margin-bottom:10px">“' + esc(shortKo(boss.ko)) + '”</div>' +
-            '<button class="btn" id="bossBtn">🎤 ' + (bossDone ? '다시 도전' : '보스에 도전') + '</button></div>';
+            '<button class="btn" id="bossBtn">🎤 ' + (bossDone ? '다시 도전' : '보스에 도전') + '</button>' + (bossDone ? ' <button class="btn ghost" id="bragBoss">📣 자랑하기</button>' : '') + '</div>';
     }
 
     if (pass && !partial && !store.seen.remindOffer) h += '<div class="card" id="remindOffer" style="text-align:center"><b>⏰ 내일도 이 시간에 알려 드릴까요?</b><div class="muted" style="margin:4px 0 8px">매일 같은 시간에 하면 습관이 돼요</div>' +
@@ -2968,6 +3247,8 @@ function renderQuizResult(body, l) {
     if (rno) rno.addEventListener('click', () => { store.seen.remindOffer = todayStr(); save(); const c = document.getElementById('remindOffer'); if (c) c.remove(); });
     const ct = document.getElementById('copyToday');
     if (ct) ct.addEventListener('click', () => copyText((l.keySentences || []).map((x, i) => (i + 1) + '. ' + nativeText(x) + (romanText(x) ? ' (' + romanText(x) + ')' : '') + ' — ' + x.ko).join('\n'), '📋 오늘 문장을 복사했어요. 카톡 나에게 보내기로 다시 보세요!'));
+    const bgb = document.getElementById('bragBoss');
+    if (bgb) bgb.addEventListener('click', () => shareApp('brag_boss', bragText('boss')));
     const bb = document.getElementById('bossBtn');
     if (bb) bb.addEventListener('click', () => openSpeak({
         item: boss, mode: 'boss',
@@ -2979,7 +3260,7 @@ function renderQuizResult(body, l) {
             else { if ((score || 0) > (p.boss[l.id].score || 0)) p.boss[l.id].score = score; p.boss[l.id].last = todayStr(); }
             save();
             const dl = dayLog(); dl.boss = (dl.boss || 0) + 1; save();
-            if (first) { addXp(XP.boss, '보스 클리어 👑'); celebrate(); } else checkQuests();
+            if (first) { addXp(XP.boss, '보스 클리어 👑'); celebrate(); track('boss_clear', { lesson_id: l.id }); } else checkQuests();
         },
         onClose: () => { if (S.view === 'lesson' && S.quiz === q) renderQuizResult(body, l); },
     }));
@@ -3067,7 +3348,7 @@ function renderReview() {
     if (r.i >= r.queue.length || r.stopped) {
         if (!r.rewarded) {
             r.rewarded = true;
-            if (r.graded) { touchStreak(); showToast('🃏 복습 ' + r.graded + '장 · +' + r.graded * XP.review + ' XP', 'gold', 2600); }
+            if (r.graded) { touchStreak(); showToast('🃏 복습 ' + r.graded + '장 · +' + r.graded * XP.review + ' XP', 'gold', 2600); track('review_done', { cards: r.graded }); }
             if (r.quick && r.graded) finishQuick();
         }
         const tomorrow = Object.values(prog().srs).filter(c => !c.mastered && c.due === todayStr(1)).length;
@@ -3138,6 +3419,7 @@ function renderReview() {
 
     function grade(res) {
         const card = prog().srs[c.key];
+        if (card) card.rv = todayStr();
         if (c.relearn) {                       // 다시 잡기 카드는 상자를 바꾸지 않는다
             if (res === 'ok') showToast('✔ 다시 잡았어요!');
         } else if (card && c.keepCheck) {      // 유지 점검
@@ -3882,7 +4164,7 @@ function renderStoryRead() {
             const firstRead = !p.storiesRead[s.id];
             if (!q.rewarded) {
                 q.rewarded = true;
-                if (firstRead) p.storiesRead[s.id] = { date: todayStr(), score: q.score };
+                if (firstRead) { p.storiesRead[s.id] = { date: todayStr(), score: q.score }; track('story_read', { story_id: s.id }); }
                 else { p.storiesRead[s.id].last = todayStr(); p.storiesRead[s.id].score = Math.max(p.storiesRead[s.id].score || 0, q.score); }
                 const dls = dayLog(); dls.stories = (dls.stories || 0) + 1;
                 const again = firstRead ? 0 : Math.max(0, Math.min(XP.storyAgain, 9 - (dls.storyXp || 0)));   // 다시 읽기 XP는 하루 9까지
@@ -4092,16 +4374,31 @@ function renderHistory() {
 }
 
 /* ═══════════════════ 학습 가이드 ═══════════════════ */
+// 자주 묻는 질문(가이드 · 언어 선택 화면의 도움말)
+function faqHtml() {
+    const qa = [
+        ['🔇 소리가 안 나요', '① 무음·진동 모드를 끄고 소리를 키워 주세요(아이폰은 옆면 무음 스위치). ② 카카오톡·네이버 같은 앱 안에서 열었다면 메뉴(⋮ 또는 ⋯) → <b>다른 브라우저로 열기</b>로 크롬·사파리에서 열어 주세요. ③ 그래도 안 되면 기기에 그 언어 음성을 내려받아 주세요 — 안드로이드: 설정 → 일반(또는 접근성) → 텍스트 음성 변환 / 아이폰: 설정 → 손쉬운 사용 → 읽기 및 말하기 → 음성. 듣기 문제는 🔇 <b>글자로 보기</b>로 풀 수 있어요.'],
+        ['🎤 말하기 채점(마이크)이 안 돼요', '① 🎤를 처음 누를 때 <b>허용</b>을 눌러 주세요. 이미 막았다면 주소창 왼쪽 🔒 → 권한 → 마이크 허용. ② 아이폰은 설정 → 일반 → 키보드 → <b>받아쓰기</b>를 켜야 해요. ③ 앱 안 브라우저나 인터넷이 끊긴 곳에서는 채점이 안 될 수 있어요. 그럴 땐 <b>녹음해서 비교하기</b>나 <b>소리 내어 말했어요</b>로 넘어가도 괜찮아요.'],
+        ['📱 휴대폰을 바꿔요 · 기록을 옮기고 싶어요', (cloudOn() ? '가장 쉬운 방법: 두 기기에서 ⚙️ 설정 → <b>구글로 로그인</b>하면 자동으로 이어져요. 로그인 없이 옮기려면: ' : '') + '예전 기기에서 👤 나 → ⚙️ 설정 → 📦 <b>백업 코드 만들기</b> → 코드를 복사하거나 백업 파일을 카톡 「나와의 채팅」에 보내 두고, 새 기기의 첫 화면(언어 고르기) 아래 <b>📦 다른 기기 기록 가져오기</b>에 붙여넣으세요.'],
+        ['🏠 홈 화면에 앱처럼 두려면', '안드로이드 크롬: 메뉴(⋮) → <b>홈 화면에 추가</b>(또는 앱 설치) / 아이폰 사파리: 아래 공유(□↑) → <b>홈 화면에 추가</b>. 아이폰은 홈 화면 아이콘과 사파리의 기록이 따로라서, 추가한 뒤에는 ' + (cloudOn() ? '구글 로그인이나 ' : '') + '백업 코드로 기록을 옮기고 앞으로는 아이콘으로만 열어 주세요.'],
+        ['🧹 기록이 사라졌어요', '기록은 이 기기의 이 브라우저에 저장돼요. 시크릿(비공개) 창, 다른 브라우저, 앱 안 브라우저에는 기록이 없어요. 인터넷 사용 기록(쿠키·사이트 데이터)을 지우면 함께 지워져요. ' + (cloudOn() ? '구글로 로그인해 두면 다시 로그인해서 되살릴 수 있어요.' : '백업 코드를 가끔 만들어 두세요.')],
+        ['💰 정말 무료인가요?', '네, 무료이고 광고도 없어요. 발음은 기기에 들어 있는 음성, 채점은 브라우저의 음성 인식을 써요.'],
+    ];
+    return '<div class="card faq">' + qa.map(x => '<details><summary>' + x[0] + '</summary><div class="faq-a">' + x[1] + '</div></details>').join('') +
+        '<div class="muted" style="margin-top:8px">' + (feedbackOn() ? '해결이 안 되면 ⚙️ 설정 → 💬 의견 보내기로 알려 주세요 · ' : '') + '<a href="../privacy.html" target="_blank" rel="noopener">개인정보 안내</a></div></div>';
+}
+function openHelp() { openModal('<div class="sheet-head"><b>❓ 자주 묻는 질문</b><button class="sheet-close" data-close-overlay aria-label="닫기">✕</button></div>' + faqHtml()); track('help_open'); }
 function renderGuide() {
     let h = subnavHtml('guide') + '<div class="section-title" style="margin-top:0">📖 이렇게 배우면 됩니다</div>';
     h += '<div class="card">' +
         gs(1, '매일 15분, 한 레슨씩', '언어는 벼락치기가 안 돼요. 하루 한 레슨(약 15분)이면 ' + (ALL.length <= 31 ? '한 달' : '약 ' + Math.ceil(ALL.length / 30) + '달') + ' 안에 전 과정(' + ALL.length + '레슨)을 마칠 수 있어요. 오늘의 목표 XP를 채우고 연속 학습 🔥 기록을 지켜 보세요!') +
-        gs(2, '무조건 소리 내어 따라 하기', '🔊 버튼으로 원어민 발음을 듣고, 🎤 버튼으로 직접 말해 보세요. AI가 단어마다 채점해 줘요. 회화는 🎭 역할극으로 내 대사를 직접 말해 보세요!') +
+        gs(2, '무조건 소리 내어 따라 하기', '🔊 버튼으로 원어민 발음을 듣고, 🎤 버튼으로 직접 말해 보세요. 음성 인식으로 단어마다 채점해 줘요. 회화는 🎭 역할극으로 내 대사를 직접 말해 보세요!') +
         gs(3, '퀴즈로 확인하고 통과하기', '각 레슨 끝의 퀴즈를 70% 이상 맞혀야 다음 레슨이 열려요. 틀려도 괜찮아요 — 해설을 읽고 다시 도전하면 더 오래 기억에 남아요.') +
         gs(4, '복습함 · 읽기로 배운 걸 지키기', '통과한 레슨의 단어는 🃏 복습함에 자동 저장되고, 틀린 문제는 📝 오답 노트에 모여요. 진도가 쌓이면 📚 읽기에서 배운 단어로만 된 쉬운 이야기도 즐길 수 있어요.') +
         gs(5, '보스 미션으로 마무리', '퀴즈를 통과하면 🔥 보스 미션이 열려요. 한국어 뜻만 보고 핵심 문장을 말해 성공하면 레슨에 👑 왕관이 붙어요.') +
         '</div>';
 
+    h += '<div class="section-title">❓ 자주 묻는 질문</div>' + faqHtml();
     h += '<div class="section-title">🗺️ 이 언어의 커리큘럼 (표준 학습 순서)</div><div class="card">';
     UNITS.forEach(u => {
         const done = u.lessons.filter(l => isDone(l.id)).length;
@@ -4123,7 +4420,7 @@ function renderGuide() {
         '· 완벽하려 하지 않기 — 틀려도 일단 말하면 늘어요<br>' +
         '· 배운 문장을 오늘 혼잣말로 3번 써먹기<br>' +
         '· 놓친 날이 있어도 벌점은 없어요 — 🛡️ 방패가 연속 기록을 지켜 주고, 다시 시작하면 그만!</div>';
-    h += '<div class="tip-box"><b>📱 아이폰 사용자 팁</b><br>사파리는 7일 동안 열지 않은 사이트의 저장 기록을 지울 수 있어요. 공유 버튼 → <b>홈 화면에 추가</b>로 앱처럼 설치하면 기록이 안전하게 남고, 설정의 백업 코드도 가끔 만들어 두세요.</div>';
+    h += '<div class="tip-box"><b>📱 기록 지키기</b><br>학습 기록은 이 기기의 이 브라우저에만 저장돼요' + (cloudOn() ? '. ⚙️ 설정에서 <b>구글로 로그인</b>하면 휴대폰·PC 어디서든 이어져요' : '') + '. 가끔 ⚙️ 설정 → 📦 <b>백업 파일</b>을 만들어 두세요. 아이폰에서 <b>홈 화면에 추가</b>한 아이콘은 사파리와 기록이 따로라서, 옮길 때는 백업 코드(또는 로그인)로 가져와야 해요.</div>';
     $main.innerHTML = h;
     bindSubnav();
 
@@ -4178,6 +4475,7 @@ function googleCalLink(timeString) {
 }
 function downloadIcs(t) {
     if (window.top !== window.self) { showToast('이 화면에서는 파일을 받을 수 없어요. 앱을 새 창에서 열어 주세요'); return; }
+    if (IN_APP) { window.open(googleCalLink(t), '_blank'); showToast('📅 앱 안의 브라우저라 구글 캘린더로 열었어요. 안 되면 기본 브라우저에서 만들어 주세요', '', 3800); return; }
     const blob = new Blob([buildReminderIcs(t)], { type: 'text/calendar;charset=utf-8' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob); a.download = 'language-starter-alarm.ics';
@@ -4195,6 +4493,7 @@ function renderSettings() {
     let h = subnavHtml('settings');
     if (!hasTTS) h += '<div class="notice">⚠️ 이 브라우저는 음성 합성(TTS)을 지원하지 않아 발음 듣기를 쓸 수 없어요. 크롬/엣지/사파리 최신 버전을 추천합니다.</div>';
     else if (!voiceCache[CUR.code]) h += '<div class="notice">ℹ️ ' + esc(CUR.name) + ' 음성이 아직 준비되지 않았어요. 발음 버튼을 한 번 누르면 준비되는 경우가 많아요.</div>';
+    h += cloudCardHtml('settings');
     h += '<div class="card">' +
         setRow('현재 학습 언어', CUR.flag + ' ' + esc(CUR.name), '<button class="btn small ghost" id="switchLangBtn">바꾸기</button>') +
         setRow('하루 목표', '오늘의 목표 XP (레슨 1개 통과 = 20 XP)', '<select class="sel" id="setGoal" aria-label="하루 목표 XP">' + [[10, '가볍게 10'], [20, '보통 20'], [30, '꾸준히 30'], [50, '열심히 50'], [80, '불타게 80']].map(([v, t]) => '<option value="' + v + '"' + (store.settings.dailyGoal === v ? ' selected' : '') + '>' + t + ' XP</option>').join('') + '</select>') +
@@ -4220,7 +4519,7 @@ function renderSettings() {
         setRow('⏰ 매일 알림', '휴대폰 캘린더에 매일 반복 일정 넣기 · <a href="' + esc(googleCalLink(store.settings.reminderTime)) + '" target="_blank" rel="noopener">Google 캘린더</a> · 아이폰은 사파리에서 · 다시 만들면 일정이 두 개가 될 수 있어요', '<input type="time" id="setRemind" value="' + esc(store.settings.reminderTime) + '" aria-label="알림 시각"> <button class="btn small ghost" id="icsBtn">📅 만들기</button>') +
         '</div>';
     h += '<div class="card">' +
-        setRow('학습 데이터', '완료 ' + doneCount() + '레슨 · 단어장 ' + Object.keys(prog().srs).length + '장 · 이 브라우저에 저장됨',
+        setRow('학습 데이터', '완료 ' + doneCount() + '레슨 · 단어장 ' + Object.keys(prog().srs).length + '장 · 이 브라우저에 저장됨' + (CLOUD.user ? ' + ☁️ 구글 계정' : ''),
             '<button class="btn small" id="resetBtn" style="background:var(--error)">초기화</button>') +
         '</div>';
     h += '<div class="card">' +
@@ -4234,9 +4533,19 @@ function renderSettings() {
             if (!snap || !snap.at || (Date.now() - Date.parse(snap.at)) > 7 * 86400000) return '';
             return '<button class="btn small gray block" id="undoRestore" style="margin-top:8px">↩ 복원 전 기록으로 되돌리기 (' + esc(snap.at.slice(0, 10)) + ')</button>';
         })() + '<div class="muted" style="margin-top:6px">마지막 백업: ' + esc(store.seen.lastBackup || '없음') + '</div><div id="backupArea"></div></div>';
-    h += '<div class="muted" style="text-align:center;margin-top:16px">랭귀지 스타터 v2.0 · 오프라인에서도 동작해요 🌍<br>발음은 브라우저 내장 음성(TTS), 말하기 채점은 브라우저 음성 인식을 사용합니다</div>';
+    h += '<div class="card"><div style="font-size:14px;font-weight:700;margin-bottom:6px">🤝 함께 만들어요</div>' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap">' + (feedbackOn() ? '<button class="btn small" id="fbBtn">💬 의견 보내기</button>' : '') + '<button class="btn small ghost" id="shareBtn">📣 친구에게 추천하기</button></div>' +
+        (cloudOn() && cloudCfg().measurementId ? setRow('사용 통계 보내기', '쿠키로 방문·레슨 완료 같은 사용 기록만 모아 앱을 고치는 데 써요(이름·이메일 없음, 광고 없음) · <a href="../privacy.html" target="_blank" rel="noopener">자세히</a>', '<label class="switch"><input type="checkbox" id="setStats"' + (store.settings.stats !== false ? ' checked' : '') + '><span class="slider"></span></label>') : '') +
+        '</div>';
+    h += '<div class="muted" style="text-align:center;margin-top:16px">랭귀지 스타터 v' + APP_VERSION + ' · <a href="../privacy.html" target="_blank" rel="noopener">개인정보 안내</a><br>발음은 브라우저 내장 음성(TTS), 말하기 채점은 브라우저 음성 인식을 사용합니다</div>';
     $main.innerHTML = h;
     bindSubnav();
+    bindCloudCard('settings');
+    const fbb = document.getElementById('fbBtn');
+    if (fbb) fbb.addEventListener('click', () => openFeedback('', 'settings'));
+    document.getElementById('shareBtn').addEventListener('click', () => shareApp('settings'));
+    const sst = document.getElementById('setStats');
+    if (sst) sst.addEventListener('change', e => { setStatsEnabled(e.target.checked); showToast(e.target.checked ? '📊 사용 통계를 켰어요' : '📊 사용 통계를 껐어요'); });
 
     document.getElementById('switchLangBtn').addEventListener('click', () => go('picker'));
     document.getElementById('setKoPron').addEventListener('change', e => { store.settings.koPron = e.target.value === 'auto' ? 'auto' : e.target.value === 'on'; save(); });
@@ -4270,7 +4579,7 @@ function renderSettings() {
     });
     document.getElementById('resetBtn').addEventListener('click', () => {
         if (confirm('정말 ' + CUR.name + '의 학습 기록을 지울까요?\n(완료한 레슨, 복습 단어장, XP가 사라져요. 다른 언어의 진도와 전체 연속 기록은 유지됩니다)')) {
-            delete store.byLang[CUR.code]; delete store.seen['welcome_' + CUR.code]; if (CUR.code === 'en') delete store.seen.deqOfferShown; save();
+            store.byLang[CUR.code] = { gen: ((store.byLang[CUR.code] || {}).gen || 0) + 1, completed: {}, srs: {}, streak: { last: '', count: 0 }, lastPos: null }; delete store.seen['welcome_' + CUR.code]; if (CUR.code === 'en') delete store.seen.deqOfferShown; save();
             go('home');
         }
     });
@@ -4281,16 +4590,16 @@ function renderSettings() {
             '<button class="btn small block" id="copyBtn" style="margin-top:6px">📋 코드 복사하기</button>';
         const ta = document.getElementById('backupCode');
         ta.value = exportProgress();
+        exportProgressCode().then(c => { ta.value = c; }).catch(() => { });
         document.getElementById('copyBtn').addEventListener('click', () => { copyText(ta.value, '📋 백업 코드를 복사했어요!'); store.seen.lastBackup = todayStr(); save(); });
-        area().insertAdjacentHTML('beforeend', '<button class="btn small ghost block" id="fileBtn" style="margin-top:6px">📥 파일로 저장하기</button>');
-        document.getElementById('fileBtn').addEventListener('click', () => {
+        area().insertAdjacentHTML('beforeend', IN_APP ? '<div class="muted" style="margin-top:6px">앱 안의 브라우저에서는 파일 저장이 안 될 수 있어요. 위 코드를 복사해 카톡 「나와의 채팅」에 보내 두세요.</div>' : '<button class="btn small ghost block" id="fileBtn" style="margin-top:6px">📤 백업 파일 보내기 · 저장하기</button>');
+        if (IN_APP) return;
+        document.getElementById('fileBtn').addEventListener('click', async () => {
             try {
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(new Blob([ta.value], { type: 'text/plain' }));
-                a.download = 'language-starter-backup-' + todayStr() + '.txt';
-                document.body.appendChild(a); a.click(); a.remove();
+                const r = await shareBackupFile(ta.value);
+                if (r === 'cancel') return;
                 store.seen.lastBackup = todayStr(); save();
-                showToast('📥 백업 파일을 저장했어요');
+                showToast(r === 'shared' ? '📤 백업 파일을 보냈어요' : '📥 백업 파일을 저장했어요 · 안 보이면 위 코드를 복사해 두세요', '', 3400);
             } catch (e) { showToast('파일을 만들지 못했어요. 코드를 복사해 주세요'); }
         });
     });
@@ -4299,62 +4608,604 @@ function renderSettings() {
         if (!confirm('복원하기 전 기록으로 되돌릴까요? 지금 기록은 그 기록으로 바뀌어요.')) return;
         try {
             const snap = JSON.parse(localStorage.getItem(LS_KEY + '_before_restore'));
-            localStorage.setItem(LS_KEY, snap.raw);
+            const back = normalizeStore(JSON.parse(snap.raw)), g = nextGen(store, back);
+            store = back; store.gen = g; save();
             localStorage.removeItem(LS_KEY + '_before_restore');
-            store = normalizeStore(JSON.parse(snap.raw));
             showToast('↩ 복원 전 기록으로 되돌렸어요', 'gold');
             if (store.active && LANGS[store.active]) activateLanguage(store.active); else go('picker');
         } catch (e) { showToast('되돌리지 못했어요'); }
     });
     if (S.openBackup) { S.openBackup = false; document.getElementById('backupBtn').click(); setTimeout(() => { const b = document.getElementById('backupArea'); if (b) b.scrollIntoView({ block: 'center' }); }, 60); }
-    document.getElementById('restoreBtn').addEventListener('click', () => {
-        area().innerHTML = '<div class="muted" style="margin:12px 0 6px">다른 기기에서 만든 백업 코드를 붙여넣으세요.<br>⚠️ 지금 이 기기의 진도는 코드의 내용으로 <b>덮어써집니다.</b></div>' +
-            '<textarea id="restoreCode" placeholder="여기에 백업 코드(또는 Daily English Quest 백업)를 붙여넣으세요" style="width:100%;height:88px;font-size:11px;border:1px solid var(--border);border-radius:10px;padding:8px;font-family:monospace"></textarea>' +
-            '<label class="muted" style="display:block;margin-top:4px">또는 백업 파일(.json) 고르기: <input type="file" id="restoreFile" accept=".json,application/json,text/plain"></label>' +
-            '<button class="btn small block" id="doRestore" style="margin-top:6px">진도 복원하기</button>';
-        document.getElementById('restoreFile').addEventListener('change', ev => {
-            const f = ev.target.files && ev.target.files[0]; if (!f) return;
-            const rd = new FileReader();
-            rd.onload = () => { document.getElementById('restoreCode').value = String(rd.result || ''); showToast('파일을 읽었어요. "진도 복원하기"를 누르세요'); };
-            rd.readAsText(f);
-        });
-        document.getElementById('doRestore').addEventListener('click', () => {
-            const code = document.getElementById('restoreCode').value;
-            // Daily English Quest 백업(JSON)은 덮어쓰기 복원이 아니라 영어 진도로 합치기
-            const t = code.trim();
-            if (t.startsWith('{')) {
-                let obj = null; try { obj = JSON.parse(t); } catch (e) { obj = null; }
-                const info = obj && obj.app === 'daily-english-quest' ? parseDeqState(obj.data) : null;
-                if (!info) { showToast('이 파일은 읽을 수 없어요. 랭귀지 스타터 백업 코드나 Daily English Quest 백업을 넣어 주세요', '', 3600); return; }
-                const run = () => { const r = importDeq(info); celebrate(); showToast('📦 DEQ 기록을 영어로 가져왔어요! 레슨 ' + r.lessons + '개 · 카드 ' + r.cards + '장', 'gold', 3600); S.openUnit = null; go('home'); };
-                if (CUR.code === 'en') run(); else { showToast('영어로 바꾼 뒤 가져올게요'); activateLanguage('en').then(() => { if (CUR && CUR.code === 'en') { closeModal(true); run(); } }); }
-                return;
-            }
-            if (storageFailed) { showToast('이 브라우저는 기록 저장이 안 돼요. 일반 창(크롬·사파리)에서 복원해 주세요', '', 3600); return; }
-            let obj;
-            try { obj = parseBackup(code); } catch (e) { showToast('복원하지 못했어요: ' + e.message, '', 3600); return; }
-            const incoming = normalizeStore(obj.data);
-            const sheet = openModal('<div class="sheet-head"><b>이 백업으로 바꿀까요?</b><button class="sheet-close" data-close-overlay aria-label="닫기">✕</button></div>' +
-                '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px"><div class="card" style="margin:0"><b>📦 백업</b>' + storeSummary(incoming, typeof obj.exportedAt === 'string' ? esc(obj.exportedAt.slice(0, 10)) : '날짜 모름') + '</div>' +
-                '<div class="card" style="margin:0"><b>📱 지금 이 기기</b>' + storeSummary(store) + '</div></div>' +
-                '<div class="muted" style="margin-bottom:10px">바꾸기 전 기록은 7일 동안 보관돼서 설정에서 되돌릴 수 있어요.</div>' +
-                '<div style="display:flex;gap:8px"><button class="btn block gray" data-close-overlay>취소</button><button class="btn block" id="restoreYes">바꾸기</button></div>');
-            sheet.querySelector('#restoreYes').addEventListener('click', () => {
-                try {
-                    let raw = null; try { raw = localStorage.getItem(LS_KEY); } catch (e) { raw = null; }
-                    if (raw) localStorage.setItem(LS_KEY + '_before_restore', JSON.stringify({ at: new Date().toISOString(), raw }));
-                    const r = importProgress(code);
-                    closeModal(true);
-                    showToast('🎉 복원 완료! 완료 ' + r.lessons + '레슨 · 단어장 ' + r.cards + '장', 'gold', 3400);
-                    if (store.active && LANGS[store.active]) activateLanguage(store.active); else go('picker');
-                } catch (e) { showToast('복원하지 못했어요: ' + e.message, '', 3600); }
-            });
-        });
-    });
-
+    document.getElementById('restoreBtn').addEventListener('click', () => openRestore(area()));
     function setRow(title, desc, ctl) {
         return '<div class="set-row"><div><div class="s-title">' + title + '</div><div class="s-desc">' + desc + '</div></div><div class="s-ctl">' + ctl + '</div></div>';
     }
+}
+// 백업 코드·파일로 기록 가져오기(설정 · 언어 선택 화면). box가 없으면 시트로 연다
+function openRestore(box) {
+    if (!box) box = openModal('<div class="sheet-head"><b>📦 다른 기기 기록 가져오기</b><button class="sheet-close" data-close-overlay aria-label="닫기">✕</button></div><div id="restoreBox"></div>').querySelector('#restoreBox');
+    box.innerHTML = '<div class="muted" style="margin:12px 0 6px">다른 기기에서 만든 백업 코드를 붙여넣거나 백업 파일을 고르세요. 다음 화면에서 <b>합치기</b>와 <b>바꾸기</b> 중에 고를 수 있어요.</div>' +
+        '<textarea id="restoreCode" placeholder="여기에 백업 코드(또는 Daily English Quest 백업)를 붙여넣으세요" style="width:100%;height:88px;font-size:11px;border:1px solid var(--border);border-radius:10px;padding:8px;font-family:monospace"></textarea>' +
+        '<div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap"><button class="btn small ghost" id="restorePaste">📋 붙여넣기</button><label class="btn small ghost" style="cursor:pointer">📄 백업 파일 고르기<input type="file" id="restoreFile" accept=".txt,.json,application/json,text/plain" style="display:none"></label></div>' +
+        '<button class="btn small block" id="doRestore" style="margin-top:6px">기록 가져오기</button>';
+    const rp = document.getElementById('restorePaste');
+    if (rp) rp.addEventListener('click', async () => { try { document.getElementById('restoreCode').value = await navigator.clipboard.readText(); } catch (e) { showToast('길게 눌러 직접 붙여넣어 주세요'); } });
+    document.getElementById('restoreFile').addEventListener('change', ev => {
+        const f = ev.target.files && ev.target.files[0]; if (!f) return;
+        const rd = new FileReader();
+        rd.onload = () => { document.getElementById('restoreCode').value = String(rd.result || ''); showToast('파일을 읽었어요. "기록 가져오기"를 누르세요'); };
+        rd.readAsText(f);
+    });
+    document.getElementById('doRestore').addEventListener('click', async () => {
+        const code = document.getElementById('restoreCode').value;
+        // Daily English Quest 백업(JSON)은 덮어쓰기 복원이 아니라 영어 진도로 합치기
+        const t = code.trim();
+        if (t.startsWith('{')) {
+            let obj = null; try { obj = JSON.parse(t); } catch (e) { obj = null; }
+            const info = obj && obj.app === 'daily-english-quest' ? parseDeqState(obj.data) : null;
+            if (!info) { showToast('이 파일은 읽을 수 없어요. 랭귀지 스타터 백업 코드나 Daily English Quest 백업을 넣어 주세요', '', 3600); return; }
+            const run = () => { const r = importDeq(info); celebrate(); showToast('📦 DEQ 기록을 영어로 가져왔어요! 레슨 ' + r.lessons + '개 · 카드 ' + r.cards + '장', 'gold', 3600); S.openUnit = null; go('home'); };
+            if (CUR && CUR.code === 'en') { closeModal(true); run(); } else { closeModal(true); showToast('영어로 바꾼 뒤 가져올게요'); store.seen.welcome_en = store.seen.welcome_en || todayStr(); activateLanguage('en').then(() => { if (CUR && CUR.code === 'en') { closeModal(true); run(); } }); }
+            return;
+        }
+        if (storageFailed) { showToast('이 브라우저는 기록 저장이 안 돼요. 일반 창(크롬·사파리)에서 복원해 주세요', '', 3600); return; }
+        let obj;
+        try { obj = await parseBackupAny(code); } catch (e) { showToast('복원하지 못했어요: ' + e.message, '', 3600); return; }
+        const incoming = normalizeStore(obj.data);
+        const hasNow = hasProgress(store);
+        const sheet = openModal('<div class="sheet-head"><b>백업 기록을 어떻게 가져올까요?</b><button class="sheet-close" data-close-overlay aria-label="닫기">✕</button></div>' +
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px"><div class="card" style="margin:0"><b>📦 백업</b>' + storeSummary(incoming, typeof obj.exportedAt === 'string' ? esc(obj.exportedAt.slice(0, 10)) : '날짜 모름') + '</div>' +
+            '<div class="card" style="margin:0"><b>📱 지금 이 기기</b>' + storeSummary(store) + '</div></div>' +
+            '<div class="muted" style="margin-bottom:10px">' + (hasNow ? '<b>합치기</b>는 두 기록의 진도를 모두 남기고, <b>바꾸기</b>는 이 기기 기록을 백업 내용으로 바꿔요. ' : '') + '지금 기록은 7일 동안 보관돼서 설정에서 되돌릴 수 있어요.</div>' +
+            (hasNow ? '<button class="btn block" id="restoreMerge">🔗 합치기 (추천)</button>' : '') +
+            '<div style="display:flex;gap:8px;margin-top:8px"><button class="btn block gray" data-close-overlay>취소</button><button class="btn block' + (hasNow ? ' ghost' : '') + '" id="restoreYes">' + (hasNow ? '바꾸기' : '가져오기') + '</button></div>');
+        const finishRestore = (msg) => {
+            closeModal(true);
+            let lessons = 0, cards = 0;
+            Object.values(store.byLang).forEach(p => { lessons += Object.keys(p.completed || {}).length; cards += Object.keys(p.srs || {}).length; });
+            showToast(msg + ' 완료 ' + lessons + '레슨 · 단어장 ' + cards + '장', 'gold', 3400);
+            track('restore', { mode: msg.includes('합') ? 'merge' : 'replace' });
+            if (store.active && isLang(store.active)) activateLanguage(store.active); else { CUR = null; DATA = null; go('picker'); }
+        };
+        const mg = sheet.querySelector('#restoreMerge');
+        if (mg) mg.addEventListener('click', () => {
+            try { snapshotBeforeRestore(); store = mergeStores(incoming, store, true); save(); finishRestore('🔗 합치기 완료!'); }
+            catch (e) { showToast('가져오지 못했어요: ' + e.message, '', 3600); }
+        });
+        sheet.querySelector('#restoreYes').addEventListener('click', () => {
+            try {
+                snapshotBeforeRestore();
+                const g = nextGen(store, incoming);
+                store = incoming; store.gen = g; save();
+                finishRestore('🎉 가져오기 완료!');
+            } catch (e) { showToast('복원하지 못했어요: ' + e.message, '', 3600); }
+        });
+    });
+}
+
+/* ═══════════════════ ☁️ 구글 로그인 · 클라우드 저장 · 사용 통계 · 의견 (Firebase) ═══════════════════ */
+// cloud-config.js 에 Firebase 웹 설정이 있을 때만 켜진다. 없으면 지금처럼 이 기기에만 저장한다.
+// Firebase SDK는 vendor/firebase/ 에 직접 담아 두고(외부 CDN 없음), 필요할 때만 불러온다.
+//  · fb-core: 앱 + 사용 통계(Analytics) — 설정에 measurementId가 있고 통계를 끄지 않았을 때
+//  · fb-sync: 로그인(Auth) + 저장(Firestore lite) — 로그인했던 기기이거나 로그인·의견 보내기를 누를 때
+// 클라우드에는 users/{uid} 문서 하나에 전체 기록(store)을 넣는다. 합치기는 여러 탭 합치기와 같은 mergeStores.
+const FB_VER = '12.19.0';
+const CLOUD_HINT_KEY = 'lang_starter_cloud';   // {uid, rev, at, lastUid} — 이 기기가 어느 계정과 이어졌는지(이름·이메일은 저장하지 않음)
+const CLOUD_JSON_LIMIT = 600000;                // 이보다 크면 gzip으로 줄여 저장(Firestore 문서 1MB 한도)
+const CLOUD_DOC_LIMIT = 900000;
+function cloudCfg() { const c = window.CLOUD_CONFIG; return (c && typeof c === 'object' && typeof c.apiKey === 'string' && typeof c.projectId === 'string') ? c : null; }
+function cloudOn() { return !!cloudCfg(); }
+function cloudHint(patch) {
+    let h = {};
+    try { h = JSON.parse(localStorage.getItem(CLOUD_HINT_KEY) || '{}') || {}; } catch (e) { h = {}; }
+    if (!isObj(h)) h = {};
+    if (patch) { h = Object.assign(h, patch); try { localStorage.setItem(CLOUD_HINT_KEY, JSON.stringify(h)); } catch (e) { } }
+    return h;
+}
+function fbUrl(f) { return new URL('vendor/firebase/' + f + '?v=' + FB_VER, location.href).href; }
+const dynImport = (function () { try { return new Function('u', 'return import(u)'); } catch (e) { return () => Promise.reject(new Error('이 브라우저는 너무 오래됐어요')); } })();
+function fbOptions() {
+    const c = cloudCfg(), o = {};
+    ['apiKey', 'authDomain', 'projectId', 'appId', 'messagingSenderId', 'storageBucket', 'measurementId'].forEach(k => { if (typeof c[k] === 'string' && c[k]) o[k] = c[k]; });
+    return o;
+}
+let fbCorePromise = null, fbSyncPromise = null;
+function loadFbCore() {
+    if (!cloudOn()) return Promise.reject(new Error('cloud off'));
+    if (!fbCorePromise) fbCorePromise = dynImport(fbUrl('fb-core.js')).then(m => {
+        CLOUD.core = m;
+        CLOUD.app = m.getApps().length ? m.getApp() : m.initializeApp(fbOptions());
+        return m;
+    }).catch(e => { fbCorePromise = null; throw e; });
+    return fbCorePromise;
+}
+function loadFbSync() {
+    if (!fbSyncPromise) fbSyncPromise = loadFbCore().then(() => dynImport(fbUrl('fb-sync.js'))).then(m => {
+        CLOUD.sync = m;
+        CLOUD.auth = m.initializeAuth(CLOUD.app, { persistence: [m.indexedDBLocalPersistence, m.browserLocalPersistence], popupRedirectResolver: m.browserPopupRedirectResolver });
+        CLOUD.db = m.getFirestore(CLOUD.app);
+        const em = cloudCfg().emulator;   // 자동 테스트용(Firebase 에뮬레이터)
+        if (isObj(em) && em.auth && em.host) { m.connectAuthEmulator(CLOUD.auth, em.auth, { disableWarnings: true }); m.connectFirestoreEmulator(CLOUD.db, em.host, em.port || 8080); }
+        m.onAuthStateChanged(CLOUD.auth, u => onCloudAuth(u));
+        return m;
+    }).catch(e => { fbSyncPromise = null; throw e; });
+    return fbSyncPromise;
+}
+function randId() { let s = ''; const a = 'abcdefghijklmnopqrstuvwxyz0123456789'; for (let i = 0; i < 12; i++) s += a[Math.floor(Math.random() * a.length)]; return s; }
+function hasProgress(st) {
+    return Object.values((st && st.byLang) || {}).some(p => p && (Object.keys(p.completed || {}).length || (p.xp || 0) > 0 || Object.keys(p.srs || {}).length));
+}
+
+/* ── 기록 묶기(필요하면 gzip) ── */
+function b64FromBytes(u8) { let s = ''; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); }
+function bytesFromB64(b) { const s = atob(b); const u8 = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u8[i] = s.charCodeAt(i); return u8; }
+async function packStore(st) {
+    const json = JSON.stringify(st);
+    const bytes = new TextEncoder().encode(json);
+    if (bytes.length <= CLOUD_JSON_LIMIT) return { enc: 'json', data: json };
+    if (typeof CompressionStream !== 'function') throw new Error('too-big');
+    const gz = new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer());
+    const data = b64FromBytes(gz);
+    if (data.length > CLOUD_DOC_LIMIT) throw new Error('too-big');
+    return { enc: 'gz', data };
+}
+async function unpackStore(d) {
+    if (!isObj(d) || typeof d.data !== 'string') throw new Error('bad-doc');
+    let json = d.data;
+    if (d.enc === 'gz') {
+        if (typeof DecompressionStream !== 'function') throw new Error('old-browser');
+        json = await new Response(new Blob([bytesFromB64(d.data)]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
+    }
+    return normalizeStore(JSON.parse(json));
+}
+
+/* ── 로그인 상태 ── */
+function onCloudAuth(u) {
+    const prev = CLOUD.user;
+    CLOUD.user = u || null;
+    CLOUD.ready = true;
+    if (u) {
+        CLOUD.state = 'in';
+        const h = cloudHint();
+        if (h.uid !== u.uid) cloudHint({ uid: u.uid, rev: '', at: '' });
+        if ('name' in h || 'email' in h) { const x = cloudHint(); delete x.name; delete x.email; try { localStorage.setItem(CLOUD_HINT_KEY, JSON.stringify(x)); } catch (e) { } }
+        if (!prev || prev.uid !== u.uid) cloudFirstSync(u);
+        track('login_state', { signed_in: 1 });
+    } else {
+        const h = cloudHint();
+        CLOUD.state = 'out';
+        if (h.uid) { cloudHint({ uid: '', lastUid: h.uid, rev: '' }); if (!CLOUD.signingOut) showToast('☁️ 로그인이 풀렸어요. 설정에서 다시 로그인해 주세요', '', 3600); }
+        CLOUD.signingOut = false;
+    }
+    refreshCloudUi();
+}
+function cloudBoot() {
+    if (!cloudOn()) return;
+    CLOUD.state = 'idle';
+    // 예전에 로그인했던 기기만 로그인 모듈을 미리 불러와 세션을 되살린다
+    if (cloudHint().uid) {
+        CLOUD.state = 'loading';
+        setTimeout(() => { loadFbSync().catch(() => { CLOUD.state = 'error'; refreshCloudUi(); }); }, 400);
+    }
+    window.addEventListener('online', () => { if (CLOUD.user) { cloudPull(); scheduleCloudPush(500); } });
+    document.addEventListener('visibilitychange', () => {
+        if (!CLOUD.user) return;
+        if (document.hidden) { if (CLOUD.dirty) cloudPush(); }
+        else if (Date.now() - CLOUD.lastPull > 30000) cloudPull();
+    });
+    initAnalytics();
+}
+function prefetchFbSync() {
+    if (!cloudOn() || CLOUD.sync || fbSyncPromise) return;
+    const c = navigator.connection;
+    if (c && c.saveData) return;
+    const go = () => { loadFbSync().then(() => refreshCloudUi()).catch(() => { }); };
+    if (window.requestIdleCallback) requestIdleCallback(go, { timeout: 2500 }); else setTimeout(go, 1200);
+}
+async function cloudLogin() {
+    if (!cloudOn()) return;
+    if (IN_APP) { showInAppLoginHelp(); return; }
+    if (!CLOUD.sync) {
+        // 처음 누를 때는 모듈부터 불러오고, 준비되면 한 번 더 누르게 한다(팝업 차단 방지)
+        CLOUD.state = 'loading'; refreshCloudUi();
+        try { await loadFbSync(); } catch (e) { CLOUD.state = 'error'; refreshCloudUi(); showToast('로그인 준비에 실패했어요. 인터넷 연결을 확인해 주세요'); return; }
+        CLOUD.state = CLOUD.user ? 'in' : 'out'; CLOUD.readyTap = true; refreshCloudUi();
+        showToast('준비됐어요! 한 번 더 눌러 구글 로그인 창을 열어 주세요', '', 3200);
+        return;
+    }
+    const m = CLOUD.sync;
+    try {
+        const pv = new m.GoogleAuthProvider();
+        pv.setCustomParameters({ prompt: 'select_account' });
+        CLOUD.loginTap = true;
+        const em = cloudCfg().emulator;
+        if (isObj(em) && typeof window.__emuGoogleIdToken === 'string') await m.signInWithCredential(CLOUD.auth, m.GoogleAuthProvider.credential(window.__emuGoogleIdToken));   // 에뮬레이터 자동 테스트 전용
+        else await m.signInWithPopup(CLOUD.auth, pv);
+        track('login', { method: 'google' });
+    } catch (e) {
+        CLOUD.loginTap = false;
+        const code = (e && e.code) || '';
+        if (/popup-closed-by-user|cancelled-popup-request|user-cancelled/.test(code)) return;
+        if (/popup-blocked/.test(code)) showToast('팝업이 막혔어요. 브라우저에서 팝업을 허용하거나 한 번 더 눌러 주세요', '', 4200);
+        else if (/network-request-failed/.test(code)) showToast('인터넷 연결을 확인해 주세요');
+        else if (/unauthorized-domain|operation-not-allowed|invalid-api-key|configuration-not-found/.test(code)) showToast('로그인 설정이 아직 준비되지 않았어요 (' + code.replace('auth/', '') + ')', '', 4200);
+        else if (/web-storage-unsupported|operation-not-supported-in-this-environment/.test(code)) showInAppLoginHelp();
+        else showToast('로그인하지 못했어요' + (code ? ' (' + code.replace('auth/', '') + ')' : ''), '', 3600);
+    }
+}
+function showInAppLoginHelp() {
+    const ua = navigator.userAgent || '';
+    openModal('<div class="sheet-head"><b>🔐 구글 로그인은 기본 브라우저에서</b><button class="sheet-close" data-close-overlay aria-label="닫기">✕</button></div>' +
+        '<div style="font-size:14px;line-height:1.7">카카오톡·네이버·인스타그램처럼 <b>앱 안에서 열린 브라우저</b>에서는 구글이 로그인을 막아 두었어요.<br>오른쪽 위(또는 아래) 메뉴 <b>⋮</b> → <b>다른 브라우저로 열기</b>(Chrome·Safari)를 누른 뒤 로그인해 주세요.</div>' +
+        (/KAKAOTALK/i.test(ua) ? '<a class="btn block" style="margin-top:12px;text-align:center;text-decoration:none" href="kakaotalk://web/openExternal?url=' + encodeURIComponent(shareUrl('', 'kakao_inapp')) + '">👉 기본 브라우저로 열기</a>' : '') +
+        '<button class="btn gray block" data-close-overlay style="margin-top:8px">닫기</button>');
+}
+async function cloudLogout(wipeLocal) {
+    if (!CLOUD.sync || !CLOUD.auth) return;
+    if (CLOUD.dirty) { try { await cloudPush(); } catch (e) { } }
+    CLOUD.signingOut = true;
+    try { await CLOUD.sync.signOut(CLOUD.auth); } catch (e) { CLOUD.signingOut = false; showToast('로그아웃하지 못했어요'); return; }
+    if (wipeLocal) {
+        const g = nextGen(store);
+        store = normalizeStore({ gen: g }); save();
+        try { localStorage.removeItem(LS_KEY + '_before_restore'); localStorage.removeItem(LS_KEY + '_corrupt_backup'); localStorage.removeItem(CLOUD_HINT_KEY); } catch (e) { }
+        CLOUD.lastPushedRaw = '';
+        showToast('👋 로그아웃하고 이 기기의 기록을 지웠어요');
+        setTimeout(() => location.reload(), 600);
+        return;
+    }
+    showToast('👋 로그아웃했어요. 이 기기의 기록은 그대로 남아 있어요', '', 3200);
+    if (S.view === 'settings') renderSettings();
+}
+
+/* ── 처음 이어질 때: 계정 기록과 이 기기 기록 정리 ── */
+async function cloudFirstSync(u) {
+    const m = CLOUD.sync, ref = m.doc(CLOUD.db, 'users', u.uid);
+    const interactive = !!CLOUD.loginTap; CLOUD.loginTap = false;
+    CLOUD.syncing = true; refreshCloudUi();
+    let snap;
+    try { snap = await m.getDoc(ref); }
+    catch (e) { CLOUD.syncing = false; CLOUD.error = '기록을 불러오지 못했어요'; refreshCloudUi(); scheduleCloudPush(20000); return; }
+    const h = cloudHint();
+    const localHas = hasProgress(store);
+    const otherOwner = !!(h.lastUid && h.lastUid !== u.uid);   // 이 기기 기록이 다른 계정에서 쓰던 것
+    if (!snap.exists()) {
+        CLOUD.syncing = false;
+        if (localHas && (otherOwner || (!h.lastUid && interactive))) {
+            cloudChoose(u, null, otherOwner ? 'newAccount' : 'firstUpload');
+            return;
+        }
+        cloudHint({ lastUid: u.uid, rev: '' });
+        await cloudPush(true);
+        if (localHas && interactive) showToast('☁️ 이 기기의 기록을 계정에 저장했어요. 이제 다른 기기에서도 이어서 할 수 있어요', 'gold', 4200);
+        else if (interactive) showToast('☁️ 로그인했어요! 이제 기록이 계정에 자동 저장돼요', 'gold', 3600);
+        track('sign_up', { method: 'google' });
+        return;
+    }
+    const d = snap.data();
+    let cloudStore;
+    try { cloudStore = await unpackStore(d); }
+    catch (e) { CLOUD.syncing = false; CLOUD.error = e.message === 'old-browser' ? '이 브라우저는 기록을 풀 수 없어요. 최신 크롬·사파리를 써 주세요' : '계정 기록을 읽지 못했어요'; refreshCloudUi(); return; }
+    CLOUD.syncing = false;
+    const cloudHas = hasProgress(cloudStore);
+    if (localHas && cloudHas && (otherOwner || (h.lastUid !== u.uid && interactive))) { cloudChoose(u, { d, cloudStore }, otherOwner ? 'otherOwner' : 'both'); return; }
+    // 이 기기가 비어 있으면 계정 기록을 그대로, 아니면 합친다(진도는 늘어나는 쪽으로)
+    const merged = localHas ? mergeStores(cloudStore, store) : mergeStores(store, cloudStore);
+    applyCloudStore(merged, d.rev);
+    cloudHint({ lastUid: u.uid });
+    if (JSON.stringify(merged) !== JSON.stringify(cloudStore)) scheduleCloudPush(300);
+    else CLOUD.lastPushedRaw = JSON.stringify(store);
+    if (interactive) showToast(localHas ? '☁️ 로그인했어요! 이 기기와 계정의 기록을 합쳤어요' : '☁️ 계정 기록을 불러왔어요. 이어서 공부해요!', 'gold', 3600);
+}
+function cloudChoose(u, cloud, why) {
+    const localSum = storeSummary(store, '');
+    const cloudSum = cloud ? storeSummary(cloud.cloudStore, '') : '<div style="font-size:12.5px">아직 기록 없음</div>';
+    const intro = why === 'firstUpload'
+        ? '이 기기에서 공부한 기록을 <b>' + esc(u.email || '이 계정') + '</b>에 저장할까요?<br><span class="muted">가족과 함께 쓰는 기기라면 다른 사람의 기록일 수도 있어요.</span>'
+        : why === 'newAccount'
+        ? '이 기기에는 <b>다른 계정에서 쓰던 기록</b>이 남아 있어요. 이 기록을 <b>' + esc(u.email || '이 계정') + '</b>에 올릴까요?'
+        : why === 'otherOwner'
+            ? '이 기기에는 <b>다른 계정에서 쓰던 기록</b>이 남아 있어요. 어떻게 할까요?'
+            : '이 기기에도, 계정에도 기록이 있어요. 두 기록을 합칠까요?';
+    const sheet = openModal('<div class="sheet-head"><b>☁️ 기록 이어 붙이기</b></div>' +
+        '<div style="font-size:14px;line-height:1.7;margin-bottom:10px">' + intro + '</div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px"><div class="card" style="margin:0"><b>📱 이 기기</b>' + localSum + '</div><div class="card" style="margin:0"><b>☁️ 구글 계정</b>' + cloudSum + '</div></div>' +
+        (why === 'newAccount' || why === 'firstUpload'
+            ? '<button class="btn block" id="ccMerge">📤 ' + (why === 'firstUpload' ? '내 기록이에요 — 계정에 저장' : '이 기기 기록 올리기') + '</button><button class="btn gray block" id="ccCloud" style="margin-top:8px">🆕 이 계정은 빈 기록으로 시작</button>'
+            : '<button class="btn block" id="ccMerge">🔗 둘 다 합치기' + (why === 'both' ? ' (추천)' : '') + '</button><button class="btn ' + (why === 'otherOwner' ? '' : 'gray ') + 'block" id="ccCloud" style="margin-top:8px">☁️ 계정 기록만 쓰기</button>') +
+        '<div class="muted" style="margin-top:8px">이 기기의 지금 기록은 7일 동안 보관돼서 설정에서 되돌릴 수 있어요.</div>' +
+        '<button class="btn ghost block" id="ccCancel" style="margin-top:8px">취소하고 로그아웃</button>');
+    const done = () => closeModal(true);
+    sheet.querySelector('#ccMerge').addEventListener('click', () => {
+        done();
+        const merged = cloud ? mergeStores(cloud.cloudStore, store, true) : store;
+        applyCloudStore(merged, cloud ? cloud.d.rev : '');
+        cloudHint({ lastUid: u.uid });
+        if (!cloud) track('sign_up', { method: 'google' });
+        scheduleCloudPush(200);
+        showToast('☁️ 기록을 합쳐서 계정에 저장해요', 'gold', 3200);
+    });
+    sheet.querySelector('#ccCloud').addEventListener('click', async () => {
+        done();
+        snapshotBeforeRestore();
+        const next = normalizeStore(cloud ? cloud.cloudStore : { settings: store.settings });
+        next.gen = nextGen(store, cloud && cloud.cloudStore);   // 이 기기의 다른 탭·예전 기록이 다시 섞이지 않게
+        applyCloudStore(next, cloud ? cloud.d.rev : '');
+        cloudHint({ lastUid: u.uid });
+        showToast(cloud ? '☁️ 계정 기록으로 바꿨어요' : '🆕 빈 기록으로 시작해요', 'gold', 3200);
+        try { await cloudPush(true); } catch (e) { }
+        location.reload();
+    });
+    sheet.querySelector('#ccCancel').addEventListener('click', () => { done(); cloudLogout(false); });
+}
+function snapshotBeforeRestore() {
+    try { const raw = localStorage.getItem(LS_KEY); if (raw) localStorage.setItem(LS_KEY + '_before_restore', JSON.stringify({ at: new Date().toISOString(), raw })); } catch (e) { }
+}
+// 클라우드에서 온 기록을 이 기기에 반영(저장 + 화면 갱신). rev = 그 기록의 버전
+function applyCloudStore(next, rev) {
+    store = normalizeStore(next);
+    CLOUD.applying = true;
+    try { save(); } finally { CLOUD.applying = false; }
+    if (rev !== undefined) cloudHint({ rev: rev || '', at: new Date().toISOString() });
+    CLOUD.lastPull = Date.now();
+    refreshAfterExternalChange();
+}
+function refreshAfterExternalChange() {
+    if (typeof CUR !== 'undefined' && CUR && DATA) {
+        updateHeader(); updateTabs();
+        const root = document.getElementById('modalRoot');
+        if (['home', 'history', 'story', 'settings', 'guide', 'review'].includes(S.view) && !(root && root.innerHTML) && !S.review && !S.quiz) render();
+    } else if (store.active && LANGS[store.active] && typeof activateLanguage === 'function' && S.view === 'picker') {
+        activateLanguage(store.active);
+    } else if (S.view === 'picker') render();
+    refreshCloudUi();
+}
+
+/* ── 동기화: 올리기(바뀐 뒤 몇 초 모아서) · 내려받기(앱으로 돌아올 때) ── */
+function cloudAfterSave() {
+    if (!CLOUD || !CLOUD.user || CLOUD.applying) return;
+    CLOUD.dirty = true;
+    scheduleCloudPush(4000);
+}
+function scheduleCloudPush(ms) {
+    if (!CLOUD.user) return;
+    if (!CLOUD.firstDirty) CLOUD.firstDirty = Date.now();
+    const wait = Math.max(0, Math.min(ms, 20000 - (Date.now() - CLOUD.firstDirty)));
+    clearTimeout(CLOUD.pushTimer);
+    CLOUD.pushTimer = setTimeout(() => cloudPush(), wait);
+}
+async function cloudPush(force) {
+    if (!CLOUD.user || !CLOUD.sync) return;
+    if (CLOUD.pushing) { CLOUD.again = true; return; }
+    const raw = JSON.stringify(store);
+    if (!force && raw === CLOUD.lastPushedRaw) { CLOUD.dirty = false; CLOUD.firstDirty = 0; return; }
+    CLOUD.pushing = true; CLOUD.dirty = false; CLOUD.firstDirty = 0;
+    const m = CLOUD.sync, uid = CLOUD.user.uid, ref = m.doc(CLOUD.db, 'users', uid);
+    const newRev = randId();
+    let merged = null, wrote = null;
+    try {
+        await m.runTransaction(CLOUD.db, async tx => {
+            const snap = await tx.get(ref);
+            merged = null;
+            // 마지막으로 맞춘 뒤 다른 기기가 올렸으면 먼저 합친다
+            if (snap.exists() && snap.data().rev && snap.data().rev !== cloudHint().rev) merged = mergeStores(await unpackStore(snap.data()), store);
+            const body = await packStore(merged || store);
+            wrote = merged || store;
+            tx.set(ref, { v: 1, enc: body.enc, data: body.data, rev: newRev, updatedAt: m.serverTimestamp(), app: APP_VERSION });
+        });
+        if (!CLOUD.user || CLOUD.user.uid !== uid) return;
+        if (merged) applyCloudStore(merged);
+        cloudHint({ rev: newRev, at: new Date().toISOString() });
+        CLOUD.lastPushedRaw = JSON.stringify(wrote);
+        CLOUD.error = '';
+        CLOUD.fails = 0;
+    } catch (e) {
+        CLOUD.dirty = true;
+        CLOUD.fails = (CLOUD.fails || 0) + 1;
+        CLOUD.error = e && e.message === 'too-big' ? '기록이 너무 커서 클라우드에 저장하지 못했어요 — 백업 코드를 이용해 주세요' : (navigator.onLine === false ? '오프라인 — 인터넷이 연결되면 저장해요' : '클라우드 저장이 잠시 실패했어요 — 곧 다시 시도해요');
+        if (!(e && e.message === 'too-big')) scheduleCloudPush(Math.min(120000, 5000 * Math.pow(2, CLOUD.fails)));
+    } finally {
+        CLOUD.pushing = false;
+        refreshCloudUi();
+        if (CLOUD.again) { CLOUD.again = false; scheduleCloudPush(1000); }
+    }
+}
+async function cloudPull() {
+    if (!CLOUD.user || !CLOUD.sync || CLOUD.pushing) return;
+    const m = CLOUD.sync, uid = CLOUD.user.uid;
+    CLOUD.lastPull = Date.now();
+    try {
+        const snap = await m.getDoc(m.doc(CLOUD.db, 'users', uid));
+        if (!CLOUD.user || CLOUD.user.uid !== uid) return;
+        if (!snap.exists()) { scheduleCloudPush(500); return; }
+        const d = snap.data();
+        if (d.rev && d.rev === cloudHint().rev) return;   // 마지막으로 맞춘 뒤 바뀐 게 없음
+        const cloudStore = await unpackStore(d);
+        const merged = mergeStores(cloudStore, store);
+        applyCloudStore(merged, d.rev);
+        if (JSON.stringify(merged) !== JSON.stringify(cloudStore)) scheduleCloudPush(1500);
+        else CLOUD.lastPushedRaw = JSON.stringify(store);
+        CLOUD.error = '';
+    } catch (e) { CLOUD.error = navigator.onLine === false ? '오프라인 — 인터넷이 연결되면 맞춰요' : ''; refreshCloudUi(); }
+}
+async function cloudDeleteAll() {
+    if (!CLOUD.user || !CLOUD.sync) return;
+    if (!confirm('구글 계정에 저장된 학습 기록을 모두 지우고 로그아웃할까요?\n(이 기기의 기록은 남아요. 지운 클라우드 기록은 되돌릴 수 없어요)')) return;
+    const m = CLOUD.sync;
+    clearTimeout(CLOUD.pushTimer);
+    try {
+        await m.deleteDoc(m.doc(CLOUD.db, 'users', CLOUD.user.uid));
+        try { await m.deleteUser(CLOUD.user); CLOUD.signingOut = true; }   // 로그인한 지 오래됐으면 계정 연결은 남고 로그아웃만
+        catch (e) { CLOUD.signingOut = true; await m.signOut(CLOUD.auth); }
+        cloudHint({ uid: '', lastUid: '', rev: '', at: '' });
+        CLOUD.lastPushedRaw = '';
+        showToast('🗑️ 클라우드 기록을 지우고 로그아웃했어요', '', 3200);
+        track('cloud_delete');
+    } catch (e) { showToast('지우지 못했어요. 인터넷 연결을 확인해 주세요'); }
+    if (S.view === 'settings') renderSettings();
+}
+function cloudStatusText() {
+    const h = cloudHint();
+    if (CLOUD.syncing || CLOUD.pushing) return '☁️ 맞추는 중…';
+    if (CLOUD.error) return '⚠️ ' + CLOUD.error;
+    if (CLOUD.dirty) return '☁️ 곧 저장해요';
+    if (h.at) { const mins = Math.round((Date.now() - Date.parse(h.at)) / 60000); return '☁️ 저장됨 · ' + (mins < 1 ? '방금' : mins < 60 ? mins + '분 전' : mins < 1440 ? Math.round(mins / 60) + '시간 전' : h.at.slice(0, 10)); }
+    return '☁️ 저장됨';
+}
+
+/* ── 화면: 설정 카드 · 언어 선택 화면 안내 · 홈 권유 ── */
+function cloudCardHtml(where) {
+    if (!cloudOn()) return '';
+    const st = CLOUD.state;
+    const u = CLOUD.user;
+    if (u) {
+        return '<div class="card cloud-card" id="cloudCard"><div style="display:flex;align-items:center;gap:10px"><div class="cloud-ava" aria-hidden="true">' + esc(((u.displayName || u.email || '?').trim()[0] || '?').toUpperCase()) + '</div>' +
+            '<div style="flex:1;min-width:0"><div style="font-weight:800;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(u.displayName || '구글 계정') + '</div><div class="muted" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(u.email || '') + '</div></div></div>' +
+            '<div class="muted" id="cloudStatus" style="margin:8px 0" aria-live="polite">' + esc(cloudStatusText()) + '</div>' +
+            (where === 'settings' ? '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn small ghost" id="cloudSyncNow">🔄 지금 맞추기</button><button class="btn small gray" id="cloudOut">로그아웃</button></div>' +
+                '<div class="muted" style="margin-top:8px">휴대폰·PC에서 같은 구글 계정으로 로그인하면 기록이 자동으로 이어져요. <a href="#" id="cloudDel">클라우드 기록 지우기</a> · <a href="../privacy.html" target="_blank" rel="noopener">개인정보 안내</a></div>' : '') +
+            '</div>';
+    }
+    const busy = st === 'loading' || (st === 'idle' && !!cloudHint().uid);
+    const label = busy ? '⏳ 준비 중…' : st === 'error' ? '🔄 다시 시도' : (CLOUD.readyTap ? '👉 구글 로그인 창 열기' : '구글로 로그인');
+    const desc = where === 'picker'
+        ? '다른 기기에서 공부하던 기록이 있나요? 같은 구글 계정으로 로그인하면 그대로 이어져요.'
+        : where === 'home'
+            ? '구글로 로그인하면 휴대폰을 바꾸거나 PC에서 열어도 기록이 그대로 이어져요. 기록이 날아갈 걱정도 없어요.'
+            : '로그인하면 기록이 구글 계정에 자동 저장돼서, 휴대폰·PC 어디서든 이어서 공부할 수 있어요. 로그인하지 않아도 이 기기에서는 그대로 쓸 수 있어요.';
+    return '<div class="card cloud-card" id="cloudCard"><div style="font-weight:800;font-size:14.5px;margin-bottom:4px">☁️ ' + (where === 'picker' ? '기록 이어서 하기' : '기록을 안전하게 보관하기') + '</div>' +
+        '<div class="muted" style="margin-bottom:10px;line-height:1.6">' + desc + '</div>' +
+        (IN_APP ? '<div class="inapp-note" style="margin:0 0 8px">앱 안의 브라우저에서는 구글 로그인이 막혀 있어요. 메뉴 ⋮ → 다른 브라우저로 열기 후 로그인해 주세요.</div>' : '') +
+        '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn gbtn" id="cloudIn"' + (busy ? ' disabled' : '') + '><span class="g-logo" aria-hidden="true">G</span> ' + label + '</button>' +
+        (where === 'home' ? '<button class="btn small gray" id="cloudLater">나중에</button>' : '') + '</div>' +
+        (where !== 'home' ? '<div class="muted" style="margin-top:8px">이름·이메일과 학습 기록만 저장해요 · <a href="../privacy.html" target="_blank" rel="noopener">개인정보 안내</a></div>' : '') +
+        '</div>';
+}
+function bindCloudCard(where) {
+    const b = document.getElementById('cloudIn');
+    if (b) b.addEventListener('click', () => { if (CLOUD.state === 'error') { CLOUD.state = 'idle'; } cloudLogin(); });
+    const later = document.getElementById('cloudLater');
+    if (later) later.addEventListener('click', () => { store.seen.cloudNudge = todayStr(); save(); const c = document.getElementById('cloudCard'); if (c) c.remove(); });
+    const sn = document.getElementById('cloudSyncNow');
+    if (sn) sn.addEventListener('click', async () => { CLOUD.syncing = true; refreshCloudUi(); await cloudPull(); CLOUD.syncing = false; await cloudPush(true); showToast('☁️ 기록을 맞췄어요'); });
+    const out = document.getElementById('cloudOut');
+    if (out) out.addEventListener('click', () => {
+        const sheet = openModal('<div class="sheet-head"><b>로그아웃</b><button class="sheet-close" data-close-overlay aria-label="닫기">✕</button></div>' +
+            '<div style="font-size:14px;line-height:1.7;margin-bottom:12px">기록은 구글 계정에 저장돼 있어요. 이 기기의 기록은 어떻게 할까요?</div>' +
+            '<button class="btn block" id="outKeep">이 기기에 남겨 두기</button>' +
+            '<button class="btn gray block" id="outWipe" style="margin-top:8px">이 기기에서 지우기 (함께 쓰는 기기라면)</button>');
+        sheet.querySelector('#outKeep').addEventListener('click', () => { closeModal(true); cloudLogout(false); });
+        sheet.querySelector('#outWipe').addEventListener('click', () => { closeModal(true); cloudLogout(true); });
+    });
+    const del = document.getElementById('cloudDel');
+    if (del) del.addEventListener('click', e => { e.preventDefault(); cloudDeleteAll(); });
+    if (!CLOUD.user && cloudOn() && !IN_APP) prefetchFbSync();
+}
+function refreshCloudUi() {
+    const card = document.getElementById('cloudCard');
+    if (!card) return;
+    const where = S.view === 'settings' ? 'settings' : S.view === 'picker' ? 'picker' : 'home';
+    if (where === 'home' && CLOUD.user) { card.remove(); return; }
+    const tmp = document.createElement('div');
+    tmp.innerHTML = cloudCardHtml(where);
+    const next = tmp.firstElementChild;
+    if (!next) { card.remove(); return; }
+    card.replaceWith(next);
+    bindCloudCard(where);
+}
+function cloudNudgeDue() {
+    if (!cloudOn() || CLOUD.user || cloudHint().uid) return false;
+    if (doneCount() < 2) return false;
+    return !(store.seen.cloudNudge && dayDiff(store.seen.cloudNudge, todayStr()) < 10);
+}
+
+/* ── 사용 통계(익명) ── */
+function statsAllowed() { return cloudOn() && !!cloudCfg().measurementId && store.settings.stats !== false && navigator.doNotTrack !== '1'; }
+function initAnalytics() {
+    if (!statsAllowed()) return;
+    const start = () => loadFbCore().then(m => m.analyticsSupported().then(ok => {
+        if (!ok) return;
+        CLOUD.ga = m.initializeAnalytics(CLOUD.app, { config: { page_location: ENTRY_URL, send_page_view: true, allow_google_signals: false, allow_ad_personalization_signals: false } });
+        const q = CLOUD.gaQueue.splice(0);
+        q.forEach(e => { try { m.logEvent(CLOUD.ga, e[0], e[1]); } catch (err) { } });
+    })).catch(() => { });
+    if (window.requestIdleCallback) requestIdleCallback(start, { timeout: 4000 }); else setTimeout(start, 1500);
+}
+function track(name, params) {
+    try {
+        const p = Object.assign({ language: (typeof CUR !== 'undefined' && CUR) ? CUR.code : (store.active || '') }, params || {});
+        CLOUD.log.push([name, p]); if (CLOUD.log.length > 40) CLOUD.log.shift();
+        if (!statsAllowed()) return;
+        if (CLOUD.ga && CLOUD.core) CLOUD.core.logEvent(CLOUD.ga, name, p);
+        else if (CLOUD.gaQueue.length < 50) CLOUD.gaQueue.push([name, p]);
+    } catch (e) { }
+}
+function setStatsEnabled(on) {
+    store.settings.stats = !!on; save();
+    if (CLOUD.ga && CLOUD.core) { try { CLOUD.core.setAnalyticsCollectionEnabled(CLOUD.ga, !!on); } catch (e) { } }
+    else if (on) initAnalytics();
+}
+
+/* ── 의견 보내기 ── */
+function feedbackOn() { return cloudOn(); }
+function openFeedback(rating, from) {
+    if (!feedbackOn()) return;
+    const R = [['good', '😍', '좋아요'], ['ok', '🙂', '괜찮아요'], ['bad', '😕', '아쉬워요']];
+    let pick = rating || '';
+    const sheet = openModal('<div class="sheet-head"><b>💬 의견 보내기</b><button class="sheet-close" data-close-overlay aria-label="닫기">✕</button></div>' +
+        '<div style="font-size:14px;margin-bottom:8px">랭귀지 스타터, 써 보니 어때요?</div>' +
+        '<div class="seg" role="group" aria-label="만족도" style="margin-bottom:10px">' + R.map(r => '<button data-rate="' + r[0] + '" aria-pressed="' + (pick === r[0]) + '">' + r[1] + ' ' + r[2] + '</button>').join('') + '</div>' +
+        '<textarea id="fbText" maxlength="1500" rows="4" style="width:100%;border:1px solid var(--border);border-radius:12px;padding:10px;font-size:14px;font-family:inherit" placeholder="좋았던 점, 불편했던 점, 이런 게 있으면 좋겠다… 무엇이든 적어 주세요"></textarea>' +
+        '<input id="fbContact" maxlength="100" style="width:100%;border:1px solid var(--border);border-radius:12px;padding:10px;font-size:13px;margin-top:8px;font-family:inherit" placeholder="(선택) 답장 받을 연락처 — 이메일이나 카톡 ID">' +
+        '<div class="muted" style="margin:6px 0 10px">보내는 내용: 위에 쓴 글, 지금 배우는 언어, 앱 버전, 기기 종류(휴대폰/PC) · <a href="../privacy.html" target="_blank" rel="noopener">개인정보 안내</a></div>' +
+        '<button class="btn block" id="fbSend">보내기</button>');
+    sheet.querySelectorAll('[data-rate]').forEach(b => b.addEventListener('click', () => { pick = b.dataset.rate; sheet.querySelectorAll('[data-rate]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); }));
+    sheet.querySelector('#fbSend').addEventListener('click', async () => {
+        const text = sheet.querySelector('#fbText').value.trim(), contact = sheet.querySelector('#fbContact').value.trim();
+        if (!text && !pick) { showToast('만족도를 고르거나 한 줄이라도 적어 주세요'); return; }
+        const btn = sheet.querySelector('#fbSend'); btn.disabled = true; btn.textContent = '보내는 중…';
+        try {
+            const m = await loadFbSync();
+            const doc = { text: text.slice(0, 1500), rating: pick || null, lang: (CUR && CUR.code) || '', app: APP_VERSION, at: m.serverTimestamp(), ua: /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent || '') ? 'mobile' : 'desktop', from: String(from || '').slice(0, 20) };
+            if (contact) doc.contact = contact.slice(0, 100);
+            if (CLOUD.user) doc.uid = CLOUD.user.uid;
+            await m.addDoc(m.collection(CLOUD.db, 'feedback'), doc);
+            closeModal(true);
+            store.seen.feedbackSent = todayStr(); save();
+            track('feedback_sent', { rating: pick || 'none' });
+            showToast('💌 고마워요! 보내 주신 의견은 꼭 읽어 볼게요', 'gold', 3400);
+        } catch (e) { btn.disabled = false; btn.textContent = '다시 보내기'; showToast('보내지 못했어요. 인터넷 연결을 확인해 주세요'); }
+    });
+}
+function feedbackAskDue() {
+    return feedbackOn() && !store.seen.feedbackAsked && !store.seen.feedbackSent && doneCount() >= 3;
+}
+
+/* ── 친구에게 추천 · 자랑하기 ── */
+function appBaseUrl() { return location.origin + location.pathname.replace(/[^/]*$/, ''); }
+function shareUrl(lang, src) {
+    const q = new URLSearchParams();
+    if (lang) q.set('lang', lang);
+    q.set('utm_source', src || 'share'); q.set('utm_medium', 'friend');
+    return appBaseUrl() + '?' + q.toString();
+}
+async function shareApp(kind, text) {
+    const lang = (CUR && CUR.code) || '';
+    const url = shareUrl(lang, kind || 'share');
+    const msg = text || ((CUR ? CUR.flag + ' ' : '') + '왕초보도 하루 10분이면 되는 외국어 회화 앱이에요. 영어·중국어·일본어·스페인어·프랑스어 무료!');
+    track('share', { kind: kind || 'share' });
+    try {
+        if (navigator.share) { await navigator.share({ title: '랭귀지 스타터', text: msg, url }); return; }
+    } catch (e) { if (e && e.name === 'AbortError') return; }
+    copyText(msg + '\n' + url, '🔗 링크를 복사했어요! 카톡에 붙여넣어 보내 보세요');
+}
+function bragText(what) {
+    const L = CUR ? CUR.name : '외국어';
+    return what === 'streak' ? '🔥 ' + curStreak() + '일 연속으로 ' + L + ' 공부 중! 랭귀지 스타터로 같이 해요'
+        : what === 'boss' ? '🏆 ' + L + ' 보스 미션 클리어! 랭귀지 스타터로 같이 해요'
+            : what === 'level' ? '⭐ ' + L + ' 레벨 업! 랭귀지 스타터로 같이 해요'
+                : what === 'course' ? '🎓 ' + L + ' 과정을 끝까지 마쳤어요! 랭귀지 스타터로 같이 해요'
+                    : '📚 ' + L + ' 공부 중! 랭귀지 스타터로 같이 해요';
 }
 
 /* ═══════════════════ 스크린리더: 외국어 글자에 lang 붙이기 ═══════════════════ */
@@ -4389,16 +5240,40 @@ window.addEventListener('popstate', () => {
 });
 document.addEventListener('click', armBack, { once: true, capture: true });
 
+/* ═══════════════════ 홈 화면 설치(안드로이드 크롬 등) ═══════════════════ */
+const INSTALL = { ev: null };
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); INSTALL.ev = e; });
+window.addEventListener('appinstalled', () => { INSTALL.ev = null; track('app_installed'); });
+function installDue() {
+    return !!INSTALL.ev && !IN_APP && doneCount() >= 2 && !(store.seen.installAsk && dayDiff(store.seen.installAsk, todayStr()) < 14);
+}
+
 /* ═══════════════════ 시작 ═══════════════════ */
 document.getElementById('langSwitchBtn').addEventListener('click', () => go('picker'));
 document.getElementById('avatarBtn').addEventListener('click', () => go('picker'));
 renderStorageWarning();
 applyBigText();
+cloudBoot();
+// 서비스 워커: 한 번 연 언어는 오프라인에서도 열리게(https에서만, file://은 지금처럼)
+if ('serviceWorker' in navigator && window.isSecureContext && /^https?:$/.test(location.protocol)) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').then(reg => {
+            const warm = () => {
+                const sw = navigator.serviceWorker.controller || reg.active; if (!sw) return;
+                const urls = performance.getEntriesByType('resource').map(e => e.name).filter(u => /\/language-teacher\/((data|stories)-[a-z]{2}\.js|cloud-config\.js|vendor\/|icons\/)/.test(u));
+                sw.postMessage({ type: 'warm', urls: [location.href.split('?')[0]].concat(urls) });
+            };
+            if (reg.active) warm(); else navigator.serviceWorker.addEventListener('controllerchange', warm, { once: true });
+            // 언어를 새로 불러오면 그것도 담아 둔다
+            setInterval(() => { if (navigator.serviceWorker.controller) warm(); }, 60000);
+        }).catch(() => { });
+    });
+}
 const QP = new URLSearchParams(location.search);
 const wantLang = QP.get('lang'), fromDeq = QP.get('from') === 'deq';
 if (wantLang) { try { history.replaceState(null, '', location.pathname); } catch (e) { } }
 let startLang = null;
-if (wantLang && LANGS[wantLang]) {
+if (wantLang && isLang(wantLang)) {
     // 옛 DEQ 주소로 들어왔어도, 이미 다른 언어를 고른 사람은 가져올 기록이 남아 있을 때만 영어로
     if (fromDeq && store.active && store.active !== wantLang) {
         const rec = store.byLang.en && store.byLang.en.deqImport;
@@ -4408,7 +5283,7 @@ if (wantLang && LANGS[wantLang]) {
     } else startLang = wantLang;
 }
 if (startLang) activateLanguage(startLang, { fromDeq: fromDeq && startLang === 'en' });
-else if (store.active && LANGS[store.active]) activateLanguage(store.active);
+else if (store.active && isLang(store.active)) activateLanguage(store.active);
 else render();
 </script>
 </body>
