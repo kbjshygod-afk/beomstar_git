@@ -462,6 +462,15 @@ def run(args) -> dict:
         raise SystemExit(f"benchmark {params['benchmark']} could not be loaded")
     as_of = bench.index[-1]
     if cfg["start_date"] is None:
+        # The paper period may only start with a signal file committed before the next open;
+        # a first run that is already past that deadline (e.g. after a holiday) waits.
+        deadline = next_open_deadline(market, as_of)
+        if now > deadline and not args.allow_late_start:
+            msg = (f"{market}: 첫 실행이 {_day(as_of)} 봉의 다음 시가({_iso(deadline)}) 이후라 시작일을 확정하지 않았습니다. "
+                   "다음 제시간 실행에서 모의투자가 시작됩니다.")
+            log.warning(msg)
+            print(msg)
+            return {"started": False, "as_of": _day(as_of), "deadline": _iso(deadline)}
         cfg["start_date"] = _day(as_of)                      # frozen from here on
         (root / "config.json").write_text(json.dumps(cfg, ensure_ascii=False, indent=1))
         log.info("paper trading for %s starts at the close of %s", market, cfg["start_date"])
@@ -511,7 +520,8 @@ def run(args) -> dict:
     if not args.no_commit:
         commit_and_push(repo, f"{market} ledger {snap['as_of']}", args.push_branch)
     print(report)
-    return {"snapshot": snap, "signal_file": str(sig_path), "signal_state": sig_state, "audit": aud, "performance": perf}
+    return {"started": True, "snapshot": snap, "signal_file": str(sig_path), "signal_state": sig_state,
+            "audit": aud, "performance": perf}
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -532,6 +542,8 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--max-symbols", type=int, default=0)
     p.add_argument("--chunk-size", type=int, default=40)
     p.add_argument("--now", default=None, help="override the current time (ISO, UTC if naive; tests)")
+    p.add_argument("--allow-late-start", action="store_true",
+                   help="start even if the first run is past the next open (not for the official ledger)")
     p.add_argument("-v", "--verbose", action="store_true")
     return p
 

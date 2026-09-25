@@ -1,8 +1,28 @@
 # 업무 자동화·코인 기술적 분석·미국 주식/ETF 거시 매매 스킬
 
-GitHub 공개 스킬을 분야별로 조사해 고른 10개입니다(조사일 2026-09-25). 이 폴더의 스킬은 이 저장소에서 자동으로 켜지지 않습니다. 쓰려면 아래 방법으로 claude.ai 또는 Claude Code에 설치합니다.
+이 폴더의 스킬은 이 저장소에서 자동으로 켜지지 않습니다. 쓰려면 아래 방법으로 claude.ai 또는 Claude Code에 설치합니다.
 
-## 한눈에 보기
+## 대표님 룰 스킬: `swing-scanner-rules` (우선 사용)
+
+대표님 매매 스캐너의 룰(2026-09-04 룰 시트)을 그대로 옮긴 스킬입니다. 종목을 물으면 이 룰만으로 판정합니다: 트렌드 템플릿 8/8, 피벗 돌파와 거래량 1.4배, 추격 15% 제한, 시장별 레짐, 손절 −7%/−10%, 50일선 종가 이탈 청산, 0.75% 위험 기준 수량, 목표가 없음.
+
+| 항목 | 내용 |
+|---|---|
+| 위치 | `trading/swing-scanner-rules/`, 업로드용 `dist/swing-scanner-rules.zip` |
+| 수치 출처 | ① 매일 모의투자가 올리는 종목별 상태표(`paper-trading` 브랜치의 `status.csv`) ② 같이 들어 있는 엔진을 Yahoo 데이터나 트레이딩뷰 CSV로 실행 ③ 둘 다 안 되면 CSV를 요청하고 추정하지 않음 |
+| 엔진 검증 | 트레이딩뷰 지표를 따로 옮긴 코드와 일봉 492,965개를 대조해 불일치 0건 |
+| 10년 백테스트 | `trading/swing-scanner-rules/references/backtest-ko.md` (스캐너 계기판 수치와 나란히 비교) |
+| 모의투자 | 판정 기준은 `docs/paper-trading-plan.md`에 미리 고정 |
+| 동작 시험 | "AAPL 지금 사도 돼? 내 스윙 룰로 봐줘" → 스킬 호출, 상태표 수치와 일치, 목표가 없음, 데이터 기준일·추정값 7개 표시, S&P500·나스닥100 두 손절 기준을 함께 제시 |
+| 필요 환경 | 상태표만 읽을 때는 GitHub 접속만 있으면 됩니다. 엔진을 직접 돌릴 때는 Python과 `pandas`, `numpy`, `yfinance`가 필요합니다 |
+
+**같이 켜지 않는 것을 권하는 스킬:** `technical-analyst`(목표가·패턴 판단), `position-sizer`(다른 수량 공식), `exposure-coach`(다른 노출 상한), `crypto-regime-analyzer`(다른 코인 국면 기준). 대표님 룰과 다른 답을 내서 판단이 섞일 수 있습니다. 거시 참고용(`digital-oracle`, `macro-regime-detector`, 참여도·섹터 스킬)은 룰을 바꾸지 않는 배경 정보로만 씁니다.
+
+## 조사한 공개 스킬 10개 (2026-09-25)
+
+GitHub 공개 스킬을 분야별로 조사해 고른 10개입니다.
+
+### 한눈에 보기
 
 | 분야 | 스킬 | 하는 일 | 데이터·키 | 매매 주문 |
 |---|---|---|---|---|
@@ -19,7 +39,7 @@ GitHub 공개 스킬을 분야별로 조사해 고른 10개입니다(조사일 2
 
 **어떤 스킬도 주문을 내지 않습니다.** 모두 분석과 계산만 하고, 매매 판단은 사용자가 합니다.
 
-## 사용 순서 (미국 주식·ETF)
+### 사용 순서 (미국 주식·ETF)
 
 1. `digital-oracle`: 금리·연준·물가 기대로 거시 배경 확인
 2. `macro-regime-detector`: 자산 간 비율로 지금이 어떤 국면인지 판정
@@ -36,15 +56,17 @@ GitHub 공개 스킬을 분야별로 조사해 고른 10개입니다(조사일 2
 
 1. `dist/`의 zip 파일을 받습니다 (스킬 하나당 zip 하나).
 2. 설정 → 기능(Capabilities) → 스킬 → 업로드.
-3. **데이터를 가져오는 스킬**(`google-apps-script`, `technical-analyst`의 차트 분석, `exposure-coach`, `position-sizer`를 뺀 나머지)은 코드 실행의 인터넷 접속이 필요합니다. 설정 → 기능 → "코드 실행 및 파일 생성"에서 네트워크 접속을 **모든 도메인** 또는 필요한 도메인 허용으로 바꿉니다. Team·Enterprise 요금제는 조직 관리자가 바꿉니다. 접속이 막히면 스킬은 추정값을 만들지 않고 오류로 멈춥니다.
+3. **데이터를 가져오는 스킬**은 코드 실행의 인터넷 접속이 필요합니다. 필요 없는 것은 `google-apps-script`, `technical-analyst`의 차트 분석, `exposure-coach`, `position-sizer`입니다. `swing-scanner-rules`는 `raw.githubusercontent.com` 접속이 필요하고, 엔진을 직접 돌릴 때는 Yahoo 접속도 필요합니다. 설정 → 기능 → "코드 실행 및 파일 생성"에서 네트워크 접속을 **모든 도메인** 또는 필요한 도메인 허용으로 바꿉니다. Team·Enterprise 요금제는 조직 관리자가 바꿉니다. 접속이 막히면 스킬은 추정값을 만들지 않고 오류로 멈춥니다.
 
 ### Claude Code (맥)
 
 ```bash
 git clone --depth 1 -b claude/github-top-10-skills-k1u8yp https://github.com/kbjshygod-afk/beomstar_git.git /tmp/beomstar-skills
 mkdir -p ~/.claude/skills
-cp -R /tmp/beomstar-skills/skills-library/{automation,crypto,macro}/* ~/.claude/skills/
-pip3 install requests yfinance pandas
+cp -R /tmp/beomstar-skills/skills-library/trading/swing-scanner-rules ~/.claude/skills/
+# 필요한 공개 스킬만 골라서 복사 (위 '같이 켜지 않는 것을 권하는 스킬' 참고)
+cp -R /tmp/beomstar-skills/skills-library/automation/google-apps-script ~/.claude/skills/
+pip3 install requests yfinance pandas numpy
 ```
 
 `~/.claude/skills/`에 넣으면 모든 프로젝트에서 켜집니다. 맥에서는 네트워크 제한이 없어서 데이터를 가져오는 스킬을 쓰기가 가장 편합니다.

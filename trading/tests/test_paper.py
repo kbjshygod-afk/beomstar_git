@@ -169,3 +169,19 @@ def test_relative_ledger_dir(tmp_path, ledger_repo, monkeypatch):
         "--now", now.strftime("%Y-%m-%dT%H:%M:%S")])
     r = P.run(args)
     assert r["audit"]["uncommitted"] == [] and r["audit"]["late"] == []
+
+
+def test_first_run_after_the_open_does_not_start(tmp_path, ledger_repo, monkeypatch):
+    offline = tmp_path / "data"
+    offline.mkdir()
+    days = _write_market(offline)
+    friday = days[-1]                                        # 2024-06-28
+    monday_after_open = datetime(2024, 7, 1, 15, 0, tzinfo=timezone.utc)
+    r = _run(offline, ledger_repo, monday_after_open, monkeypatch)
+    assert r["started"] is False and r["as_of"] == "2024-06-28"
+    root = ledger_repo / "paper" / "SP500"
+    assert not (root / "signals").exists()
+    cfg = json.loads((root / "config.json").read_text()) if (root / "config.json").exists() else {"start_date": None}
+    assert cfg["start_date"] is None
+    r2 = _run(offline, ledger_repo, _after_close(friday), monkeypatch)     # a timely run starts it
+    assert r2["started"] is True and r2["audit"]["late"] == []
