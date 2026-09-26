@@ -26,12 +26,19 @@ def main():
     p.add_argument("--start", required=True)
     p.add_argument("--out", required=True)
     p.add_argument("--extra-tickers", default=None)
+    p.add_argument("--fallback-universe", default=None, help="tickers to use if the live universe fetch fails")
     a = p.parse_args()
     market = normalize_preset(a.market)
     params = resolve(market)
     now = datetime.now(timezone.utc)
     start, end = pd.Timestamp(a.start).date(), (now + timedelta(days=1)).date()
-    universe = D.fetch_universe(market, cache_dir=None, now=now)
+    try:
+        universe = D.fetch_universe(market, cache_dir=None, now=now)
+    except Exception as e:  # noqa: BLE001 - KRX's listing endpoint fails now and then
+        if not a.fallback_universe:
+            raise
+        print(f"universe fetch failed ({e}); using {a.fallback_universe}", flush=True)
+        universe = [t.strip() for t in Path(a.fallback_universe).read_text().split() if t.strip()]
     extra = []
     if a.extra_tickers:
         extra = [t.strip() for t in Path(a.extra_tickers).read_text().split() if t.strip()]

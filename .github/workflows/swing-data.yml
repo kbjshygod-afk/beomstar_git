@@ -1,11 +1,12 @@
-# Research data snapshot: daily bars for every market (plus former S&P 500 members since 2014,
-# for the survivorship-bias check), saved to the `swing-data` branch for offline analysis.
+# Research data snapshot: daily bars for every market, plus former members of the S&P 500 and of
+# the KOSPI top 200 / KOSDAQ top 150 since 2014 (survivorship-bias check), saved to the
+# `swing-data` branch for offline analysis.
 name: swing-data
 
 on:
   push:
     branches: [claude/github-top-10-skills-k1u8yp]
-    paths: ['.github/workflows/swing-data.yml', 'trading/tools/snapshot_data.py']
+    paths: ['.github/workflows/swing-data.yml', 'trading/tools/snapshot_data.py', 'trading/tools/krx_membership.py']
   workflow_dispatch:
 
 permissions:
@@ -44,11 +45,19 @@ jobs:
           print(len(out), "tickers ever in the index since 2014")
           EOF
           mkdir -p data && cp hist.csv data/sp500_membership.csv
+      - name: Point-in-time KOSPI 200 / KOSDAQ 150 universes (FinanceData/marcap)
+        if: matrix.market == 'KOSPI' || matrix.market == 'KOSDAQ'
+        working-directory: trading
+        run: |
+          pip install pyarrow
+          python tools/krx_membership.py --market ${{ matrix.market }} --start 2014 \
+            --out data/${{ matrix.market }}_membership.csv.gz --extra extra.txt --latest latest.txt
       - name: Snapshot
         working-directory: trading
         run: |
           EXTRA=""
           if [ -f extra.txt ]; then EXTRA="--extra-tickers extra.txt"; fi
+          if [ -f latest.txt ]; then EXTRA="$EXTRA --fallback-universe latest.txt"; fi
           python tools/snapshot_data.py --market ${{ matrix.market }} --start 2014-01-01 \
             --out data/${{ matrix.market }}.pkl.xz $EXTRA
       - uses: actions/upload-artifact@v4
