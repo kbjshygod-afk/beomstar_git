@@ -165,19 +165,84 @@
     "benchmark": "^NDX",
     "mode": "MA200",
     "close": 30608.1348,
-    "ma200": null,
-    "ma20": null,
-    "on": null
+    "ma200": 27353.8206,
+    "ma20": 29620.5933,
+    "on": true
    },
    "entries_next_open": [],
    "exits_next_open": [],
    "positions": [],
-   "watchlist": [],
+   "watchlist": [
+    {
+     "symbol": "MU",
+     "label": "2순위 · 근접 (피벗 3% 이내)",
+     "close": 1082.28,
+     "pivot": 1105.5,
+     "to_pivot_pct": 2.15,
+     "rs": 98.99
+    },
+    {
+     "symbol": "AMD",
+     "label": "1순위 · 임박 (피벗 1% 이내)",
+     "close": 630.63,
+     "pivot": 630.8,
+     "to_pivot_pct": 0.03,
+     "rs": 97.98
+    },
+    {
+     "symbol": "STX",
+     "label": "2순위 · 근접 (피벗 3% 이내)",
+     "close": 916.83,
+     "pivot": 936.94,
+     "to_pivot_pct": 2.19,
+     "rs": 94.95
+    },
+    {
+     "symbol": "MRVL",
+     "label": "2순위 · 근접 (피벗 3% 이내)",
+     "close": 261.94,
+     "pivot": 266.0,
+     "to_pivot_pct": 1.55,
+     "rs": 93.94
+    },
+    {
+     "symbol": "ALAB",
+     "label": "2순위 · 근접 (피벗 3% 이내)",
+     "close": 364.62,
+     "pivot": 369.15,
+     "to_pivot_pct": 1.24,
+     "rs": 90.91
+    },
+    {
+     "symbol": "TER",
+     "label": "1순위 · 임박 (피벗 1% 이내)",
+     "close": 398.38,
+     "pivot": 399.4,
+     "to_pivot_pct": 0.26,
+     "rs": 84.85
+    },
+    {
+     "symbol": "ASML",
+     "label": "2순위 · 근접 (피벗 3% 이내)",
+     "close": 1743.9399,
+     "pivot": 1790.0,
+     "to_pivot_pct": 2.64,
+     "rs": 81.82
+    },
+    {
+     "symbol": "AAPL",
+     "label": "2순위 · 근접 (피벗 3% 이내)",
+     "close": 341.07,
+     "pivot": 345.34,
+     "to_pivot_pct": 1.25,
+     "rs": 76.77
+    }
+   ],
    "performance": {
-    "equity": null,
-    "return_pct": null,
-    "bench_return_pct": null,
-    "mdd_pct": null,
+    "equity": 100000000.0,
+    "return_pct": 0.0,
+    "bench_return_pct": 0.0,
+    "mdd_pct": 0.0,
     "closed_trades": 0,
     "win_rate_pct": null,
     "avg_win_pct": null,
@@ -196,7 +261,7 @@
    }
   }
  },
- "updated_at": "2026-09-26T02:19:42Z",
+ "updated_at": "2026-09-26T02:20:30Z",
  "disclaimer": "기계적 룰 출력이며 투자 자문이 아닙니다. 매수·매도 결정은 소유자 본인이 합니다.",
  "unconfirmed": "미확인 추정값(스캐너 원본 코드 미확인): 피벗=직전 20봉 최고가(당일 제외) · 거래량 평균=직전 50일(당일 제외) · RS=지수 대비 가중 1년 수익률 ≥ 0%p(스캐너는 유니버스 백분위 ≥ 70) · 52주 고저=종가 기준 · 200일선 상승=22봉 전 대비 · 수축비=10/40일 평균 TR · 비용=편도 0.2%"
 }
