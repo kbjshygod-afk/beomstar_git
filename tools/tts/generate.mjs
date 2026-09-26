@@ -5,10 +5,12 @@
 //   node tools/tts/generate.mjs                            전체 녹음(이미 있는 파일은 건너뜀 = 이어 하기)
 //
 // 옵션: --lang zh[,ja]  언어만 골라서 · --limit N  언어마다 새로 만들 클립 수 제한(시험용) · --prune  더 이상 안 쓰는 mp3 삭제
-//       --redo  이미 있는 파일도 다시 녹음(목소리를 바꿨을 때) · --concurrency N (기본 4) · --out DIR (시험용 출력 폴더)
+//       --redo  이미 있는 파일도 다시 녹음(rev가 바뀌어 앱이 새로 받음) · --concurrency N (기본 4) · --out DIR (시험용 출력 폴더)
 // API 키: 환경 변수 GOOGLE_TTS_API_KEY (화면·로그에 절대 찍지 않는다. 요청 헤더 X-Goog-Api-Key 로만 보낸다)
-// 결과: language-teacher/audio/{lang}/{id}.mp3 + index.json = { v: 1, voices: {a, b}, rate: 녹음 속도, ids: [디스크에 있는 클립 id, 정렬] }
+// 결과: language-teacher/audio/{lang}/{id}.mp3 + index.json = { v: 1, voices: {a, b}, rate, rates: {a, b}(목소리 칸별 녹음 속도),
+//       norate: [speakingRate를 거부한 목소리](있을 때만), gen: 다시 녹음한 횟수, rev: 앱 주소의 ?v=, ids: [디스크에 있는 클립 id, 정렬] }
 import { mkdirSync, readdirSync, statSync, writeFileSync, renameSync, unlinkSync, readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { resolve } from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { collectLang, LANG_CODES, APP_DIR } from './clips.mjs';
@@ -60,7 +62,7 @@ const API = 'https://texttospeech.googleapis.com/v1';
 const argv = process.argv.slice(2);
 const flag = n => argv.includes(n);
 const opt = n => { const i = argv.indexOf(n); return i >= 0 ? argv[i + 1] : undefined; };
-if (flag('--help') || flag('-h')) { console.log(readFileSync(new URL(import.meta.url), 'utf8').split('\n').filter(l => l.startsWith('//')).slice(0, 10).join('\n')); process.exit(0); }
+if (flag('--help') || flag('-h')) { console.log(readFileSync(new URL(import.meta.url), 'utf8').split('\n').filter(l => l.startsWith('//')).slice(0, 11).join('\n')); process.exit(0); }
 const DRY = flag('--dry-run');
 const LIST_VOICES = flag('--list-voices');
 const PRUNE = flag('--prune');
@@ -116,7 +118,9 @@ async function listVoices(languageCode) {
     const j = await withRetry(() => api('GET', '/voices?languageCode=' + encodeURIComponent(languageCode)), 'voices ' + languageCode);
     return ((j && j.voices) || []).filter(v => (v.languageCodes || []).includes(languageCode));
 }
-const noRateVoices = new Set();   // speakingRate를 거부한 목소리(속도 없이 녹음)
+// speakingRate를 거부한 목소리(속도 없이 녹음). index.json의 norate로 다음 실행에 이어 준다
+// — 새로 녹음할 것이 없는 실행(이어 하기·--prune·다른 언어와 함께)에서도 rates가 설정값으로 되돌아가지 않게
+const noRateVoices = new Set();
 async function synthesize(text, cfg, voiceName) {
     const audioConfig = Object.assign({}, AUDIO, noRateVoices.has(voiceName) ? {} : { speakingRate: cfg.speakingRate });
     try {
@@ -165,14 +169,19 @@ function hasFile(lang, id) { try { return statSync(mp3Path(lang, id)).size > 0; 
 function diskIds(lang) {
     try { return readdirSync(langDir(lang)).filter(f => /^[0-9a-f]{12}\.mp3$/.test(f)).map(f => f.slice(0, 12)); } catch (e) { return []; }
 }
-function readIndex(lang) { try { return JSON.parse(readFileSync(new URL('index.json', langDir(lang)), 'utf8')); } catch (e) { return null; } }
-function writeIndex(lang, voices, clips) {
+function readIndex(lang) { try { const j = JSON.parse(readFileSync(new URL('index.json', langDir(lang)), 'utf8')); return j && typeof j === 'object' ? j : null; } catch (e) { return null; } }
+// 목소리 칸별 녹음 속도(앱은 재생 속도를 이 값 기준으로 맞춘다). speakingRate를 거부한 목소리는 기본 속도 1로 녹음됨
+const ratesFor = (lang, voices) => ({ a: noRateVoices.has(voices.a) ? 1 : VOICES[lang].speakingRate, b: noRateVoices.has(voices.b) ? 1 : VOICES[lang].speakingRate });
+// rev: 앱이 녹음 주소에 붙이는 ?v= — 목소리·속도가 바뀌거나 이미 있던 파일을 다시 녹음하면(gen) 바뀌어, 한 번 들은 사용자도 새 파일을 받는다
+const revFor = (voices, rates, gen) => createHash('sha1').update(JSON.stringify([voices.a, voices.b, rates.a, rates.b, gen])).digest('hex').slice(0, 10);
+function writeIndex(lang, voices, clips, gen) {
     const ids = [...new Set(clips.filter(c => hasFile(lang, c.id)).map(c => c.id))].sort();
     mkdirSync(langDir(lang), { recursive: true });
     const f = new URL('index.json', langDir(lang));
-    // rate: 녹음 속도(앱이 재생 속도를 rate 기준으로 맞춘다). 속도를 거부한 목소리가 있으면 1
-    const rate = (voices && (noRateVoices.has(voices.a) || noRateVoices.has(voices.b))) ? 1 : VOICES[lang].speakingRate;
-    writeFileSync(new URL('index.json.tmp', langDir(lang)), JSON.stringify({ v: 1, voices, rate, ids }) + '\n');
+    const rates = ratesFor(lang, voices), norate = [...new Set([voices.a, voices.b].filter(v => noRateVoices.has(v)))];
+    // rate: 예전 형식(칸 하나)과 맞추려고 a 칸 속도를 함께 적는다
+    const out = Object.assign({ v: 1, voices, rate: rates.a, rates }, norate.length ? { norate } : {}, { gen, rev: revFor(voices, rates, gen), ids });
+    writeFileSync(new URL('index.json.tmp', langDir(lang)), JSON.stringify(out) + '\n');
     renameSync(new URL('index.json.tmp', langDir(lang)), f);
     return ids.length;
 }
@@ -274,17 +283,27 @@ async function runGenerate(plan) {
         console.log('\n[' + p.lang + '] 목소리 a = ' + voices.a + ' · b = ' + voices.b + ' · 속도 ' + cfg.speakingRate);
         notes.forEach(n => console.log('    · ' + n));
         const prev = readIndex(p.lang), existing = diskIds(p.lang);
-        if (prev && prev.voices && existing.length && (prev.voices.a !== voices.a || prev.voices.b !== voices.b)) {
+        const pv = prev && prev.voices && typeof prev.voices === 'object' ? prev.voices : null;
+        // 지난번에 speakingRate를 거부한 목소리는 이번에도 속도 없이 녹음하고, index.json의 속도도 그대로 둔다
+        if (pv && Array.isArray(prev.norate)) for (const slot of ['a', 'b']) if (pv[slot] === voices[slot] && prev.norate.includes(voices[slot])) noRateVoices.add(voices[slot]);
+        let gen = prev && Number.isInteger(prev.gen) && prev.gen >= 0 ? prev.gen : 0;
+        const rates = ratesFor(p.lang, voices), pr = prev && prev.rates && typeof prev.rates === 'object' ? prev.rates : null;
+        const voiceChanged = !!pv && (pv.a !== voices.a || pv.b !== voices.b);
+        const rateChanged = !!pr && (pr.a !== rates.a || pr.b !== rates.b);   // 같은 목소리인데 VOICES의 speakingRate를 바꾼 경우
+        if (existing.length && (voiceChanged || rateChanged)) {
             if (!REDO) {
-                console.log('  ✋ 목소리가 지난번과 달라요(지난번 a=' + prev.voices.a + ', b=' + prev.voices.b + '). 섞이지 않게 이 언어는 건너뜀.\n     전부 새 목소리로: --redo --lang ' + p.lang + '  /  예전 목소리 유지: VOICES 설정을 되돌리기');
+                console.log('  ✋ 목소리나 속도가 지난번과 달라요(지난번 a=' + (pv && pv.a) + ', b=' + (pv && pv.b) + (pr ? ', 속도 a=' + pr.a + ' b=' + pr.b : '') + '). 섞이지 않게 이 언어는 건너뜀.\n     전부 새로: --redo --lang ' + p.lang + '  /  예전 것 유지: VOICES 설정을 되돌리기');
                 anyFail = true; continue;
             }
-            // --redo + 목소리 변경: 예전 목소리 파일을 먼저 지워서, --limit 으로 일부만 다시 만들어도 두 목소리가 섞이지 않게 한다
+            // --redo + 목소리·속도 변경: 예전 파일을 먼저 지워서, --limit 으로 일부만 다시 만들어도 두 목소리가 섞이지 않게 한다
             existing.forEach(id => unlinkSync(mp3Path(p.lang, id)));
-            writeIndex(p.lang, voices, p.clips);
-            console.log('  🔁 목소리가 바뀌어 예전 파일 ' + existing.length + '개를 지우고 새로 녹음해요');
+            writeIndex(p.lang, voices, p.clips, ++gen);
+            console.log('  🔁 목소리나 속도가 바뀌어 예전 파일 ' + existing.length + '개를 지우고 새로 녹음해요');
         }
         const todo = p.todo;
+        // --redo 로 이미 있는 파일을 덮어쓸 때: 먼저 버전(gen → rev)을 올려 둔다. 같은 목소리로 다시 녹음해도 한 번 들은 사용자가
+        // 새 파일을 받고, 중간에 끊겨도 옛 주소의 캐시가 남지 않게
+        if (REDO && todo.some(c => hasFile(p.lang, c.id))) { writeIndex(p.lang, voices, p.clips, ++gen); console.log('  🔁 다시 녹음 → 녹음 버전 gen ' + gen); }
         console.log('  클립 ' + p.clips.length + '개 중 새로 만들 것 ' + todo.length + '개' + (REDO ? ' (--redo)' : '') + (LIMIT !== Infinity ? ' (--limit ' + LIMIT + ')' : ''));
         mkdirSync(langDir(p.lang), { recursive: true });
         let done = 0, failed = 0, chars = 0, bytes = 0, next = 0, consecutiveFail = 0, lastLog = 0;
@@ -317,7 +336,7 @@ async function runGenerate(plan) {
         };
         await Promise.all(Array.from({ length: CONC }, worker));
         progress(true);
-        const n = writeIndex(p.lang, voices, p.clips);
+        const n = writeIndex(p.lang, voices, p.clips, gen);
         console.log('  ✔ ' + p.lang + ': 이번에 ' + done + '개 녹음(' + fmt(chars) + '자, ' + mb(bytes) + ')' + (failed ? ' · 실패 ' + failed + '개(다시 실행하면 이어서 시도)' : '') + ' · index.json ' + n + '/' + p.clips.length + '개 · 폴더 ' + mb(dirBytes(p.lang)));
         if (failed) anyFail = true;
         if (PRUNE && !fatal) { const r = prune(p.lang, p.clips, true); console.log('  🧹 --prune: 안 쓰는 파일 ' + r.n + '개 삭제(' + mb(r.bytes) + ')'); }

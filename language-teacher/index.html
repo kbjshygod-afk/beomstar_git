@@ -1274,7 +1274,8 @@ function ttsFail(why) {
     if (TTS_HEALTH.bad || (why === 'timeout' && TTS_HEALTH.fails < 2)) return;
     TTS_HEALTH.bad = true; renderTtsWarning(); track('tts_fail', { why: String(why).slice(0, 30) });
 }
-function ttsBadNow() { if (clipsReady()) return false; return !ttsAvailable() || TTS_HEALTH.bad; }   // 녹음 음성이 있으면 기기 음성 상태와 관계없음
+// 녹음 음성이 잘 들리는 동안은 기기 음성 상태와 관계없음. 녹음을 받지 못하면(오프라인에서 처음 듣는 문장 등) 기기 음성이 대신 읽으므로 그 상태로 판단
+function ttsBadNow() { if (clipsReady() && !CLIP_HEALTH.fails) return false; return !ttsAvailable() || TTS_HEALTH.bad; }
 function watchUtter(u, tok) {
     u.onstart = ttsGood;
     const active = !navigator.userActivation || navigator.userActivation.isActive;   // 사용자가 누르지 않은 자동 재생은 판정에서 뺀다
@@ -1299,7 +1300,7 @@ function renderTtsWarning() {
 }
 let ttsWarned = false;
 function ttsCheck() {
-    if (ttsWarned || !CUR || clipsReady()) return;
+    if (ttsWarned || !CUR || (clipsReady() && !CLIP_HEALTH.fails)) return;
     if (!ttsAvailable()) { ttsWarned = true; showToast('🔇 이 브라우저는 발음 듣기를 지원하지 않아요. 크롬·사파리로 열어 주세요', '', 3800); return; }
     if (!voiceCache[CUR.code]) {
         pickVoice(CUR.code);
@@ -1319,7 +1320,11 @@ function remoteFailed(u, ev) {
 /* ═══════════════════ 녹음된 자연 음성(있으면 먼저) ═══════════════════ */
 // tools/tts/generate.mjs 로 미리 녹음한 audio/{언어}/{id}.mp3 — id = clipId(목소리 칸, 문장 그대로).
 // 녹음이 없는 문장(채점 조각·예전 카드 등)이나 받지 못한 경우는 기기 음성(speechSynthesis)으로 읽는다.
-const CLIPS = {};   // code → { ids: Set, rate: 녹음 속도, rev } · null(이 언어는 녹음 없음) · 'loading'
+const CLIPS = {};   // code → { ids: Set, rate·rates{a,b}: 녹음 속도, rev: 주소의 ?v= } · null(이 언어는 녹음 없음) · 'loading'
+// 녹음이 실제로 들리는지: 재생이 시작되면 0, 받지 못하거나 재생이 막히면 1씩 늘린다(ttsBadNow·ttsCheck가 본다)
+const CLIP_HEALTH = { fails: 0 };
+const CLIP_WAIT = 2500;     // 이 안에 녹음이 시작되지 않으면(응답이 멈춘 망·느린 망) 이번에는 기기 음성으로 — 늦게 받아져도 틀지 않는다
+const CLIP_GIVEUP = 15000;  // 받기를 끝내 포기하는 시간 — 멈춘 요청이 그 문장을 계속 막지 않게(다음에 누르면 새로 받음)
 // FNV-1a 64비트의 앞 12자리(16진) — tools/tts/clips.mjs 의 clipId와 같아야 한다(시험 값: ('a','Hello') → c390128b4c43)
 function clipId(slot, text) {
     const bytes = new TextEncoder().encode(slot + '|' + text);
@@ -1339,19 +1344,38 @@ function loadClips(code) {
     if (c === 'loading' || c === null || (c && c.ids)) return;
     if (location.protocol === 'file:') { CLIPS[code] = null; return; }   // 파일로 열면 받을 수 없음(기기 음성)
     CLIPS[code] = 'loading';
-    fetch('audio/' + code + '/index.json', { cache: 'no-cache' }).then(r => r.status === 404 ? null : r.ok ? r.json() : Promise.reject(new Error('audio index ' + r.status))).then(j => {
-        CLIPS[code] = (isObj(j) && Array.isArray(j.ids) && j.ids.length) ? { ids: new Set(j.ids), rate: Number(j.rate) > 0 ? Number(j.rate) : 0.95, rev: (hashStr(JSON.stringify(j.voices || '') + '|' + (j.rate || '')) >>> 0).toString(36) } : null;
+    const ac = typeof AbortController === 'function' ? new AbortController() : null;
+    const t = setTimeout(() => { if (ac) ac.abort(); }, 8000);   // 응답이 멈춘 망: 이번에는 기기 음성(다음에 이 언어를 열 때 다시)
+    const swc = () => ('serviceWorker' in navigator && navigator.serviceWorker.controller) || null, viaSw = !!swc();
+    const url = 'audio/' + code + '/index.json';
+    fetch(url, ac ? { cache: 'no-cache', signal: ac.signal } : { cache: 'no-cache' }).then(r => r.status === 404 ? null : r.ok ? r.json() : Promise.reject(new Error('audio index ' + r.status))).then(j => {
+        clearTimeout(t);
+        CLIPS[code] = clipIndex(j);
+        // 서비스 워커가 켜지기 전에 받았으면(첫 방문) 오프라인용으로 담아 달라고 한다(아직 안 켜졌으면 켜질 때 warm이 CLIPS를 보고 보냄)
+        const ctl = swc();
+        if (CLIPS[code] && ctl && !viaSw) try { ctl.postMessage({ type: 'warm', urls: [new URL(url, location.href).href] }); } catch (e) { }
         if (CLIPS[code] && CUR && CUR.code === code && S.view === 'settings' && !document.getElementById('modalRoot').innerHTML) renderSettings();
-    }).catch(() => { CLIPS[code] = undefined; });   // 오프라인 등 — 다음에 다시
+    }).catch(() => { clearTimeout(t); CLIPS[code] = undefined; });   // 오프라인 등 — 다음에 다시
+}
+// index.json = { voices: {a, b}, rate, rates: {a, b}(목소리 칸별 녹음 속도), rev: 녹음 버전, ids } — tools/tts/generate.mjs 가 쓴다
+function clipIndex(j) {
+    if (!isObj(j) || !Array.isArray(j.ids) || !j.ids.length) return null;
+    const num = x => (Number(x) > 0 ? Number(x) : 0), base = num(j.rate) || 0.95, rs = isObj(j.rates) ? j.rates : {};
+    const rates = { a: num(rs.a) || base, b: num(rs.b) || base };
+    // ?v= 는 녹음 도구가 정한 버전(목소리·속도가 바뀌거나 다시 녹음하면 바뀜) — 없는 옛 목록은 목소리·속도로 만든다
+    const rev = typeof j.rev === 'string' && /^[0-9a-z]{1,16}$/i.test(j.rev) ? j.rev : (hashStr(JSON.stringify(j.voices || '') + '|' + (j.rate || '')) >>> 0).toString(36);
+    return { ids: new Set(j.ids), rate: rates.a, rates, rev };
 }
 function clipsReady() { const c = CUR && CLIPS[CUR.code]; return !!(c && c.ids) && store.settings.voiceMode !== 'device'; }
-function clipUrl(text, speaker) {
-    if (typeof text !== 'string' || !text || !clipsReady()) return '';
-    const c = CLIPS[CUR.code], slot = clipSlot(speaker);
-    let id = clipId(slot, text);
-    if (!c.ids.has(id)) { if (slot !== 'b') return ''; id = clipId('a', text); if (!c.ids.has(id)) return ''; }
-    return 'audio/' + CUR.code + '/' + id + '.mp3?v=' + c.rev;
+// 이 문장의 녹음 → { url, rate: 그 목소리 칸의 녹음 속도 } · 없으면 null
+function clipFor(text, speaker) {
+    if (typeof text !== 'string' || !text || !clipsReady()) return null;
+    const c = CLIPS[CUR.code];
+    let slot = clipSlot(speaker), id = clipId(slot, text);
+    if (!c.ids.has(id)) { if (slot !== 'b') return null; slot = 'a'; id = clipId('a', text); if (!c.ids.has(id)) return null; }
+    return { url: 'audio/' + CUR.code + '/' + id + '.mp3?v=' + c.rev, rate: c.rates[slot] || c.rate || 0.95 };
 }
+function clipUrl(text, speaker) { const k = clipFor(text, speaker); return k ? k.url : ''; }
 // 파일은 fetch로 받아(서비스 워커가 캐시 → 오프라인에서도) 한 개의 <audio>로 재생한다
 let clipEl = null, clipTok = 0;
 const clipBlobs = new Map();   // 주소 → Promise<blob 주소> (최근 60개)
@@ -1364,29 +1388,35 @@ function clipAudio() {
 }
 function clipBlob(url) {
     if (clipBlobs.has(url)) return clipBlobs.get(url);
-    const p = fetch(url).then(r => { if (!r.ok) throw new Error('clip ' + r.status); return r.blob(); }).then(b => URL.createObjectURL(b));
+    const ac = typeof AbortController === 'function' ? new AbortController() : null;
+    // 끝내 오지 않는 요청은 버린다(멈춘 요청이 그 문장을 계속 막지 않게)
+    const t = setTimeout(() => { if (clipBlobs.get(url) === p) clipBlobs.delete(url); if (ac) ac.abort(); }, CLIP_GIVEUP);
+    const p = fetch(url, ac ? { signal: ac.signal } : undefined).then(r => { if (!r.ok) throw new Error('clip ' + r.status); return r.blob(); }).then(b => URL.createObjectURL(b));
     clipBlobs.set(url, p);
-    p.catch(() => clipBlobs.delete(url));
+    p.then(() => clearTimeout(t), () => { clearTimeout(t); if (clipBlobs.get(url) === p) clipBlobs.delete(url); });
     if (clipBlobs.size > 60) { const k = clipBlobs.keys().next().value, old = clipBlobs.get(k); clipBlobs.delete(k); old.then(u => setTimeout(() => URL.revokeObjectURL(u), 30000), () => { }); }
     return p;
 }
-function playClip(url, rate, onEnd, onFail) {
+// k = clipFor()의 결과. 끝까지 들리면 onEnd, 받지 못하거나 재생이 막히거나 CLIP_WAIT 안에 시작하지 못하면 onFail(한 번만)
+function playClip(k, rate, onEnd, onFail) {
     const tok = ++clipTok;
-    const c = CLIPS[CUR.code];
-    const r = Math.max(0.5, Math.min(2, rate / ((c && c.rate) || 0.95) * curRate()));
-    clipBlob(url).then(src => {
-        if (tok !== clipTok) return;
-        const a = clipAudio();
+    const r = Math.max(0.5, Math.min(2, rate / (k.rate || 0.95) * curRate()));
+    let started = false, over = false;
+    const fail = () => { if (over) return; over = true; clearTimeout(guard); if (!started) CLIP_HEALTH.fails++; if (onFail) onFail(); };
+    const guard = setTimeout(() => { if (tok !== clipTok || over || started) return; stopClip(); fail(); }, CLIP_WAIT);   // stopClip: 늦게 받아진 녹음은 틀지 않는다
+    clipBlob(k.url).then(src => {
+        if (tok !== clipTok || over) return;
+        let a; try { a = clipAudio(); } catch (e) { fail(); return; }   // <audio>를 못 만드는 환경: 기기 음성으로
         a.onended = a.onerror = null;
         a.src = src;
         a.defaultPlaybackRate = r; a.playbackRate = r;
-        let done = false;
-        const fin = ok => { if (done || tok !== clipTok) return; done = true; a.onended = a.onerror = null; const f = ok ? onEnd : onFail; if (f) f(); };
+        const fin = ok => { if (over || tok !== clipTok) return; a.onended = a.onerror = null; if (!ok) { fail(); return; } over = true; clearTimeout(guard); if (onEnd) onEnd(); };
+        const play = () => { if (tok !== clipTok || over) return; started = true; clearTimeout(guard); CLIP_HEALTH.fails = 0; };
         a.onended = () => fin(true);
         a.onerror = () => fin(false);
         const p = a.play();
-        if (p && p.catch) p.catch(() => fin(false));
-    }, () => { if (tok === clipTok && onFail) onFail(); });
+        if (p && p.then) p.then(play, () => fin(false)); else play();
+    }, () => { if (tok === clipTok) fail(); });
 }
 function stopClip() { clipTok++; if (clipEl) { clipEl.onended = clipEl.onerror = null; try { clipEl.pause(); } catch (e) { } } }
 // 아이폰·아이패드: 첫 터치 때 같은 <audio>를 소리 없이 한 번 재생해 두면, 뒤이은 자동 이어 읽기도 막히지 않는다
@@ -1396,9 +1426,10 @@ function unlockClip() {
     try { const a = clipAudio(); if (a.src && !a.paused) return; a.src = SILENT_WAV; const p = a.play(); if (p && p.catch) p.catch(() => { }); } catch (e) { }
 }
 document.addEventListener('touchend', unlockClip, true); document.addEventListener('click', unlockClip, true);
-function speak(text, rate = 1, speaker, retried) {
-    const url = !retried && CUR ? clipUrl(text, speaker) : '';
-    if (url) { stopSpeak(); playClip(url, rate, null, () => speak(text, rate, speaker, true)); return; }   // 녹음을 못 틀면 기기 음성으로
+// retried: 클라우드 음성 오류 뒤 기기 음성으로 다시 읽는 중 · noClip: 녹음을 못 틀어 기기 음성으로 읽는 중(클라우드 음성 재시도는 그대로 가능)
+function speak(text, rate = 1, speaker, retried, noClip) {
+    const k = !retried && !noClip && CUR ? clipFor(text, speaker) : null;
+    if (k) { stopSpeak(); playClip(k, rate, null, () => speak(text, rate, speaker, false, true)); return; }   // 녹음을 못 틀면 같은 문장을 기기 음성으로
     ttsCheck();
     if (!ttsAvailable() || !CUR || !text) return;
     stopSpeak();
@@ -1422,6 +1453,7 @@ function speakSeq(items, onDone, onStep) {
     stopSpeak(); seqPlaying = true;
     const my = seqToken;
     const list = items.map(x => typeof x === 'string' ? { text: x } : x).filter(x => x && x.text);
+    const noClip = new Set();   // 녹음을 못 틀어 기기 음성으로 읽은 문장(클라우드 음성 재시도 때 녹음을 다시 기다리지 않게)
     let i = 0;
     const next = () => {
         if (my !== seqToken || !seqPlaying || i >= list.length) {
@@ -1441,10 +1473,12 @@ function speakSeq(items, onDone, onStep) {
         let advanced = false, dog = 0;
         const go = () => { if (advanced) return; advanced = true; clearTimeout(dog); setTimeout(next, gap); };
         const perChar = /[\u3040-\u30ff\u4e00-\u9fff]/.test(cur.text) ? 380 : 130;   // 한자·가나는 한 글자가 길다
-        const url = clipUrl(cur.text, cur.speaker);
-        if (url) {
-            dog = setTimeout(() => { if (!advanced && my === seqToken) go(); }, Math.max(6000, cur.text.length * perChar * 3) + 4000);
-            playClip(url, 0.92, go, () => { if (my === seqToken && !advanced) { clearTimeout(dog); ttsLine(); } });
+        const k = noClip.has(idx) ? null : clipFor(cur.text, cur.speaker);
+        if (k) {
+            // 제시간에 시작하지 못하거나 못 받으면 playClip이 onFail → 같은 문장을 기기 음성으로.
+            // 시작한 뒤 끝나지 않으면(재생이 멈춤) 녹음을 멈추고(늦게 이어서 들리지 않게) 다음 문장으로
+            dog = setTimeout(() => { if (!advanced && my === seqToken) { stopClip(); go(); } }, Math.max(6000, cur.text.length * perChar * 3) + 4000);
+            playClip(k, 0.92, go, () => { if (my === seqToken && !advanced) { clearTimeout(dog); noClip.add(idx); ttsLine(); } });
             const nx2 = list[i]; if (nx2) { const nu = clipUrl(nx2.text, nx2.speaker); if (nu) clipBlob(nu).catch(() => { }); }   // 다음 문장 미리 받기
             return;
         }
@@ -5880,6 +5914,9 @@ if ('serviceWorker' in navigator && window.isSecureContext && /^https?:$/.test(l
         bar.querySelector('.sw-x').addEventListener('click', () => bar.remove());
         document.body.appendChild(bar);
     };
+    // 느린 망에서 서비스 워커가 저장본 화면을 먼저 보여 줬는데, 뒤이어 받은 화면이 달랐을 때(= 새 배포) 알려 온다.
+    // load를 기다리지 않고 바로 듣는다(load 전에 온 알림을 놓치지 않게)
+    navigator.serviceWorker.addEventListener('message', e => { if (e.data && e.data.type === 'html-updated') showSwUpdateBar(); });
     window.addEventListener('load', () => {
         // 처음 맡은 워커가 생기는 것(첫 설치)은 새 배포가 아니므로 안내하지 않는다 — 이미 맡은 워커가 있던 화면에서만
         let hadCtl = !!navigator.serviceWorker.controller, lastCheck = 0, asked = false;
@@ -5888,8 +5925,10 @@ if ('serviceWorker' in navigator && window.isSecureContext && /^https?:$/.test(l
             const warm = () => {
                 const sw = navigator.serviceWorker.controller || reg.active; if (!sw) return;
                 const urls = performance.getEntriesByType('resource').map(e => e.name).filter(u => /\/language-teacher\/((data|stories)-[a-z]{2}\.js|cloud-config\.js|vendor\/|icons\/)/.test(u));
+                // 녹음 목록: 서비스 워커가 켜지기 전에 받은 것(허브·공유 링크 ?lang= 로 온 첫 방문)도 오프라인용으로 담게. 녹음이 있는 언어만
+                const idx = Object.keys(CLIPS).filter(c => CLIPS[c] && CLIPS[c].ids).map(c => new URL('audio/' + c + '/index.json', location.href).href);
                 // 앱 화면은 처음 들어온 주소(?lang= 포함, 시작 코드가 지우기 전) — 방금 받은 그 주소라 HTTP 캐시에서 나온다
-                sw.postMessage({ type: 'warm', urls: [ENTRY_URL.split('#')[0]].concat(urls) });
+                sw.postMessage({ type: 'warm', urls: [ENTRY_URL.split('#')[0]].concat(urls, idx) });
             };
             if (reg.active) warm(); else navigator.serviceWorker.addEventListener('controllerchange', warm, { once: true });
             // 언어를 새로 불러오면 그것도 담아 둔다

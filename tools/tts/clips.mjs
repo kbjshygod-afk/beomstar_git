@@ -22,7 +22,7 @@
 //               프랑스어 FR_VOWELS 예(쉼표로 나눔)·FR_LIAISON·FR_SOUND_POOL, 영어 EAR_SETS 단어·EAR_LINKS(say, en)
 // 모으지 않는 것(실행 중 사용자 상태에 따라 달라짐 → 앱은 기기 음성으로 대체해야 함):
 //   🎤 채점 결과의 ✗ 칩(data-unit: 소문자·악센트 제거·축약 풀기 등으로 가공된 조각), 예전 앱/옛 데이터에서 넘어온 복습 카드 문장,
-//   한글(자모 포함)이 섞인 문자열(예: 선택 문제 보기 'ㅃ'·'ㅅ' — 앱의 /[가-힣]/ 검사가 자모는 거르지 못해 지금은 외국어 목소리로 읽힘).
+//   한글(자모 포함)이 섞인 문자열(예: 선택 문제 보기 'ㅃ'·'ㅅ' — 앱도 /[ㄱ-ㅎㅏ-ㅣ가-힣]/ 검사로 이런 정답 보기는 읽지 않음).
 import { readFileSync, existsSync, realpathSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import vm from 'node:vm';
@@ -147,7 +147,7 @@ export function langInfo(code) {
 }
 
 /* ───────────── 클립 모으기 ───────────── */
-const HANGUL = /[가-힣]/;                                         // index.html 과 같은 조건(정답 보기 읽기)
+const HANGUL = /[ㄱ-ㅎㅏ-ㅣ가-힣]/;                                // index.html 과 같은 조건(정답 보기 읽기: 자모·완성형이 있으면 읽지 않음)
 const HANGUL_ANY = /[\u1100-\u11ff\u3130-\u318f\ua960-\ua97f\uac00-\ud7af\ud7b0-\ud7ff]/;   // 완성형 + 자모
 const SLOT_B_SPEAKERS = new Set(['B', 'D']);   // tuneFor(): B·D → 두 번째 목소리(b), A·C·E·N → 기본 목소리(a)
 
@@ -162,8 +162,8 @@ export function collectLang(code) {
     const skipped = new Set();
     const add = (slot, text, from) => {
         if (typeof text !== 'string' || !text) return;   // speak()/speakSeq()는 빈 문자열을 읽지 않는다
-        // 한글이 섞인 문자열은 외국어 목소리로 읽을 수 없어 뺀다. 앱의 정답 읽기 조건 /[가-힣]/ 는 완성형만 걸러서
-        // 'ㅃ'·'ㅅ' 같은 자모 보기는 그대로 speak()에 넘어간다 → 이런 건 녹음하지 않고 앱이 기기 음성으로 대체(또는 건너뛰기).
+        // 한글이 섞인 문자열은 외국어 목소리로 읽을 수 없어 뺀다. 선택 문제 정답 보기는 아래에서 HANGUL(앱과 같은 조건)로 먼저 거르고,
+        // 그 밖의 출처에서 한글이 섞여 들어오면 알려 준다(녹음이 없으니 앱은 기기 음성으로 대체).
         if (HANGUL_ANY.test(text)) { if (!skipped.has(text)) { skipped.add(text); warnings.push('한글 포함이라 녹음 안 함(' + from + '): ' + JSON.stringify(text)); } return; }
         const key = slot + '\u0000' + text;
         let c = map.get(key);
