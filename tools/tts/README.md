@@ -8,6 +8,7 @@
 |---|---|
 | `tools/tts/clips.mjs` | 데이터(`language-teacher/data-*.js`, `stories-*.js`)와 `index.html`의 훈련소 상수를 읽어 **녹음할 문장 목록**을 만들고, 파일 이름(`clipId`)을 정해요 |
 | `tools/tts/generate.mjs` | 목록을 Google Cloud TTS로 녹음해 `language-teacher/audio/{언어}/{id}.mp3`와 `index.json`을 만들어요 |
+| `tools/tts/check.py` | 녹음 **끝 잘림** 검사 — 의심 파일을 지우면(`--delete`) `generate.mjs`가 그 파일만 다시 녹음해요(ffmpeg 필요) |
 | `docs/voice-setup.md` | Google Cloud 쪽 준비(프로젝트·결제·API 키) — 개발자가 아니어도 따라 할 수 있게 |
 
 외부 패키지는 필요 없어요(node 18 이상).
@@ -37,7 +38,17 @@ node tools/tts/generate.mjs --lang zh --limit 5
 
 # 4) 전체 녹음 — 이미 있는 파일은 건너뛰어요(중간에 끊겨도 같은 명령으로 이어 하기)
 node tools/tts/generate.mjs
+
+# 5) 끝 잘림 검사 → 지우고 다시 녹음 — '의심 0개'가 될 때까지 반복(보통 3~6번)
+pip install imageio-ffmpeg            # 시스템에 ffmpeg가 없을 때만
+python3 tools/tts/check.py --delete && echo 끝   # 의심 파일이 있으면 지우고 1을 돌려줘요
+node tools/tts/generate.mjs
 ```
+
+5번을 5~6번 반복해도 남는 것(보통 10여 개)은 `python3 tools/tts/check.py --delete` 후 `node tools/tts/generate.mjs --pad`로 녹음하세요.
+
+> 2026-09 첫 전체 녹음: 끝 잘림 의심 398개(영어 218·스페인어 167·프랑스어 13, 중국어·일본어 0) → 다시 녹음 6번에 12개 → `--pad`로 0개.
+> Whisper 받아쓰기로 영어·스페인어·프랑스어 전체를 원문과 비교해 뒤 단어가 빠진 녹음이 없는 것도 확인했어요(속도가 녹음마다 달라 길이만으로는 판단할 수 없어요).
 
 끝나면 `language-teacher/audio/`를 커밋하면 돼요.
 
@@ -51,6 +62,7 @@ node tools/tts/generate.mjs
 | `--limit N` | 언어마다 **새로** 만들 클립을 N개까지만(시험용) |
 | `--prune` | 지금 목록에 없는 mp3(데이터에서 지워지거나 바뀐 문장)와 남은 `.tmp`를 지워요. `--dry-run`과 함께 쓰면 지울 개수만 보여 줘요 |
 | `--redo` | 이미 있는 파일도 다시 녹음해요. 목소리를 바꿨다면 예전 파일을 먼저 지워서 두 목소리가 섞이지 않게 해요. 덮어쓰기 전에 `index.json`의 `gen`을 1 올려서, 같은 목소리로 다시 녹음해도 한 번 들은 사용자가 새 파일을 받아요 |
+| `--pad` | 끝에 0.4초 쉼(SSML `<break>`)을 붙여 녹음해요. `check.py --delete`로 여러 번 다시 녹음해도 **계속 끝이 잘리는** 클립(예: "You too!", "leer")에만 써요(시험 24번 중 24번 정상). SSML 태그도 과금 글자 수에 들어가요 |
 | `--concurrency N` | 동시에 보내는 요청 수(기본 4) |
 | `--out DIR` | 다른 폴더에 쓰기(시험용) |
 
@@ -60,7 +72,7 @@ node tools/tts/generate.mjs
   `{ "v": 1, "voices": { "a": "…", "b": "…" }, "rate": 0.9, "rates": { "a": 0.9, "b": 1 }, "norate": ["…"], "gen": 0, "rev": "…", "ids": [ … ] }`
   - `ids`: **지금 목록에 있고 디스크에도 있는** 클립만, 정렬해서.
   - `rates`: 목소리 칸별 녹음 속도(앱이 재생 속도를 이 값에 맞춰요). `rate`는 예전 형식과 맞추려고 적는 `a` 칸 속도.
-  - `norate`: `speakingRate`를 거부해 기본 속도(1)로 녹음한 목소리(있을 때만). 다음 실행이 이어받아서, 새로 녹음할 것이 없는 실행(이어 하기·`--prune`·다른 언어와 함께)에서도 속도가 설정값으로 되돌아가지 않아요.
+  - `norate`: 기본 속도(1)로 녹음한 목소리 — Chirp 3 HD 목소리와 `speakingRate`를 거부한 목소리(있을 때만). 다음 실행이 이어받아서, 새로 녹음할 것이 없는 실행(이어 하기·`--prune`·다른 언어와 함께)에서도 속도가 설정값으로 되돌아가지 않아요.
   - `gen`: 이미 있던 파일을 다시 녹음(`--redo`)하거나 목소리·속도가 바뀌어 지운 횟수.
   - `rev`: 목소리·속도·`gen`으로 정한 짧은 해시. 앱은 녹음 주소에 `?v=rev`를 붙여서, 이 값이 바뀌면 한 번 들은 사용자도 새 파일을 받아요.
 - 지난번 `index.json`과 목소리나 속도가 다르면(설정을 바꿨거나 후보가 없어져 다른 목소리가 골라졌을 때) 그 언어는 건너뛰어요. 새 목소리·속도로 전부 바꾸려면 `--redo --lang xx`.
@@ -88,7 +100,8 @@ node tools/tts/generate.mjs --prune              # 새 문장만 녹음 + 안 �
 | `b` | 대화의 **B·D** — 앱 `tuneFor()`가 두 번째 목소리를 쓰는 화자 | 남성: `xx-XX-Chirp3-HD-Charon` → `Puck` → Neural2/WaveNet |
 
 - 언어 코드: en `en-US`, zh `cmn-CN`, es `es-ES`, ja `ja-JP`, fr `fr-FR`
-- 속도(`speakingRate`): zh 0.9, 나머지 0.95. 목소리가 속도 설정을 거부하면 기본 속도로 녹음하고 알려 줘요(앱에서 재생 속도로 조절). 그 목소리는 `index.json`의 `norate`에 적혀 다음 실행에서도 속도 없이 녹음돼요.
+- 속도(`speakingRate`): **Chirp 3 HD에는 보내지 않아요(속도 1로 녹음, 앱이 재생 속도로 조절).** 2026-09 시험에서 Chirp 3 HD에 속도(0.95)를 주면 문장 끝(예: "And you?", "¿Y tú?")이 잘리거나 통째로 빠지는 일이 20번 중 11번, 같은 문장을 속도 없이 녹음하면 20번 중 0번이었어요. 그래서 `index.json`의 `rates`는 1, `norate`에 두 목소리가 적혀요.
+  다른 등급(Neural2·WaveNet 등으로 자동 선택된 경우)은 설정값(zh 0.9, 나머지 0.95)을 써요. 목소리가 속도 설정을 거부하면 기본 속도로 녹음하고 알려 줘요(앱에서 재생 속도로 조절). 그 목소리는 `index.json`의 `norate`에 적혀 다음 실행에서도 속도 없이 녹음돼요.
 - 오디오: `MP3`, 24000 Hz(Google MP3는 32 kbps)
 - ⚠ **중국어**: Chirp 3 HD가 다음자(多音字, 예: 还·行·得·了·长)를 문맥과 다르게 읽을 수 있어요. 이번 작업 범위 밖이라 그대로 두었어요 — 들어 보고 틀린 문장은 따로 처리해야 해요.
 
@@ -191,3 +204,5 @@ function clipId(slot, text) {
 | `✋ 목소리나 속도가 지난번과 달라요` | 예전 목소리·속도 유지: `VOICES` 되돌리기 · 새 목소리·속도로 전부: `--redo --lang xx` |
 | `fetch failed`(프록시 뒤에서) | node 22.21+/24+라면 `NODE_USE_ENV_PROXY=1 node tools/tts/generate.mjs …` |
 | 일부 실패 | 같은 명령을 다시 실행하면 없는 파일만 이어서 만들어요 |
+| `HTTP 429: Resource has been exhausted` | 분당 요청 한도예요. 도구가 기다렸다 다시 해요. 6번 넘게 실패한 것은 같은 명령을 다시 실행 |
+| 짧은 단어 끝이 뚝 끊겨 들림 | Chirp 3 HD가 가끔 끝을 잘라 돌려줘요(속도를 안 줘도 짧은 단어는 몇십 %). `python3 tools/tts/check.py --delete` → `generate.mjs` 반복 |
