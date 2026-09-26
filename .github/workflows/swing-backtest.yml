@@ -72,6 +72,17 @@ jobs:
             --start ${{ steps.dates.outputs.start }} --end ${{ steps.dates.outputs.end }} \
             --test-start ${{ steps.dates.outputs.test_start }} --rs-mode both -v \
             --cache-dir .cache --out results/${{ matrix.market }} $EXTRA 2>&1 | tee results-${{ matrix.market }}.log
+      - name: Signal study (every signal traded alone, for pattern analysis)
+        working-directory: trading
+        env:
+          MAX_SYMBOLS: ${{ github.event.inputs.max_symbols || '0' }}
+        run: |
+          EXTRA=""
+          if [ "$MAX_SYMBOLS" != "0" ]; then EXTRA="--max-symbols $MAX_SYMBOLS"; fi
+          python -m swing_engine.signal_study --market ${{ matrix.market }} \
+            --start ${{ steps.dates.outputs.start }} --end ${{ steps.dates.outputs.end }} \
+            --test-start ${{ steps.dates.outputs.test_start }} \
+            --cache-dir .cache --out results/${{ matrix.market }}/signals.csv $EXTRA
       - name: Print summaries
         if: always()
         working-directory: trading
