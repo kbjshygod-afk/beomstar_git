@@ -6,6 +6,7 @@
 //
 // 옵션: --lang zh[,ja]  언어만 골라서 · --limit N  언어마다 새로 만들 클립 수 제한(시험용) · --prune  더 이상 안 쓰는 mp3 삭제
 //       --redo  이미 있는 파일도 다시 녹음(rev가 바뀌어 앱이 새로 받음) · --concurrency N (기본 4) · --out DIR (시험용 출력 폴더)
+//       --pad   끝에 0.4초 쉼(SSML break)을 붙여 녹음 — check.py로 지우고 다시 녹음해도 계속 끝이 잘리는 클립에만
 // API 키: 환경 변수 GOOGLE_TTS_API_KEY (화면·로그에 절대 찍지 않는다. 요청 헤더 X-Goog-Api-Key 로만 보낸다)
 // 결과: language-teacher/audio/{lang}/{id}.mp3 + index.json = { v: 1, voices: {a, b}, rate, rates: {a, b}(목소리 칸별 녹음 속도),
 //       norate: [speakingRate를 거부한 목소리](있을 때만), gen: 다시 녹음한 횟수, rev: 앱 주소의 ?v=, ids: [디스크에 있는 클립 id, 정렬] }
@@ -67,6 +68,7 @@ const DRY = flag('--dry-run');
 const LIST_VOICES = flag('--list-voices');
 const PRUNE = flag('--prune');
 const REDO = flag('--redo');
+const PAD = flag('--pad');
 const LIMIT = opt('--limit') !== undefined ? Math.max(0, parseInt(opt('--limit'), 10) || 0) : Infinity;
 const CONC = Math.max(1, Math.min(16, parseInt(opt('--concurrency') || '4', 10) || 4));
 const LANGS = opt('--lang') ? opt('--lang').split(',').map(s => s.trim()).filter(Boolean) : LANG_CODES;
@@ -121,10 +123,12 @@ async function listVoices(languageCode) {
 // speakingRate를 거부한 목소리(속도 없이 녹음). index.json의 norate로 다음 실행에 이어 준다
 // — 새로 녹음할 것이 없는 실행(이어 하기·--prune·다른 언어와 함께)에서도 rates가 설정값으로 되돌아가지 않게
 const noRateVoices = new Set();
+// --pad: Chirp 3 HD가 몇 번을 다시 녹음해도 끝을 자르는 짧은 문장(예: "You too!", "leer")은 뒤에 쉼을 붙이면 끝까지 읽는다(2026-09 시험 24번 중 24번)
+const padSsml = text => ({ ssml: '<speak>' + text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;') + '<break time="400ms"/></speak>' });
 async function synthesize(text, cfg, voiceName) {
     const audioConfig = Object.assign({}, AUDIO, noRateVoices.has(voiceName) ? {} : { speakingRate: cfg.speakingRate });
     try {
-        const j = await api('POST', '/text:synthesize', { input: { text }, voice: { languageCode: cfg.languageCode, name: voiceName }, audioConfig });
+        const j = await api('POST', '/text:synthesize', { input: PAD ? padSsml(text) : { text }, voice: { languageCode: cfg.languageCode, name: voiceName }, audioConfig });
         if (!j || !j.audioContent) throw new Error('응답에 audioContent가 없어요');
         return Buffer.from(j.audioContent, 'base64');
     } catch (e) {
