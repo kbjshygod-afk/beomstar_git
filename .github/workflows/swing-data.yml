@@ -1,0 +1,83 @@
+# Research data snapshot: daily bars for every market (plus former S&P 500 members since 2014,
+# for the survivorship-bias check), saved to the `swing-data` branch for offline analysis.
+name: swing-data
+
+on:
+  push:
+    branches: [claude/github-top-10-skills-k1u8yp]
+    paths: ['.github/workflows/swing-data.yml', 'trading/tools/snapshot_data.py']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        market: [SP500, NDX100, KOSPI, KOSDAQ, CRYPTO]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: trading/requirements.txt
+      - run: pip install -r trading/requirements.txt
+      - name: Former S&P 500 members since 2014 (fja05680/sp500)
+        if: matrix.market == 'SP500'
+        working-directory: trading
+        run: |
+          curl -sSfL -o hist.csv "https://raw.githubusercontent.com/fja05680/sp500/master/S%26P%20500%20Historical%20Components%20%26%20Changes%20(Updated).csv"
+          python - <<'EOF'
+          import pandas as pd
+          d = pd.read_csv("hist.csv")
+          d = d[d["date"] >= "2014-01-01"]
+          s = set()
+          for x in d["tickers"]:
+              s |= set(x.split(","))
+          out = sorted(t.strip().upper().replace(".", "-") for t in s if t.strip())
+          open("extra.txt", "w").write("\n".join(out))
+          print(len(out), "tickers ever in the index since 2014")
+          EOF
+          mkdir -p data && cp hist.csv data/sp500_membership.csv
+      - name: Snapshot
+        working-directory: trading
+        run: |
+          EXTRA=""
+          if [ -f extra.txt ]; then EXTRA="--extra-tickers extra.txt"; fi
+          python tools/snapshot_data.py --market ${{ matrix.market }} --start 2014-01-01 \
+            --out data/${{ matrix.market }}.pkl.xz $EXTRA
+      - uses: actions/upload-artifact@v4
+        with:
+          name: swing-data-${{ matrix.market }}
+          path: trading/data/
+
+  publish:
+    needs: snapshot
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: swing-data-*
+          path: out
+          merge-multiple: true
+      - name: Push to the swing-data branch (single commit, replaced each run)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          git config --global user.name "swing-data[bot]"
+          git config --global user.email "swing-data@users.noreply.github.com"
+          git init -q pub && cd pub
+          git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git"
+          git checkout -q --orphan swing-data
+          cp -r ../out/. .
+          ls -la
+          git add -A
+          git commit -q -m "Research data snapshot ${GITHUB_SHA::7}"
+          git push -q -f origin swing-data
