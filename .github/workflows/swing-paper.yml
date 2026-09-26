@@ -1,0 +1,100 @@
+# Daily paper trading of the swing-rules engine.
+# Signals are committed to the `paper-trading` branch right after each market's close,
+# before the next session's open, so the git history proves no signal was changed afterwards.
+# Scheduled runs only start once this file is on the repository's default branch.
+name: swing-paper
+
+on:
+  schedule:
+    - cron: '35 22 * * 1-5'   # US markets: after the NYSE close (22:35 UTC)
+    - cron: '5 8 * * 1-5'     # Korean markets: after the KRX close (17:05 KST)
+    - cron: '40 0,6,12,18 * * *'   # Crypto: every 6 h; the first run with yesterday's candle commits it
+  workflow_dispatch:
+    inputs:
+      markets:
+        description: 'Markets to run (space separated)'
+        default: 'SP500 NDX100 KOSPI KOSDAQ CRYPTO'
+  push:
+    branches: [claude/github-top-10-skills-k1u8yp]
+    paths: ['trading/swing_engine/paper.py', '.github/workflows/swing-paper.yml']
+
+permissions:
+  contents: write
+
+concurrency:
+  group: swing-paper
+  cancel-in-progress: false
+
+jobs:
+  paper:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: trading/requirements.txt
+      - run: pip install -r trading/requirements.txt
+      - name: Pick markets
+        id: m
+        run: |
+          if [ -n "${{ github.event.inputs.markets }}" ]; then m="${{ github.event.inputs.markets }}"
+          elif [ "${{ github.event.schedule }}" = "35 22 * * 1-5" ]; then m="SP500 NDX100"
+          elif [ "${{ github.event.schedule }}" = "5 8 * * 1-5" ]; then m="KOSPI KOSDAQ"
+          elif [ "${{ github.event.schedule }}" = "40 0,6,12,18 * * *" ]; then m="CRYPTO"
+          else m="SP500 NDX100 KOSPI KOSDAQ CRYPTO"; fi
+          echo "markets=$m" >> "$GITHUB_OUTPUT"
+          # data-not-ready retries (exit 75) for stocks; crypto is retried by its next 6-hourly run
+          echo "tries=3" >> "$GITHUB_OUTPUT"; echo "wait=600" >> "$GITHUB_OUTPUT"
+          # push-triggered runs are trials: they write to a separate branch
+          if [ "${{ github.event_name }}" = "push" ]; then echo "branch=paper-trading-trial" >> "$GITHUB_OUTPUT"; else echo "branch=paper-trading" >> "$GITHUB_OUTPUT"; fi
+      - name: Check out the ledger branch
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH: ${{ steps.m.outputs.branch }}
+        run: |
+          git config --global user.name "swing-paper[bot]"
+          git config --global user.email "swing-paper@users.noreply.github.com"
+          git init -q ledger && cd ledger
+          git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git"
+          if git fetch -q origin "$BRANCH"; then git checkout -q -b "$BRANCH" FETCH_HEAD; else git checkout -q --orphan "$BRANCH"; fi
+      - uses: actions/cache@v4
+        with:
+          path: trading/.cache
+          key: swing-paper-data-${{ github.run_id }}
+          restore-keys: swing-paper-data-
+      - name: Run paper trading
+        working-directory: trading
+        env:
+          BRANCH: ${{ steps.m.outputs.branch }}
+          TRIES: ${{ steps.m.outputs.tries }}
+          WAIT: ${{ steps.m.outputs.wait }}
+        run: |
+          status=0
+          for market in ${{ steps.m.outputs.markets }}; do
+            echo "::group::$market"
+            attempt=1
+            while :; do
+              rc=0
+              python -m swing_engine.paper --market "$market" --ledger-dir ../ledger/paper \
+                --cache-dir .cache --push-branch "$BRANCH" -v || rc=$?
+              if [ "$rc" -eq 75 ] && [ "$market" != "CRYPTO" ] && [ "$attempt" -lt "$TRIES" ]; then
+                echo "::warning::$market data not ready (attempt $attempt/$TRIES), retrying in ${WAIT}s"
+                rm -rf .cache                     # refetch instead of reusing the incomplete download
+                sleep "$WAIT"; attempt=$((attempt + 1)); continue
+              fi
+              break
+            done
+            if [ "$rc" -eq 75 ] && [ "$market" = "CRYPTO" ]; then
+              echo "::warning::CRYPTO: yesterday's candle not on Yahoo yet; nothing committed, the next 6-hourly run retries"
+            elif [ "$rc" -eq 75 ]; then echo "::error::$market data still not ready after $TRIES attempts; nothing committed"; status=1
+            elif [ "$rc" -ne 0 ]; then echo "::error::$market failed (exit $rc)"; status=1; fi
+            echo "::endgroup::"
+          done
+          exit $status
+      - name: Summary
+        if: always()
+        run: |
+          for f in ledger/paper/*/report.md; do [ -f "$f" ] && { echo "===== $f"; cat "$f"; cat "$f" >> "$GITHUB_STEP_SUMMARY"; }; done

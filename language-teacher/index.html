@@ -644,7 +644,7 @@
 <div class="sr-only" id="announcer" aria-live="polite"></div>
 <div id="modalRoot"></div>
 
-<script src="cloud-config.js?v=1"></script>
+<script src="cloud-config.js?v=2"></script>
 <script>
 'use strict';
 // 앱 안 브라우저에서 '기록 들고 열기'로 온 경우: 주소의 #imp=LS3:… 를 먼저 떼어 둔다(통계 주소·화면에 남지 않게)
@@ -5145,7 +5145,8 @@ const FB_VER = 'f73157e4';
 const CLOUD_HINT_KEY = 'lang_starter_cloud';   // {uid, rev, at, lastUid} — 이 기기가 어느 계정과 이어졌는지(이름·이메일은 저장하지 않음)
 const CLOUD_JSON_LIMIT = 600000;                // 이보다 크면 gzip으로 줄여 저장(Firestore 문서 1MB 한도)
 const CLOUD_DOC_LIMIT = 900000;
-function cloudCfg() { const c = window.CLOUD_CONFIG; return (c && typeof c === 'object' && typeof c.apiKey === 'string' && typeof c.projectId === 'string') ? c : null; }
+// 파일로 직접 연 경우(file://)에는 구글 로그인·통계 모듈을 불러올 수 없으므로 켜지 않는다(기기에만 저장)
+function cloudCfg() { const c = window.CLOUD_CONFIG; return (location.protocol !== 'file:' && c && typeof c === 'object' && typeof c.apiKey === 'string' && typeof c.projectId === 'string') ? c : null; }
 function cloudOn() { return !!cloudCfg(); }
 // 문의·오류 제보 링크(cloud-config.js의 SITE_CONTACT) — https 주소일 때만
 function siteContact() { const c = window.SITE_CONTACT; return (c && typeof c === 'object' && typeof c.url === 'string' && /^https:\/\//.test(c.url)) ? { url: c.url, label: typeof c.label === 'string' && c.label.trim() ? c.label.trim().slice(0, 30) : '문의·오류 제보' } : null; }
