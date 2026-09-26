@@ -608,8 +608,10 @@
         .faq details:last-of-type { border-bottom: none; }
         .faq summary { font-weight: 700; font-size: 14px; cursor: pointer; }
         .faq-a { font-size: 13px; line-height: 1.7; margin-top: 6px; color: var(--text); }
-        /* 한국어는 어절 단위로 줄바꿈(좁은 화면에서 '말문이 / 트여요'처럼 끊기지 않게) */
-        .lang-card .lc-desc, .choice-btn .muted, .inapp-note, .storage-warn, .notice, .set-row .s-title, .set-row .s-desc, .lang-pick .muted { word-break: keep-all; overflow-wrap: break-word; }
+        /* 한국어는 어절 단위로 줄바꿈(좁은 화면에서 '말문이 / 트여요'처럼 끊기지 않게). 한 줄에 다 안 들어가는 긴 외국어 단어·주소만 중간에서 끊어 화면 밖으로 넘치지 않게 */
+        body { word-break: keep-all; overflow-wrap: break-word; }
+        /* 띄어쓰기 없는 중국어·일본어 문장과 기록 코드는 글자 단위로 줄바꿈(문장부호가 줄 맨 앞에 오지 않는 규칙 유지) */
+        .native, .token, .fc-hint, [lang|="zh"], [lang|="ja"], textarea, #backupArea { word-break: normal; overflow-wrap: break-word; }
         .continue-card:focus-visible, .guide-banner:focus-visible, .quick-card:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
         /* 휴대폰 화면: 설정 줄의 버튼 묶음이 길면 설명 아래로 내려서 설명이 눌리지 않게(설명 폭이 130px보다 좁아지면 내림) */
         @media (max-width: 480px) {
@@ -884,7 +886,8 @@ function mergeLang(a, b, force, aOld) {   // b = 이 탭(우선), a = 다른 탭
     if (!force && (a.gen || 0) !== (b.gen || 0)) { const bHi = (b.gen || 0) > (a.gen || 0); return bHi ? (aOld ? carrySince(b, a, b.genAt) : b) : a; }
     const o = Object.assign({}, a, b);
     o.completed = Object.assign({}, a.completed);
-    Object.entries(b.completed || {}).forEach(([k, v]) => { const x = o.completed[k]; o.completed[k] = !x ? v : Object.assign({}, x, v, { score: Math.max(x.score, v.score), date: x.date < v.date ? x.date : v.date }); });
+    // 레슨 기록은 점수·문항 수를 한 기록에서 통째로 고른다(문제를 빼서 줄어든 total이 다른 기록의 점수와 섞이지 않게). 직접 푼 기록 > 문항이 많은 기록 > 점수가 높은 기록 > 다시 풀어 맞힌 수 순이라 어느 기기에서 합쳐도 결과가 같다
+    Object.entries(b.completed || {}).forEach(([k, v]) => { const x = o.completed[k]; if (!x) { o.completed[k] = v; return; } const real = c => (c.imported || c.placed) ? 0 : 1, d = (real(v) - real(x)) || ((v.total || 0) - (x.total || 0)) || ((v.score || 0) - (x.score || 0)) || ((v.fixed || 0) - (x.fixed || 0)), w = (d > 0 || (!d && JSON.stringify(v) >= JSON.stringify(x))) ? v : x, last = [x.last, v.last].filter(Boolean).sort().pop(); o.completed[k] = Object.assign({}, w, { date: x.date < v.date ? x.date : v.date }, last ? { last } : {}); });
     o.srs = Object.assign({}, a.srs);
     Object.entries(b.srs || {}).forEach(([k, v]) => { const x = o.srs[k]; o.srs[k] = !x ? v : ((v.rv || '') !== (x.rv || '')) ? ((v.rv || '') > (x.rv || '') ? v : x) : ((v.due >= x.due) ? v : x); });
     o.daily = Object.assign({}, a.daily);
@@ -1291,7 +1294,8 @@ function renderTtsWarning() {
         : /Android/i.test(ua) ? '휴대폰 설정 → 일반(또는 접근성) → <b>텍스트 음성 변환(TTS)</b>에서 Google 음성 엔진을 고르고, ' + esc(CUR ? CUR.name : '') + ' 음성을 내려받은 뒤 다시 열어 주세요.'
         : /iPhone|iPad|iPod/.test(ua) ? '🔕 옆면 무음 스위치를 끄고 음량을 올려 보세요. 그래도 안 되면 설정 › 손쉬운 사용 › 읽기 및 말하기 › 음성에서 ' + esc(CUR ? CUR.name : '') + ' 음성을 내려받아 보세요.'
         : '크롬·엣지·사파리 최신 버전으로 열거나, 컴퓨터의 소리·음성 설정을 확인해 주세요.') +
-        ' 듣기 문제는 <b>🔇 글자로 보기</b>로 풀 수 있어요.' +
+        // 녹음 음성이 잘 나오고 있으면 듣기 문제에 🔇 버튼이 나오지 않으므로 그 안내는 뺀다
+        ((typeof clipsReady === 'function' && clipsReady() && typeof CLIP_HEALTH === 'object' && CLIP_HEALTH && !CLIP_HEALTH.fails) ? '' : ' 듣기 문제는 <b>🔇 글자로 보기</b>로 풀 수 있어요.') +
         '<div style="display:flex;gap:8px;margin-top:6px">' + (href ? '<a class="btn small" id="ttsWarnOpen" href="' + esc(href) + '" style="text-decoration:none">👉 기본 브라우저로 열기</a>' : '') + '<button class="btn small gray" id="ttsWarnClose">닫기</button></div>';
     el.hidden = false;
     carryLink(document.getElementById('ttsWarnOpen'));
@@ -2694,27 +2698,73 @@ function openExternalHref(hash) {
 }
 function inAppNoteHtml() {
     if (!IN_APP) return '';
-    const href = openExternalHref(), ios = /iPhone|iPad|iPod/.test(navigator.userAgent || ''), has = hasProgress(store), carry = has && /KAKAOTALK|Line\//i.test(navigator.userAgent || '');
+    const href = openExternalHref(), ios = /iPhone|iPad|iPod/.test(navigator.userAgent || ''), has = hasProgress(store);
+    // 카톡·라인의 '📦 기록 들고…' 글자와 '📦 버튼은…' 안내는 링크에 기록을 실제로 실은 뒤에만 나온다(bindInAppNote → carryLink)
     return '<div class="inapp-note" id="inAppNote">📱 <b>앱 안의 브라우저</b>에서는 발음 듣기·말하기 채점' + (cloudOn() ? '·구글 로그인' : '') + '이 잘 안 돼요. ' +
         (href ? '아래 버튼으로 기본 브라우저에서 열어 주세요.' : ios ? '오른쪽 아래(또는 위) <b>⋯ · 공유</b> 메뉴 → <b>Safari로 열기</b>를 누르거나, 주소를 복사해 사파리에 붙여넣어 주세요.' : '메뉴(⋮) → <b>다른 브라우저로 열기</b>를 눌러 주세요.') +
-        '<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">' + (href ? '<a class="btn small" id="inAppOpen" href="' + esc(href) + '" style="text-decoration:none">' + (carry ? '📦 기록 들고 기본 브라우저로 열기' : '👉 기본 브라우저로 열기') + '</a>' : '') + '<button class="btn small ghost" id="inAppCopy">🔗 주소 복사</button>' + (has ? '<button class="btn small ghost" id="inAppCopyCode">📋 기록 코드 복사</button>' : '') + '</div>' +
-        (has ? '<div class="muted" style="margin-top:6px">여기서 한 기록은 기본 브라우저로 저절로 옮겨지지 않아요. ' + (carry ? '📦 버튼은 기록을 함께 가져가요. 안 되면 ' : '') + '📋 기록 코드 복사 → 기본 브라우저 첫 화면 아래 「📦 다른 기기 기록 가져오기」 → 📋 붙여넣기.</div>' : '') + '</div>';
+        '<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">' + (href ? '<a class="btn small" id="inAppOpen" href="' + esc(href) + '" style="text-decoration:none">👉 기본 브라우저로 열기</a>' : '') + '<button class="btn small ghost" id="inAppCopy">🔗 주소 복사</button>' + (has ? '<button class="btn small ghost" id="inAppCopyCode">📋 기록 코드 복사</button>' : '') + '</div>' +
+        (has ? '<div class="muted" style="margin-top:6px">여기서 한 기록은 기본 브라우저로 저절로 옮겨지지 않아요. <span id="inAppCarryTip"></span>📋 기록 코드 복사 → 기본 브라우저 첫 화면 아래 「📦 다른 기기 기록 가져오기」 → 📋 붙여넣기.</div>' : '') + '</div>';
 }
-// 카톡·라인 인앱: '기본 브라우저로 열기' 링크에 기록(#imp=…)을 실어 보낸다. 실을 수 있으면 true(다른 곳의 링크에도 carryLink(a)로 쓴다)
-function carryLink(a) {
-    if (!a || !hasProgress(store) || !/KAKAOTALK|Line\//i.test(navigator.userAgent || '')) return Promise.resolve(false);
-    return exportProgressCode().then(c => {
-        if (!(c.startsWith('LS3:') && c.length <= 20000 && a.isConnected)) return false;
-        a.href = openExternalHref('#imp=' + c);
-        a.textContent = '📦 기록 들고 기본 브라우저로 열기';
-        return true;
-    }).catch(() => false);
+// 카톡·라인 인앱: '기본 브라우저로 열기' 링크에 기록(#imp=…)을 실어 보낸다. 실었으면 true(다른 곳의 링크에도 carryLink(a)로 쓴다)
+//  · 링크를 만든 뒤 기록이 바뀌었으면(레슨·복습을 더 함) 누르는 순간 코드를 새로 만들어 연다
+//  · 기록이 너무 커서 못 실으면 글자를 '👉 기본 브라우저로 열기'로 두고, 곁에 📋 기록 코드로 옮기는 방법을 보여 준다
+//    onState(ok, why)를 주면 그 안내를 대신 그린다(why: '' 기록 없음 · 'big' 너무 큼 · 'old' 압축을 못 하는 브라우저)
+const CARRY_MAX = 20000;
+function carryLink(a, onState) {
+    if (!a || !/KAKAOTALK|Line\//i.test(navigator.userAgent || '')) return Promise.resolve(false);
+    if (onState) a.__carryOn = onState;
+    if (!a.__carryBound) {
+        a.__carryBound = true;
+        a.addEventListener('pointerdown', () => { carryBuild(a); });   // 손가락이 닿는 순간 미리 새로 만들어 둔다
+        a.addEventListener('click', e => {
+            if (a.__carryRaw === JSON.stringify(store)) return;   // 링크가 이미 지금 기록을 싣고 있으면 그대로 연다
+            e.preventDefault();
+            const promised = a.dataset.carry === 'ok';
+            carryBuild(a).then(ok => {
+                if (!ok && promised && hasProgress(store)) { showToast('📦 기록이 커져서 링크에 함께 싣지 못했어요. 📋 기록 코드를 복사해 옮겨 주세요', '', 4500); return; }
+                location.href = a.href;
+            });
+        });
+    }
+    return carryBuild(a);
 }
-// 소리 배너는 소리가 안 나는 순간에 한 번만 그려지므로, 화면을 새로 그릴 때 링크(지금 언어·쌓인 기록)를 다시 맞춘다
+function carryBuild(a) {
+    const raw = JSON.stringify(store), j = a.__carryJob;
+    if (j && j.raw === raw) return j.p;
+    const job = { raw };
+    a.__carryJob = job;
+    job.p = (hasProgress(store) ? exportProgressCode() : Promise.resolve('')).catch(() => '').then(c => {
+        if (a.__carryJob !== job) return a.__carryJob.p;   // 그사이 기록이 또 바뀌어 새로 만드는 중
+        const ok = c.startsWith('LS3:') && c.length <= CARRY_MAX, why = ok || !c ? '' : c.length > CARRY_MAX ? 'big' : 'old';
+        if (!a.isConnected) return false;
+        a.href = openExternalHref(ok ? '#imp=' + c : '');
+        a.textContent = ok ? '📦 기록 들고 기본 브라우저로 열기' : '👉 기본 브라우저로 열기';
+        a.dataset.carry = ok ? 'ok' : why;
+        a.__carryRaw = raw;
+        (a.__carryOn || carryNote)(ok, why, a);
+        return ok;
+    });
+    return job.p;
+}
+// 기록을 링크에 못 실었을 때 버튼 줄 아래에 붙는 안내(소리 배너·로그인 도움 창)
+function carryNote(ok, why, a) {
+    let n = a.__carryNote;
+    if (ok || !why) { if (n) n.remove(); a.__carryNote = null; return; }
+    if (n && n.isConnected) return;
+    n = document.createElement('div');
+    n.style.cssText = 'margin-top:8px;font-size:12.5px;line-height:1.55';
+    n.innerHTML = '<div>' + (why === 'big' ? '기록이 커서 이 버튼으로는 함께 옮기지 못해요.' : '이 브라우저에서는 이 버튼으로 기록을 함께 옮기지 못해요.') + ' 📋 기록 코드를 복사해 기본 브라우저 첫 화면 아래 「📦 다른 기기 기록 가져오기」에 붙여넣어 주세요.</div>' +
+        '<button class="btn small ghost" style="margin-top:6px">📋 기록 코드 복사</button>';
+    n.querySelector('button').addEventListener('click', () => exportProgressCode().then(c => copyText(c, '📋 기록 코드를 복사했어요! 기본 브라우저 첫 화면 아래 「📦 다른 기기 기록 가져오기」에 붙여넣으세요' + CODE_TIP)));
+    const row = a.parentElement && a.parentElement.style.display === 'flex' ? a.parentElement : a;
+    row.after(n);
+    a.__carryNote = n;
+}
+// 소리 배너는 소리가 안 나는 순간에 한 번만 그려지므로, 화면을 새로 그리거나 레슨을 마칠 때 링크(지금 언어·쌓인 기록)를 다시 맞춘다
 function refreshTtsWarnLink() {
     const el = document.getElementById('ttsWarn'), a = document.getElementById('ttsWarnOpen');
     if (!el || el.hidden || !a) return;
-    carryLink(a).then(ok => { if (!ok && a.isConnected) { a.href = openExternalHref(); a.textContent = '👉 기본 브라우저로 열기'; } });
+    carryLink(a);
 }
 function bindInAppNote() {
     const c = document.getElementById('inAppCopy');
@@ -2724,8 +2774,11 @@ function bindInAppNote() {
         track('inapp_open_external');
         if (/^intent:/.test(o.getAttribute('href') || '')) setTimeout(() => { if (!document.hidden) showToast('크롬이 없나요? 🔗 주소 복사 후 쓰는 브라우저 주소창에 붙여넣어 주세요', '', 4000); }, 1500);
     });
-    // 카톡·라인은 주소에 기록을 실어 보낼 수 있다(클릭 때 바로 열리도록 미리 바꿔 둠)
-    carryLink(o);
+    // 카톡·라인은 주소에 기록을 실어 보낼 수 있다(클릭 때 바로 열리도록 미리 바꿔 둠). 못 실으면 아래 안내가 📋 기록 코드 쪽으로 이끈다
+    carryLink(o, (ok, why) => {
+        const t = document.getElementById('inAppCarryTip');
+        if (t) t.textContent = ok ? '📦 버튼은 기록을 함께 가져가요. 안 되면 ' : why ? (why === 'big' ? '기록이 커서' : '이 브라우저에서는') + ' 버튼에 함께 싣지 못하니 이렇게 옮겨 주세요: ' : '';
+    });
     refreshTtsWarnLink();
     const cc = document.getElementById('inAppCopyCode');
     if (cc) cc.addEventListener('click', () => exportProgressCode().then(c => copyText(c, '📋 기록 코드를 복사했어요! 기본 브라우저 첫 화면 아래 「📦 다른 기기 기록 가져오기」에 붙여넣으세요' + CODE_TIP)));
@@ -3254,7 +3307,7 @@ function renderQuiz(body, l) {
         if (q.noSound) {
             // 글자를 보여 주면 답이 드러나는 문제: 성조는 병음(성조 부호)을 빼고 한자만, 보기에 같은 단어가 있는 문제는 점수에서 뺄 수 있게
             if (item.type === 'tone') h += '<div class="card" style="text-align:center;margin:-4px 0 10px"><div class="native" style="font-size:24px">' + esc(itemText) + '</div><div class="muted">🔇 글자를 보고 성조를 떠올려 골라 보세요</div></div>';
-            else if (item.choices.includes(itemText)) h += '<div class="card" style="text-align:center;margin:-4px 0 10px"><div class="muted">🔇 이 문제는 소리를 들어야 풀 수 있어요</div>' + (q.answered ? '' : '<button class="btn small gray" id="qExcuse" style="margin-top:8px">건너뛰기(점수에서 빼기)</button>') + '</div>';
+            else if (item.choices.includes(itemText)) h += '<div class="card" style="text-align:center;margin:-4px 0 10px"><div class="muted">🔇 이 문제는 소리를 들어야 풀 수 있어요' + (q.phase2 ? '. 건너뛰어도 괜찮아요(첫 시도 점수는 그대로예요)' : '') + '</div>' + (q.answered ? '' : '<button class="btn small gray" id="qExcuse" style="margin-top:8px">' + (q.phase2 ? '건너뛰기' : '건너뛰기(점수에서 빼기)') + '</button>') + '</div>';
             else h += '<div class="card" style="text-align:center;margin:-4px 0 10px"><div class="native" style="font-size:24px">' + esc(itemText) + '</div>' + (romanText(item) ? '<div style="color:var(--primary);font-weight:600">' + esc(romanText(item)) + '</div>' : '') + '<div class="muted">🔇 소리 대신 글자로 풀어요</div></div>';
         } else if (ttsBadNow()) h += '<div style="text-align:center;margin:-4px 0 10px"><button class="btn small gray" id="qNoSound">🔇 소리가 안 나요 — 글자로 보기</button></div>';
     }
@@ -3301,8 +3354,8 @@ function renderQuiz(body, l) {
     const qex = document.getElementById('qExcuse');
     if (qex) qex.addEventListener('click', () => {   // 소리 없이는 풀 수 없는 문제: 맞힌 수에도 전체 문항 수에도 넣지 않는다
         if (q.answered) return;
-        if (!q.excused) q.excused = [];
-        if (!q.excused.includes(qIdx)) q.excused.push(qIdx);
+        // 2회차(틀렸던 문제 다시 풀기)에서는 넘어가기만 한다: 1회차에 틀린 기록은 그대로 두어 '한 번에 전부 맞혔어요'·🏆가 '틀렸던 문제' 목록과 함께 나오지 않게
+        if (!q.phase2) { if (!q.excused) q.excused = []; if (!q.excused.includes(qIdx)) q.excused.push(qIdx); }
         q.i++; q.answered = false; q.sel = []; q.selSrc = []; q.half = null; q.plays = 0; q.hints = 0; q.usedHint = false;
         renderQuiz(body, l);
     });
@@ -3451,7 +3504,8 @@ function renderQuizResult(body, l) {
             if (firstScore === total && !(prev && prev.score === prev.total)) gained += XP.perfect;
             if (!prev) { p.completed[l.id] = { score: firstScore, fixed: fixed, total, date: todayStr() }; track('lesson_complete', { lesson_id: l.id, unit: l.unitId, lessons_done: doneCount() }); }
             else {
-                if (firstScore > prev.score || prev.imported || prev.placed) { prev.score = firstScore; prev.fixed = fixed; prev.total = total; delete prev.imported; delete prev.placed; }
+                // 문제를 빼서 줄어든 기록(total이 작음)은 더 온전한 기록을 덮지 않는다(기기끼리 합칠 때 mergeLang과 같은 기준)
+                if (prev.imported || prev.placed || total > prev.total || (total === prev.total && firstScore > prev.score)) { prev.score = firstScore; prev.fixed = fixed; prev.total = total; delete prev.imported; delete prev.placed; }
                 prev.last = todayStr();
             }
             const dl = dayLog(); dl.lessons = (dl.lessons || 0) + 1;
@@ -3600,6 +3654,7 @@ function renderQuizResult(body, l) {
         },
         onClose: () => { if (S.view === 'lesson' && S.quiz === q) renderQuizResult(body, l); },
     }));
+    refreshTtsWarnLink();   // 결과 화면은 render()를 거치지 않으므로, 방금 저장한 기록을 소리 배너의 '기본 브라우저로 열기'에 싣는다
 }
 
 /* ═══════════════════ SRS 복습 ═══════════════════ */

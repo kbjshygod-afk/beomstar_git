@@ -16,6 +16,8 @@
   p { font-size: 14px; line-height: 1.7; color: #64748b; margin: 0 0 16px; }
   a.btn { display: block; background: #1a56db; color: #fff; text-decoration: none; font-weight: 800; border-radius: 14px; padding: 13px; margin-top: 8px; }
   a.ghost { background: #fff; color: #1a56db; border: 1.5px solid #1a56db; }
+  /* 한국어는 어절 단위로 줄바꿈하고, 한 줄에 다 안 들어가는 긴 주소·영어 이름만 중간에서 끊는다 */
+  body { word-break: keep-all; overflow-wrap: break-word; }
 </style>
 </head>
 <body>
