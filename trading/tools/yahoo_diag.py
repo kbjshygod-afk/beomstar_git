@@ -52,3 +52,41 @@ for market in ("SP500", "CRYPTO"):
     last = Counter(df.index[-1].strftime("%Y-%m-%d") for df in frames.values())
     print(f"\npaper.load_bars {market}: {len(frames)} frames, failed {len(failed)}, bench last "
           f"{bench.index[-1].strftime('%Y-%m-%d')}, frame last-date counts {dict(last)}")
+
+# full paper run on a scratch ledger (no push), printing the intermediate state
+import subprocess  # noqa: E402
+import tempfile  # noqa: E402
+
+import pandas as pd  # noqa: E402
+
+from swing_engine.portfolio import PortfolioConfig, prepare_frames, simulate  # noqa: E402
+
+orig_prepare, orig_sim = P.prepare_frames, P.simulate
+
+
+def _prep(frames, bench, cfg):
+    out = orig_prepare(frames, bench, cfg)
+    ts = pd.Timestamp(cfg.as_of)
+    have = sum(ts in f.index for f in out.values())
+    print(f"  prepare_frames: {len(out)} frames, as_of={cfg.as_of!r} ({type(cfg.as_of).__name__}), "
+          f"test_start={cfg.test_start!r}, frames containing as_of: {have}, "
+          f"sample index tail {list(next(iter(out.values())).index[-2:])}, dtype {next(iter(out.values())).index.dtype}")
+    return out
+
+
+def _sim(prepared, cfg):
+    r = orig_sim(prepared, cfg)
+    print(f"  simulate: equity rows {len(r.equity)}, trades {len(r.trades)}, config {r.config.get('first_date')}..{r.config.get('last_date')}")
+    return r
+
+
+P.prepare_frames, P.simulate = _prep, _sim
+for market in ("SP500", "CRYPTO"):
+    tmp = Path(tempfile.mkdtemp())
+    subprocess.run(["git", "init", "-q", str(tmp)], check=True)
+    for k, v in (("user.email", "d@e.com"), ("user.name", "d")):
+        subprocess.run(["git", "-C", str(tmp), "config", k, v], check=True)
+    extra = ["--allow-late-start"] if market == "CRYPTO" else []
+    print(f"\n### paper.run {market}")
+    r = P.run(P.build_parser().parse_args(["--market", market, "--ledger-dir", str(tmp / "paper"), "--no-commit", *extra]))
+    print("  started", r.get("started"), "regime", r.get("snapshot", {}).get("regime"))
