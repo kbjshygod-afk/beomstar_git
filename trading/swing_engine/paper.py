@@ -439,6 +439,31 @@ def render_report(market, cfg, snap, perf, aud, res, params) -> str:
     return "\n".join(L) + "\n"
 
 
+NOT_READY = 75          # exit code: data not ready, nothing committed (the workflow retries)
+
+
+def data_ready(market: str, frames: dict, bench: pd.DataFrame, now: datetime,
+               min_coverage: float = 0.9, bench_name: str = "benchmark") -> tuple[bool, str]:
+    """Is the data complete enough to commit signals for the benchmark's last bar?
+
+    * Most symbols must have a bar on that date. Yahoo has served symbol data that stopped a
+      day short of the index (2026-09-26 01:30 UTC: no S&P 500 symbol had the 09-25 bar that
+      ^GSPC had; a rerun minutes later was complete).
+    * Crypto: yesterday's UTC candle must be there. Right after 00:00 UTC Yahoo leaves out the
+      day that just closed and returns the new, still-forming day instead.
+    """
+    as_of = bench.index[-1]
+    if market == "CRYPTO":
+        expected = pd.Timestamp(now.astimezone(timezone.utc).date() - timedelta(days=1))
+        if as_of < expected:
+            return False, f"{bench_name} 마지막 확정 봉 {_day(as_of)} < {_day(expected)}"
+    have = sum(1 for f in frames.values() if len(f) and pd.Timestamp(as_of) in f.index)
+    cov = have / len(frames) if frames else 0.0
+    if cov < min_coverage:
+        return False, f"{_day(as_of)} 봉이 있는 종목 {have}/{len(frames)} ({cov:.0%}) < {min_coverage:.0%}"
+    return True, ""
+
+
 # ---------------------------------------------------------------------------
 # main
 # ---------------------------------------------------------------------------
@@ -461,6 +486,12 @@ def run(args) -> dict:
     if bench is None or len(bench) == 0:
         raise SystemExit(f"benchmark {params['benchmark']} could not be loaded")
     as_of = bench.index[-1]
+    ok, why = data_ready(market, frames, bench, now, args.min_coverage, params["benchmark"])
+    if not ok:
+        msg = f"{market}: 데이터 미준비 — {why}. 아무것도 커밋하지 않고 종료합니다."
+        log.warning(msg)
+        print(msg)
+        return {"started": cfg["start_date"] is not None, "ready": False, "as_of": _day(as_of), "reason": why}
     if cfg["start_date"] is None:
         # The paper period may only start with a signal file committed before the next open;
         # a first run that is already past that deadline (e.g. after a holiday) waits.
@@ -544,6 +575,8 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--now", default=None, help="override the current time (ISO, UTC if naive; tests)")
     p.add_argument("--allow-late-start", action="store_true",
                    help="start even if the first run is past the next open (not for the official ledger)")
+    p.add_argument("--min-coverage", type=float, default=0.9,
+                   help="share of symbols that must have the benchmark's last bar (else exit 75, nothing committed)")
     p.add_argument("-v", "--verbose", action="store_true")
     return p
 
@@ -552,8 +585,8 @@ def main(argv=None) -> int:
     args = build_parser().parse_args(argv)
     logging.basicConfig(level=logging.INFO if args.verbose else logging.WARNING,
                         format="%(levelname)s %(name)s: %(message)s")
-    run(args)
-    return 0
+    res = run(args)
+    return NOT_READY if res.get("ready") is False else 0
 
 
 if __name__ == "__main__":

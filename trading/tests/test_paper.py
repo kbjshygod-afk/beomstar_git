@@ -185,3 +185,35 @@ def test_first_run_after_the_open_does_not_start(tmp_path, ledger_repo, monkeypa
     assert cfg["start_date"] is None
     r2 = _run(offline, ledger_repo, _after_close(friday), monkeypatch)     # a timely run starts it
     assert r2["started"] is True and r2["audit"]["late"] == []
+
+
+def test_stale_symbols_are_not_committed(tmp_path, ledger_repo, monkeypatch):
+    """Symbols a day behind the benchmark: nothing is committed and main exits 75."""
+    offline = tmp_path / "data"
+    offline.mkdir()
+    days = _write_market(offline)
+    friday = days[-1]
+    for f in offline.glob("T*.csv"):                         # symbols stop on Thursday
+        df = pd.read_csv(f)
+        df.iloc[:-1].to_csv(f, index=False)
+    r = _run(offline, ledger_repo, _after_close(friday), monkeypatch)
+    assert r["ready"] is False and r["as_of"] == friday.strftime("%Y-%m-%d")
+    root = ledger_repo / "paper" / "SP500"
+    assert not (root / "signals").exists()
+    assert not (root / "config.json").exists() or json.loads((root / "config.json").read_text())["start_date"] is None
+    code = P.main(["--market", "SP500", "--ledger-dir", str(ledger_repo / "paper"), "--offline-dir", str(offline),
+                   "--now", _after_close(friday).strftime("%Y-%m-%dT%H:%M:%S"), "--no-commit"])
+    assert code == P.NOT_READY
+
+
+def test_crypto_needs_yesterdays_candle():
+    d = pd.date_range("2026-09-01", "2026-09-24")
+    bench = pd.DataFrame({"close": range(len(d))}, index=d, dtype=float)
+    frames = {"ETH-USD": bench.copy()}
+    after_midnight = datetime(2026, 9, 26, 0, 40, tzinfo=timezone.utc)   # 09-25 closed 40 min ago
+    ok, why = P.data_ready("CRYPTO", frames, bench, after_midnight, bench_name="BTC-USD")
+    assert not ok and "2026-09-24 < 2026-09-25" in why
+    ok, _ = P.data_ready("CRYPTO", frames, bench, datetime(2026, 9, 25, 20, 0, tzinfo=timezone.utc))
+    assert ok                                            # 09-25 still forming: 09-24 is the latest final bar
+    ok, _ = P.data_ready("SP500", frames, bench, after_midnight)
+    assert ok                                            # stocks: holidays make a date check unreliable
