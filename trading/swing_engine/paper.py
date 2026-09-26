@@ -49,8 +49,10 @@ MARKET_KO = {"SP500": "S&P500", "NDX100": "나스닥100", "KOSPI": "코스피", 
 # exchange holidays are not modelled, which only makes the deadline earlier (stricter).
 OPENS = {"America/New_York": dtime(9, 30), "Asia/Seoul": dtime(9, 0)}
 # Crypto fills at the 00:00 UTC open, the same instant its signal bar closes, so no commit can
-# precede it. The plan instead requires the signal file within 3 hours of the close.
-CRYPTO_DEADLINE_HOURS = 3
+# precede it. Yahoo also publishes the day that just closed hours late (2026-09-26: still missing
+# 2 h after the close), so the plan requires the signal file before the next bar closes, i.e.
+# within 24 hours of the close. The daily recomputation checks the signals themselves.
+CRYPTO_DEADLINE_HOURS = 24
 WATCH_MAX = 15
 
 
@@ -85,7 +87,8 @@ def next_open_deadline(market: str, as_of) -> datetime:
     d = pd.Timestamp(as_of).date()
     sess = D.session_for(market)
     if sess is None:
-        return datetime.combine(d + timedelta(days=1), dtime(CRYPTO_DEADLINE_HOURS, 0), tzinfo=timezone.utc)
+        close = datetime.combine(d + timedelta(days=1), dtime(0, 0), tzinfo=timezone.utc)
+        return close + timedelta(hours=CRYPTO_DEADLINE_HOURS)
     tz = sess[0]
     nxt = d + timedelta(days=1)
     while nxt.weekday() >= 5:

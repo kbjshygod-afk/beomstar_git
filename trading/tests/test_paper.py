@@ -65,8 +65,8 @@ def test_next_open_deadline():
     assert P.next_open_deadline("SP500", "2024-06-28") == datetime(2024, 7, 1, 13, 30, tzinfo=timezone.utc)
     # KRX: Friday -> Monday 09:00 KST = 00:00 UTC
     assert P.next_open_deadline("KOSPI", "2024-06-28") == datetime(2024, 7, 1, 0, 0, tzinfo=timezone.utc)
-    # crypto: 3 hours after the 00:00 UTC close
-    assert P.next_open_deadline("CRYPTO", "2024-06-28") == datetime(2024, 6, 29, 3, 0, tzinfo=timezone.utc)
+    # crypto: before the next bar closes, 24 hours after the 00:00 UTC close
+    assert P.next_open_deadline("CRYPTO", "2024-06-28") == datetime(2024, 6, 30, 0, 0, tzinfo=timezone.utc)
 
 
 def test_daily_runs_commit_on_time_and_match(tmp_path, ledger_repo, monkeypatch):

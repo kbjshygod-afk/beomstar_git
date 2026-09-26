@@ -8,7 +8,7 @@ on:
   schedule:
     - cron: '35 22 * * 1-5'   # US markets: after the NYSE close (22:35 UTC)
     - cron: '5 8 * * 1-5'     # Korean markets: after the KRX close (17:05 KST)
-    - cron: '40 0 * * *'      # Crypto: after the 00:00 UTC daily candle
+    - cron: '40 0,6,12,18 * * *'   # Crypto: every 6 h; the first run with yesterday's candle commits it
   workflow_dispatch:
     inputs:
       markets:
@@ -43,13 +43,11 @@ jobs:
           if [ -n "${{ github.event.inputs.markets }}" ]; then m="${{ github.event.inputs.markets }}"
           elif [ "${{ github.event.schedule }}" = "35 22 * * 1-5" ]; then m="SP500 NDX100"
           elif [ "${{ github.event.schedule }}" = "5 8 * * 1-5" ]; then m="KOSPI KOSDAQ"
-          elif [ "${{ github.event.schedule }}" = "40 0 * * *" ]; then m="CRYPTO"
+          elif [ "${{ github.event.schedule }}" = "40 0,6,12,18 * * *" ]; then m="CRYPTO"
           else m="SP500 NDX100 KOSPI KOSDAQ CRYPTO"; fi
           echo "markets=$m" >> "$GITHUB_OUTPUT"
-          # data-not-ready retries (exit 75): crypto waits up to 2 h for Yahoo to publish
-          # yesterday's candle (deadline 03:00 UTC); stocks retry briefly
-          if [ "$m" = "CRYPTO" ]; then echo "tries=7" >> "$GITHUB_OUTPUT"; echo "wait=1200" >> "$GITHUB_OUTPUT"
-          else echo "tries=3" >> "$GITHUB_OUTPUT"; echo "wait=600" >> "$GITHUB_OUTPUT"; fi
+          # data-not-ready retries (exit 75) for stocks; crypto is retried by its next 6-hourly run
+          echo "tries=3" >> "$GITHUB_OUTPUT"; echo "wait=600" >> "$GITHUB_OUTPUT"
           # push-triggered runs are trials: they write to a separate branch
           if [ "${{ github.event_name }}" = "push" ]; then echo "branch=paper-trading-trial" >> "$GITHUB_OUTPUT"; else echo "branch=paper-trading" >> "$GITHUB_OUTPUT"; fi
       - name: Check out the ledger branch
@@ -82,14 +80,16 @@ jobs:
               rc=0
               python -m swing_engine.paper --market "$market" --ledger-dir ../ledger/paper \
                 --cache-dir .cache --push-branch "$BRANCH" -v || rc=$?
-              if [ "$rc" -eq 75 ] && [ "$attempt" -lt "$TRIES" ]; then
+              if [ "$rc" -eq 75 ] && [ "$market" != "CRYPTO" ] && [ "$attempt" -lt "$TRIES" ]; then
                 echo "::warning::$market data not ready (attempt $attempt/$TRIES), retrying in ${WAIT}s"
                 rm -rf .cache                     # refetch instead of reusing the incomplete download
                 sleep "$WAIT"; attempt=$((attempt + 1)); continue
               fi
               break
             done
-            if [ "$rc" -eq 75 ]; then echo "::error::$market data still not ready after $TRIES attempts; nothing committed"; status=1
+            if [ "$rc" -eq 75 ] && [ "$market" = "CRYPTO" ]; then
+              echo "::warning::CRYPTO: yesterday's candle not on Yahoo yet; nothing committed, the next 6-hourly run retries"
+            elif [ "$rc" -eq 75 ]; then echo "::error::$market data still not ready after $TRIES attempts; nothing committed"; status=1
             elif [ "$rc" -ne 0 ]; then echo "::error::$market failed (exit $rc)"; status=1; fi
             echo "::endgroup::"
           done
