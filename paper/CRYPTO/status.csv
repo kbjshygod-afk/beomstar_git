@@ -1,0 +1,26 @@
+symbol,as_of,close,status,tt_count,tt_pass,tt1,tt2,tt3,tt4,tt5,tt6,tt7,tt8,regime_on,rs,rs_proxy_pp,pivot,to_pivot_pct,breakout_pct,vol_x,ma50,exit_ma,ma150,ma200,from_high52_pct,in_position,entry_date,entry_price,stop_price,exit_pending,entry_pending,stop_if_filled_at_close
+ADA-USD,2026-09-25,0.2585,후보 아님 (트렌드 템플릿 3/8),3,False,True,False,False,False,True,True,False,False,True,41.67,-3.23,0.2616,1.22,-1.2,1.59,0.2082,0.2082,0.2006,0.2141,-70.35,False,,,,False,False,0.2326
+AVAX-USD,2026-09-25,10.6523,후보 아님 (트렌드 템플릿 3/8),3,False,True,False,False,False,True,True,False,False,True,45.83,-1.89,11.7733,10.52,-9.52,1.64,7.678,7.678,7.5933,8.0312,-66.03,False,,,,False,False,9.5871
+BCH-USD,2026-09-25,343.0638,후보 아님 (트렌드 템플릿 3/8),3,False,True,False,False,False,True,True,False,False,True,33.33,-6.09,363.7539,6.03,-5.69,1.55,246.3245,246.3245,267.4744,314.1466,-47.61,False,,,,False,False,308.7574
+BNB-USD,2026-09-25,776.799,후보 아님 (트렌드 템플릿 6/8),6,False,True,True,True,True,True,True,False,False,True,50.0,-0.45,806.5251,3.83,-3.69,1.02,694.5751,694.5751,634.873,632.9298,-40.71,False,,,,False,False,699.1191
+BTC-USD,2026-09-25,84034.9219,후보 아님 (트렌드 템플릿 5/8),5,False,True,False,True,True,True,True,False,False,True,54.17,0.0,87363.7578,3.96,-3.81,1.15,75322.961,75322.961,70586.6667,70929.064,-32.64,False,,,,False,False,75631.4297
+CRO-USD,2026-09-25,0.0667,후보 아님 (트렌드 템플릿 3/8),3,False,True,False,False,False,True,True,False,False,True,4.17,-26.71,0.069,3.47,-3.36,1.77,0.0558,0.0558,0.0598,0.0629,-69.43,False,,,,False,False,0.06
+DOGE-USD,2026-09-25,0.0989,후보 아님 (트렌드 템플릿 3/8),3,False,True,False,False,False,True,True,False,False,True,12.5,-16.4,0.1053,6.4,-6.02,1.52,0.0831,0.0831,0.0857,0.0879,-62.85,False,,,,False,False,0.0891
+ETH-USD,2026-09-25,2690.4756,후보 아님 (트렌드 템플릿 5/8),5,False,True,False,True,True,True,True,False,False,True,62.5,11.71,2805.499,4.28,-4.1,0.94,2356.9041,2356.9041,2061.0716,2094.3414,-42.61,False,,,,False,False,2421.428
+GRAM-USD,2026-09-25,1.4588,후보 아님 (트렌드 템플릿 5/8),5,False,True,True,True,True,True,False,False,False,True,,,1.4824,1.62,-1.59,1.63,1.3789,1.3789,1.044,0.7836,,False,,,,False,False,1.3129
+HBAR-USD,2026-09-25,0.0955,후보 아님 (트렌드 템플릿 3/8),3,False,True,False,False,False,True,True,False,False,True,16.67,-13.44,0.1012,5.97,-5.64,1.9,0.0763,0.0763,0.0784,0.0815,-58.52,False,,,,False,False,0.0859
+LEO-USD,2026-09-25,8.8119,후보 아님 (트렌드 템플릿 3/8),3,False,False,False,True,False,False,True,True,False,True,8.33,-19.22,9.4102,6.79,-6.36,1.36,9.2553,9.2553,9.6035,9.6523,-15.01,False,,,,False,False,7.9307
+LINK-USD,2026-09-25,13.9189,후보 아님 (트렌드 템플릿 7/8),7,False,True,True,True,True,True,True,False,True,True,79.17,28.88,13.6401,-2.0,2.04,2.17,11.1181,11.1181,9.4093,9.3303,-40.45,False,,,,False,False,12.527
+LTC-USD,2026-09-25,72.3941,후보 아님 (트렌드 템플릿 6/8),6,False,True,False,True,True,True,True,False,True,True,70.83,13.92,74.6098,3.06,-2.97,2.44,51.7968,51.7968,49.2983,50.7274,-42.51,False,,,,False,False,65.1547
+NEAR-USD,2026-09-25,4.9488,신호 확정 → 다음 시가 진입,8,True,True,True,True,True,True,True,True,True,True,95.83,181.12,4.7961,-3.08,3.18,3.23,2.3509,2.3509,2.0539,1.8707,0.0,False,,,,False,True,4.4539
+SHIB-USD,2026-09-25,0.0,후보 아님 (트렌드 템플릿 3/8),3,False,True,False,False,False,True,True,False,False,True,20.83,-7.98,0.0,0.0,0.0,1.09,0.0,0.0,0.0,0.0,-53.85,False,,,,False,False,0.0
+SOL-USD,2026-09-25,122.0097,후보 아님 (트렌드 템플릿 6/8),6,False,True,False,True,True,True,True,False,True,True,75.0,14.08,119.8072,-1.81,1.84,1.81,96.7495,96.7495,84.1711,84.6049,-48.05,False,,,,False,False,109.8088
+SUI20947-USD,2026-09-25,1.1927,후보 아님 (트렌드 템플릿 3/8),3,False,True,False,False,False,True,True,False,False,True,58.33,4.27,1.0758,-9.81,10.87,3.35,0.7735,0.7735,0.8116,0.8434,-67.13,False,,,,False,False,1.0734
+TAO22974-USD,2026-09-25,317.9636,후보 아님 (트렌드 템플릿 4/8),4,False,True,False,True,False,True,True,False,False,True,66.67,13.68,325.188,2.27,-2.22,1.71,233.7597,233.7597,233.7708,244.107,-36.2,False,,,,False,False,286.1673
+TRX-USD,2026-09-25,0.3382,후보 아님 (트렌드 템플릿 6/8),6,False,True,True,True,True,True,False,True,False,True,29.17,-6.49,0.3491,3.22,-3.12,0.86,0.3361,0.3361,0.3346,0.3297,-9.92,False,,,,False,False,0.3043
+UNI7083-USD,2026-09-25,9.6263,3순위 · 관찰,8,True,True,True,True,True,True,True,True,True,True,91.67,128.63,10.8802,13.03,-11.52,1.89,5.6824,5.6824,4.1075,3.9394,-6.23,False,,,,False,False,8.6637
+WBT-USD,2026-09-25,83.9226,3순위 · 관찰,8,True,True,True,True,True,True,True,True,True,True,87.5,57.46,87.8705,4.7,-4.49,1.09,71.3581,71.3581,60.2397,58.7051,-3.71,False,,,,False,False,75.5303
+XLM-USD,2026-09-25,0.2202,후보 아님 (트렌드 템플릿 5/8),5,False,True,True,True,False,True,True,False,False,True,25.0,-6.57,0.2243,1.86,-1.83,2.71,0.1815,0.1815,0.1823,0.1781,-46.11,False,,,,False,False,0.1982
+XMR-USD,2026-09-25,557.142,3순위 · 관찰,8,True,True,True,True,True,True,True,True,True,True,83.33,52.04,631.1672,13.29,-11.73,0.96,477.4519,477.4519,394.8546,383.1382,-21.91,False,,,,False,False,501.4278
+XRP-USD,2026-09-25,1.5684,후보 아님 (트렌드 템플릿 5/8),5,False,True,False,True,True,True,True,False,False,True,37.5,-3.58,1.6536,5.43,-5.15,2.11,1.3093,1.3093,1.2381,1.2767,-48.42,False,,,,False,False,1.4116
+ZEC-USD,2026-09-25,1552.9524,3순위 · 관찰,8,True,True,True,True,True,True,True,True,True,True,100.0,814.84,1651.0967,6.32,-5.94,1.14,944.3986,944.3986,645.3781,554.2762,-4.6,False,,,,False,False,1397.6572
