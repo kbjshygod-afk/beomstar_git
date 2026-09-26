@@ -26,3 +26,29 @@ for market, tickers in (("SP500", ["AAPL", "MSFT", "NVDA"]), ("CRYPTO", ["BTC-US
         kept, dropped = D.drop_unconfirmed_last_bar(df, market, now=now, ticker=t)
         print(f"engine {market} {t}: last rows {[d.strftime('%Y-%m-%d') for d in df.index[-3:]]} "
               f"-> after drop {kept.index[-1].strftime('%Y-%m-%d')} (dropped={dropped})")
+
+# replicate paper.load_bars for the full universe
+from collections import Counter  # noqa: E402
+
+from swing_engine import paper as P  # noqa: E402
+from swing_engine.backtest import warmup_bars  # noqa: E402
+from swing_engine.params import resolve  # noqa: E402
+
+
+class _A:
+    offline_dir = None
+    cache_dir = None
+    chunk_size = 40
+    max_symbols = 0
+
+
+for market in ("SP500", "CRYPTO"):
+    params = resolve(market)
+    uni = D.fetch_universe(market, cache_dir=None, now=now)
+    wb = warmup_bars(params)
+    cal_days = wb + 30 if market == "CRYPTO" else int(wb * 1.5) + 45
+    start = now.date() - timedelta(days=cal_days)
+    frames, bench, failed = P.load_bars(market, params, uni, start, now, _A())
+    last = Counter(df.index[-1].strftime("%Y-%m-%d") for df in frames.values())
+    print(f"\npaper.load_bars {market}: {len(frames)} frames, failed {len(failed)}, bench last "
+          f"{bench.index[-1].strftime('%Y-%m-%d')}, frame last-date counts {dict(last)}")
