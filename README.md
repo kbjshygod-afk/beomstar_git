@@ -14,10 +14,10 @@
 - 기록은 기본적으로 **이 기기의 이 브라우저**에만 저장돼요. ⚙️ 설정에서 **구글로 로그인**하면 휴대폰·PC 어디서든 이어져요(로그인 기능은 [설정 안내](docs/cloud-setup.md)대로 켜야 나타나요).
 - 로그인 없이 옮기려면 ⚙️ 설정 → 📦 백업 코드/파일 → 새 기기 첫 화면의 **다른 기기 기록 가져오기**.
 - 앱 안 **❓ 도움말**에 소리·마이크·기록 옮기기·홈 화면 추가 방법이 있어요.
-- [개인정보 안내](privacy.html) · 문의 창구는 준비되면 앱 설정·도움말에 나타나요.
+- [개인정보 안내](privacy.html) · 문의·오류 제보는 [GitHub 이슈 페이지](https://github.com/kbjshygod-afk/beomstar_git/issues)로 알려 주세요(공개 게시판이라 개인정보는 적지 마세요).
 
 ## 예전 앱을 쓰던 분
-「니하오 중국어」「올라 스페인어」「Daily English Quest」「Emma 영어 선생님」은 랭귀지 스타터로 합쳐졌어요. 옛 주소는 안내 페이지이고, **같은 브라우저라면 예전 기록이 자동으로 옮겨져요**(Emma의 AI 자유 회화는 `english-teacher/emma.html`에 고급 사용자용으로 남아 있어요).
+「니하오 중국어」「올라 스페인어」「Daily English Quest」「Emma 영어 선생님」은 랭귀지 스타터로 합쳐졌어요. 옛 주소는 안내 페이지이고, 니하오 중국어·올라 스페인어·Daily English Quest는 **같은 브라우저라면 예전 기록이 자동으로 옮겨져요**. Emma의 퀴즈 기록은 옮겨지지 않고 `english-teacher/emma.html`에 그대로 있어요(Emma의 퀴즈·AI 자유 회화는 그곳에 고급 사용자용으로 남아 있어요).
 
 ---
 
@@ -34,18 +34,23 @@ beomstar_git/
 │   ├── cloud-config.js   # Firebase 웹 설정(null이면 로그인·통계·의견 기능 숨김)
 │   ├── manifest.webmanifest, icons/   # 홈 화면 설치
 │   └── vendor/firebase/  # 직접 묶은 Firebase SDK(필요할 때만 불러옴)
-├── tools/firebase/       # SDK 묶기 스크립트(build.mjs) · Firestore 보안 규칙(firestore.rules)
+├── tools/tts/            # 자연 음성 녹음 도구(Google Cloud TTS → language-teacher/audio/) — docs/voice-setup.md
+├── tools/firebase/       # SDK 묶기 스크립트(build.mjs — FB_VER도 자동으로 적음) · Firestore 보안 규칙(firestore.rules)
 ├── docs/cloud-setup.md   # 구글 로그인·클라우드 저장 켜는 방법(주인용)
 ├── daily-english-quest/  # 옛 주소 → 헬로 영어 안내(DEQ 기록 가져오기)
 ├── chinese-teacher/      # 옛 주소 → 니하오 중국어 안내(nihao_zh_v1 기록 자동 이관)
 ├── spanish-teacher/      # 옛 주소 → 올라 스페인어 안내(hola_es_v1 기록 자동 이관)
 └── english-teacher/      # 옛 주소 → 헬로 영어 안내, emma.html(예전 Emma)
 ```
-정적 파일뿐이라 GitHub Pages에 그대로 올리면 됩니다. 로컬에서는 `python3 -m http.server`로 열면 로그인까지 시험할 수 있어요(file://로도 로그인 외 기능은 동작).
+정적 파일뿐이라 GitHub Pages에 그대로 올리면 됩니다. 로컬에서는 `python3 -m http.server`로 띄운 뒤 **http://localhost:8000/language-teacher/** 로 열면 로그인까지 시험할 수 있어요. Firebase의 승인된 도메인에 기본으로 들어 있는 것은 `localhost`라서, `127.0.0.1`로 열면 로그인이 막혀요(file://로도 로그인 외 기능은 동작).
 
 ### 배포 전 체크
 - `data-*.js`·`stories-*.js`를 고쳤다면 `node tools/stamp-data-ver.mjs`로 `DATA_VER`(내용 해시)를 갱신하세요(`--check`로 확인만). 잊어도 서비스 워커가 뒤에서 확인해 다음 열 때 새 데이터로 바뀝니다.
+- Firebase 묶음(`language-teacher/vendor/firebase/`)은 `tools/firebase`에서 `npm install && npm run build`로만 만드세요. 빌드가 `FB_VER`(묶음 내용 해시)를 자동으로 적어요. 확인만: `node tools/firebase/build.mjs --check`. SDK 버전 올리기는 [설정 안내](docs/cloud-setup.md)의 ‘자주 묻는 것’ 참고.
+- 서비스 워커 캐시 이름: 데이터 캐시(`lt-data`)는 바꾸지 마세요(바꾸면 모든 언어의 오프라인 자료가 사라져요). 화면 쪽을 비워야 할 때만 `SHELL`(`lt-shell-vN`)의 번호를 올리세요.
+- `sw.js`를 바꿔 배포하면, 열어 둔 화면(홈 화면 앱 포함)에 ‘🆕 새 버전이 나왔어요 · 누르면 새로고침’ 안내가 떠요. `index.html`만 바꾼 배포는 다음에 열 때 바로 새 화면이 됩니다.
 - 저장 형식(store 칸)을 바꾸면 `index.html`의 `SCHEMA`를 올리세요. 옛 화면은 더 새 형식의 기록을 덮어쓰지 않고 새로고침을 권합니다.
+- 문장·단어를 고쳤다면 `node tools/tts/generate.mjs`로 새 문장만 녹음하고(키 필요, [음성 설정 안내](docs/voice-setup.md)) `--prune`으로 안 쓰는 파일을 지우세요. 녹음이 없는 문장은 기기 음성으로 읽으니 잊어도 앱은 동작해요.
 - 서비스 워커(`language-teacher/sw.js`)에 문제가 생기면 `tools/sw-killswitch.js`를 `language-teacher/sw.js`로 복사해 배포하세요. 모든 사용자의 캐시를 지우고 서비스 워커를 해제합니다.
 - 문의 링크: `language-teacher/cloud-config.js`의 `SITE_CONTACT`에 구글 설문지·오픈채팅 주소를 넣으면 허브·설정·도움말·개인정보 안내에 한꺼번에 나타나요.
 
