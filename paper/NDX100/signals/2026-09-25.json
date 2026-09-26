@@ -1,0 +1,22 @@
+{
+ "market": "NDX100",
+ "as_of": "2026-09-25",
+ "regime": {
+  "benchmark": "^NDX",
+  "mode": "MA200",
+  "close": 30608.1348,
+  "ma200": null,
+  "ma20": null,
+  "on": null
+ },
+ "entries_next_open": [],
+ "exits_next_open": [],
+ "positions": [],
+ "watchlist": [],
+ "coverage": {
+  "requested": 101,
+  "loaded": 101,
+  "failed": []
+ },
+ "generated_at": "2026-09-26T01:31:12Z"
+}
