@@ -8,7 +8,7 @@ on:
   schedule:
     - cron: '35 22 * * 1-5'   # US markets: after the NYSE close (22:35 UTC)
     - cron: '5 8 * * 1-5'     # Korean markets: after the KRX close (17:05 KST)
-    - cron: '40 0 * * *'      # Crypto: after the 00:00 UTC daily candle
+    - cron: '40 0,6,12,18 * * *'   # Crypto: every 6 h; the first run with yesterday's candle commits it
   workflow_dispatch:
     inputs:
       markets:
@@ -28,7 +28,7 @@ concurrency:
 jobs:
   paper:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -43,9 +43,11 @@ jobs:
           if [ -n "${{ github.event.inputs.markets }}" ]; then m="${{ github.event.inputs.markets }}"
           elif [ "${{ github.event.schedule }}" = "35 22 * * 1-5" ]; then m="SP500 NDX100"
           elif [ "${{ github.event.schedule }}" = "5 8 * * 1-5" ]; then m="KOSPI KOSDAQ"
-          elif [ "${{ github.event.schedule }}" = "40 0 * * *" ]; then m="CRYPTO"
+          elif [ "${{ github.event.schedule }}" = "40 0,6,12,18 * * *" ]; then m="CRYPTO"
           else m="SP500 NDX100 KOSPI KOSDAQ CRYPTO"; fi
           echo "markets=$m" >> "$GITHUB_OUTPUT"
+          # data-not-ready retries (exit 75) for stocks; crypto is retried by its next 6-hourly run
+          echo "tries=3" >> "$GITHUB_OUTPUT"; echo "wait=600" >> "$GITHUB_OUTPUT"
           # push-triggered runs are trials: they write to a separate branch
           if [ "${{ github.event_name }}" = "push" ]; then echo "branch=paper-trading-trial" >> "$GITHUB_OUTPUT"; else echo "branch=paper-trading" >> "$GITHUB_OUTPUT"; fi
       - name: Check out the ledger branch
@@ -67,12 +69,28 @@ jobs:
         working-directory: trading
         env:
           BRANCH: ${{ steps.m.outputs.branch }}
+          TRIES: ${{ steps.m.outputs.tries }}
+          WAIT: ${{ steps.m.outputs.wait }}
         run: |
           status=0
           for market in ${{ steps.m.outputs.markets }}; do
             echo "::group::$market"
-            python -m swing_engine.paper --market "$market" --ledger-dir ../ledger/paper \
-              --cache-dir .cache --push-branch "$BRANCH" -v || { echo "::error::$market failed"; status=1; }
+            attempt=1
+            while :; do
+              rc=0
+              python -m swing_engine.paper --market "$market" --ledger-dir ../ledger/paper \
+                --cache-dir .cache --push-branch "$BRANCH" -v || rc=$?
+              if [ "$rc" -eq 75 ] && [ "$market" != "CRYPTO" ] && [ "$attempt" -lt "$TRIES" ]; then
+                echo "::warning::$market data not ready (attempt $attempt/$TRIES), retrying in ${WAIT}s"
+                rm -rf .cache                     # refetch instead of reusing the incomplete download
+                sleep "$WAIT"; attempt=$((attempt + 1)); continue
+              fi
+              break
+            done
+            if [ "$rc" -eq 75 ] && [ "$market" = "CRYPTO" ]; then
+              echo "::warning::CRYPTO: yesterday's candle not on Yahoo yet; nothing committed, the next 6-hourly run retries"
+            elif [ "$rc" -eq 75 ]; then echo "::error::$market data still not ready after $TRIES attempts; nothing committed"; status=1
+            elif [ "$rc" -ne 0 ]; then echo "::error::$market failed (exit $rc)"; status=1; fi
             echo "::endgroup::"
           done
           exit $status
