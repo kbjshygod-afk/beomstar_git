@@ -280,7 +280,10 @@ async function runGenerate(plan) {
         const cfg = VOICES[p.lang];
         const avail = await listVoices(cfg.languageCode);
         const { voices, notes } = resolveVoices(p.lang, avail);
-        console.log('\n[' + p.lang + '] 목소리 a = ' + voices.a + ' · b = ' + voices.b + ' · 속도 ' + cfg.speakingRate);
+        // Chirp 3 HD는 speakingRate를 받으면 끝(예: "And you?", "¿Y tú?")을 자르거나 빠뜨리는 경우가 잦다(2026-09 시험, 같은 두 문장: 0.95일 때 20번 중 11번, 속도 없이 20번 중 0번).
+        // 그래서 속도 없이(1) 녹음하고 앱이 재생 속도로 맞춘다 — index.json의 rates·norate에 1로 적힌다
+        for (const slot of ['a', 'b']) if (tierOf(voices[slot]).id === 'chirp3hd') noRateVoices.add(voices[slot]);
+        { const r0 = ratesFor(p.lang, voices); console.log('\n[' + p.lang + '] 목소리 a = ' + voices.a + ' · b = ' + voices.b + ' · 속도 a ' + r0.a + ' · b ' + r0.b); }
         notes.forEach(n => console.log('    · ' + n));
         const prev = readIndex(p.lang), existing = diskIds(p.lang);
         const pv = prev && prev.voices && typeof prev.voices === 'object' ? prev.voices : null;
