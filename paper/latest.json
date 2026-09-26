@@ -1,0 +1,44 @@
+{
+ "markets": {
+  "SP500": {
+   "as_of": "2026-09-25",
+   "start_date": "2026-09-25",
+   "regime": {
+    "benchmark": "^GSPC",
+    "mode": "MA200",
+    "close": 7743.4102,
+    "ma200": null,
+    "ma20": null,
+    "on": null
+   },
+   "entries_next_open": [],
+   "exits_next_open": [],
+   "positions": [],
+   "watchlist": [],
+   "performance": {
+    "equity": null,
+    "return_pct": null,
+    "bench_return_pct": null,
+    "mdd_pct": null,
+    "closed_trades": 0,
+    "win_rate_pct": null,
+    "avg_win_pct": null,
+    "avg_loss_pct": null,
+    "open_positions": 0
+   },
+   "status_csv": "SP500/status.csv",
+   "audit": {
+    "days": 1,
+    "signal_files": 1,
+    "missing_days": [],
+    "late": [],
+    "uncommitted": [],
+    "mismatched": [],
+    "revised": []
+   }
+  }
+ },
+ "updated_at": "2026-09-26T01:30:27Z",
+ "disclaimer": "기계적 룰 출력이며 투자 자문이 아닙니다. 매수·매도 결정은 소유자 본인이 합니다.",
+ "unconfirmed": "미확인 추정값(스캐너 원본 코드 미확인): 피벗=직전 20봉 최고가(당일 제외) · 거래량 평균=직전 50일(당일 제외) · RS=지수 대비 가중 1년 수익률 ≥ 0%p(스캐너는 유니버스 백분위 ≥ 70) · 52주 고저=종가 기준 · 200일선 상승=22봉 전 대비 · 수축비=10/40일 평균 TR · 비용=편도 0.2%"
+}
