@@ -608,6 +608,20 @@
         .faq details:last-of-type { border-bottom: none; }
         .faq summary { font-weight: 700; font-size: 14px; cursor: pointer; }
         .faq-a { font-size: 13px; line-height: 1.7; margin-top: 6px; color: var(--text); }
+        /* 한국어는 어절 단위로 줄바꿈(좁은 화면에서 '말문이 / 트여요'처럼 끊기지 않게). 한 줄에 다 안 들어가는 긴 외국어 단어·주소만 중간에서 끊어 화면 밖으로 넘치지 않게 */
+        body { word-break: keep-all; overflow-wrap: break-word; }
+        /* 띄어쓰기 없는 중국어·일본어 문장과 기록 코드는 글자 단위로 줄바꿈(문장부호가 줄 맨 앞에 오지 않는 규칙 유지) */
+        .native, .token, .fc-hint, [lang|="zh"], [lang|="ja"], textarea, #backupArea { word-break: normal; overflow-wrap: break-word; }
+        .continue-card:focus-visible, .guide-banner:focus-visible, .quick-card:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+        /* 휴대폰 화면: 설정 줄의 버튼 묶음이 길면 설명 아래로 내려서 설명이 눌리지 않게(설명 폭이 130px보다 좁아지면 내림) */
+        @media (max-width: 480px) {
+            .set-row { flex-wrap: wrap; row-gap: 8px; }
+            .set-row > div:first-child { flex: 1 1 130px; min-width: 0; }
+        }
+        /* 아이폰 사파리는 16px보다 작은 입력칸을 누르면 화면을 확대하므로, 글자를 넣는 칸은 16px로(체크박스·범위 등은 그대로) */
+        @supports (-webkit-touch-callout: none) {
+            textarea, select, input:not([type]), input[type=text], input[type=email], input[type=search], input[type=tel], input[type=url], input[type=number], input[type=password], input[type=time] { font-size: 16px !important; }
+        }
     </style>
 </head>
 <body>
@@ -786,6 +800,7 @@ function cleanSettings(v) {
     if (typeof v.sfx === 'boolean') o.sfx = v.sfx;
     if (typeof v.bigText === 'boolean') o.bigText = v.bigText;
     if (typeof v.stats === 'boolean') o.stats = v.stats;
+    if (v.voiceMode === 'device' || v.voiceMode === 'natural') o.voiceMode = v.voiceMode;
     const r = Number(v.rate); if (Number.isFinite(r)) o.rate = Math.max(0.6, Math.min(1.2, Math.round(r * 10) / 10));
     if ([10, 20, 30, 50, 80].includes(Number(v.dailyGoal))) o.dailyGoal = Number(v.dailyGoal);
     if (typeof v.reminderTime === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(v.reminderTime)) o.reminderTime = v.reminderTime;
@@ -871,7 +886,8 @@ function mergeLang(a, b, force, aOld) {   // b = 이 탭(우선), a = 다른 탭
     if (!force && (a.gen || 0) !== (b.gen || 0)) { const bHi = (b.gen || 0) > (a.gen || 0); return bHi ? (aOld ? carrySince(b, a, b.genAt) : b) : a; }
     const o = Object.assign({}, a, b);
     o.completed = Object.assign({}, a.completed);
-    Object.entries(b.completed || {}).forEach(([k, v]) => { const x = o.completed[k]; o.completed[k] = !x ? v : Object.assign({}, x, v, { score: Math.max(x.score, v.score), date: x.date < v.date ? x.date : v.date }); });
+    // 레슨 기록은 점수·문항 수를 한 기록에서 통째로 고른다(문제를 빼서 줄어든 total이 다른 기록의 점수와 섞이지 않게). 직접 푼 기록 > 문항이 많은 기록 > 점수가 높은 기록 > 다시 풀어 맞힌 수 순이라 어느 기기에서 합쳐도 결과가 같다
+    Object.entries(b.completed || {}).forEach(([k, v]) => { const x = o.completed[k]; if (!x) { o.completed[k] = v; return; } const real = c => (c.imported || c.placed) ? 0 : 1, d = (real(v) - real(x)) || ((v.total || 0) - (x.total || 0)) || ((v.score || 0) - (x.score || 0)) || ((v.fixed || 0) - (x.fixed || 0)), w = (d > 0 || (!d && JSON.stringify(v) >= JSON.stringify(x))) ? v : x, last = [x.last, v.last].filter(Boolean).sort().pop(); o.completed[k] = Object.assign({}, w, { date: x.date < v.date ? x.date : v.date }, last ? { last } : {}); });
     o.srs = Object.assign({}, a.srs);
     Object.entries(b.srs || {}).forEach(([k, v]) => { const x = o.srs[k]; o.srs[k] = !x ? v : ((v.rv || '') !== (x.rv || '')) ? ((v.rv || '') > (x.rv || '') ? v : x) : ((v.due >= x.due) ? v : x); });
     o.daily = Object.assign({}, a.daily);
@@ -879,6 +895,7 @@ function mergeLang(a, b, force, aOld) {   // b = 이 탭(우선), a = 다른 탭
     ['boss', 'storiesRead', 'roleplay', 'steps', 'spoke', 'heard', 'warm', 'lf', 'ear'].forEach(f => { o[f] = Object.assign({}, a[f] || {}, b[f] || {}); });
     o.xp = Math.max(a.xp || 0, b.xp || 0);
     o.streak = maxBy(a.streak, b.streak, s2 => (s2 && s2.last) || '');
+    if (force) ['gen', 'genAt'].forEach(f => { if (b[f]) o[f] = b[f]; else delete o[f]; });   // 합치기는 이 기기(b)의 언어 세대를 유지
     return o;
 }
 // force: 사용자가 '합치기'를 고른 경우 — 세대가 달라도 합친다. otherOld: other가 업데이트 전 화면(세대를 모름)이 저장한 기록
@@ -891,8 +908,7 @@ function mergeStores(other, mine, force, otherOld) {
         Object.keys(other.byLang || {}).forEach(k => { const c = carrySince(m0.byLang[k] || { completed: {}, srs: {}, daily: {}, xp: 0 }, other.byLang[k], mine.genAt); if (m0.byLang[k] || Object.keys(c.completed).length || Object.keys(c.srs).length || c.xp) m0.byLang[k] = c; });
         return m0;
     }
-    const m = Object.assign({}, mine);
-    if (force) m.gen = Math.max(other.gen || 0, mine.gen || 0);
+    const m = Object.assign({}, mine);   // 합치기(force)도 세대는 이 기기(mine) 것 — 합친 결과는 늘어나기만 하므로 세대를 올릴 필요가 없다
     m.byLang = Object.assign({}, other.byLang);
     Object.keys(mine.byLang).forEach(k => { m.byLang[k] = mergeLang(other.byLang[k], mine.byLang[k], force, otherOld); });
     const so = other.streak, sm = mine.streak;
@@ -907,9 +923,9 @@ function warnOldTab() {   // 업데이트 전에 열어 둔 탭이 저장함 —
     if (warnOldTab.shown) return; warnOldTab.shown = true;
     setTimeout(() => { try { showToast('🔄 다른 탭에 예전 화면이 열려 있어요. 그 탭을 새로고침해 주세요', '', 6000); } catch (e) { } }, 300);
 }
-function warnNewer() {
+function warnNewer() {   // 계속 보이는 안내(홈 화면 앱에는 새로고침 버튼이 없다)
     if (warnNewer.shown) return; warnNewer.shown = true;
-    setTimeout(() => { try { showToast('🆕 앱이 새 버전으로 바뀌었어요. 새로고침하면 이어서 저장돼요', '', 6000); } catch (e) { } }, 300);
+    setTimeout(() => { try { renderStorageWarning(); } catch (e) { } }, 0);
 }
 function save() {
     if (newerSchema) { warnNewer(); return; }
@@ -930,7 +946,7 @@ function save() {
 function syncFromStorage() {
     let cur = null; try { cur = localStorage.getItem(LS_KEY); } catch (e) { return; }
     if (!cur || cur === lastRaw) return;
-    let other = null, oldFmt = false; try { const o = JSON.parse(cur); oldFmt = isObj(o) && o.schema === undefined && isObj(o.byLang); if (oldFmt) warnOldTab(); other = normalizeStore(o); } catch (e) { return; }
+    let other = null, oldFmt = false; try { const o = JSON.parse(cur); if (isObj(o) && Number(o.schema) > SCHEMA) { newerSchema = true; warnNewer(); return; } oldFmt = isObj(o) && o.schema === undefined && isObj(o.byLang); if (oldFmt) warnOldTab(); other = normalizeStore(o); } catch (e) { return; }
     store = mergeStores(other, store, false, oldFmt);
     lastRaw = cur;
     if (oldFmt) save();   // 옛 화면이 지운 세대·새 칸을 바로 다시 적는다
@@ -940,12 +956,20 @@ function syncFromStorage() {
         if (['home', 'history', 'story', 'settings', 'guide'].includes(S.view) && !(root && root.innerHTML)) render();
     }
 }
-window.addEventListener('storage', e => { if (e.key === LS_KEY) syncFromStorage(); });
+window.addEventListener('storage', e => { if (e.key === LS_KEY) syncFromStorage(); else if (e.key === RELOAD_KEY && e.newValue) location.reload(); });
+// 계정 바꾸기·지우고 로그아웃처럼 기록을 통째로 바꿀 때: 같은 기기의 다른 탭이 옛 기록을 다시 섞지 않게 새로고침시킨다
+const RELOAD_KEY = LS_KEY + '_reload';
+function reloadOtherTabs() { try { localStorage.setItem(RELOAD_KEY, String(Date.now())); } catch (e) { } }
 document.addEventListener('visibilitychange', () => { if (!document.hidden) syncFromStorage(); });
 function renderStorageWarning() {
     const el = document.getElementById('storageWarn');
     if (!el) return;
-    if (storageFailed) {
+    if (newerSchema) {
+        el.innerHTML = '🆕 앱이 새 버전으로 바뀌었어요 — 이 화면에서 한 공부는 저장되지 않아요. <button class="btn small" id="swReload">새로고침</button>';
+        el.hidden = false;
+        document.getElementById('swReload').addEventListener('click', () => location.reload());
+    }
+    else if (storageFailed) {
         el.innerHTML = esc(storageFailReason === 'quota' ? '⚠️ 저장 공간이 가득 차 학습 기록을 저장하지 못했어요.' : '⚠️ 이 브라우저에서는 학습 기록을 저장할 수 없어요(비공개 창이거나 저장이 막혀 있어요).') + ' 새로고침하면 사라지니 지금 백업해 두세요. <button class="btn small" id="swBackup">💾 지금 기록 백업 코드 복사</button>';
         el.hidden = false;
         const b = document.getElementById('swBackup');
@@ -1217,7 +1241,7 @@ if ('speechSynthesis' in window) {
     Object.keys(LANGS).forEach(pickVoice);
 }
 function ttsAvailable() { return 'speechSynthesis' in window; }
-function stopSpeak() { seqToken++; if (ttsAvailable()) speechSynthesis.cancel(); clearPlaying(); }
+function stopSpeak() { seqToken++; stopClip(); if (ttsAvailable()) speechSynthesis.cancel(); clearPlaying(); }
 function tuneFor(speaker) {
     const vc = voiceCache[CUR.code] || {};
     let a = vc.a || null, b = vc.b || null;
@@ -1253,7 +1277,8 @@ function ttsFail(why) {
     if (TTS_HEALTH.bad || (why === 'timeout' && TTS_HEALTH.fails < 2)) return;
     TTS_HEALTH.bad = true; renderTtsWarning(); track('tts_fail', { why: String(why).slice(0, 30) });
 }
-function ttsBadNow() { return !ttsAvailable() || TTS_HEALTH.bad; }
+// 녹음 음성이 잘 들리는 동안은 기기 음성 상태와 관계없음. 녹음을 받지 못하면(오프라인에서 처음 듣는 문장 등) 기기 음성이 대신 읽으므로 그 상태로 판단
+function ttsBadNow() { if (clipsReady() && !CLIP_HEALTH.fails) return false; return !ttsAvailable() || TTS_HEALTH.bad; }
 function watchUtter(u, tok) {
     u.onstart = ttsGood;
     const active = !navigator.userActivation || navigator.userActivation.isActive;   // 사용자가 누르지 않은 자동 재생은 판정에서 뺀다
@@ -1269,15 +1294,17 @@ function renderTtsWarning() {
         : /Android/i.test(ua) ? '휴대폰 설정 → 일반(또는 접근성) → <b>텍스트 음성 변환(TTS)</b>에서 Google 음성 엔진을 고르고, ' + esc(CUR ? CUR.name : '') + ' 음성을 내려받은 뒤 다시 열어 주세요.'
         : /iPhone|iPad|iPod/.test(ua) ? '🔕 옆면 무음 스위치를 끄고 음량을 올려 보세요. 그래도 안 되면 설정 › 손쉬운 사용 › 읽기 및 말하기 › 음성에서 ' + esc(CUR ? CUR.name : '') + ' 음성을 내려받아 보세요.'
         : '크롬·엣지·사파리 최신 버전으로 열거나, 컴퓨터의 소리·음성 설정을 확인해 주세요.') +
-        ' 듣기 문제는 <b>🔇 글자로 보기</b>로 풀 수 있어요.' +
-        '<div style="display:flex;gap:8px;margin-top:6px">' + (href ? '<a class="btn small" href="' + esc(href) + '" style="text-decoration:none">👉 기본 브라우저로 열기</a>' : '') + '<button class="btn small gray" id="ttsWarnClose">닫기</button></div>';
+        // 녹음 음성이 잘 나오고 있으면 듣기 문제에 🔇 버튼이 나오지 않으므로 그 안내는 뺀다
+        ((typeof clipsReady === 'function' && clipsReady() && typeof CLIP_HEALTH === 'object' && CLIP_HEALTH && !CLIP_HEALTH.fails) ? '' : ' 듣기 문제는 <b>🔇 글자로 보기</b>로 풀 수 있어요.') +
+        '<div style="display:flex;gap:8px;margin-top:6px">' + (href ? '<a class="btn small" id="ttsWarnOpen" href="' + esc(href) + '" style="text-decoration:none">👉 기본 브라우저로 열기</a>' : '') + '<button class="btn small gray" id="ttsWarnClose">닫기</button></div>';
     el.hidden = false;
+    carryLink(document.getElementById('ttsWarnOpen'));
     const x = document.getElementById('ttsWarnClose');
     if (x) x.addEventListener('click', () => { TTS_HEALTH.dismissed = true; el.hidden = true; });
 }
 let ttsWarned = false;
 function ttsCheck() {
-    if (ttsWarned || !CUR) return;
+    if (ttsWarned || !CUR || (clipsReady() && !CLIP_HEALTH.fails)) return;
     if (!ttsAvailable()) { ttsWarned = true; showToast('🔇 이 브라우저는 발음 듣기를 지원하지 않아요. 크롬·사파리로 열어 주세요', '', 3800); return; }
     if (!voiceCache[CUR.code]) {
         pickVoice(CUR.code);
@@ -1294,7 +1321,119 @@ function remoteFailed(u, ev) {
     pickVoice(CUR.code);
     return true;
 }
-function speak(text, rate = 1, speaker, retried) {
+/* ═══════════════════ 녹음된 자연 음성(있으면 먼저) ═══════════════════ */
+// tools/tts/generate.mjs 로 미리 녹음한 audio/{언어}/{id}.mp3 — id = clipId(목소리 칸, 문장 그대로).
+// 녹음이 없는 문장(채점 조각·예전 카드 등)이나 받지 못한 경우는 기기 음성(speechSynthesis)으로 읽는다.
+const CLIPS = {};   // code → { ids: Set, rate·rates{a,b}: 녹음 속도, rev: 주소의 ?v= } · null(이 언어는 녹음 없음) · 'loading'
+// 녹음이 실제로 들리는지: 재생이 시작되면 0, 받지 못하거나 재생이 막히면 1씩 늘린다(ttsBadNow·ttsCheck가 본다)
+const CLIP_HEALTH = { fails: 0 };
+const CLIP_WAIT = 2500;     // 이 안에 녹음이 시작되지 않으면(응답이 멈춘 망·느린 망) 이번에는 기기 음성으로 — 늦게 받아져도 틀지 않는다
+const CLIP_GIVEUP = 15000;  // 받기를 끝내 포기하는 시간 — 멈춘 요청이 그 문장을 계속 막지 않게(다음에 누르면 새로 받음)
+// FNV-1a 64비트의 앞 12자리(16진) — tools/tts/clips.mjs 의 clipId와 같아야 한다(시험 값: ('a','Hello') → c390128b4c43)
+function clipId(slot, text) {
+    const bytes = new TextEncoder().encode(slot + '|' + text);
+    let hi = 0xcbf29ce4, lo = 0x84222325;
+    for (let i = 0; i < bytes.length; i++) {
+        lo = (lo ^ bytes[i]) >>> 0;
+        const l = lo * 0x1b3;
+        const carry = Math.floor(l / 4294967296);
+        hi = (Math.imul(hi, 0x1b3) + carry + ((lo << 8) >>> 0)) >>> 0;
+        lo = l >>> 0;
+    }
+    return ('00000000' + hi.toString(16)).slice(-8) + ('0000' + (lo >>> 16).toString(16)).slice(-4);
+}
+function clipSlot(speaker) { return speaker === 'B' || speaker === 'D' ? 'b' : 'a'; }   // tuneFor()가 두 번째 목소리를 쓰는 화자
+function loadClips(code) {
+    const c = CLIPS[code];
+    if (c === 'loading' || c === null || (c && c.ids)) return;
+    if (location.protocol === 'file:') { CLIPS[code] = null; return; }   // 파일로 열면 받을 수 없음(기기 음성)
+    CLIPS[code] = 'loading';
+    const ac = typeof AbortController === 'function' ? new AbortController() : null;
+    const t = setTimeout(() => { if (ac) ac.abort(); }, 8000);   // 응답이 멈춘 망: 이번에는 기기 음성(다음에 이 언어를 열 때 다시)
+    const swc = () => ('serviceWorker' in navigator && navigator.serviceWorker.controller) || null, viaSw = !!swc();
+    const url = 'audio/' + code + '/index.json';
+    fetch(url, ac ? { cache: 'no-cache', signal: ac.signal } : { cache: 'no-cache' }).then(r => r.status === 404 ? null : r.ok ? r.json() : Promise.reject(new Error('audio index ' + r.status))).then(j => {
+        clearTimeout(t);
+        CLIPS[code] = clipIndex(j);
+        // 서비스 워커가 켜지기 전에 받았으면(첫 방문) 오프라인용으로 담아 달라고 한다(아직 안 켜졌으면 켜질 때 warm이 CLIPS를 보고 보냄)
+        const ctl = swc();
+        if (CLIPS[code] && ctl && !viaSw) try { ctl.postMessage({ type: 'warm', urls: [new URL(url, location.href).href] }); } catch (e) { }
+        if (CLIPS[code] && CUR && CUR.code === code && S.view === 'settings' && !document.getElementById('modalRoot').innerHTML) renderSettings();
+    }).catch(() => { clearTimeout(t); CLIPS[code] = undefined; });   // 오프라인 등 — 다음에 다시
+}
+// index.json = { voices: {a, b}, rate, rates: {a, b}(목소리 칸별 녹음 속도), rev: 녹음 버전, ids } — tools/tts/generate.mjs 가 쓴다
+function clipIndex(j) {
+    if (!isObj(j) || !Array.isArray(j.ids) || !j.ids.length) return null;
+    const num = x => (Number(x) > 0 ? Number(x) : 0), base = num(j.rate) || 0.95, rs = isObj(j.rates) ? j.rates : {};
+    const rates = { a: num(rs.a) || base, b: num(rs.b) || base };
+    // ?v= 는 녹음 도구가 정한 버전(목소리·속도가 바뀌거나 다시 녹음하면 바뀜) — 없는 옛 목록은 목소리·속도로 만든다
+    const rev = typeof j.rev === 'string' && /^[0-9a-z]{1,16}$/i.test(j.rev) ? j.rev : (hashStr(JSON.stringify(j.voices || '') + '|' + (j.rate || '')) >>> 0).toString(36);
+    return { ids: new Set(j.ids), rate: rates.a, rates, rev };
+}
+function clipsReady() { const c = CUR && CLIPS[CUR.code]; return !!(c && c.ids) && store.settings.voiceMode !== 'device'; }
+// 이 문장의 녹음 → { url, rate: 그 목소리 칸의 녹음 속도 } · 없으면 null
+function clipFor(text, speaker) {
+    if (typeof text !== 'string' || !text || !clipsReady()) return null;
+    const c = CLIPS[CUR.code];
+    let slot = clipSlot(speaker), id = clipId(slot, text);
+    if (!c.ids.has(id)) { if (slot !== 'b') return null; slot = 'a'; id = clipId('a', text); if (!c.ids.has(id)) return null; }
+    return { url: 'audio/' + CUR.code + '/' + id + '.mp3?v=' + c.rev, rate: c.rates[slot] || c.rate || 0.95 };
+}
+function clipUrl(text, speaker) { const k = clipFor(text, speaker); return k ? k.url : ''; }
+// 파일은 fetch로 받아(서비스 워커가 캐시 → 오프라인에서도) 한 개의 <audio>로 재생한다
+let clipEl = null, clipTok = 0;
+const clipBlobs = new Map();   // 주소 → Promise<blob 주소> (최근 60개)
+function clipAudio() {
+    if (!clipEl) {
+        clipEl = new Audio(); clipEl.preload = 'auto';
+        try { clipEl.preservesPitch = true; clipEl.webkitPreservesPitch = true; clipEl.mozPreservesPitch = true; } catch (e) { }
+    }
+    return clipEl;
+}
+function clipBlob(url) {
+    if (clipBlobs.has(url)) return clipBlobs.get(url);
+    const ac = typeof AbortController === 'function' ? new AbortController() : null;
+    // 끝내 오지 않는 요청은 버린다(멈춘 요청이 그 문장을 계속 막지 않게)
+    const t = setTimeout(() => { if (clipBlobs.get(url) === p) clipBlobs.delete(url); if (ac) ac.abort(); }, CLIP_GIVEUP);
+    const p = fetch(url, ac ? { signal: ac.signal } : undefined).then(r => { if (!r.ok) throw new Error('clip ' + r.status); return r.blob(); }).then(b => URL.createObjectURL(b));
+    clipBlobs.set(url, p);
+    p.then(() => clearTimeout(t), () => { clearTimeout(t); if (clipBlobs.get(url) === p) clipBlobs.delete(url); });
+    if (clipBlobs.size > 60) { const k = clipBlobs.keys().next().value, old = clipBlobs.get(k); clipBlobs.delete(k); old.then(u => setTimeout(() => URL.revokeObjectURL(u), 30000), () => { }); }
+    return p;
+}
+// k = clipFor()의 결과. 끝까지 들리면 onEnd, 받지 못하거나 재생이 막히거나 CLIP_WAIT 안에 시작하지 못하면 onFail(한 번만)
+function playClip(k, rate, onEnd, onFail) {
+    const tok = ++clipTok;
+    const r = Math.max(0.5, Math.min(2, rate / (k.rate || 0.95) * curRate()));
+    let started = false, over = false;
+    const fail = () => { if (over) return; over = true; clearTimeout(guard); if (!started) CLIP_HEALTH.fails++; if (onFail) onFail(); };
+    const guard = setTimeout(() => { if (tok !== clipTok || over || started) return; stopClip(); fail(); }, CLIP_WAIT);   // stopClip: 늦게 받아진 녹음은 틀지 않는다
+    clipBlob(k.url).then(src => {
+        if (tok !== clipTok || over) return;
+        let a; try { a = clipAudio(); } catch (e) { fail(); return; }   // <audio>를 못 만드는 환경: 기기 음성으로
+        a.onended = a.onerror = null;
+        a.src = src;
+        a.defaultPlaybackRate = r; a.playbackRate = r;
+        const fin = ok => { if (over || tok !== clipTok) return; a.onended = a.onerror = null; if (!ok) { fail(); return; } over = true; clearTimeout(guard); if (onEnd) onEnd(); };
+        const play = () => { if (tok !== clipTok || over) return; started = true; clearTimeout(guard); CLIP_HEALTH.fails = 0; };
+        a.onended = () => fin(true);
+        a.onerror = () => fin(false);
+        const p = a.play();
+        if (p && p.then) p.then(play, () => fin(false)); else play();
+    }, () => { if (tok === clipTok) fail(); });
+}
+function stopClip() { clipTok++; if (clipEl) { clipEl.onended = clipEl.onerror = null; try { clipEl.pause(); } catch (e) { } } }
+// 아이폰·아이패드: 첫 터치 때 같은 <audio>를 소리 없이 한 번 재생해 두면, 뒤이은 자동 이어 읽기도 막히지 않는다
+const SILENT_WAV = 'data:audio/wav;base64,UklGRsQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YaAAAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA';
+function unlockClip() {
+    document.removeEventListener('touchend', unlockClip, true); document.removeEventListener('click', unlockClip, true);
+    try { const a = clipAudio(); if (a.src && !a.paused) return; a.src = SILENT_WAV; const p = a.play(); if (p && p.catch) p.catch(() => { }); } catch (e) { }
+}
+document.addEventListener('touchend', unlockClip, true); document.addEventListener('click', unlockClip, true);
+// retried: 클라우드 음성 오류 뒤 기기 음성으로 다시 읽는 중 · noClip: 녹음을 못 틀어 기기 음성으로 읽는 중(클라우드 음성 재시도는 그대로 가능)
+function speak(text, rate = 1, speaker, retried, noClip) {
+    const k = !retried && !noClip && CUR ? clipFor(text, speaker) : null;
+    if (k) { stopSpeak(); playClip(k, rate, null, () => speak(text, rate, speaker, false, true)); return; }   // 녹음을 못 틀면 같은 문장을 기기 음성으로
     ttsCheck();
     if (!ttsAvailable() || !CUR || !text) return;
     stopSpeak();
@@ -1314,10 +1453,11 @@ function clearPlaying() { document.querySelectorAll('.playing').forEach(el => el
 // items: 문자열 또는 {text, speaker, part} — 문장·화자·파트가 바뀔 때 사람처럼 쉬는 시간을 다르게 둔다.
 // iOS 사파리는 한꺼번에 큐에 넣으면 멈추므로 한 문장씩 이어 읽는다.
 function speakSeq(items, onDone, onStep) {
-    if (!ttsAvailable() || !CUR) { if (onDone) setTimeout(onDone, 0); return; }
+    if ((!ttsAvailable() && !clipsReady()) || !CUR) { if (onDone) setTimeout(onDone, 0); return; }
     stopSpeak(); seqPlaying = true;
     const my = seqToken;
     const list = items.map(x => typeof x === 'string' ? { text: x } : x).filter(x => x && x.text);
+    const noClip = new Set();   // 녹음을 못 틀어 기기 음성으로 읽은 문장(클라우드 음성 재시도 때 녹음을 다시 기다리지 않게)
     let i = 0;
     const next = () => {
         if (my !== seqToken || !seqPlaying || i >= list.length) {
@@ -1327,23 +1467,39 @@ function speakSeq(items, onDone, onStep) {
         const idx = i, cur = list[i++], nx = list[i];
         clearPlaying();
         if (onStep) onStep(cur, idx);
-        let u;
-        try { u = makeUtter(cur.text, 0.92, cur.speaker); } catch (e) { setTimeout(next, 0); return; }
+        if (my !== seqToken) return;     // onStep에서 멈췄으면(소리 안 남 등) 이 문장은 읽지 않는다
         let gap = 420;
         if (nx) {
             if (nx.part) gap = 1000;
             else if ((cur.speaker || '') !== (nx.speaker || '')) gap = 650;
             if (/[?？]\s*$/.test(cur.text)) gap += 150;
         }
-        let advanced = false;
+        let advanced = false, dog = 0;
         const go = () => { if (advanced) return; advanced = true; clearTimeout(dog); setTimeout(next, gap); };
-        // 멈춤 감시: 끝·오류 이벤트가 안 오는 기기(목소리 0개 등)에서도 다음 문장으로 넘어간다
         const perChar = /[\u3040-\u30ff\u4e00-\u9fff]/.test(cur.text) ? 380 : 130;   // 한자·가나는 한 글자가 길다
-        const dog = setTimeout(() => { if (!advanced && my === seqToken) { if (!TTS_HEALTH.ok) ttsFail('timeout'); go(); } }, Math.max(3000, cur.text.length * perChar / Math.max(0.5, curRate())) * (TTS_HEALTH.ok ? 3 : 1) + 1500);
+        const k = noClip.has(idx) ? null : clipFor(cur.text, cur.speaker);
+        if (k) {
+            // 제시간에 시작하지 못하거나 못 받으면 playClip이 onFail → 같은 문장을 기기 음성으로.
+            // 시작한 뒤 끝나지 않으면(재생이 멈춤) 녹음을 멈추고(늦게 이어서 들리지 않게) 다음 문장으로
+            dog = setTimeout(() => { if (!advanced && my === seqToken) { stopClip(); go(); } }, Math.max(6000, cur.text.length * perChar * 3) + 4000);
+            playClip(k, 0.92, go, () => { if (my === seqToken && !advanced) { clearTimeout(dog); noClip.add(idx); ttsLine(); } });
+            const nx2 = list[i]; if (nx2) { const nu = clipUrl(nx2.text, nx2.speaker); if (nu) clipBlob(nu).catch(() => { }); }   // 다음 문장 미리 받기
+            return;
+        }
+        ttsLine();
+        function ttsLine() {
+        let u;
+        try { u = makeUtter(cur.text, 0.92, cur.speaker); } catch (e) { go(); return; }
+        // 멈춤 감시: 끝·오류 이벤트가 안 오는 기기(목소리 0개 등)에서도 다음 문장으로 넘어간다
+        // '소리 안 남'으로 판정된 뒤에는 읽을 시간만큼만 짧게 기다린다(대사마다 몇 초씩 멈춘 것처럼 보이지 않게)
+        const waitMs = TTS_HEALTH.bad ? Math.max(1200, cur.text.length * perChar * 0.5)
+            : Math.max(3000, cur.text.length * perChar / Math.max(0.5, curRate())) * (TTS_HEALTH.ok ? 3 : 1) + 1500;
+        dog = setTimeout(() => { if (!advanced && my === seqToken) { if (!TTS_HEALTH.ok) ttsFail('timeout'); go(); } }, waitMs);
         u.onend = () => { u.__ended = true; ttsGood(); go(); };
         u.onerror = ev => { u.__ended = true; if (!cur.retried && remoteFailed(u, ev)) { cur.retried = true; i = idx; advanced = true; setTimeout(next, 50); return; } if (ttsErrorIsReal(ev)) ttsFail(ev.error); go(); };
         watchUtter(u, my);
         try { speechSynthesis.speak(u); } catch (e) { go(); }
+        }
     };
     next();
 }
@@ -1381,7 +1537,8 @@ document.addEventListener('keydown', e => {
     if (!root || !root.innerHTML) return;
     if (e.key === 'Escape') { e.preventDefault(); closeModal(false, 'cancel'); return; }
     if (e.key === 'Tab') {
-        const els = Array.from(root.querySelectorAll('button:not([disabled]), select, input, textarea, [tabindex]'));
+        const els = Array.from(root.querySelectorAll('button:not([disabled]), select:not([disabled]), input:not([disabled]):not([type="hidden"]), textarea:not([disabled]), a[href], summary, [tabindex]:not([tabindex="-1"])'))
+            .filter(el => el.getClientRects().length);   // 닫힌 <details> 안이나 숨은 칸은 빼고
         if (!els.length) return;
         const first = els[0], last = els[els.length - 1];
         if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
@@ -1390,7 +1547,7 @@ document.addEventListener('keydown', e => {
 });
 
 /* ═══════════════════ 말하기 채점 (음성 인식) ═══════════════════ */
-const MIC_BLOCKED = { on: false };   // 이번 세션에 마이크 권한·장치 문제가 있었는지
+const MIC_BLOCKED = { on: false, hangs: 0 };   // 이번 세션에 마이크 권한·장치 문제가 있었는지 · 음성 인식이 응답 없이 멈춘 횟수
 function micHelpText(code) {
     const ua = navigator.userAgent || '', ios = /iPhone|iPad|iPod/.test(ua);
     if (IN_APP) return '앱 안의 브라우저에서는 마이크 채점이 잘 안 돼요. 기본 브라우저(크롬·사파리)로 열면 채점돼요.';
@@ -1576,7 +1733,10 @@ function openSpeak(cfg) {
         // 녹음 비교: 원어민 소리와 내 목소리를 번갈아 듣고 스스로 확인(서버·인식기 없이 오프라인에서도 됨)
         stage.innerHTML = (msg ? '<div class="notice">' + esc(msg) + '</div>' : (!SR ? '<div class="muted" style="text-align:center;margin-bottom:6px">🎙 이 브라우저는 자동 채점이 안 돼요. 녹음해서 원어민 소리와 비교해 보세요.</div>' : '')) +
             (REC_OK ? '<button class="mic-circle" id="recGo" aria-label="녹음 시작">🎙</button><div class="mic-hint" id="recHint">눌러서 녹음(최대 6초) — 녹음은 이 기기 안에서만 쓰고 저장하지 않아요</div><div id="recOut"></div>' : '') +
-            '<button class="btn block' + (REC_OK ? ' ghost' : '') + '" id="micSelf" style="margin-top:8px">🗣️ 소리 내어 3번 말했어요</button>';
+            '<button class="btn block' + (REC_OK ? ' ghost' : '') + '" id="micSelf" style="margin-top:8px">🗣️ 소리 내어 3번 말했어요</button>' +
+            (SR ? '<div style="text-align:center;margin-top:8px"><button class="btn small gray" id="micBackSR">🎤 자동 채점 다시 해 보기</button></div>' : '');
+        const mb = stage.querySelector('#micBackSR');
+        if (mb) mb.addEventListener('click', () => { stopRec(); MIC_BLOCKED.on = false; MIC_BLOCKED.hangs = 0; useRec = false; ready(); });
         const rg = stage.querySelector('#recGo');
         if (rg) rg.addEventListener('click', () => recordOnce(rg));
         stage.querySelector('#micSelf').addEventListener('click', () => { reveal(); finish(null, ''); });
@@ -1611,7 +1771,7 @@ function openSpeak(cfg) {
     function listen() {
         if (recog) {   // ⏹를 누름: 멈추고, 1.2초 안에 끝나지 않으면 강제로 끊고 들린 만큼으로 채점
             const r0 = recog; try { r0.stop(); } catch (e) { }
-            setTimeout(() => { if (recog === r0 && r0.__finishNow) r0.__finishNow(); }, 1200);
+            setTimeout(() => { if (recog === r0 && r0.__finishNow) r0.__finishNow(true); }, 1200);
             return;
         }
         stopSpeak();
@@ -1625,6 +1785,7 @@ function openSpeak(cfg) {
         btn.classList.add('listening'); btn.textContent = '⏹'; hint.textContent = '듣고 있어요... 다 말하면 잠시 기다리거나 ⏹를 누르세요';
         r.onresult = ev => {
             if (recog !== r) return;
+            MIC_BLOCKED.hangs = 0;   // 결과가 오면 음성 인식은 살아 있다
             let interim = '';
             for (let i = ev.resultIndex; i < ev.results.length; i++) {
                 const res = ev.results[i];
@@ -1653,24 +1814,35 @@ function openSpeak(cfg) {
                 : '다시 시도해 주세요.');
         };
         r.onend = () => {
+            r.__gotEnd = true;   // 늦게 와도 '인식기는 살아 있다'는 표시
             if (recog !== r) return;
             stopRecog();
             const said = finalText.trim() || lastInterim;   // 끝 결과가 없으면 마지막 중간 결과로
             if (said) finish(scoreSpeechItem(CUR.code, item, said), said);
             else if (!errored) ready('소리가 안 들렸어요. 조금 더 크게 다시 말해 보세요.');
         };
-        // 브라우저가 끝(onend)을 주지 않고 멈추는 경우(아이폰 등): 강제로 끊고 들린 만큼 채점, 아무것도 없으면 스스로 확인으로
-        r.__finishNow = () => {
+        // 브라우저가 끝(onend)을 주지 않고 멈추는 경우(아이폰 등): 강제로 끊고 들린 만큼 채점.
+        // 들린 게 없으면 '멈춤'으로 세고, 두 번째 멈춤부터 이 세션은 소리 내어 말하고 스스로 확인으로.
+        // 내가 누른 ⏹ 뒤에 끝 신호가 조금 늦는 건 흔하니, 몇 초 더 기다려도 끝내 오지 않을 때만 멈춤으로 센다
+        r.__finishNow = userStop => {
             if (recog !== r) return;
             try { r.abort(); } catch (e) { }
             stopRecog();
             const said = finalText.trim() || lastInterim;
             if (said) { finish(scoreSpeechItem(CUR.code, item, said), said); return; }
-            MIC_BLOCKED.on = true; useRec = true;
-            ready('음성 인식이 응답하지 않아요. 지금은 소리 내어 말하고 스스로 확인해요.');
+            if (!userStop) { micHang(true); return; }
+            ready('소리가 안 들렸어요. 조금 더 크게 다시 말해 보세요.');
+            setTimeout(() => { if (!r.__gotEnd) micHang(false); }, 4000);
         };
         try { r.start(); } catch (e) { stopRecog(); ready('음성 인식을 시작하지 못했어요. 잠시 후 다시 시도해 주세요.'); return; }
         recogTimer = setTimeout(() => { try { r.stop(); } catch (e) { } setTimeout(() => { if (recog === r) r.__finishNow(); }, 1500); }, 10000);
+    }
+    function micHang(now) {
+        MIC_BLOCKED.hangs++;
+        if (MIC_BLOCKED.hangs < 2) { if (now) ready('음성 인식이 응답하지 않았어요. 🎤를 다시 눌러 말해 보세요.'); return; }
+        MIC_BLOCKED.on = true; useRec = true;
+        // 나중에 알게 된 경우엔 🎤 대기 화면일 때만 바꾼다(듣는 중·결과 화면은 다음 차례에 바뀜)
+        if (now || (!recog && stage.isConnected && stage.querySelector('#micGo'))) ready('음성 인식이 응답하지 않아요. 지금은 소리 내어 말하고 스스로 확인해요.');
     }
     function finish(res, said) {
         reveal();
@@ -1939,6 +2111,7 @@ async function activateLanguage(code, opts) {
     if (!L) return;
     const gen = ++langGen;
     stopSpeak(); closeModal(true); resetTransient();
+    loadClips(code);   // 녹음된 자연 음성 목록(있으면) — 학습 데이터와 함께
     applyTheme(L);
     S.view = 'loading';
     document.getElementById('appHeader').style.display = 'flex';
@@ -1977,8 +2150,8 @@ async function activateLanguage(code, opts) {
     // 동화 데이터는 있으면 쓰고, 못 받았으면 읽기 탭에서 다시 시도
     const storyRes = await storyP;
     const stories = (window[L.storyGlobal] && window[L.storyGlobal].stories) || [];
+    if (gen !== langGen) return;     // 늦게 끝난 이전 언어 요청은 전역 상태를 건드리지 않는다
     STORIES_FAILED = storyRes === 'fail' && !stories.length;
-    if (gen !== langGen) return;
     CUR = L; DATA = data;
     UNITS = DATA.units || [];
     ALL = UNITS.flatMap(u => u.lessons.map(l => ({ ...l, unitId: u.unitId, unitTitle: u.title, unitIcon: u.icon })));
@@ -2221,7 +2394,7 @@ function showWelcome(code, deqInfo) {
     h += '<div class="muted" style="margin-bottom:12px;line-height:1.7">① 레슨: 단어 → 문장 → 회화 → 문법 → 퀴즈<br>② 🎤 ' + (SR && !IN_APP ? '따라 말하면 잘 알아듣는지 점수로 알려 줘요' : '따라 말하고 내 녹음과 비교해요(점수 채점은 크롬·사파리에서)') + '<br>③ 매일 목표 XP를 채우고 🔥 연속 기록 이어 가기</div>' +
         '<div style="font-size:14px;font-weight:800;margin-bottom:8px">🎯 하루 목표를 골라 주세요</div>' +
         '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">' +
-        goals.map(([v, t, m]) => '<button class="choice-btn" data-goal="' + v + '" style="text-align:center;margin:0' + (store.settings.dailyGoal === v ? ';border-color:var(--primary);background:var(--red-soft);font-weight:800' : '') + '">' + t + '<br><span class="muted">' + v + ' XP · 하루 약 ' + m + '</span></button>').join('') + '</div>' +
+        goals.map(([v, t, m]) => '<button class="choice-btn" data-goal="' + v + '" style="text-align:center;margin:0' + (store.settings.dailyGoal === v ? ';border-color:var(--primary);background:var(--red-soft);font-weight:800' : '') + '">' + t + '<br><span class="muted">' + v + ' XP · <span style="white-space:nowrap">하루 약 ' + m + '</span></span></button>').join('') + '</div>' +
         '<label style="display:flex;gap:8px;align-items:center;font-size:14px;margin:-6px 0 12px"><input type="checkbox" id="wBig"' + (store.settings.bigText ? ' checked' : '') + '> 🔍 글씨를 크게 볼래요</label>';
     const places = placementChoices();
     if (places.length) {
@@ -2344,7 +2517,7 @@ function renderPicker() {
     h += '<div class="muted" style="text-align:center;margin-top:8px">언제든 오른쪽 위 🔀 언어 버튼으로 바꿀 수 있고,<br>언어마다 진도가 각각 따로 저장돼요.</div>';
     if (cloudOn() && !CLOUD.user) h += '<div style="margin-top:14px">' + cloudCardHtml('picker') + '</div>';
     h += '<div style="text-align:center;margin-top:10px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="btn small ghost" id="pickRestore">📦 다른 기기 기록 가져오기</button><button class="btn small ghost" id="pickHelp">❓ 도움말</button></div>';
-    if (statsAllowed()) h += '<div class="muted" style="text-align:center;margin-top:10px;font-size:11.5px">앱을 고치려고 쿠키로 사용 통계를 모아요(이름·이메일 없음) · ⚙️ 설정에서 끌 수 있어요 · <a href="../privacy.html" target="_blank" rel="noopener">개인정보 안내</a></div>';
+    if (statsAllowed()) h += '<div class="muted" style="text-align:center;margin-top:10px;font-size:11.5px">앱을 고치려고 쿠키로 사용 통계를 모아요(이름·이메일 없음) · 언어를 고른 뒤 👤 나 → ⚙️ 설정에서 끌 수 있어요 · <a href="../privacy.html" target="_blank" rel="noopener">개인정보 안내</a></div>';
     h += '</div>';
     $main.innerHTML = h;
     bindCloudCard('picker');
@@ -2377,7 +2550,7 @@ function renderHome() {
     let html = '';
 
     if (next) {
-        html += '<div class="continue-card" id="continueBtn">' +
+        html += '<div class="continue-card" id="continueBtn" role="button" tabindex="0">' +
             '<div class="cc-label">' + (doneCount() === 0 && resumeStep === 0 ? '🚀 학습 시작하기' : (resumeStep > 0 ? '📍 멈춘 곳부터 이어서' : '▶ 이어서 학습하기')) + '</div>' +
             '<div class="cc-title">' + esc(next.unitIcon) + ' ' + esc(next.title) + '</div>' +
             '<div class="cc-goal">' + (resumeStep > 0
@@ -2385,29 +2558,31 @@ function renderHome() {
                 : esc(next.goal || '')) + '</div>' +
             '<span class="cc-btn">▶ ' + (resumeStep > 0 ? '이어서 하기' : '시작하기') + ' · 약 ' + lessonMinutes(next) + '분</span></div>';
     } else if (placeIdx() > 0 && ALL.slice(0, placeIdx()).some(l => !isDone(l.id))) {
-        html += '<div class="continue-card" id="continueBtn"><div class="cc-label">🎉 실전 과정 수료!</div>' +
+        html += '<div class="continue-card" id="continueBtn" role="button" tabindex="0"><div class="cc-label">🎉 실전 과정 수료!</div>' +
             '<div class="cc-title">30일 생활 회화를 모두 마쳤어요</div>' +
             '<div class="cc-goal">기초 0~5단계는 원할 때 골라서 복습해 보세요. 복습 카드와 ' + CUR.trainerLabel + ' 훈련도 잊지 말고요!</div></div>';
     } else {
-        html += '<div class="continue-card" id="continueBtn"><div class="cc-label">🎉 전 과정 수료!</div>' +
+        html += '<div class="continue-card" id="continueBtn" role="button" tabindex="0"><div class="cc-label">🎉 전 과정 수료!</div>' +
             '<div class="cc-title">모든 레슨을 완료했어요</div>' +
             '<div class="cc-goal">복습과 ' + CUR.trainerLabel + ' 훈련, 쉬운 읽기로 실력을 다져 보세요.</div></div>' +
             '<button class="btn ghost block" id="bragCourse" style="margin:-4px 0 12px">🎓 친구에게 자랑하기</button>';
     }
     html += todayCardHtml(due);
-    if (!IN_APP && !CLOUD.user && !cloudNudgeDue() && doneCount() >= 2 && !(store.seen.iosNudge && dayDiff(store.seen.iosNudge, todayStr()) < 14) && !(store.seen.lastBackup && dayDiff(store.seen.lastBackup, todayStr()) < 30))
-        html += '<div class="inapp-note" id="iosNudge">📱 학습 기록은 <b>이 기기의 이 브라우저에만</b> 있어요. 휴대폰을 바꾸거나 인터넷 사용 기록(사이트 데이터)을 지우면 사라져요' + (IOS_SAFARI ? ' — 아이폰 사파리는 7일 동안 안 열면 지울 수도 있어요' : '') + '. 가끔 백업 파일을 만들어 두세요' + (cloudOn() ? ', 구글로 로그인하면 자동으로 지켜져요' : '') + '.<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap"><button class="btn small" id="iosBackup">📤 백업 파일 보내기</button>' + (IOS_SAFARI ? '<button class="btn small ghost" id="iosHomeMove">🏠 홈 화면 앱으로 옮기기</button>' : '') + (cloudOn() ? '<button class="btn small ghost" id="iosLogin">☁️ 구글로 로그인</button>' : '') + '<button class="btn small gray" id="iosClose">닫기</button></div></div>';
     if (curStreak() >= 7 && curStreak() % 7 === 0 && store.streak.last === todayStr() && store.seen.bragStreak !== todayStr()) html += '<div class="guide-banner" id="bragStreak" role="button" tabindex="0">🔥 ' + curStreak() + '일 연속 달성! 친구에게 자랑하고 같이 해요 📣</div>';
-    if (cloudNudgeDue()) html += cloudCardHtml('home');
-    else if (installDue()) html += '<div class="card" id="installCard" style="text-align:center"><b>📲 홈 화면에 설치할까요?</b><div class="muted" style="margin:4px 0 8px">아이콘을 누르면 바로 열리고, 인터넷이 끊겨도 배운 레슨을 볼 수 있어요</div><div style="display:flex;gap:8px;justify-content:center"><button class="btn small" id="installYes">설치하기</button><button class="btn small gray" id="installNo">나중에</button></div></div>';
-    else if (feedbackAskDue()) html += '<div class="card" id="fbAsk" style="text-align:center"><b>랭귀지 스타터, 써 보니 어때요?</b><div class="muted" style="margin:4px 0 8px">한 번만 눌러 주시면 앱을 고치는 데 큰 힘이 돼요</div><div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="btn small ghost" data-fbask="good">😍 좋아요</button><button class="btn small ghost" data-fbask="ok">🙂 괜찮아요</button><button class="btn small ghost" data-fbask="bad">😕 아쉬워요</button></div><button class="btn small gray" id="fbAskNo" style="margin-top:8px">다음에</button></div>';
+    // 권유 카드(로그인·설치·의견·백업)는 홈 한 번에 하나만, 그중 하나를 닫은 날에는 더 띄우지 않는다
+    const nudgedToday = [store.seen.cloudNudge, store.seen.installAsk, store.seen.feedbackAsked, store.seen.iosNudge].includes(todayStr());
+    const nudge = nudgedToday ? '' : cloudNudgeDue() ? 'cloud' : installDue() ? 'install' : feedbackAskDue() ? 'feedback' : iosNudgeDue() ? 'ios' : '';
+    if (nudge === 'cloud') html += cloudCardHtml('home');
+    else if (nudge === 'install') html += '<div class="card" id="installCard" style="text-align:center"><b>📲 홈 화면에 설치할까요?</b><div class="muted" style="margin:4px 0 8px">아이콘을 누르면 바로 열리고, 인터넷이 끊겨도 배운 레슨을 볼 수 있어요</div><div style="display:flex;gap:8px;justify-content:center"><button class="btn small" id="installYes">설치하기</button><button class="btn small gray" id="installNo">나중에</button></div></div>';
+    else if (nudge === 'feedback') html += '<div class="card" id="fbAsk" style="text-align:center"><b>랭귀지 스타터, 써 보니 어때요?</b><div class="muted" style="margin:4px 0 8px">한 번만 눌러 주시면 앱을 고치는 데 큰 힘이 돼요</div><div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="btn small ghost" data-fbask="good">😍 좋아요</button><button class="btn small ghost" data-fbask="ok">🙂 괜찮아요</button><button class="btn small ghost" data-fbask="bad">😕 아쉬워요</button></div><button class="btn small gray" id="fbAskNo" style="margin-top:8px">다음에</button></div>';
+    else if (nudge === 'ios') html += iosNudgeHtml();
     html += inAppNoteHtml();
     const dlq = dayLog(), qs = quickSentence();
-    if (qs && !dlq.quick && new Date().getHours() >= 18 && !dlq.xp && curStreak() > 0) html += '<div class="guide-banner" id="eveBanner">🌙 오늘 1분만 해도 🔥 ' + curStreak() + '일 연속을 이어 가요 →</div>';
+    if (qs && !dlq.quick && new Date().getHours() >= 18 && !dlq.xp && curStreak() > 0) html += '<div class="guide-banner" id="eveBanner" role="button" tabindex="0">🌙 오늘 1분만 해도 🔥 ' + curStreak() + '일 연속을 이어 가요 →</div>';
     if (qs && !dlq.quick) html += '<div class="quick-card" id="quickBtn" role="button" tabindex="0"><div class="qc-ico">⚡</div><div><div class="qc-t">바쁜 날엔 1분만!</div><div class="qc-d">오늘의 한 문장 듣고 말하기' + (Object.keys(prog().srs).length >= 4 ? ' + 짝 맞추기 5쌍' : '') + ' — 연속 기록이 이어져요</div></div></div>';
-    if (deqPending()) html += '<div class="guide-banner" id="deqBanner">📦 Daily English Quest 기록이 있어요 — 가져와서 이어 하기 →</div>';
-    if (doneCount() === 0) html += '<div class="guide-banner" id="guideBanner">👋 처음이신가요? 학습 가이드 먼저 보기 →</div>';
-    if (due > 0) html += '<div class="guide-banner" id="reviewBanner">🃏 잊어버릴 때쯤 다시 보는 단어 카드 ' + Math.min(due, sessionCap()) + '장이 기다려요 →</div>';
+    if (deqPending()) html += '<div class="guide-banner" id="deqBanner" role="button" tabindex="0">📦 Daily English Quest 기록이 있어요 — 가져와서 이어 하기 →</div>';
+    if (doneCount() === 0) html += '<div class="guide-banner" id="guideBanner" role="button" tabindex="0">👋 처음이신가요? 학습 가이드 먼저 보기 →</div>';
+    if (due > 0) html += '<div class="guide-banner" id="reviewBanner" role="button" tabindex="0">🃏 잊어버릴 때쯤 다시 보는 단어 카드 ' + Math.min(due, sessionCap()) + '장이 기다려요 →</div>';
 
     html += '<div class="section-title">학습 경로 — 순서대로 배우면 됩니다</div>';
     UNITS.forEach(u => {
@@ -2495,6 +2670,16 @@ function renderHome() {
 
     function stat(e, n, l) { return '<div class="stat"><div class="num">' + e + ' ' + n + '</div><div class="lbl">' + l + '</div></div>'; }
 }
+function iosNudgeDue() {
+    return !IN_APP && !CLOUD.user && !cloudNudgeDue() && doneCount() >= 2 && !(store.seen.iosNudge && dayDiff(store.seen.iosNudge, todayStr()) < 14) && !(store.seen.lastBackup && dayDiff(store.seen.lastBackup, todayStr()) < 30);
+}
+function iosNudgeHtml() {
+    // 로그인 권유를 최근(10일 안)에 미뤘다면 여기서 다시 로그인을 권하지 않는다
+    const login = cloudOn() && !(store.seen.cloudNudge && dayDiff(store.seen.cloudNudge, todayStr()) < 10);
+    return '<div class="inapp-note" id="iosNudge">📱 학습 기록은 <b>이 기기의 이 브라우저에만</b> 있어요. 휴대폰을 바꾸거나 인터넷 사용 기록(사이트 데이터)을 지우면 사라져요' + (IOS_SAFARI ? ' — 아이폰 사파리는 7일 동안 안 열면 지울 수도 있어요' : '') + '. ' +
+        (login ? '가끔 백업 파일을 만들어 두거나 구글로 로그인해 두면 기록이 지켜져요.' : '가끔 백업 파일을 만들어 두면 기록이 지켜져요.') +
+        '<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap"><button class="btn small" id="iosBackup">📤 백업 파일 보내기</button>' + (IOS_SAFARI ? '<button class="btn small ghost" id="iosHomeMove">🏠 홈 화면 앱으로 옮기기</button>' : '') + (login ? '<button class="btn small ghost" id="iosLogin">☁️ 구글로 로그인</button>' : '') + '<button class="btn small gray" id="iosClose">닫기</button></div></div>';
+}
 
 const IN_APP_RE = /KAKAOTALK|NAVER\(inapp|Instagram|FBAN|FBAV|Line\/|DaumApps|everytimeApp|BAND\/|Barcelona|musical_ly|BytedanceWebview|; wv\)/i;
 const IOS_SAFARI = /iPhone|iPad|iPod/.test(navigator.userAgent || '') && navigator.standalone !== true && !/CriOS|FxiOS|EdgiOS|Whale|OPT\/|NAVER|DaumApps/i.test(navigator.userAgent || '') && !IN_APP_RE.test(navigator.userAgent || '');
@@ -2513,11 +2698,73 @@ function openExternalHref(hash) {
 }
 function inAppNoteHtml() {
     if (!IN_APP) return '';
-    const href = openExternalHref(), ios = /iPhone|iPad|iPod/.test(navigator.userAgent || ''), has = hasProgress(store), carry = has && /KAKAOTALK|Line\//i.test(navigator.userAgent || '');
+    const href = openExternalHref(), ios = /iPhone|iPad|iPod/.test(navigator.userAgent || ''), has = hasProgress(store);
+    // 카톡·라인의 '📦 기록 들고…' 글자와 '📦 버튼은…' 안내는 링크에 기록을 실제로 실은 뒤에만 나온다(bindInAppNote → carryLink)
     return '<div class="inapp-note" id="inAppNote">📱 <b>앱 안의 브라우저</b>에서는 발음 듣기·말하기 채점' + (cloudOn() ? '·구글 로그인' : '') + '이 잘 안 돼요. ' +
         (href ? '아래 버튼으로 기본 브라우저에서 열어 주세요.' : ios ? '오른쪽 아래(또는 위) <b>⋯ · 공유</b> 메뉴 → <b>Safari로 열기</b>를 누르거나, 주소를 복사해 사파리에 붙여넣어 주세요.' : '메뉴(⋮) → <b>다른 브라우저로 열기</b>를 눌러 주세요.') +
-        '<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">' + (href ? '<a class="btn small" id="inAppOpen" href="' + esc(href) + '" style="text-decoration:none">' + (carry ? '📦 기록 들고 기본 브라우저로 열기' : '👉 기본 브라우저로 열기') + '</a>' : '') + '<button class="btn small ghost" id="inAppCopy">🔗 주소 복사</button>' + (has ? '<button class="btn small ghost" id="inAppCopyCode">📋 기록 코드 복사</button>' : '') + '</div>' +
-        (has ? '<div class="muted" style="margin-top:6px">여기서 한 기록은 기본 브라우저로 저절로 옮겨지지 않아요. ' + (carry ? '📦 버튼은 기록을 함께 가져가요. 안 되면 ' : '') + '📋 기록 코드 복사 → 기본 브라우저 첫 화면 아래 「📦 다른 기기 기록 가져오기」 → 📋 붙여넣기.</div>' : '') + '</div>';
+        '<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">' + (href ? '<a class="btn small" id="inAppOpen" href="' + esc(href) + '" style="text-decoration:none">👉 기본 브라우저로 열기</a>' : '') + '<button class="btn small ghost" id="inAppCopy">🔗 주소 복사</button>' + (has ? '<button class="btn small ghost" id="inAppCopyCode">📋 기록 코드 복사</button>' : '') + '</div>' +
+        (has ? '<div class="muted" style="margin-top:6px">여기서 한 기록은 기본 브라우저로 저절로 옮겨지지 않아요. <span id="inAppCarryTip"></span>📋 기록 코드 복사 → 기본 브라우저 첫 화면 아래 「📦 다른 기기 기록 가져오기」 → 📋 붙여넣기.</div>' : '') + '</div>';
+}
+// 카톡·라인 인앱: '기본 브라우저로 열기' 링크에 기록(#imp=…)을 실어 보낸다. 실었으면 true(다른 곳의 링크에도 carryLink(a)로 쓴다)
+//  · 링크를 만든 뒤 기록이 바뀌었으면(레슨·복습을 더 함) 누르는 순간 코드를 새로 만들어 연다
+//  · 기록이 너무 커서 못 실으면 글자를 '👉 기본 브라우저로 열기'로 두고, 곁에 📋 기록 코드로 옮기는 방법을 보여 준다
+//    onState(ok, why)를 주면 그 안내를 대신 그린다(why: '' 기록 없음 · 'big' 너무 큼 · 'old' 압축을 못 하는 브라우저)
+const CARRY_MAX = 20000;
+function carryLink(a, onState) {
+    if (!a || !/KAKAOTALK|Line\//i.test(navigator.userAgent || '')) return Promise.resolve(false);
+    if (onState) a.__carryOn = onState;
+    if (!a.__carryBound) {
+        a.__carryBound = true;
+        a.addEventListener('pointerdown', () => { carryBuild(a); });   // 손가락이 닿는 순간 미리 새로 만들어 둔다
+        a.addEventListener('click', e => {
+            if (a.__carryRaw === JSON.stringify(store)) return;   // 링크가 이미 지금 기록을 싣고 있으면 그대로 연다
+            e.preventDefault();
+            const promised = a.dataset.carry === 'ok';
+            carryBuild(a).then(ok => {
+                if (!ok && promised && hasProgress(store)) { showToast('📦 기록이 커져서 링크에 함께 싣지 못했어요. 📋 기록 코드를 복사해 옮겨 주세요', '', 4500); return; }
+                location.href = a.href;
+            });
+        });
+    }
+    return carryBuild(a);
+}
+function carryBuild(a) {
+    const raw = JSON.stringify(store), j = a.__carryJob;
+    if (j && j.raw === raw) return j.p;
+    const job = { raw };
+    a.__carryJob = job;
+    job.p = (hasProgress(store) ? exportProgressCode() : Promise.resolve('')).catch(() => '').then(c => {
+        if (a.__carryJob !== job) return a.__carryJob.p;   // 그사이 기록이 또 바뀌어 새로 만드는 중
+        const ok = c.startsWith('LS3:') && c.length <= CARRY_MAX, why = ok || !c ? '' : c.length > CARRY_MAX ? 'big' : 'old';
+        if (!a.isConnected) return false;
+        a.href = openExternalHref(ok ? '#imp=' + c : '');
+        a.textContent = ok ? '📦 기록 들고 기본 브라우저로 열기' : '👉 기본 브라우저로 열기';
+        a.dataset.carry = ok ? 'ok' : why;
+        a.__carryRaw = raw;
+        (a.__carryOn || carryNote)(ok, why, a);
+        return ok;
+    });
+    return job.p;
+}
+// 기록을 링크에 못 실었을 때 버튼 줄 아래에 붙는 안내(소리 배너·로그인 도움 창)
+function carryNote(ok, why, a) {
+    let n = a.__carryNote;
+    if (ok || !why) { if (n) n.remove(); a.__carryNote = null; return; }
+    if (n && n.isConnected) return;
+    n = document.createElement('div');
+    n.style.cssText = 'margin-top:8px;font-size:12.5px;line-height:1.55';
+    n.innerHTML = '<div>' + (why === 'big' ? '기록이 커서 이 버튼으로는 함께 옮기지 못해요.' : '이 브라우저에서는 이 버튼으로 기록을 함께 옮기지 못해요.') + ' 📋 기록 코드를 복사해 기본 브라우저 첫 화면 아래 「📦 다른 기기 기록 가져오기」에 붙여넣어 주세요.</div>' +
+        '<button class="btn small ghost" style="margin-top:6px">📋 기록 코드 복사</button>';
+    n.querySelector('button').addEventListener('click', () => exportProgressCode().then(c => copyText(c, '📋 기록 코드를 복사했어요! 기본 브라우저 첫 화면 아래 「📦 다른 기기 기록 가져오기」에 붙여넣으세요' + CODE_TIP)));
+    const row = a.parentElement && a.parentElement.style.display === 'flex' ? a.parentElement : a;
+    row.after(n);
+    a.__carryNote = n;
+}
+// 소리 배너는 소리가 안 나는 순간에 한 번만 그려지므로, 화면을 새로 그리거나 레슨을 마칠 때 링크(지금 언어·쌓인 기록)를 다시 맞춘다
+function refreshTtsWarnLink() {
+    const el = document.getElementById('ttsWarn'), a = document.getElementById('ttsWarnOpen');
+    if (!el || el.hidden || !a) return;
+    carryLink(a);
 }
 function bindInAppNote() {
     const c = document.getElementById('inAppCopy');
@@ -2527,8 +2774,12 @@ function bindInAppNote() {
         track('inapp_open_external');
         if (/^intent:/.test(o.getAttribute('href') || '')) setTimeout(() => { if (!document.hidden) showToast('크롬이 없나요? 🔗 주소 복사 후 쓰는 브라우저 주소창에 붙여넣어 주세요', '', 4000); }, 1500);
     });
-    // 카톡·라인은 주소에 기록을 실어 보낼 수 있다(클릭 때 바로 열리도록 미리 바꿔 둠)
-    if (o && hasProgress(store) && /KAKAOTALK|Line\//i.test(navigator.userAgent || '')) exportProgressCode().then(c => { if (c.startsWith('LS3:') && c.length <= 20000 && o.isConnected) o.href = openExternalHref('#imp=' + c); }).catch(() => { });
+    // 카톡·라인은 주소에 기록을 실어 보낼 수 있다(클릭 때 바로 열리도록 미리 바꿔 둠). 못 실으면 아래 안내가 📋 기록 코드 쪽으로 이끈다
+    carryLink(o, (ok, why) => {
+        const t = document.getElementById('inAppCarryTip');
+        if (t) t.textContent = ok ? '📦 버튼은 기록을 함께 가져가요. 안 되면 ' : why ? (why === 'big' ? '기록이 커서' : '이 브라우저에서는') + ' 버튼에 함께 싣지 못하니 이렇게 옮겨 주세요: ' : '';
+    });
+    refreshTtsWarnLink();
     const cc = document.getElementById('inAppCopyCode');
     if (cc) cc.addEventListener('click', () => exportProgressCode().then(c => copyText(c, '📋 기록 코드를 복사했어요! 기본 브라우저 첫 화면 아래 「📦 다른 기기 기록 가져오기」에 붙여넣으세요' + CODE_TIP)));
 }
@@ -2860,7 +3111,16 @@ function renderStep() {
                         showToast(ok ? '⭕ 귀로 알아들었어요! 이제 대본으로 확인해 보세요' : '👀 대본을 보며 다시 들어 보세요', '', 3000);
                     }));
                 } else { revealScript(); lf.remove(); showToast('👀 이제 대본을 보며 맞게 들었는지 확인해 보세요!', '', 3000); }
-            }, (x, i) => hilite(i));
+            }, (x, i) => {
+                // 듣는 중에 '소리 안 남'으로 판정되면 끝까지 기다리지 않고 바로 대본을 연다
+                if (ttsBadNow()) {
+                    stopSpeak(); seqPlaying = false; revealScript();
+                    if (lf.isConnected) lf.remove();
+                    showToast('🔇 소리가 나지 않아 대본을 바로 보여 드려요', '', 3200);
+                    return;
+                }
+                hilite(i);
+            });
         });
         document.getElementById('playAll').addEventListener('click', () => speakSeq(turns.map(asItem), () => { body.querySelectorAll('[data-sec-toggle]').forEach(tg => markHeard(parseInt(tg.dataset.secToggle, 10))); }, (x, i) => hilite(i)));
         document.getElementById('stopAll').addEventListener('click', () => { seqPlaying = false; if (S.rpActive) { rolePlayToken++; S.rpActive = null; showToast('🎭 역할극을 멈췄어요'); } stopSpeak(); });
@@ -3044,8 +3304,12 @@ function renderQuiz(body, l) {
         h += '<div class="quiz-audio">' +
             '<button class="big-listen" id="qPlay" aria-label="듣기">🔊</button>' +
             '<button class="big-listen slow" id="qPlaySlow" aria-label="느리게 듣기">🐢</button></div>';
-        if (ttsBadNow() || q.noSound) h += q.noSound ? '<div class="card" style="text-align:center;margin:-4px 0 10px"><div class="native" style="font-size:24px">' + esc(itemText) + '</div>' + (romanText(item) ? '<div style="color:var(--primary);font-weight:600">' + esc(romanText(item)) + '</div>' : '') + '<div class="muted">🔇 소리 대신 글자로 풀어요</div></div>'
-            : '<div style="text-align:center;margin:-4px 0 10px"><button class="btn small gray" id="qNoSound">🔇 소리가 안 나요 — 글자로 보기</button></div>';
+        if (q.noSound) {
+            // 글자를 보여 주면 답이 드러나는 문제: 성조는 병음(성조 부호)을 빼고 한자만, 보기에 같은 단어가 있는 문제는 점수에서 뺄 수 있게
+            if (item.type === 'tone') h += '<div class="card" style="text-align:center;margin:-4px 0 10px"><div class="native" style="font-size:24px">' + esc(itemText) + '</div><div class="muted">🔇 글자를 보고 성조를 떠올려 골라 보세요</div></div>';
+            else if (item.choices.includes(itemText)) h += '<div class="card" style="text-align:center;margin:-4px 0 10px"><div class="muted">🔇 이 문제는 소리를 들어야 풀 수 있어요' + (q.phase2 ? '. 건너뛰어도 괜찮아요(첫 시도 점수는 그대로예요)' : '') + '</div>' + (q.answered ? '' : '<button class="btn small gray" id="qExcuse" style="margin-top:8px">' + (q.phase2 ? '건너뛰기' : '건너뛰기(점수에서 빼기)') + '</button>') + '</div>';
+            else h += '<div class="card" style="text-align:center;margin:-4px 0 10px"><div class="native" style="font-size:24px">' + esc(itemText) + '</div>' + (romanText(item) ? '<div style="color:var(--primary);font-weight:600">' + esc(romanText(item)) + '</div>' : '') + '<div class="muted">🔇 소리 대신 글자로 풀어요</div></div>';
+        } else if (ttsBadNow()) h += '<div style="text-align:center;margin:-4px 0 10px"><button class="btn small gray" id="qNoSound">🔇 소리가 안 나요 — 글자로 보기</button></div>';
     }
     if (item.type === 'arrange') {
         h += '<div class="arrange-area" id="arrArea">' +
@@ -3087,6 +3351,14 @@ function renderQuiz(body, l) {
     if (qps) { qps.addEventListener('click', () => speak(itemText, 0.7)); }
     const qns = document.getElementById('qNoSound');
     if (qns) qns.addEventListener('click', () => { q.noSound = true; renderQuiz(body, l); });
+    const qex = document.getElementById('qExcuse');
+    if (qex) qex.addEventListener('click', () => {   // 소리 없이는 풀 수 없는 문제: 맞힌 수에도 전체 문항 수에도 넣지 않는다
+        if (q.answered) return;
+        // 2회차(틀렸던 문제 다시 풀기)에서는 넘어가기만 한다: 1회차에 틀린 기록은 그대로 두어 '한 번에 전부 맞혔어요'·🏆가 '틀렸던 문제' 목록과 함께 나오지 않게
+        if (!q.phase2) { if (!q.excused) q.excused = []; if (!q.excused.includes(qIdx)) q.excused.push(qIdx); }
+        q.i++; q.answered = false; q.sel = []; q.selSrc = []; q.half = null; q.plays = 0; q.hints = 0; q.usedHint = false;
+        renderQuiz(body, l);
+    });
     if (qp && !q.answered && q.autoFor !== q.i + ':' + (q.phase2 ? 2 : 1)) {
         q.autoFor = q.i + ':' + (q.phase2 ? 2 : 1);
         setTimeout(() => { if (S.quiz === q && !q.answered) speak(itemText, 0.95); }, 350);
@@ -3144,7 +3416,7 @@ function renderQuiz(body, l) {
             });
             answerFeedback(ok, item, '');
             if ((item.type === 'listen' || item.type === 'tone') && itemText) setTimeout(() => speak(itemText, 0.9), 250);
-            else if (ok && !/[가-힣]/.test(item.choices[item.answer])) setTimeout(() => speak(item.choices[item.answer], 0.95), 250);
+            else if (ok && !/[ㄱ-ㅎㅏ-ㅣ가-힣]/.test(item.choices[item.answer])) setTimeout(() => speak(item.choices[item.answer], 0.95), 250);
         }));
     }
 
@@ -3172,6 +3444,7 @@ function renderQuiz(body, l) {
         }
         save();
         const qhb = document.getElementById('qHalf'); if (qhb) qhb.remove();
+        const qxb = document.getElementById('qExcuse'); if (qxb) qxb.remove();
         sfx(ok ? ([3, 5, 10].includes(q.combo) ? 'level' : 'ok') : 'bad');
         try { if (navigator.vibrate) navigator.vibrate(ok ? 15 : [30, 40, 30]); } catch (e) { }
         announce(ok ? '정답' : '오답');
@@ -3211,13 +3484,14 @@ function newQuizState(only, attempt) { return { i: 0, score: 0, answered: false,
 function renderQuizResult(body, l) {
     const q = S.quiz;
     const items = l.quiz || [];
-    const total = (l.redo || l.skipUnit !== undefined) ? items.length : items.length;
+    const excused = (q.excused || []).length;       // 소리가 안 나서 '건너뛰기(점수에서 빼기)'한 문제는 전체 문항 수에서도 뺀다
+    const total = Math.max(0, items.length - excused);
     const skipUnit = l.skipUnit;
     const partial = !!(l.redo || skipUnit !== undefined);   // 오답 노트 · 건너뛰기 시험은 레슨 진도와 따로
     const firstScore = q.phase2 ? q.firstScore : q.score;
     const fixed = q.phase2 ? (q.corrected || 0) : 0;
-    const shown = partial ? q.score : Math.min(items.length, firstScore + fixed);
-    const pass = (partial ? q.score / total : shown / items.length) >= (skipUnit !== undefined ? 0.8 : PASS_RATE);
+    const shown = partial ? q.score : Math.min(total, firstScore + fixed);
+    const pass = total > 0 && (partial ? q.score : shown) / total >= (skipUnit !== undefined ? 0.8 : PASS_RATE);
     let skipped = 0;
     if (skipUnit !== undefined && pass && !q.settled) skipped = applySkipPass(skipUnit);
     let gained = 0;
@@ -3230,7 +3504,8 @@ function renderQuizResult(body, l) {
             if (firstScore === total && !(prev && prev.score === prev.total)) gained += XP.perfect;
             if (!prev) { p.completed[l.id] = { score: firstScore, fixed: fixed, total, date: todayStr() }; track('lesson_complete', { lesson_id: l.id, unit: l.unitId, lessons_done: doneCount() }); }
             else {
-                if (firstScore > prev.score || prev.imported || prev.placed) { prev.score = firstScore; prev.fixed = fixed; prev.total = total; delete prev.imported; delete prev.placed; }
+                // 문제를 빼서 줄어든 기록(total이 작음)은 더 온전한 기록을 덮지 않는다(기기끼리 합칠 때 mergeLang과 같은 기준)
+                if (prev.imported || prev.placed || total > prev.total || (total === prev.total && firstScore > prev.score)) { prev.score = firstScore; prev.fixed = fixed; prev.total = total; delete prev.imported; delete prev.placed; }
                 prev.last = todayStr();
             }
             const dl = dayLog(); dl.lessons = (dl.lessons || 0) + 1;
@@ -3251,7 +3526,7 @@ function renderQuizResult(body, l) {
             const dl = dayLog(); const give = Math.max(0, Math.min(q.score * 2, 10 - (dl.redoXp || 0)));
             dl.redoXp = (dl.redoXp || 0) + give; gained += give;
         }
-        if (!pass && !partial) {       // 떨어져도 노력은 보상 (레슨당 하루 1번)
+        if (!pass && !partial && total) {       // 떨어져도 노력은 보상 (레슨당 하루 1번)
             const dl = dayLog(); if (!dl.effort) dl.effort = {};
             if (!dl.effort[l.id]) { dl.effort[l.id] = 1; gained += 3; }
         }
@@ -3266,11 +3541,12 @@ function renderQuizResult(body, l) {
         '<div class="r-emoji">' + (pass ? (q.score === total ? '🏆' : '🎉') : '💪') + '</div>' +
         '<div class="r-score" style="color:' + (pass ? 'var(--success)' : 'var(--error)') + '">' + shown + ' / ' + total + '</div>' +
         (fixed ? '<div class="muted">첫 시도 ' + firstScore + '개 + 다시 풀어 맞힌 ' + fixed + '개</div>' : '') +
+        (excused ? '<div class="muted">🔇 소리를 들어야 풀 수 있는 ' + excused + '문제는 점수에서 뺐어요</div>' : '') +
         (!partial && pass ? '<div class="stars" style="font-size:22px;margin-top:4px">' + starStr(firstScore / total >= 1 ? 3 : firstScore / total >= 0.85 ? 2 : 1) + '</div>' : '') +
-        '<div class="r-msg">' + (l.warm ? '워밍업 끝! 머리가 풀렸으니 새 레슨을 시작해 볼까요?' : skipUnit !== undefined ? (pass ? '⏩ 합격! ' + skipUnit + '단계를 건너뛰었어요 (레슨 ' + skipped + '개 통과 처리 · 단어는 복습함에 나눠 담았어요)' : '80% 이상이면 합격이에요. 이 단계는 차근차근 배워 봐요 — 이미 아는 부분은 금방 지나가요!') :
+        '<div class="r-msg">' + (l.warm ? '워밍업 끝! 머리가 풀렸으니 새 레슨을 시작해 볼까요?' : !total ? '🔇 모두 소리를 들어야 풀 수 있는 문제였어요. 소리가 나는 기기에서 다시 풀어 보세요.' : skipUnit !== undefined ? (pass ? '⏩ 합격! ' + skipUnit + '단계를 건너뛰었어요 (레슨 ' + skipped + '개 통과 처리 · 단어는 복습함에 나눠 담았어요)' : '80% 이상이면 합격이에요. 이 단계는 차근차근 배워 봐요 — 이미 아는 부분은 금방 지나가요!') :
             partial ? (q.score === total ? (Object.keys(prog().mistakes || {}).length ? '전부 맞혔어요! 👏 다른 날 한 번 더 맞히면 노트에서 졸업해요' : '전부 맞혔어요! 오답 노트를 모두 졸업했어요 🎓') : '다른 날 한 번 더 맞힌 문제는 오답 노트에서 졸업해요. 남은 건 다음에 또!') :
             pass ? (firstScore === total ? '완벽해요! 한 번에 전부 맞혔어요' : '통과! 잘하고 있어요 👏') + '<br>이 레슨 단어들이 내일부터 복습 카드로 나와요.' :
-            (Math.ceil(items.length * PASS_RATE) - shown <= 1 ? '거의 다 왔어요, 1문제만 더! 💪' : Math.ceil(items.length * PASS_RATE) + '문제 이상 맞히면 통과예요.') + '<br>단어와 회화를 한 번 더 보고 다시 도전해 보세요!') +
+            (Math.ceil(total * PASS_RATE) - shown <= 1 ? '거의 다 왔어요, 1문제만 더! 💪' : Math.ceil(total * PASS_RATE) + '문제 이상 맞히면 통과예요.') + '<br>단어와 회화를 한 번 더 보고 다시 도전해 보세요!') +
         (gained ? '<br><b style="color:var(--primary)">+' + gained + ' XP' + (!pass && !partial ? ' (노력 보상)' : '') + '</b>' : '') + '</div></div>';
     h += '@@ACTIONS@@';
     if (boss) {
@@ -3378,6 +3654,7 @@ function renderQuizResult(body, l) {
         },
         onClose: () => { if (S.view === 'lesson' && S.quiz === q) renderQuizResult(body, l); },
     }));
+    refreshTtsWarnLink();   // 결과 화면은 render()를 거치지 않으므로, 방금 저장한 기록을 소리 배너의 '기본 브라우저로 열기'에 싣는다
 }
 
 /* ═══════════════════ SRS 복습 ═══════════════════ */
@@ -4521,7 +4798,7 @@ function openHomeMove() {
         '<div style="font-size:14px;line-height:1.8">홈 화면 아이콘은 사파리와 기록을 따로 저장해요. 아래 순서대로 하면 지금 기록을 그대로 가져가요.<br>' +
         '<b>①</b> <button class="btn small" id="hmCopy">📋 기록 복사하기</button><br>' +
         '<b>②</b> 화면 아래 공유 버튼(□↑) → 「홈 화면에 추가」 → 추가<br>' +
-        '<b>③</b> 홈 화면의 🌍 랭귀지 스타터 아이콘을 열고, 첫 화면의 <b>📋 사파리 기록 붙여넣기</b>를 누르세요.</div>' +
+        '<b>③</b> 홈 화면에 생긴 「랭귀지 스타터」 아이콘(파란 바탕에 가·A 말풍선)을 열고, 첫 화면의 <b>📋 사파리 기록 붙여넣기</b>를 누르세요.</div>' +
         '<div class="muted" style="margin-top:8px">※ 옮긴 뒤에는 홈 화면 아이콘으로만 여세요. 사파리 기록은 7일 동안 안 열면 지워질 수 있어요.</div>');
     sheet.querySelector('#hmCopy').addEventListener('click', () => exportProgressCode().then(c => copyText(c, '📋 기록을 복사했어요. 이제 공유 → 홈 화면에 추가' + CODE_TIP)));
     track('home_move_open');
@@ -4573,7 +4850,14 @@ function voiceDesc() {
     if (!ttsAvailable()) return '이 브라우저는 음성 합성을 지원하지 않아요';
     if (!vc) return CUR.name + ' 음성이 없어요 — 기기 설정에서 ' + CUR.name + ' 음성을 내려받으면 들을 수 있어요';
     const best = vc.a && scoreVoiceFor(vc.a, CUR.ttsLang) >= 60;
-    return (best ? '고품질 음성을 자동으로 골랐어요' : '더 자연스러운 목소리: 기기 설정 → 손쉬운 사용 → 음성 콘텐츠에서 "향상된/고품질" 음성을 내려받으세요') + (vc.b ? ' · 대화는 두 목소리로' : '');
+    // 음성을 내려받는 곳은 기기마다 달라요(소리 배너 안내와 같은 경로)
+    const ua = navigator.userAgent || '', mac = /Macintosh/.test(ua);
+    const how = /Android/i.test(ua) ? '휴대폰 설정 → 일반(또는 접근성) → 텍스트 음성 변환(TTS) → Google 음성 엔진 → 음성 데이터 설치에서 ' + CUR.name + ' 음성을 내려받으세요'
+        : (/iPhone|iPad|iPod/.test(ua) || (mac && navigator.maxTouchPoints > 1)) ? '설정 → 손쉬운 사용 → 읽기 및 말하기 → 음성에서 ' + CUR.name + '의 "향상된/고품질" 음성을 내려받으세요'
+            : mac ? '시스템 설정 → 손쉬운 사용 → 읽기 및 말하기 → 시스템 음성에서 ' + CUR.name + '의 "향상된/고품질" 음성을 내려받으세요'
+                : /Windows/.test(ua) ? 'Windows 설정 → 시간 및 언어 → 음성에서 ' + CUR.name + ' 음성을 추가하세요'
+                    : '컴퓨터의 음성(TTS) 설정에서 ' + CUR.name + ' 음성을 추가하세요';
+    return (best ? '고품질 음성을 자동으로 골랐어요' : '더 자연스러운 목소리: ' + how) + (vc.b ? ' · 대화는 두 목소리로' : '');
 }
 function voiceSelectHtml() {
     const vc = voiceCache[CUR.code];
@@ -4630,7 +4914,9 @@ function addReminder(t) {
 function renderSettings() {
     const hasTTS = ttsAvailable();
     let h = subnavHtml('settings');
-    if (!hasTTS) h += '<div class="notice">⚠️ 이 브라우저는 음성 합성(TTS)을 지원하지 않아 발음 듣기를 쓸 수 없어요. 크롬/엣지/사파리 최신 버전을 추천합니다.</div>';
+    const hasClips = !!(CLIPS[CUR.code] && CLIPS[CUR.code].ids);
+    if (hasClips && clipsReady()) { /* 녹음 음성으로 들으므로 기기 음성 안내는 생략 */ }
+    else if (!hasTTS) h += '<div class="notice">⚠️ 이 브라우저는 음성 합성(TTS)을 지원하지 않아 발음 듣기를 쓸 수 없어요. 크롬/엣지/사파리 최신 버전을 추천합니다.</div>';
     else if (!voiceCache[CUR.code]) h += '<div class="notice">ℹ️ ' + esc(CUR.name) + ' 음성이 아직 준비되지 않았어요. 발음 버튼을 한 번 누르면 준비되는 경우가 많아요.</div>';
     h += cloudCardHtml('settings');
     h += '<div class="card">' +
@@ -4641,7 +4927,8 @@ function renderSettings() {
             const near = [0.8, 1, 1.1].reduce((a, b) => Math.abs(b - curRate()) < Math.abs(a - curRate()) ? b : a, 1);
             return '<button data-rate="' + v + '" aria-pressed="' + (near === v) + '">' + t + '</button>';
         }).join('') + '</div>') +
-        setRow('목소리', voiceDesc(), voiceSelectHtml()) +
+        (hasClips ? setRow('🎙️ 자연 음성', '원어민에 가까운 녹음 목소리로 들어요 · 녹음이 없는 문장은 기기 목소리', '<label class="switch"><input type="checkbox" id="setNatural"' + (store.settings.voiceMode !== 'device' ? ' checked' : '') + '><span class="slider"></span></label>') : '') +
+        setRow(hasClips ? '기기 목소리' : '목소리', voiceDesc(), voiceSelectHtml()) +
         setRow('글씨 크게', '화면 전체 글씨와 버튼을 조금 크게', '<label class="switch"><input type="checkbox" id="setBig"' + (store.settings.bigText ? ' checked' : '') + '><span class="slider"></span></label>') +
         setRow('효과음', '정답·오답·레벨 업 때 짧은 소리', '<label class="switch"><input type="checkbox" id="setSfx"' + (store.settings.sfx ? ' checked' : '') + '><span class="slider"></span></label>') +
         setRow('자유 탐색 모드', '순서 잠금을 풀고 모든 레슨·읽기 열기 (추천하지 않아요!)', '<label class="switch"><input type="checkbox" id="setFree"' + (store.settings.freeNav ? ' checked' : '') + '><span class="slider"></span></label>') +
@@ -4704,6 +4991,8 @@ function renderSettings() {
     document.getElementById('setGoal').addEventListener('change', e => { store.settings.dailyGoal = parseInt(e.target.value, 10) || 30; save(); showToast('🎯 하루 목표: ' + store.settings.dailyGoal + ' XP'); });
     document.getElementById('setBig').addEventListener('change', e => { store.settings.bigText = e.target.checked; save(); applyBigText(); });
     document.getElementById('setSfx').addEventListener('change', e => { store.settings.sfx = e.target.checked; save(); if (e.target.checked) sfx('ok'); });
+    const sn = document.getElementById('setNatural');
+    if (sn) sn.addEventListener('change', e => { store.settings.voiceMode = e.target.checked ? 'natural' : 'device'; save(); track('voice_mode', { mode: store.settings.voiceMode }); speak(CUR.sampleWord, 0.95); });
     const vs = document.getElementById('setVoice');
     if (vs) vs.addEventListener('change', e => {
         if (!store.settings.voice) store.settings.voice = {};
@@ -4717,8 +5006,20 @@ function renderSettings() {
         try { downloadIcs(t); } catch (err) { showToast('파일을 만들지 못했어요.'); }
     });
     document.getElementById('resetBtn').addEventListener('click', () => {
-        if (confirm('정말 ' + CUR.name + '의 학습 기록을 지울까요?\n(완료한 레슨, 복습 단어장, XP가 사라져요. 다른 언어의 진도와 전체 연속 기록은 유지됩니다)')) {
+        // '복원 전 기록'에 이 언어의 진도가 있으면, 되돌리기로 지운 진도가 살아나지 않게 그 사본도 함께 지운다
+        const snapKey = LS_KEY + '_before_restore';
+        let dropSnap = false, snapShown = false;
+        try {
+            const raw = localStorage.getItem(snapKey);
+            if (raw) {
+                const snap = JSON.parse(raw), old = JSON.parse((snap && snap.raw) || 'null'), op = old && old.byLang && old.byLang[CUR.code];
+                dropSnap = !old || !!(op && (Object.keys(op.completed || {}).length || Object.keys(op.srs || {}).length || op.xp));
+                snapShown = !!(snap && snap.at) && (Date.now() - Date.parse(snap.at)) <= 7 * 86400000;
+            }
+        } catch (e) { dropSnap = true; }
+        if (confirm('정말 ' + CUR.name + '의 학습 기록을 지울까요?\n(완료한 레슨, 복습 단어장, XP가 사라져요. 다른 언어의 진도와 전체 연속 기록은 유지됩니다)' + (dropSnap && snapShown ? '\n\n아래 「↩ 복원 전 기록으로 되돌리기」도 함께 사라져요(되돌리면 지운 기록이 다시 살아나기 때문이에요).' : ''))) {
             store.byLang[CUR.code] = { gen: ((store.byLang[CUR.code] || {}).gen || 0) + 1, genAt: todayStr(), completed: {}, srs: {}, streak: { last: '', count: 0 }, lastPos: null }; delete store.seen['welcome_' + CUR.code]; if (CUR.code === 'en') delete store.seen.deqOfferShown; save();
+            if (dropSnap) { try { localStorage.removeItem(snapKey); } catch (e) { } }
             go('home');
         }
     });
@@ -4806,7 +5107,7 @@ async function restoreFromCode(code, opts) {
         const sheet = openModal('<div class="sheet-head"><b>' + esc(opts.title || '백업 기록을 어떻게 가져올까요?') + '</b><button class="sheet-close" data-close-overlay aria-label="닫기">✕</button></div>' +
             '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px"><div class="card" style="margin:0"><b>📦 백업</b>' + storeSummary(incoming, typeof obj.exportedAt === 'string' ? esc(obj.exportedAt.slice(0, 10)) : '날짜 모름') + '</div>' +
             '<div class="card" style="margin:0"><b>📱 지금 이 기기</b>' + storeSummary(store) + '</div></div>' +
-            '<div class="muted" style="margin-bottom:10px">' + (hasNow ? '<b>합치기</b>는 두 기록의 진도를 모두 남기고, <b>바꾸기</b>는 이 기기 기록을 백업 내용으로 바꿔요. ' : '') + '지금 기록은 7일 동안 보관돼서 설정에서 되돌릴 수 있어요.</div>' +
+            (hasNow ? '<div class="muted" style="margin-bottom:10px"><b>합치기</b>는 두 기록의 진도를 모두 남기고, <b>바꾸기</b>는 ' + (cloudLinked() ? '<b>이 기기와 구글 계정(로그인한 모든 기기)</b>의 기록을' : '이 기기 기록을') + ' 백업 내용으로 바꿔요. 지금 기록은 7일 동안 보관돼서 설정에서 되돌릴 수 있어요.</div>' : '') +
             (hasNow ? '<button class="btn block" id="restoreMerge">🔗 합치기 (추천)</button>' : '') +
             '<div style="display:flex;gap:8px;margin-top:8px"><button class="btn block gray" data-close-overlay>취소</button><button class="btn block' + (hasNow ? ' ghost' : '') + '" id="restoreYes">' + (hasNow ? '바꾸기' : '가져오기') + '</button></div>');
         const finishRestore = (msg) => {
@@ -4827,6 +5128,7 @@ async function restoreFromCode(code, opts) {
                 snapshotBeforeRestore();
                 const g = nextGen(store, incoming);
                 store = incoming; store.gen = g; store.genAt = todayStr(); save();
+                if (cloudOn() && !CLOUD.user && cloudHint().lastUid) cloudHint({ lastUid: '', rev: '', base: null, pend: null });   // 다음 로그인 때 계정 기록과 어떻게 할지 묻는다
                 finishRestore('🎉 가져오기 완료!');
             } catch (e) { showToast('복원하지 못했어요: ' + e.message, '', 3600); }
         });
@@ -4839,7 +5141,7 @@ async function restoreFromCode(code, opts) {
 //  · fb-core: 앱 + 사용 통계(Analytics) — 설정에 measurementId가 있고 통계를 끄지 않았을 때
 //  · fb-sync: 로그인(Auth) + 저장(Firestore lite) — 로그인했던 기기이거나 로그인·의견 보내기를 누를 때
 // 클라우드에는 users/{uid} 문서 하나에 전체 기록(store)을 넣는다. 합치기는 여러 탭 합치기와 같은 mergeStores.
-const FB_VER = '12.19.0';
+const FB_VER = 'f73157e4';
 const CLOUD_HINT_KEY = 'lang_starter_cloud';   // {uid, rev, at, lastUid} — 이 기기가 어느 계정과 이어졌는지(이름·이메일은 저장하지 않음)
 const CLOUD_JSON_LIMIT = 600000;                // 이보다 크면 gzip으로 줄여 저장(Firestore 문서 1MB 한도)
 const CLOUD_DOC_LIMIT = 900000;
@@ -4847,11 +5149,13 @@ function cloudCfg() { const c = window.CLOUD_CONFIG; return (c && typeof c === '
 function cloudOn() { return !!cloudCfg(); }
 // 문의·오류 제보 링크(cloud-config.js의 SITE_CONTACT) — https 주소일 때만
 function siteContact() { const c = window.SITE_CONTACT; return (c && typeof c === 'object' && typeof c.url === 'string' && /^https:\/\//.test(c.url)) ? { url: c.url, label: typeof c.label === 'string' && c.label.trim() ? c.label.trim().slice(0, 30) : '문의·오류 제보' } : null; }
+// 저장 공간이 가득 찼거나 막힌 브라우저에서도 이 세션 동안은 계정과 이어진 상태를 메모리에 기억한다
+var HINT_MEM = null, hintLsBad = false;
 function cloudHint(patch) {
-    let h = {};
-    try { h = JSON.parse(localStorage.getItem(CLOUD_HINT_KEY) || '{}') || {}; } catch (e) { h = {}; }
-    if (!isObj(h)) h = {};
-    if (patch) { h = Object.assign(h, patch); try { localStorage.setItem(CLOUD_HINT_KEY, JSON.stringify(h)); } catch (e) { } }
+    let h = null;
+    if (!hintLsBad) { try { h = JSON.parse(localStorage.getItem(CLOUD_HINT_KEY) || '{}'); } catch (e) { h = null; hintLsBad = true; } }
+    if (!isObj(h)) h = Object.assign({}, HINT_MEM || {});
+    if (patch) { h = Object.assign(h, patch); HINT_MEM = Object.assign({}, h); try { localStorage.setItem(CLOUD_HINT_KEY, JSON.stringify(h)); } catch (e) { hintLsBad = true; } }
     return h;
 }
 function fbUrl(f) { return new URL('vendor/firebase/' + f + '?v=' + FB_VER, location.href).href; }
@@ -4891,16 +5195,6 @@ function hasProgress(st) {
 /* ── 기록 묶기(필요하면 gzip) ── */
 function b64FromBytes(u8) { let s = ''; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); }
 function bytesFromB64(b) { const s = atob(b); const u8 = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u8[i] = s.charCodeAt(i); return u8; }
-async function packStore(st) {
-    const json = JSON.stringify(st);
-    const bytes = new TextEncoder().encode(json);
-    if (bytes.length <= CLOUD_JSON_LIMIT) return { enc: 'json', data: json };
-    if (typeof CompressionStream !== 'function') throw new Error('too-big');
-    const gz = new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer());
-    const data = b64FromBytes(gz);
-    if (data.length > CLOUD_DOC_LIMIT) throw new Error('too-big');
-    return { enc: 'gz', data };
-}
 async function unpackStore(d) {
     if (!isObj(d) || typeof d.data !== 'string') throw new Error('bad-doc');
     let json = d.data;
@@ -4914,21 +5208,26 @@ async function unpackStore(d) {
 }
 
 /* ── 로그인 상태 ── */
+// 이 기기가 지금 로그인한 계정과 이어져 있는가 — 처음 맞추기(또는 사용자의 선택)가 끝나기 전에는 올리기·내려받기를 하지 않는다
+function cloudLinked() { return !!(CLOUD.user && CLOUD.sync && !CLOUD.choosing && !CLOUD.deleting && cloudHint().lastUid === CLOUD.user.uid); }
 function onCloudAuth(u) {
     const prev = CLOUD.user;
     CLOUD.user = u || null;
     CLOUD.ready = true;
     if (u) {
         CLOUD.state = 'in';
+        CLOUD.signingOut = false;
         const h = cloudHint();
-        if (h.uid !== u.uid) cloudHint({ uid: u.uid, rev: '', at: '' });
+        if (h.uid !== u.uid) cloudHint({ uid: u.uid, rev: '', at: '', base: null });
         if ('name' in h || 'email' in h) { const x = cloudHint(); delete x.name; delete x.email; try { localStorage.setItem(CLOUD_HINT_KEY, JSON.stringify(x)); } catch (e) { } }
         if (!prev || prev.uid !== u.uid) cloudFirstSync(u);
         track('login_state', { signed_in: 1 });
     } else {
         const h = cloudHint();
         CLOUD.state = 'out';
-        if (h.uid) { cloudHint({ uid: '', lastUid: h.uid, rev: '' }); if (!CLOUD.signingOut) showToast('☁️ 로그인이 풀렸어요. 설정에서 다시 로그인해 주세요', '', 3600); }
+        if (CLOUD.choosing) { CLOUD.choosing = false; closeModal(true); }
+        clearTimeout(CLOUD.pushTimer); CLOUD.firstDirty = 0;
+        if (h.uid) { cloudHint({ uid: '', lastUid: h.uid, rev: '', base: null }); if (!CLOUD.signingOut) showToast('☁️ 로그인이 풀렸어요. 설정에서 다시 로그인해 주세요', '', 3600); }
         CLOUD.signingOut = false;
     }
     refreshCloudUi();
@@ -4941,7 +5240,11 @@ function cloudBoot() {
         CLOUD.state = 'loading';
         setTimeout(() => { loadFbSync().catch(() => { CLOUD.state = 'error'; refreshCloudUi(); }); }, 1200);
     }
-    window.addEventListener('online', () => { if (CLOUD.user) { cloudPull(); scheduleCloudPush(500); } });
+    window.addEventListener('online', () => {
+        if (!CLOUD.user) return;
+        if (CLOUD.firstPending && !CLOUD.syncing && !CLOUD.choosing) { cloudFirstSync(CLOUD.user); return; }
+        cloudPull(); scheduleCloudPush(500);
+    });
     document.addEventListener('visibilitychange', () => {
         if (!CLOUD.user) return;
         if (document.hidden) { if (CLOUD.dirty) cloudPush(); }
@@ -4988,49 +5291,158 @@ async function cloudLogin() {
         else showToast('로그인하지 못했어요' + (code ? ' (' + code.replace('auth/', '') + ')' : ''), '', 3600);
     }
 }
-function showInAppLoginHelp() {
-    const ua = navigator.userAgent || '';
-    openModal('<div class="sheet-head"><b>🔐 구글 로그인은 기본 브라우저에서</b><button class="sheet-close" data-close-overlay aria-label="닫기">✕</button></div>' +
-        '<div style="font-size:14px;line-height:1.7">카카오톡·네이버·인스타그램처럼 <b>앱 안에서 열린 브라우저</b>에서는 구글이 로그인을 막아 두었어요.<br>오른쪽 위(또는 아래) 메뉴 <b>⋮</b> → <b>다른 브라우저로 열기</b>(Chrome·Safari)를 누른 뒤 로그인해 주세요.</div>' +
-        (/KAKAOTALK/i.test(ua) ? '<a class="btn block" style="margin-top:12px;text-align:center;text-decoration:none" href="kakaotalk://web/openExternal?url=' + encodeURIComponent(shareUrl('', 'kakao_inapp')) + '">👉 기본 브라우저로 열기</a>' : '') +
-        '<button class="btn gray block" data-close-overlay style="margin-top:8px">닫기</button>');
+// 앱 안 브라우저에서 기본 브라우저로 옮기는 방법(아이폰은 ⋯·공유 → Safari, 그 밖은 메뉴 ⋮)
+function inAppHowTo() {
+    return IOS_UA ? '오른쪽 아래(또는 위) <b>⋯ · 공유</b> 메뉴 → <b>Safari로 열기</b>' : '오른쪽 위(또는 아래) 메뉴 <b>⋮</b> → <b>다른 브라우저로 열기</b>';
 }
+function showInAppLoginHelp() {
+    const href = openExternalHref();
+    const sheet = openModal('<div class="sheet-head"><b>🔐 구글 로그인은 기본 브라우저에서</b><button class="sheet-close" data-close-overlay aria-label="닫기">✕</button></div>' +
+        '<div style="font-size:14px;line-height:1.7">카카오톡·네이버·인스타그램처럼 <b>앱 안에서 열린 브라우저</b>에서는 구글이 로그인을 막아 두었어요.<br>' + (href ? '아래 버튼으로 기본 브라우저(Chrome·Safari)에서 연 뒤 로그인해 주세요.' : inAppHowTo() + '를 누른 뒤 로그인해 주세요.') + '</div>' +
+        (href ? '<a class="btn block" id="inAppLoginOpen" style="margin-top:12px;text-align:center;text-decoration:none" href="' + esc(href) + '">👉 기본 브라우저로 열기</a>' : '') +
+        '<button class="btn gray block" data-close-overlay style="margin-top:8px">닫기</button>');
+    const a = sheet.querySelector('#inAppLoginOpen');
+    if (a && typeof carryLink === 'function') carryLink(a);   // 카톡·라인은 기록을 함께 들고 간다
+}
+function sleepMs(ms) { return new Promise(r => setTimeout(r, ms)); }
 async function cloudLogout(wipeLocal) {
     if (!CLOUD.sync || !CLOUD.auth) return;
-    if (CLOUD.dirty) { try { await cloudPush(); } catch (e) { } }
+    if (wipeLocal && CLOUD.user && !cloudLinked() && hasProgress(store) &&
+        !confirm('이 기기의 기록은 아직 구글 계정에 저장되지 않았어요.\n지우면 되돌릴 수 없어요. 필요하면 취소하고 ⚙️ 설정의 백업 코드를 먼저 만들어 두세요.\n그래도 이 기기에서 지울까요? (취소하면 로그아웃도 하지 않아요)')) return;
+    clearTimeout(CLOUD.pushTimer); CLOUD.firstDirty = 0;
+    if (cloudLinked()) {
+        // 아직 못 올린 공부가 있으면 먼저 올린다(올리는 중이면 끝날 때까지 기다림)
+        const until = Date.now() + (wipeLocal ? 10000 : 3000);
+        if (wipeLocal && (CLOUD.pushing || JSON.stringify(store) !== CLOUD.lastPushedRaw)) showToast('☁️ 계정에 저장하는 중…', '', 2000);
+        for (let k = 0; k < 3; k++) {
+            while (CLOUD.pushing && Date.now() < until) await sleepMs(100);
+            if (CLOUD.pushing || JSON.stringify(store) === CLOUD.lastPushedRaw) break;
+            await cloudPush();
+            if (CLOUD.error) break;
+        }
+        clearTimeout(CLOUD.pushTimer);
+        if (wipeLocal && (CLOUD.pushing || JSON.stringify(store) !== CLOUD.lastPushedRaw)) {
+            showToast('⚠️ 아직 계정에 올리지 못한 기록이 있어서 지우지 않았어요. 인터넷에 연결한 뒤 다시 해 보거나, 먼저 백업 코드를 만들어 두세요', '', 5200);
+            if (!CLOUD.pushing) scheduleCloudPush(3000);
+            return;
+        }
+    }
     CLOUD.signingOut = true;
     try { await CLOUD.sync.signOut(CLOUD.auth); } catch (e) { CLOUD.signingOut = false; showToast('로그아웃하지 못했어요'); return; }
+    clearTimeout(CLOUD.pushTimer);
+    CLOUD.dirty = false; CLOUD.lastPushedRaw = ''; CLOUD.fails = 0; CLOUD.firstDirty = 0; CLOUD.error = ''; CLOUD.firstPending = null;
     if (wipeLocal) {
         const g = nextGen(store);
         store = normalizeStore({ gen: g, genAt: todayStr() }); save();
-        try { [LS_KEY + '_before_restore', LS_KEY + '_corrupt_backup', CLOUD_HINT_KEY, STATS_OFF_KEY, LEGACY_DONE_KEY, 'nihao_zh_v1', 'hola_es_v1', DEQ_KEY].forEach(k => localStorage.removeItem(k)); } catch (e) { }
-        CLOUD.lastPushedRaw = '';
+        // 통계 끄기 선택(STATS_OFF_KEY)은 기기 설정이라 남긴다
+        try { [LS_KEY + '_before_restore', LS_KEY + '_corrupt_backup', CLOUD_HINT_KEY, LEGACY_DONE_KEY, 'nihao_zh_v1', 'hola_es_v1', DEQ_KEY].forEach(k => localStorage.removeItem(k)); } catch (e) { }
+        reloadOtherTabs();
         showToast('👋 로그아웃하고 이 기기의 기록을 지웠어요');
         setTimeout(() => location.reload(), 600);
         return;
     }
+    store.seen.cloudNudge = todayStr(); save();   // 방금 로그아웃한 사람에게 바로 로그인을 권하지 않게
     showToast('👋 로그아웃했어요. 이 기기의 기록은 그대로 남아 있어요', '', 3200);
     if (S.view === 'settings') renderSettings();
 }
 
+/* ── 합치기: 세대(초기화·바꾸기)와 두 기기가 따로 모은 XP ── */
+// 마지막으로 맞춘 기록의 XP(언어별 총 XP와 최근 7일 XP) — 다음 합치기에서 두 기기가 그사이 따로 모은 XP를 더하는 기준
+function xpBase(st) {
+    const o = {};
+    Object.keys((st && st.byLang) || {}).forEach(k => {
+        const p = st.byLang[k]; if (!isObj(p)) return;
+        const d = {}; Object.keys(p.daily || {}).sort().slice(-7).forEach(x => { d[x] = (p.daily[x] && p.daily[x].xp) || 0; });
+        o[k] = { g: p.gen || 0, xp: p.xp || 0, d, dt: todayStr() };
+    });
+    return o;
+}
+// 두 쪽 모두 base에서 늘었으면 늘어난 만큼을 더한다(base가 어긋나면 큰 쪽)
+function addSince(c, l, b) { c = c || 0; l = l || 0; if (typeof b !== 'number' || b > c || b > l) return Math.max(c, l); return Math.max(c, l, c + l - b); }
+function langHas(p) { return !!p && !!(Object.keys(p.completed || {}).length || Object.keys(p.srs || {}).length || (p.xp || 0) > 0); }
+// 클라우드 기록(cs)과 이 기기 기록(local) 합치기. 세대가 다르면(어느 기기에서 '바꾸기'·언어 초기화를 함) 높은 세대를 그대로 쓴다 —
+// 날짜만으로는 초기화 전후의 공부를 가를 수 없어서, 밀려나는 쪽 기기에는 되돌리기용 사본을 남긴다(lost).
+// base: 마지막으로 맞춘 때의 xpBase — 두 기기가 그사이 따로 모은 XP를 더한다
+function cloudMerge(cs, local, base) {
+    const cg = cs.gen || 0, lg = local.gen || 0;
+    let m, lost = false;
+    if (cg !== lg) {
+        const hi = cg > lg ? cs : local, lo = hi === cs ? local : cs;
+        m = Object.assign({}, hi);
+        m.settings = local.settings;
+        m.seen = Object.assign({}, lo.seen, hi.seen);
+        m.badges = Object.assign({}, lo.badges, hi.badges);
+        lost = hi === cs && hasProgress(local);
+        return { store: m, lost };
+    }
+    m = mergeStores(cs, local);
+    m.byLang = Object.assign({}, m.byLang);
+    Object.keys(m.byLang).forEach(k => {
+        const a = cs.byLang[k], b = local.byLang[k];
+        if (!a || !b) return;
+        const ag = a.gen || 0, bg = b.gen || 0;
+        if (ag !== bg) { if (ag > bg && langHas(b)) lost = true; return; }   // 한쪽에서 이 언어를 초기화함 — 높은 세대(mergeLang이 고름)
+        const bx = isObj(base) && isObj(base[k]) && (base[k].g || 0) === ag ? base[k] : null;
+        if (!bx) return;
+        const o = m.byLang[k] = Object.assign({}, m.byLang[k]);
+        o.xp = addSince(a.xp, b.xp, bx.xp);
+        if (isObj(bx.d)) {
+            // 맞춘 날(dt, 옛 기준이면 기준에 있는 마지막 날) 이후에 두 기기 모두 공부한 날은 기준 0으로 더한다
+            const since = isDate(bx.dt) ? bx.dt : Object.keys(bx.d).sort().pop() || '';
+            o.daily = Object.assign({}, o.daily);
+            Object.keys(o.daily).forEach(d => {
+                const x = a.daily && a.daily[d], y = b.daily && b.daily[d];
+                if (!x || !y) return;
+                const bd = typeof bx.d[d] === 'number' ? bx.d[d] : (since && d >= since ? 0 : null);
+                if (bd !== null) o.daily[d] = Object.assign({}, o.daily[d], { xp: addSince(x.xp, y.xp, bd) });
+            });
+        }
+    });
+    return { store: m, lost };
+}
+// 보내고 응답을 못 받은 올리기(pend)가 실제로 계정에 들어가 있으면(문서 rev가 같으면) 맞춘 것으로 친다 — XP를 두 번 더하지 않게
+function ownPending(docRev) {
+    const h = cloudHint();
+    if (docRev && isObj(h.pend) && h.pend.rev === docRev) return cloudHint({ rev: docRev, base: h.pend.base || null, pend: null });
+    return h;
+}
+const LOST_TOAST = '☁️ 다른 기기에서 기록을 새로 바꿨어요. 이 기기의 이전 기록은 ⚙️ 설정에서 7일 안에 되돌릴 수 있어요';
+
 /* ── 처음 이어질 때: 계정 기록과 이 기기 기록 정리 ── */
 async function cloudFirstSync(u) {
     const m = CLOUD.sync, ref = m.doc(CLOUD.db, 'users', u.uid);
-    const interactive = !!CLOUD.loginTap; CLOUD.loginTap = false;
+    // 첫 맞추기가 실패해 다시 하는 경우에도 처음 로그인 버튼을 눌렀는지는 그대로 기억한다
+    const interactive = !!CLOUD.loginTap || !!(CLOUD.firstPending && CLOUD.firstPending.uid === u.uid && CLOUD.firstPending.interactive);
+    CLOUD.loginTap = false;
+    if (cloudHint().delPending === u.uid) { cloudFinishDelete(u, interactive); return; }   // 지난번에 계정 정보만 못 지웠음
     CLOUD.syncing = true; refreshCloudUi();
+    const rev0 = cloudHint().rev;
     let snap;
     try { snap = await m.getDoc(ref); }
-    catch (e) { CLOUD.syncing = false; CLOUD.error = '기록을 불러오지 못했어요'; refreshCloudUi(); scheduleCloudPush(20000); return; }
-    const h = cloudHint();
-    const localHas = hasProgress(store);
+    catch (e) {
+        CLOUD.syncing = false; CLOUD.error = '기록을 불러오지 못했어요'; refreshCloudUi();
+        if (!CLOUD.user || CLOUD.user.uid !== u.uid) return;
+        if (cloudHint().lastUid === u.uid) { CLOUD.firstPending = null; scheduleCloudPush(20000); return; }   // 이미 이어진 계정 — 올릴 때 합친다
+        // 아직 이어지지 않은 계정: 기록을 섞지 않고 잠시 뒤 처음 맞추기를 다시 한다
+        const fp = CLOUD.firstPending = { uid: u.uid, interactive, wait: Math.min(60000, ((CLOUD.firstPending && CLOUD.firstPending.wait) || 2500) * 2) };
+        setTimeout(() => { if (CLOUD.firstPending === fp && CLOUD.user && CLOUD.user.uid === u.uid && !CLOUD.syncing && !CLOUD.choosing) cloudFirstSync(u); }, fp.wait);
+        return;
+    }
+    CLOUD.firstPending = null;
+    if (!CLOUD.user || CLOUD.user.uid !== u.uid) { CLOUD.syncing = false; refreshCloudUi(); return; }
+    let h = cloudHint();
+    const linkedBefore = h.lastUid === u.uid;                  // 이 기기가 이미 이 계정과 이어져 있었음(세션 되살리기·다시 로그인)
     const otherOwner = !!(h.lastUid && h.lastUid !== u.uid);   // 이 기기 기록이 다른 계정에서 쓰던 것
+    const localHas = hasProgress(store);
+    // 그사이 올리기가 끝났거나 진행 중이면(이미 이어진 계정) 그 올리기가 합치기를 맡는다
+    if (linkedBefore && (CLOUD.pushing || h.rev !== rev0)) { CLOUD.syncing = false; refreshCloudUi(); return; }
+    if (linkedBefore) h = ownPending(snap.exists() ? snap.data().rev : '');   // 보내고 응답을 못 받은 올리기가 실제로 들어갔으면 내 것으로
     if (!snap.exists()) {
         CLOUD.syncing = false;
-        if (localHas && (otherOwner || (!h.lastUid && interactive))) {
-            cloudChoose(u, null, otherOwner ? 'newAccount' : 'firstUpload');
-            return;
-        }
-        cloudHint({ lastUid: u.uid, rev: '' });
+        if (linkedBefore && h.rev) { refreshCloudUi(); onRemoteDeleted(); return; }   // 맞춘 적 있는데 문서가 없음 = 지워짐(되살리지 않는다)
+        // 이 기기의 기록을 이 계정에 처음 올릴 때는 늘 묻는다(가족·공용 기기의 다른 사람 기록일 수 있음)
+        if (localHas && !linkedBefore) { cloudChoose(u, null, otherOwner ? 'newAccount' : 'firstUpload'); return; }
+        cloudHint({ lastUid: u.uid, rev: '', base: null });
         await cloudPush(true);
         if (localHas && interactive) showToast('☁️ 이 기기의 기록을 계정에 저장했어요. 이제 다른 기기에서도 이어서 할 수 있어요', 'gold', 4200);
         else if (interactive) showToast('☁️ 로그인했어요! 이제 기록이 계정에 자동 저장돼요', 'gold', 3600);
@@ -5040,17 +5452,29 @@ async function cloudFirstSync(u) {
     const d = snap.data();
     let cloudStore;
     try { cloudStore = await unpackStore(d); }
-    catch (e) { CLOUD.syncing = false; CLOUD.error = e.message === 'old-browser' ? '이 브라우저는 기록을 풀 수 없어요. 최신 크롬·사파리를 써 주세요' : '계정 기록을 읽지 못했어요'; refreshCloudUi(); return; }
+    catch (e) { CLOUD.syncing = false; CLOUD.error = e.message === 'old-browser' ? '이 브라우저는 기록을 풀 수 없어요. 최신 크롬·사파리를 써 주세요' : e.message === 'newer' ? '앱이 새 버전으로 바뀌었어요 — 새로고침해 주세요' : '계정 기록을 읽지 못했어요'; refreshCloudUi(); return; }
     CLOUD.syncing = false;
+    if (!CLOUD.user || CLOUD.user.uid !== u.uid) { refreshCloudUi(); return; }
     const cloudHas = hasProgress(cloudStore);
-    if (localHas && cloudHas && (otherOwner || (h.lastUid !== u.uid && interactive))) { cloudChoose(u, { d, cloudStore }, otherOwner ? 'otherOwner' : 'both'); return; }
-    // 이 기기가 비어 있으면 계정 기록을 그대로, 아니면 합친다(진도는 늘어나는 쪽으로)
-    const merged = localHas ? mergeStores(cloudStore, store) : mergeStores(store, cloudStore);
-    applyCloudStore(merged, d.rev);
+    if (localHas && !linkedBefore) { cloudChoose(u, { d, cloudStore }, cloudHas ? (otherOwner ? 'otherOwner' : 'both') : (otherOwner ? 'newAccount' : 'firstUpload')); return; }
+    let merged, lost = false;
+    const localWon = localHas && (store.gen || 0) > (cloudStore.gen || 0);   // 이 기기에서 바꾸기를 한 기록이 계정을 대신함
+    if (!localHas && !linkedBefore) {
+        // 빈 기기(또는 지우고 로그아웃한 기기)는 이 기기의 세대와 비교하지 않고 계정 기록을 그대로 받는다
+        merged = normalizeStore(cloudStore);
+        if (store.settings.stats === false) merged.settings.stats = false;
+    } else {
+        const r = cloudMerge(cloudStore, store, h.base); merged = r.store; lost = r.lost;
+    }
+    if (lost) snapshotBeforeRestore();
+    // 빈 기기가 계정 기록을 받을 때는 이 기기의 다른 탭(지운 기록·높은 세대)이 다시 섞지 않게 통째로 바꾼다
+    applyCloudStore(merged, d.rev, xpBase(cloudStore), !localHas && !linkedBefore);
     cloudHint({ lastUid: u.uid });
-    if (JSON.stringify(merged) !== JSON.stringify(cloudStore)) scheduleCloudPush(300);
+    if (JSON.stringify(store) !== JSON.stringify(cloudStore)) scheduleCloudPush(300);
     else CLOUD.lastPushedRaw = JSON.stringify(store);
-    if (interactive) showToast(localHas ? '☁️ 로그인했어요! 이 기기와 계정의 기록을 합쳤어요' : '☁️ 계정 기록을 불러왔어요. 이어서 공부해요!', 'gold', 3600);
+    if (lost) showToast(LOST_TOAST, '', 5200);
+    else if (localWon) showToast('☁️ 이 기기에서 바꾼 기록으로 계정 기록도 바꿨어요. 예전 계정 기록은 다른 기기의 ⚙️ 설정에서 7일 안에 되돌릴 수 있어요', '', 5200);
+    else if (interactive) showToast(localHas ? '☁️ 로그인했어요! 이 기기와 계정의 기록을 합쳤어요' : '☁️ 계정 기록을 불러왔어요. 이어서 공부해요!', 'gold', 3600);
 }
 function cloudChoose(u, cloud, why) {
     const localSum = storeSummary(store, '');
@@ -5062,30 +5486,44 @@ function cloudChoose(u, cloud, why) {
         : why === 'otherOwner'
             ? '이 기기에는 <b>다른 계정에서 쓰던 기록</b>이 남아 있어요. 어떻게 할까요?'
             : '이 기기에도, 계정에도 기록이 있어요. 두 기록을 합칠까요?';
+    const blank = why === 'newAccount' || why === 'firstUpload';
+    CLOUD.choosing = true;   // 고르는 동안은 올리기·내려받기를 멈춘다
+    clearTimeout(CLOUD.pushTimer); CLOUD.dirty = false; CLOUD.firstDirty = 0;
+    // 고르지 않고 닫으면(바깥 누르기·Esc·뒤로 가기) '취소하고 로그아웃'과 같다
     const sheet = openModal('<div class="sheet-head"><b>☁️ 기록 이어 붙이기</b></div>' +
         '<div style="font-size:14px;line-height:1.7;margin-bottom:10px">' + intro + '</div>' +
         '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px"><div class="card" style="margin:0"><b>📱 이 기기</b>' + localSum + '</div><div class="card" style="margin:0"><b>☁️ 구글 계정</b>' + cloudSum + '</div></div>' +
-        (why === 'newAccount' || why === 'firstUpload'
+        (blank
             ? '<button class="btn block" id="ccMerge">📤 ' + (why === 'firstUpload' ? '내 기록이에요 — 계정에 저장' : '이 기기 기록 올리기') + '</button><button class="btn gray block" id="ccCloud" style="margin-top:8px">🆕 이 계정은 빈 기록으로 시작</button>'
             : '<button class="btn block" id="ccMerge">🔗 둘 다 합치기' + (why === 'both' ? ' (추천)' : '') + '</button><button class="btn ' + (why === 'otherOwner' ? '' : 'gray ') + 'block" id="ccCloud" style="margin-top:8px">☁️ 계정 기록만 쓰기</button>') +
-        '<div class="muted" style="margin-top:8px">이 기기의 지금 기록은 7일 동안 보관돼서 설정에서 되돌릴 수 있어요.</div>' +
-        '<button class="btn ghost block" id="ccCancel" style="margin-top:8px">취소하고 로그아웃</button>');
-    const done = () => closeModal(true);
+        '<div class="muted" style="margin-top:8px">' + (blank ? '빈 기록으로 시작해도 ' : '계정 기록만 쓰면 ') + '이 기기의 지금 기록은 7일 동안 보관돼서 설정에서 되돌릴 수 있어요.</div>' +
+        '<button class="btn ghost block" id="ccCancel" style="margin-top:8px">취소하고 로그아웃</button>', () => { CLOUD.choosing = false; cloudLogout(false); });
+    const done = () => { CLOUD.choosing = false; closeModal(true); };
     sheet.querySelector('#ccMerge').addEventListener('click', () => {
         done();
-        const merged = cloud ? mergeStores(cloud.cloudStore, store, true) : store;
-        applyCloudStore(merged, cloud ? cloud.d.rev : '');
+        const cloudHas = !!cloud && hasProgress(cloud.cloudStore);
+        const cs = cloud && cloud.cloudStore;
+        let merged = cs ? mergeStores(cs, store, true) : store;
+        if (cs) {   // 합친 기록은 계정의 세대를 따른다(이 기기의 바꾸기·가져오기 세대가 계정과 다른 기기로 퍼지지 않게)
+            merged = Object.assign({}, merged, { gen: cs.gen || 0, genAt: cs.genAt || '' });
+            merged.byLang = Object.assign({}, merged.byLang);
+            Object.keys(merged.byLang).forEach(k => { const x = Object.assign({}, merged.byLang[k]), c = cs.byLang[k] || {}; ['gen', 'genAt'].forEach(f => { if (c[f]) x[f] = c[f]; else delete x[f]; }); merged.byLang[k] = x; });
+        }
+        applyCloudStore(merged, cloud ? cloud.d.rev : '', cs ? xpBase(cs) : null, !!cs);
         cloudHint({ lastUid: u.uid });
-        if (!cloud) track('sign_up', { method: 'google' });
+        if (!cloudHas) track('sign_up', { method: 'google' });
+        CLOUD.lastPushedRaw = '';
         scheduleCloudPush(200);
-        showToast('☁️ 기록을 합쳐서 계정에 저장해요', 'gold', 3200);
+        showToast(cloudHas ? '☁️ 두 기록을 합쳐서 계정에 저장해요' : '☁️ 이 기기 기록을 계정에 저장해요', 'gold', 3200);
     });
     sheet.querySelector('#ccCloud').addEventListener('click', async () => {
         done();
         snapshotBeforeRestore();
         const next = normalizeStore(cloud ? cloud.cloudStore : { settings: store.settings });
-        next.gen = nextGen(store, cloud && cloud.cloudStore); next.genAt = todayStr();   // 이 기기의 다른 탭·예전 기록이 다시 섞이지 않게
-        applyCloudStore(next, cloud ? cloud.d.rev : '');
+        // 계정 기록을 그대로 받는다(계정의 세대는 올리지 않음 — 다른 기기 기록을 밀어내지 않게). 계정 기록이 없으면 이 기기만 새 세대로 시작
+        if (!cloud) { next.gen = nextGen(store); next.genAt = todayStr(); }
+        if (store.settings.stats === false) next.settings.stats = false;
+        applyCloudStore(next, cloud ? cloud.d.rev : '', cloud ? xpBase(cloud.cloudStore) : null, true);
         cloudHint({ lastUid: u.uid });
         showToast(cloud ? '☁️ 계정 기록으로 바꿨어요' : '🆕 빈 기록으로 시작해요', 'gold', 3200);
         try { await cloudPush(true); } catch (e) { }
@@ -5096,12 +5534,14 @@ function cloudChoose(u, cloud, why) {
 function snapshotBeforeRestore() {
     try { const raw = localStorage.getItem(LS_KEY); if (raw) localStorage.setItem(LS_KEY + '_before_restore', JSON.stringify({ at: new Date().toISOString(), raw })); } catch (e) { }
 }
-// 클라우드에서 온 기록을 이 기기에 반영(저장 + 화면 갱신). rev = 그 기록의 버전
-function applyCloudStore(next, rev) {
+// 클라우드에서 온 기록을 이 기기에 반영(저장 + 화면 갱신). rev = 그 기록의 버전, base = 그 기록의 xpBase
+function applyCloudStore(next, rev, base, replace) {
     store = normalizeStore(next);
+    if (replace) { try { lastRaw = localStorage.getItem(LS_KEY); } catch (e) { } }   // save()가 다른 탭이 쓴 옛 기록과 합치지 않게
     CLOUD.applying = true;
     try { save(); } finally { CLOUD.applying = false; }
-    if (rev !== undefined) cloudHint({ rev: rev || '', at: new Date().toISOString() });
+    if (replace) reloadOtherTabs();
+    if (rev !== undefined) cloudHint({ rev: rev || '', at: new Date().toISOString(), base: base || null });
     CLOUD.lastPull = Date.now();
     refreshAfterExternalChange();
 }
@@ -5118,43 +5558,71 @@ function refreshAfterExternalChange() {
 
 /* ── 동기화: 올리기(바뀐 뒤 몇 초 모아서) · 내려받기(앱으로 돌아올 때) ── */
 function cloudAfterSave() {
-    if (!CLOUD || !CLOUD.user || CLOUD.applying) return;
+    if (!CLOUD || !CLOUD.user || CLOUD.applying || !cloudLinked()) return;
     CLOUD.dirty = true;
     scheduleCloudPush(4000);
 }
 function scheduleCloudPush(ms) {
-    if (!CLOUD.user) return;
+    if (!cloudLinked()) return;
     if (!CLOUD.firstDirty) CLOUD.firstDirty = Date.now();
     const wait = Math.max(0, Math.min(ms, 20000 - (Date.now() - CLOUD.firstDirty)));
     clearTimeout(CLOUD.pushTimer);
     CLOUD.pushTimer = setTimeout(() => cloudPush(), wait);
 }
+async function packJson(json) {
+    const bytes = new TextEncoder().encode(json);
+    if (bytes.length <= CLOUD_JSON_LIMIT) return { enc: 'json', data: json };
+    if (typeof CompressionStream !== 'function') throw new Error('too-big');
+    const gz = new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer());
+    const data = b64FromBytes(gz);
+    if (data.length > CLOUD_DOC_LIMIT) throw new Error('too-big');
+    return { enc: 'gz', data };
+}
 async function cloudPush(force) {
-    if (!CLOUD.user || !CLOUD.sync) return;
+    if (!cloudLinked() || newerSchema) return;
     if (CLOUD.pushing) { CLOUD.again = true; return; }
     const raw = JSON.stringify(store);
     if (!force && raw === CLOUD.lastPushedRaw) { CLOUD.dirty = false; CLOUD.firstDirty = 0; return; }
     CLOUD.pushing = true; CLOUD.dirty = false; CLOUD.firstDirty = 0;
     const m = CLOUD.sync, uid = CLOUD.user.uid, ref = m.doc(CLOUD.db, 'users', uid);
     const newRev = randId();
-    let merged = null, wrote = null;
+    let merged = null, lost = false, sent = '', sentBase = null, localBase = null, readRev = '';
     try {
         await m.runTransaction(CLOUD.db, async tx => {
             const snap = await tx.get(ref);
-            merged = null;
+            merged = null; lost = false;
+            const h = ownPending(snap.exists() ? snap.data().rev : '');
+            if (!snap.exists() && h.rev) throw new Error('deleted');   // 맞춘 적 있는데 문서가 없음 = 다른 기기에서 클라우드 기록을 지움(되살리지 않는다)
             // 마지막으로 맞춘 뒤 다른 기기가 올렸으면 먼저 합친다
-            if (snap.exists() && snap.data().rev && snap.data().rev !== cloudHint().rev) merged = mergeStores(await unpackStore(snap.data()), store);
-            const body = await packStore(merged || store);
-            wrote = merged || store;
+            if (snap.exists() && snap.data().rev && snap.data().rev !== h.rev) {
+                const cs = await unpackStore(snap.data());
+                localBase = xpBase(store);
+                const r = cloudMerge(cs, store, h.base); merged = normalizeStore(r.store); lost = r.lost;
+            }
+            const src = merged || store;
+            sent = JSON.stringify(src); sentBase = xpBase(src);   // 실제로 보낸 내용(보내는 사이 저장해도 바뀌지 않게 문자열로)
+            readRev = h.rev;
+            const body = await packJson(sent);
+            cloudHint({ pend: { rev: newRev, base: sentBase } });   // 응답이 끊겨도 이 rev는 내가 보낸 것
             tx.set(ref, { v: 1, enc: body.enc, data: body.data, rev: newRev, updatedAt: m.serverTimestamp(), app: APP_VERSION });
         });
         if (!CLOUD.user || CLOUD.user.uid !== uid) return;
-        if (merged) applyCloudStore(merged);
-        cloudHint({ rev: newRev, at: new Date().toISOString() });
-        CLOUD.lastPushedRaw = JSON.stringify(wrote);
+        if (merged) {
+            if (lost) snapshotBeforeRestore();
+            // 올리는 동안 이 기기에서 저장한 공부도 함께 남긴다
+            applyCloudStore(cloudMerge(merged, store, localBase).store);
+            if (lost) showToast(LOST_TOAST, '', 5200);
+        }
+        const hh = cloudHint();
+        if (!hh.rev || hh.rev === readRev || hh.rev === newRev) cloudHint({ rev: newRev, at: new Date().toISOString(), base: sentBase, pend: null });
+        else cloudHint({ pend: null });   // 그사이 이 기기의 다른 탭이 더 새 기록을 올렸음 — 그 rev를 덮지 않는다
+        CLOUD.lastPushedRaw = sent;
         CLOUD.error = '';
         CLOUD.fails = 0;
+        if (JSON.stringify(store) !== sent) scheduleCloudPush(1000);   // 보낸 뒤 달라진 부분도 올린다
     } catch (e) {
+        if (e && e.message === 'deleted') { CLOUD.pushing = false; onRemoteDeleted(); return; }
+        if (e && e.message === 'newer') return;
         CLOUD.dirty = true;
         CLOUD.fails = (CLOUD.fails || 0) + 1;
         CLOUD.error = e && e.message === 'too-big' ? '기록이 너무 커서 클라우드에 저장하지 못했어요 — 백업 코드를 이용해 주세요' : (navigator.onLine === false ? '오프라인 — 인터넷이 연결되면 저장해요' : '클라우드 저장이 잠시 실패했어요 — 곧 다시 시도해요');
@@ -5166,43 +5634,101 @@ async function cloudPush(force) {
     }
 }
 async function cloudPull() {
-    if (!CLOUD.user || !CLOUD.sync || CLOUD.pushing) return;
+    if (!cloudLinked() || CLOUD.pushing || newerSchema) return;
     const m = CLOUD.sync, uid = CLOUD.user.uid;
+    const rev0 = cloudHint().rev;
     CLOUD.lastPull = Date.now();
     try {
         const snap = await m.getDoc(m.doc(CLOUD.db, 'users', uid));
-        if (!CLOUD.user || CLOUD.user.uid !== uid) return;
-        if (!snap.exists()) { scheduleCloudPush(500); return; }
+        if (!cloudLinked() || CLOUD.user.uid !== uid) return;
+        if (!snap.exists()) { if (cloudHint().rev) onRemoteDeleted(); else scheduleCloudPush(500); return; }
         const d = snap.data();
-        if (d.rev && d.rev === cloudHint().rev) return;   // 마지막으로 맞춘 뒤 바뀐 게 없음
+        if (d.rev && d.rev === ownPending(d.rev).rev) return;   // 마지막으로 맞춘 뒤 바뀐 게 없음(응답을 못 받은 내 올리기 포함)
         const cloudStore = await unpackStore(d);
-        const merged = mergeStores(cloudStore, store);
-        applyCloudStore(merged, d.rev);
-        if (JSON.stringify(merged) !== JSON.stringify(cloudStore)) scheduleCloudPush(1500);
+        const h = cloudHint();
+        if (!cloudLinked() || CLOUD.user.uid !== uid || CLOUD.pushing || h.rev !== rev0) return;   // 그사이 올리기가 시작·완료됨 — 그쪽이 합친다
+        const r = cloudMerge(cloudStore, store, h.base);
+        if (r.lost) snapshotBeforeRestore();
+        applyCloudStore(r.store, d.rev, xpBase(cloudStore));
+        if (JSON.stringify(store) !== JSON.stringify(cloudStore)) scheduleCloudPush(1500);
         else CLOUD.lastPushedRaw = JSON.stringify(store);
         CLOUD.error = '';
+        if (r.lost) showToast(LOST_TOAST, '', 5200);
     } catch (e) { CLOUD.error = navigator.onLine === false ? '오프라인 — 인터넷이 연결되면 맞춰요' : ''; refreshCloudUi(); }
 }
-async function cloudDeleteAll() {
-    if (!CLOUD.user || !CLOUD.sync) return;
-    if (!confirm('구글 계정에 저장된 학습 기록을 모두 지우고 로그아웃할까요?\n(이 기기의 기록은 남아요. 지운 클라우드 기록은 되돌릴 수 없어요)')) return;
-    const m = CLOUD.sync;
+// 다른 기기에서 '클라우드 기록 지우기'를 함: 되살리지 않고 이 기기도 로그아웃(이 기기 기록은 그대로)
+async function onRemoteDeleted() {
+    if (CLOUD.remoteDeleted) return; CLOUD.remoteDeleted = true;
     clearTimeout(CLOUD.pushTimer);
-    try {
-        await m.deleteDoc(m.doc(CLOUD.db, 'users', CLOUD.user.uid));
-        try { await m.deleteUser(CLOUD.user); CLOUD.signingOut = true; }   // 로그인한 지 오래됐으면 계정 연결은 남고 로그아웃만
-        catch (e) { CLOUD.signingOut = true; await m.signOut(CLOUD.auth); }
-        cloudHint({ uid: '', lastUid: '', rev: '', at: '' });
-        CLOUD.lastPushedRaw = '';
-        showToast('🗑️ 클라우드 기록을 지우고 로그아웃했어요', '', 3200);
-        track('cloud_delete');
-    } catch (e) { showToast('지우지 못했어요. 인터넷 연결을 확인해 주세요'); }
+    CLOUD.dirty = false; CLOUD.lastPushedRaw = ''; CLOUD.firstDirty = 0; CLOUD.error = '';
+    CLOUD.signingOut = true;
+    try { await CLOUD.sync.signOut(CLOUD.auth); } catch (e) { CLOUD.signingOut = false; }
+    cloudHint({ uid: '', lastUid: '', rev: '', at: '', base: null });
+    CLOUD.remoteDeleted = false;
+    showToast('☁️ 다른 기기에서 클라우드 기록을 지워서 로그아웃했어요. 이 기기의 기록은 그대로 남아 있어요', '', 5200);
     if (S.view === 'settings') renderSettings();
+}
+function cloudDeleteAll() {
+    if (!CLOUD.user || !CLOUD.sync) return;
+    const sheet = openModal('<div class="sheet-head"><b>🗑️ 클라우드 기록 지우기</b><button class="sheet-close" data-close-overlay aria-label="닫기">✕</button></div>' +
+        '<div style="font-size:14px;line-height:1.7;margin-bottom:12px">구글 계정에 저장된 <b>학습 기록</b>과 <b>로그인 정보</b>(이름·이메일)를 모두 지우고 로그아웃해요. 지운 클라우드 기록은 되돌릴 수 없어요.<br><span class="muted">이 기기의 기록은 그대로 남아요. 본인 확인을 위해 구글 로그인 창이 한 번 더 열려요.</span></div>' +
+        '<button class="btn block" id="delGo" style="background:#dc2626">구글로 확인하고 모두 지우기</button>' +
+        '<button class="btn gray block" data-close-overlay style="margin-top:8px">취소</button>');
+    sheet.querySelector('#delGo').addEventListener('click', () => { closeModal(true); cloudDeleteRun(); });
+}
+async function cloudDeleteRun(opts) {
+    const m = CLOUD.sync, user = CLOUD.user;
+    if (!m || !user) return;
+    const uid = user.uid;
+    // 오래전에 로그인했으면 구글이 계정 삭제를 막으므로 먼저 다시 확인한다(팝업은 누른 순간 바로 열어야 막히지 않음)
+    let reauth = null;
+    if (!(opts && opts.skipReauth)) try {
+        const em = cloudCfg().emulator;
+        if (isObj(em) && typeof window.__emuGoogleIdToken === 'string' && m.reauthenticateWithCredential) reauth = m.reauthenticateWithCredential(user, m.GoogleAuthProvider.credential(window.__emuGoogleIdToken));   // 에뮬레이터 자동 테스트 전용
+        else if (m.reauthenticateWithPopup) { const pv = new m.GoogleAuthProvider(); pv.setCustomParameters({ prompt: 'select_account' }); reauth = m.reauthenticateWithPopup(user, pv); }
+    } catch (e) { reauth = Promise.reject(e); }
+    if (reauth) {
+        try { await reauth; }
+        catch (e) {
+            const code = (e && e.code) || '';
+            if (/popup-closed-by-user|cancelled-popup-request|user-cancelled/.test(code)) showToast('취소했어요 — 아무것도 지우지 않았어요');
+            else if (/user-mismatch/.test(code)) showToast('지금 로그인한 구글 계정을 골라 주세요 — 아무것도 지우지 않았어요', '', 3600);
+            else if (/popup-blocked/.test(code)) showToast('팝업이 막혔어요. 팝업을 허용한 뒤 다시 눌러 주세요 — 아무것도 지우지 않았어요', '', 4200);
+            else showToast('본인 확인을 하지 못했어요' + (code ? ' (' + code.replace('auth/', '') + ')' : '') + ' — 아무것도 지우지 않았어요', '', 3600);
+            return;
+        }
+    }
+    if (!CLOUD.user || CLOUD.user.uid !== uid) return;
+    clearTimeout(CLOUD.pushTimer);
+    CLOUD.deleting = true; CLOUD.signingOut = true;   // 지우는 동안 올리기 금지 · 로그아웃 안내 토스트 막기(deleteUser 안의 로그아웃보다 먼저)
+    try { await m.deleteDoc(m.doc(CLOUD.db, 'users', uid)); }
+    catch (e) { CLOUD.deleting = false; CLOUD.signingOut = false; showToast('지우지 못했어요. 인터넷 연결을 확인해 주세요'); return; }
+    let gone = false;
+    try { await m.deleteUser(CLOUD.user); gone = true; }
+    catch (e) { try { await m.signOut(CLOUD.auth); } catch (e2) { } }
+    CLOUD.deleting = false;
+    cloudHint({ uid: '', lastUid: '', rev: '', at: '', base: null, pend: null, delPending: gone ? '' : uid });
+    CLOUD.lastPushedRaw = ''; CLOUD.dirty = false; CLOUD.error = '';
+    showToast(gone ? '🗑️ 클라우드 기록과 계정 정보를 지우고 로그아웃했어요' : '🗑️ 클라우드 학습 기록은 지웠지만 계정 정보(이름·이메일)는 지우지 못했어요 — 같은 구글 계정으로 다시 로그인하면 마저 지울 수 있어요(지금은 로그아웃됐어요)', '', gone ? 3200 : 5600);
+    track('cloud_delete', { account: gone ? 1 : 0 });
+    if (S.view === 'settings') renderSettings();
+}
+// 지난번 '클라우드 기록 지우기'에서 계정 정보만 못 지운 계정으로 다시 로그인함 — 기록을 올리기 전에 먼저 묻는다
+function cloudFinishDelete(u, fresh) {
+    CLOUD.choosing = true;
+    const sheet = openModal('<div class="sheet-head"><b>🗑️ 계정 정보 지우기 마치기</b></div>' +
+        '<div style="font-size:14px;line-height:1.7;margin-bottom:12px">지난번에 클라우드 학습 기록은 지웠지만 <b>로그인 정보</b>(이름·이메일)는 지우지 못했어요. 지금 마저 지울까요?<br><span class="muted">이 기기의 기록은 그대로 남아요.</span></div>' +
+        '<button class="btn block" id="fdGo" style="background:#dc2626">계정 정보 지우기</button>' +
+        '<button class="btn gray block" id="fdKeep" style="margin-top:8px">지우지 않고 이 계정 계속 쓰기</button>', () => { CLOUD.choosing = false; cloudLogout(false); });
+    sheet.querySelector('#fdGo').addEventListener('click', () => { CLOUD.choosing = false; closeModal(true); cloudDeleteRun({ skipReauth: fresh }); });
+    sheet.querySelector('#fdKeep').addEventListener('click', () => { CLOUD.choosing = false; closeModal(true); cloudHint({ delPending: '' }); cloudFirstSync(u); });
 }
 function cloudStatusText() {
     const h = cloudHint();
     if (CLOUD.syncing || CLOUD.pushing) return '☁️ 맞추는 중…';
     if (CLOUD.error) return '⚠️ ' + CLOUD.error;
+    if (CLOUD.user && !cloudLinked()) return '⚠️ 아직 계정과 맞추지 못했어요';
+    if (storageFailed) return '☁️ 계정에 저장해요 · 이 브라우저에는 저장되지 않아서 새로고침하면 다시 로그인해야 할 수 있어요';
     if (CLOUD.dirty) return '☁️ 곧 저장해요';
     if (h.at) { const mins = Math.round((Date.now() - Date.parse(h.at)) / 60000); return '☁️ 저장됨 · ' + (mins < 1 ? '방금' : mins < 60 ? mins + '분 전' : mins < 1440 ? Math.round(mins / 60) + '시간 전' : h.at.slice(0, 10)); }
     return '☁️ 저장됨';
@@ -5211,6 +5737,7 @@ function cloudStatusText() {
 /* ── 화면: 설정 카드 · 언어 선택 화면 안내 · 홈 권유 ── */
 function cloudCardHtml(where) {
     if (!cloudOn()) return '';
+    if (IN_APP && !CLOUD.user && where !== 'settings') return '';   // 앱 안 브라우저는 로그인이 막혀 있다 — 기본 브라우저 안내(inAppNote)가 따로 있음
     const st = CLOUD.state;
     const u = CLOUD.user;
     if (u) {
@@ -5230,7 +5757,7 @@ function cloudCardHtml(where) {
             : '로그인하면 기록이 구글 계정에 자동 저장돼서, 휴대폰·PC 어디서든 이어서 공부할 수 있어요. 로그인하지 않아도 이 기기에서는 그대로 쓸 수 있어요.';
     return '<div class="card cloud-card" id="cloudCard"><div style="font-weight:800;font-size:14.5px;margin-bottom:4px">☁️ ' + (where === 'picker' ? '기록 이어서 하기' : '기록을 안전하게 보관하기') + '</div>' +
         '<div class="muted" style="margin-bottom:10px;line-height:1.6">' + desc + '</div>' +
-        (IN_APP ? '<div class="inapp-note" style="margin:0 0 8px">앱 안의 브라우저에서는 구글 로그인이 막혀 있어요. 메뉴 ⋮ → 다른 브라우저로 열기 후 로그인해 주세요.</div>' : '') +
+        (IN_APP ? '<div class="inapp-note" style="margin:0 0 8px">앱 안의 브라우저에서는 구글 로그인이 막혀 있어요. ' + inAppHowTo() + ' 후 로그인해 주세요.</div>' : '') +
         '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn gbtn" id="cloudIn"' + (busy ? ' disabled' : '') + '><span class="g-logo" aria-hidden="true">G</span> ' + label + '</button>' +
         (where === 'home' ? '<button class="btn small gray" id="cloudLater">나중에</button>' : '') + '</div>' +
         (where !== 'home' ? '<div class="muted" style="margin-top:8px">이름·이메일과 학습 기록만 저장해요 · <a href="../privacy.html" target="_blank" rel="noopener">개인정보 안내</a></div>' : '') +
@@ -5242,11 +5769,15 @@ function bindCloudCard(where) {
     const later = document.getElementById('cloudLater');
     if (later) later.addEventListener('click', () => { store.seen.cloudNudge = todayStr(); save(); const c = document.getElementById('cloudCard'); if (c) c.remove(); });
     const sn = document.getElementById('cloudSyncNow');
-    if (sn) sn.addEventListener('click', async () => { CLOUD.syncing = true; refreshCloudUi(); await cloudPull(); CLOUD.syncing = false; await cloudPush(true); showToast('☁️ 기록을 맞췄어요'); });
+    if (sn) sn.addEventListener('click', async () => {
+        if (!cloudLinked()) { if (CLOUD.user && !CLOUD.syncing && !CLOUD.choosing) { CLOUD.error = ''; cloudFirstSync(CLOUD.user); } return; }
+        CLOUD.error = ''; CLOUD.syncing = true; refreshCloudUi(); await cloudPull(); CLOUD.syncing = false; await cloudPush(true);
+        showToast(CLOUD.error ? '⚠️ ' + CLOUD.error : '☁️ 기록을 맞췄어요');
+    });
     const out = document.getElementById('cloudOut');
     if (out) out.addEventListener('click', () => {
         const sheet = openModal('<div class="sheet-head"><b>로그아웃</b><button class="sheet-close" data-close-overlay aria-label="닫기">✕</button></div>' +
-            '<div style="font-size:14px;line-height:1.7;margin-bottom:12px">기록은 구글 계정에 저장돼 있어요. 이 기기의 기록은 어떻게 할까요?</div>' +
+            '<div style="font-size:14px;line-height:1.7;margin-bottom:12px">' + (!cloudLinked() ? (hasProgress(store) ? '⚠️ 이 기기의 기록은 아직 구글 계정에 저장되지 않았어요.' : '') : !CLOUD.dirty && !CLOUD.pushing && !CLOUD.error && JSON.stringify(store) === CLOUD.lastPushedRaw ? '기록은 구글 계정에 저장돼 있어요.' : '⚠️ 아직 계정에 올리지 못한 기록이 있을 수 있어요. 로그아웃하기 전에 한 번 더 저장해 볼게요.') + ' 이 기기의 기록은 어떻게 할까요?</div>' +
             '<button class="btn block" id="outKeep">이 기기에 남겨 두기</button>' +
             '<button class="btn gray block" id="outWipe" style="margin-top:8px">이 기기에서 지우기 (함께 쓰는 기기라면)</button>');
         sheet.querySelector('#outKeep').addEventListener('click', () => { closeModal(true); cloudLogout(false); });
@@ -5269,7 +5800,7 @@ function refreshCloudUi() {
     bindCloudCard(where);
 }
 function cloudNudgeDue() {
-    if (!cloudOn() || CLOUD.user || cloudHint().uid) return false;
+    if (!cloudOn() || IN_APP || CLOUD.user || cloudHint().uid) return false;
     if (doneCount() < 2) return false;
     return !(store.seen.cloudNudge && dayDiff(store.seen.cloudNudge, todayStr()) < 10);
 }
@@ -5315,7 +5846,7 @@ function openFeedback(rating, from) {
         '<div class="seg" role="group" aria-label="만족도" style="margin-bottom:10px">' + R.map(r => '<button data-rate="' + r[0] + '" aria-pressed="' + (pick === r[0]) + '">' + r[1] + ' ' + r[2] + '</button>').join('') + '</div>' +
         '<textarea id="fbText" maxlength="1500" rows="4" style="width:100%;border:1px solid var(--border);border-radius:12px;padding:10px;font-size:14px;font-family:inherit" placeholder="좋았던 점, 불편했던 점, 이런 게 있으면 좋겠다… 무엇이든 적어 주세요"></textarea>' +
         '<input id="fbContact" maxlength="100" style="width:100%;border:1px solid var(--border);border-radius:12px;padding:10px;font-size:13px;margin-top:8px;font-family:inherit" placeholder="(선택) 답장 받을 연락처 — 이메일이나 카톡 ID">' +
-        '<div class="muted" style="margin:6px 0 10px">보내는 내용: 위에 쓴 글, 지금 배우는 언어, 앱 버전, 기기 종류(휴대폰/PC) · <a href="../privacy.html" target="_blank" rel="noopener">개인정보 안내</a></div>' +
+        '<div class="muted" style="margin:6px 0 10px">보내는 내용: 위에 쓴 글·만족도, (적었다면) 연락처, 지금 배우는 언어, 앱 버전, 기기 종류(휴대폰/PC)' + (CLOUD.user ? ', 계정 고유 번호(로그인 중)' : '') + ' · <a href="../privacy.html" target="_blank" rel="noopener">개인정보 안내</a></div>' +
         '<button class="btn block" id="fbSend">보내기</button>');
     sheet.querySelectorAll('[data-rate]').forEach(b => b.addEventListener('click', () => { pick = b.dataset.rate; sheet.querySelectorAll('[data-rate]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); }));
     sheet.querySelector('#fbSend').addEventListener('click', async () => {
@@ -5344,13 +5875,13 @@ function appBaseUrl() { return location.origin + location.pathname.replace(/[^/]
 function shareUrl(lang, src) {
     const q = new URLSearchParams();
     if (lang) q.set('lang', lang);
-    q.set('utm_source', src || 'share'); q.set('utm_medium', 'friend');
+    q.set('utm_source', src || 'share'); q.set('utm_medium', /inapp/.test(src || '') ? 'browser_switch' : 'friend');   // 앱 안 브라우저 → 기본 브라우저는 본인이 옮긴 것
     return appBaseUrl() + '?' + q.toString();
 }
 async function shareApp(kind, text) {
-    const lang = (CUR && CUR.code) || '';
+    const lang = /^brag/.test(kind || '') ? ((CUR && CUR.code) || '') : '';   // 자랑은 그 언어로, 추천은 친구가 언어를 고르게
     const url = shareUrl(lang, kind || 'share');
-    const msg = text || ((CUR ? CUR.flag + ' ' : '') + '왕초보도 하루 10분이면 되는 외국어 회화 앱이에요. 영어·중국어·일본어·스페인어·프랑스어 무료!');
+    const msg = text || ('랭귀지 스타터 — 왕초보도 하루 10분이면 되는 외국어 회화 앱이에요. 영어·중국어·일본어·스페인어·프랑스어 무료!');
     track('share', { kind: kind || 'share' });
     try {
         if (navigator.share) { await navigator.share({ title: '랭귀지 스타터', text: msg, url }); return; }
@@ -5420,16 +5951,54 @@ applyBigText();
 cloudBoot();
 // 서비스 워커: 한 번 연 언어는 오프라인에서도 열리게(https에서만, file://은 지금처럼)
 if ('serviceWorker' in navigator && window.isSecureContext && /^https?:$/.test(location.protocol)) {
+    // 새 서비스 워커가 열어 둔 화면을 넘겨받았을 때(= 새 배포) 계속 떠 있는 새로고침 안내
+    const showSwUpdateBar = () => {
+        if (document.getElementById('swUpdateBar')) return;
+        const css = document.createElement('style');
+        css.textContent = '.sw-update-bar{position:fixed;left:0;right:0;top:calc(8px + env(safe-area-inset-top,0px));margin:0 auto;width:max-content;max-width:calc(100vw - 16px);z-index:70;display:flex;align-items:center;gap:2px;background:var(--text,#1e293b);color:var(--card,#fff);border:1px solid rgba(255,255,255,.35);border-radius:999px;box-shadow:0 8px 24px rgba(0,0,0,.28);animation:swBarIn .3s ease-out}@keyframes swBarIn{from{opacity:0}to{opacity:1}}' +
+            '.sw-update-bar button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;min-height:44px;border-radius:999px}' +
+            '.sw-update-bar .sw-go{font-size:13.5px;font-weight:800;padding:8px 6px 8px 16px;text-align:left;word-break:keep-all}' +
+            '.sw-update-bar .sw-x{font-size:15px;min-width:40px;padding:0 12px 0 6px;opacity:.75}' +
+            '.sw-update-bar button:focus-visible{outline:3px solid var(--gold,#f0a500);outline-offset:2px}' +
+            '@media (prefers-color-scheme:dark){.sw-update-bar{border-color:rgba(255,255,255,.55)}}@media print{.sw-update-bar{display:none}}';
+        document.head.appendChild(css);
+        const bar = document.createElement('div');
+        bar.id = 'swUpdateBar'; bar.className = 'sw-update-bar'; bar.setAttribute('role', 'status');
+        bar.innerHTML = '<button type="button" class="sw-go">🆕 새 버전이 나왔어요 · 누르면 새로고침</button><button type="button" class="sw-x" aria-label="새 버전 안내 닫기">✕</button>';
+        bar.querySelector('.sw-go').addEventListener('click', () => location.reload());
+        bar.querySelector('.sw-x').addEventListener('click', () => bar.remove());
+        document.body.appendChild(bar);
+    };
+    // 느린 망에서 서비스 워커가 저장본 화면을 먼저 보여 줬는데, 뒤이어 받은 화면이 달랐을 때(= 새 배포) 알려 온다.
+    // load를 기다리지 않고 바로 듣는다(load 전에 온 알림을 놓치지 않게)
+    navigator.serviceWorker.addEventListener('message', e => { if (e.data && e.data.type === 'html-updated') showSwUpdateBar(); });
     window.addEventListener('load', () => {
+        // 처음 맡은 워커가 생기는 것(첫 설치)은 새 배포가 아니므로 안내하지 않는다 — 이미 맡은 워커가 있던 화면에서만
+        let hadCtl = !!navigator.serviceWorker.controller, lastCheck = 0, asked = false;
+        const loadedAt = Date.now();
         navigator.serviceWorker.register('sw.js').then(reg => {
             const warm = () => {
                 const sw = navigator.serviceWorker.controller || reg.active; if (!sw) return;
                 const urls = performance.getEntriesByType('resource').map(e => e.name).filter(u => /\/language-teacher\/((data|stories)-[a-z]{2}\.js|cloud-config\.js|vendor\/|icons\/)/.test(u));
-                sw.postMessage({ type: 'warm', urls: [location.href.split('?')[0]].concat(urls) });
+                // 녹음 목록: 서비스 워커가 켜지기 전에 받은 것(허브·공유 링크 ?lang= 로 온 첫 방문)도 오프라인용으로 담게. 녹음이 있는 언어만
+                const idx = Object.keys(CLIPS).filter(c => CLIPS[c] && CLIPS[c].ids).map(c => new URL('audio/' + c + '/index.json', location.href).href);
+                // 앱 화면은 처음 들어온 주소(?lang= 포함, 시작 코드가 지우기 전) — 방금 받은 그 주소라 HTTP 캐시에서 나온다
+                sw.postMessage({ type: 'warm', urls: [ENTRY_URL.split('#')[0]].concat(urls, idx) });
             };
             if (reg.active) warm(); else navigator.serviceWorker.addEventListener('controllerchange', warm, { once: true });
             // 언어를 새로 불러오면 그것도 담아 둔다
             setInterval(() => { if (navigator.serviceWorker.controller) warm(); }, 60000);
+            // 새 배포 확인: 화면으로 돌아올 때마다(30초에 한 번까지) sw.js가 바뀌었는지 본다(홈 화면 앱은 새로고침 수단이 없음)
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden || Date.now() - lastCheck < 30000) return;
+                lastCheck = Date.now(); asked = true; reg.update().catch(() => { });
+            });
+            // 새 워커가 이 화면을 넘겨받으면 화면 코드는 옛것 → 새로고침 안내. 열자마자(20초 안) 브라우저가 스스로 확인해
+            // 바뀐 경우는 방금 네트워크에서 받은 화면이 이미 새것이라 안내하지 않는다
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                if (hadCtl && (asked || Date.now() - loadedAt > 20000)) showSwUpdateBar();
+                hadCtl = true;
+            });
         }).catch(() => { });
     });
 }
