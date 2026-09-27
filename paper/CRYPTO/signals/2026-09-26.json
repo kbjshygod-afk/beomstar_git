@@ -1,0 +1,39 @@
+{
+ "market": "CRYPTO",
+ "as_of": "2026-09-26",
+ "regime": {
+  "benchmark": "BTC-USD",
+  "mode": "MA200",
+  "close": 84406.4531,
+  "ma200": 71001.4616,
+  "ma20": 80162.5438,
+  "on": true
+ },
+ "entries_next_open": [],
+ "exits_next_open": [],
+ "positions": [
+  "NEAR-USD"
+ ],
+ "watchlist": [
+  {
+   "symbol": "ZEC-USD",
+   "label": "1순위 · 임박 (피벗 1% 이내)",
+   "close": 1650.4628,
+   "pivot": 1651.0967,
+   "to_pivot_pct": 0.04,
+   "rs": 100.0
+  }
+ ],
+ "coverage": {
+  "requested": 30,
+  "loaded": 25,
+  "failed": [
+   "BTW-USD",
+   "CC-USD",
+   "FIGR_HELOC-USD",
+   "HYPE-USD",
+   "RAIN-USD"
+  ]
+ },
+ "generated_at": "2026-09-27T21:35:43Z"
+}
