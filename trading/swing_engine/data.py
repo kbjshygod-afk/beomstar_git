@@ -334,7 +334,8 @@ def _cache_paths(cache_dir, ticker):
     return base / f"{name}.csv", base / f"{name}.json"
 
 
-def _read_cache(cache_dir, ticker, start: date, end: date, now: datetime, max_age_hours: float, sess):
+def _read_cache(cache_dir, ticker, start: date, end: date, now: datetime, max_age_hours: float, sess,
+                grace_minutes: int = GRACE_MINUTES):
     """Cached bars for [start, end], or None when the cache may lack a final bar.
 
     The cache is complete for the window when `end`'s session had already closed at fetch
@@ -357,9 +358,9 @@ def _read_cache(cache_dir, ticker, start: date, end: date, now: datetime, max_ag
         return None
     if fetched.tzinfo is None:
         fetched = fetched.replace(tzinfo=timezone.utc)
-    pending = _first_open_date(sess, fetched)            # first bar still forming at fetch time
+    pending = _first_open_date(sess, fetched, grace_minutes)   # first bar still forming at fetch time
     complete = pending > end
-    unchanged = (now < _confirmed_at(pending, sess)
+    unchanged = (now < _confirmed_at(pending, sess, grace_minutes)
                  and (now - fetched).total_seconds() < max_age_hours * 3600)
     if not (complete or unchanged):
         return None
@@ -426,7 +427,7 @@ def _fields_frame(sub: pd.DataFrame, label: str = "yahoo") -> pd.DataFrame | Non
 def download_yahoo(tickers, start, end, cache_dir=None, chunk_size: int = 40, retries: int = 3,
                    pause: float = 2.0, max_age_hours: float = 12.0, now: datetime | None = None,
                    timeout: float = 30, market: str | None = None,
-                   close_only=()) -> tuple[dict[str, pd.DataFrame], list[str]]:
+                   close_only=(), grace_minutes: int = GRACE_MINUTES) -> tuple[dict[str, pd.DataFrame], list[str]]:
     """Daily bars for `tickers` between `start` and `end` (both inclusive).
 
     Chunked batch download with retries; tickers still missing after `retries` attempts
@@ -439,7 +440,8 @@ def download_yahoo(tickers, start, end, cache_dir=None, chunk_size: int = 40, re
     (session_for; inferred per ticker without it).
 
     Rows without a valid price are dropped (clean_bars). Tickers in `close_only`
-    (benchmarks) only need a valid close.
+    (benchmarks) only need a valid close. `grace_minutes` is the wait after a session close
+    before its bar counts as final (see _confirmed_at).
     """
     start = pd.Timestamp(start).date()
     end = pd.Timestamp(end).date()
@@ -450,7 +452,8 @@ def download_yahoo(tickers, start, end, cache_dir=None, chunk_size: int = 40, re
     frames: dict[str, pd.DataFrame] = {}
     todo = []
     for t in tickers:
-        hit = _read_cache(cache_dir, t, start, end, now, max_age_hours, sess[t]) if cache_dir else None
+        hit = (_read_cache(cache_dir, t, start, end, now, max_age_hours, sess[t], grace_minutes)
+               if cache_dir else None)
         if hit is not None and len(hit):
             frames[t] = hit
         else:
@@ -476,7 +479,7 @@ def download_yahoo(tickers, start, end, cache_dir=None, chunk_size: int = 40, re
                     continue
                 frames[t] = df
                 if cache_dir:
-                    final = confirmed_bars(df, sess[t], now)
+                    final = confirmed_bars(df, sess[t], now, grace_minutes)
                     if len(final):
                         _write_cache(cache_dir, t, final, start, end, now)
             missing = [t for t in missing if t not in frames]
