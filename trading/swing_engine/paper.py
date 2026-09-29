@@ -1,6 +1,7 @@
 """Daily paper trading with pre-committed signals (docs/paper-trading-plan.md).
 
-One run per market after its close:
+One run per market after its close (the workflow reruns every market every 2 hours; a rerun
+with nothing new commits nothing):
 
 1. Load the frozen universe (fixed on the first run) and confirmed bars up to now.
 2. Simulate the portfolio from the paper start date to the last confirmed bar (as_of).
@@ -53,6 +54,11 @@ OPENS = {"America/New_York": dtime(9, 30), "Asia/Seoul": dtime(9, 0)}
 # 2 h after the close), so the plan requires the signal file before the next bar closes, i.e.
 # within 24 hours of the close. The daily recomputation checks the signals themselves.
 CRYPTO_DEADLINE_HOURS = 24
+# A stock bar is used only from 90 minutes after its close (the separate schedules used to run
+# 95+ minutes after the close). Yahoo keeps updating the day's volume after the close, and the
+# entry trigger reads volume, so a signal file committed minutes after the close could differ
+# from the recomputation made with the final bar. Crypto bars are final at 00:00 UTC.
+SETTLE_MINUTES = 90
 WATCH_MAX = 15
 
 
@@ -174,15 +180,19 @@ def load_bars(market: str, params: dict, universe: list[str], start: date, now: 
     else:
         end = now.date() + timedelta(days=1)
         frames, failed = D.download_yahoo(universe, start, end, cache_dir=args.cache_dir,
-                                          chunk_size=args.chunk_size, market=market, now=now)
+                                          chunk_size=args.chunk_size, market=market, now=now,
+                                          grace_minutes=args.settle_minutes)
         bf, _ = D.download_yahoo([bench_t], start, end, cache_dir=args.cache_dir, market=market,
-                                 now=now, close_only=[bench_t])
+                                 now=now, close_only=[bench_t], grace_minutes=args.settle_minutes)
         bench = bf.get(bench_t)
-    frames = {t: D.drop_unconfirmed_last_bar(df, market, now=now, ticker=t)[0] for t, df in frames.items()}
+    grace = args.settle_minutes
+    frames = {t: D.drop_unconfirmed_last_bar(df, market, now=now, ticker=t, grace_minutes=grace)[0]
+              for t, df in frames.items()}
     frames = {t: D.truncate(df, None, start) for t, df in frames.items()}
     frames = {t: df for t, df in frames.items() if len(df)}
     if bench is not None:
-        bench = D.truncate(D.drop_unconfirmed_last_bar(bench, market, now=now, ticker=bench_t)[0], None, start)
+        bench = D.truncate(D.drop_unconfirmed_last_bar(bench, market, now=now, ticker=bench_t,
+                                                       grace_minutes=grace)[0], None, start)
     return frames, bench, sorted(set(failed) | (set(universe) - set(frames)))
 
 
@@ -540,16 +550,20 @@ def run(args) -> dict:
 
     latest_p = ledger / "latest.json"
     latest = json.loads(latest_p.read_text()) if latest_p.exists() else {"markets": {}}
-    latest["updated_at"] = _iso(now)
     latest["disclaimer"] = DISCLAIMER
     latest["unconfirmed"] = UNCONFIRMED_LINE
-    latest["markets"][market] = {
+    entry = json.loads(json.dumps(_jsonable({
         "as_of": snap["as_of"], "start_date": cfg["start_date"], "regime": snap["regime"],
         "entries_next_open": snap["entries_next_open"], "exits_next_open": snap["exits_next_open"],
-        "positions": _jsonable(res.open_positions), "watchlist": snap["watchlist"], "performance": perf,
+        "positions": res.open_positions, "watchlist": snap["watchlist"], "performance": perf,
         "status_csv": f"{market}/status.csv",
         "audit": {k: aud[k] for k in ("days", "signal_files", "missing_days", "late", "uncommitted", "mismatched", "revised")},
-    }
+    })))
+    # The schedule reruns every market every 2 hours; a rerun with nothing new leaves the file
+    # (and the ledger branch) untouched.
+    if latest["markets"].get(market) != entry:
+        latest["markets"][market] = entry
+        latest["updated_at"] = _iso(now)
     latest_p.write_text(json.dumps(_jsonable(latest), ensure_ascii=False, indent=1))
     if not args.no_commit:
         commit_and_push(repo, f"{market} ledger {snap['as_of']}", args.push_branch)
@@ -580,6 +594,8 @@ def build_parser() -> argparse.ArgumentParser:
                    help="start even if the first run is past the next open (not for the official ledger)")
     p.add_argument("--min-coverage", type=float, default=0.9,
                    help="share of symbols that must have the benchmark's last bar (else exit 75, nothing committed)")
+    p.add_argument("--settle-minutes", type=int, default=SETTLE_MINUTES,
+                   help="minutes after a stock market's close before its bar is used")
     p.add_argument("-v", "--verbose", action="store_true")
     return p
 

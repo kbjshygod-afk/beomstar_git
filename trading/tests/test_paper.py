@@ -113,8 +113,26 @@ def test_rerun_same_day_is_unchanged(tmp_path, ledger_repo, monkeypatch):
     days = _write_market(offline)
     now = _after_close(days[-1])
     r1 = _run(offline, ledger_repo, now, monkeypatch)
-    r2 = _run(offline, ledger_repo, now, monkeypatch)
+    head = subprocess.run(["git", "-C", str(ledger_repo), "rev-parse", "HEAD"], capture_output=True, text=True).stdout
+    r2 = _run(offline, ledger_repo, now + pd.Timedelta(hours=2), monkeypatch)   # the next 2-hourly run
     assert r1["signal_state"] == "new" and r2["signal_state"] == "unchanged"
+    # nothing new: no commit, latest.json keeps the first run's time
+    assert subprocess.run(["git", "-C", str(ledger_repo), "rev-parse", "HEAD"], capture_output=True, text=True).stdout == head
+    latest = json.loads((ledger_repo / "paper" / "latest.json").read_text())
+    assert latest["updated_at"] == P._iso(now)
+
+
+def test_bar_is_used_only_after_the_settle_time(tmp_path, ledger_repo, monkeypatch):
+    offline = tmp_path / "data"
+    offline.mkdir()
+    _write_market(offline)                                  # last bar Friday 2024-06-28
+    early = datetime(2024, 6, 28, 20, 30, tzinfo=timezone.utc)   # 16:30 ET, 30 min after the close
+    r = _run(offline, ledger_repo, early, monkeypatch)
+    # 06-28 is not used yet; 06-27's next open has passed, so the paper period does not start
+    assert r["started"] is False and r["as_of"] == "2024-06-27"
+    assert not (ledger_repo / "paper" / "SP500" / "signals").exists()
+    r = _run(offline, ledger_repo, datetime(2024, 6, 28, 21, 35, tzinfo=timezone.utc), monkeypatch)
+    assert r["started"] and r["snapshot"]["as_of"] == "2024-06-28" and r["signal_state"] == "new"
 
 
 def test_late_commit_is_flagged(tmp_path, ledger_repo, monkeypatch):
