@@ -1,0 +1,52 @@
+# Dispatches the paper-trading run (swing-paper.yml) every 2 hours without relying on
+# GitHub's cron. In this repository scheduled runs started 2-5 hours late or not at all
+# (2026-09-28: the Monday KRX run never started; the 2-hourly schedule merged on 09-29 had
+# not fired once 9 hours later), while dispatched runs start within seconds.
+#
+# One keeper job runs for 5 h 45 min: it dispatches swing-paper at 0 h, 2 h and 4 h, then
+# dispatches the next keeper before the 6-hour job limit. A workflow_dispatch made with
+# GITHUB_TOKEN may start a new run (other GITHUB_TOKEN events may not). The schedule below
+# restarts the chain if it ever breaks, whenever GitHub gets around to firing it.
+name: swing-paper-keeper
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '47 */6 * * *'
+  push:
+    branches: [claude/github-top-10-skills-k1u8yp]
+    paths: ['.github/workflows/swing-paper-keeper.yml']
+
+permissions:
+  actions: write
+  contents: read
+
+# One keeper at a time: a new one waits for the running one (only the newest waits), and
+# the hand-over is skipped when a run is cancelled, so keepers cannot restart each other.
+concurrency:
+  group: swing-paper-keeper
+  cancel-in-progress: false
+
+jobs:
+  keep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}   # gh dispatches on the default branch
+    steps:
+      - name: Smoke test (push) - one crypto-only dispatch, no loop
+        if: github.event_name == 'push'
+        run: gh workflow run swing-paper.yml -f markets=CRYPTO
+      - name: Dispatch swing-paper at 0 h, 2 h and 4 h
+        if: github.event_name != 'push'
+        run: |
+          for i in 1 2 3; do
+            gh workflow run swing-paper.yml -f tries=1 \
+              && echo "dispatched swing-paper $i/3 at $(date -u +%FT%TZ)" \
+              || echo "::warning::dispatch $i/3 failed"
+            if [ "$i" -lt 3 ]; then sleep 7200; else sleep 6300; fi
+          done
+      - name: Hand over to the next keeper
+        if: ${{ !cancelled() && github.event_name != 'push' }}
+        run: gh workflow run swing-paper-keeper.yml
