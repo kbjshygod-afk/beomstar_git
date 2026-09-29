@@ -1,0 +1,55 @@
+{
+ "market": "NDX100",
+ "as_of": "2026-09-29",
+ "regime": {
+  "benchmark": "^NDX",
+  "mode": "MA200",
+  "close": 30339.332,
+  "ma200": 27399.6757,
+  "ma20": 29706.8802,
+  "on": true
+ },
+ "entries_next_open": [],
+ "exits_next_open": [],
+ "positions": [],
+ "watchlist": [
+  {
+   "symbol": "STX",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 913.45,
+   "pivot": 936.94,
+   "to_pivot_pct": 2.57,
+   "rs": 95.96
+  },
+  {
+   "symbol": "MRVL",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 263.27,
+   "pivot": 267.48,
+   "to_pivot_pct": 1.6,
+   "rs": 94.95
+  },
+  {
+   "symbol": "CRWD",
+   "label": "1순위 · 임박 (피벗 1% 이내)",
+   "close": 262.74,
+   "pivot": 263.87,
+   "to_pivot_pct": 0.43,
+   "rs": 91.92
+  },
+  {
+   "symbol": "PANW",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 388.41,
+   "pivot": 396.3,
+   "to_pivot_pct": 2.03,
+   "rs": 88.89
+  }
+ ],
+ "coverage": {
+  "requested": 101,
+  "loaded": 101,
+  "failed": []
+ },
+ "generated_at": "2026-09-29T23:45:14Z"
+}
