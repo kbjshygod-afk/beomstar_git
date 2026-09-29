@@ -1,0 +1,87 @@
+{
+ "market": "NDX100",
+ "as_of": "2026-09-28",
+ "regime": {
+  "benchmark": "^NDX",
+  "mode": "MA200",
+  "close": 30276.8105,
+  "ma200": 27376.8612,
+  "ma20": 29662.7621,
+  "on": true
+ },
+ "entries_next_open": [],
+ "exits_next_open": [],
+ "positions": [],
+ "watchlist": [
+  {
+   "symbol": "STX",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 921.51,
+   "pivot": 936.94,
+   "to_pivot_pct": 1.67,
+   "rs": 96.97
+  },
+  {
+   "symbol": "CRWD",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 259.25,
+   "pivot": 263.87,
+   "to_pivot_pct": 1.78,
+   "rs": 92.93
+  },
+  {
+   "symbol": "PANW",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 392.09,
+   "pivot": 396.3,
+   "to_pivot_pct": 1.07,
+   "rs": 90.91
+  },
+  {
+   "symbol": "FTNT",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 176.33,
+   "pivot": 181.37,
+   "to_pivot_pct": 2.86,
+   "rs": 89.9
+  },
+  {
+   "symbol": "ASML",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 1771.41,
+   "pivot": 1790.0,
+   "to_pivot_pct": 1.05,
+   "rs": 81.82
+  },
+  {
+   "symbol": "TXN",
+   "label": "1순위 · 임박 (피벗 1% 이내)",
+   "close": 278.31,
+   "pivot": 278.69,
+   "to_pivot_pct": 0.14,
+   "rs": 79.8
+  },
+  {
+   "symbol": "AAPL",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 338.4,
+   "pivot": 345.34,
+   "to_pivot_pct": 2.05,
+   "rs": 76.77
+  },
+  {
+   "symbol": "NVDA",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 228.86,
+   "pivot": 234.76,
+   "to_pivot_pct": 2.58,
+   "rs": 70.71
+  }
+ ],
+ "coverage": {
+  "requested": 101,
+  "loaded": 101,
+  "failed": []
+ },
+ "generated_at": "2026-09-29T01:31:47Z"
+}
