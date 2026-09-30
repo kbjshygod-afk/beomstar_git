@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from swing_engine import data as D
 from swing_engine import paper as P
 
 
@@ -46,13 +47,13 @@ def ledger_repo(tmp_path):
     return repo
 
 
-def _run(offline, repo, now, monkeypatch, commit_time=None):
+def _run(offline, repo, now, monkeypatch, commit_time=None, extra=()):
     ct = (commit_time or now).strftime("%Y-%m-%dT%H:%M:%S+00:00")
     monkeypatch.setenv("GIT_COMMITTER_DATE", ct)
     monkeypatch.setenv("GIT_AUTHOR_DATE", ct)
     args = P.build_parser().parse_args([
         "--market", "SP500", "--ledger-dir", str(repo / "paper"), "--offline-dir", str(offline),
-        "--now", now.strftime("%Y-%m-%dT%H:%M:%S")])
+        "--now", now.strftime("%Y-%m-%dT%H:%M:%S"), *extra])
     return P.run(args)
 
 
@@ -148,8 +149,15 @@ def test_older_data_never_rewinds_the_ledger(tmp_path, ledger_repo, monkeypatch)
     short.mkdir()
     for f in offline.glob("*.csv"):
         pd.read_csv(f).iloc[:-1].to_csv(short / f.name, index=False)
-    r2 = _run(short, ledger_repo, _after_close(days[-1]) + pd.Timedelta(hours=4), monkeypatch)
+    cache = tmp_path / "cache"                              # cached bars of that incomplete download
+    stale = [q for t in ("T00", "^GSPC") for q in D._cache_paths(cache, t)]
+    for q in stale:
+        q.parent.mkdir(parents=True, exist_ok=True)
+        q.write_text("stale")
+    r2 = _run(short, ledger_repo, _after_close(days[-1]) + pd.Timedelta(hours=4), monkeypatch,
+              extra=("--cache-dir", str(cache)))
     assert r2["ready"] is False and r2["as_of"] == days[-2].strftime("%Y-%m-%d")
+    assert not any(q.exists() for q in stale)               # the next run downloads them again
     root = ledger_repo / "paper" / "SP500"
     assert sorted(q.name for q in (root / "signals").iterdir()) == [f"{days[-1]:%Y-%m-%d}.json"]
     assert subprocess.run(["git", "-C", str(ledger_repo), "rev-parse", "HEAD"], capture_output=True, text=True).stdout == head

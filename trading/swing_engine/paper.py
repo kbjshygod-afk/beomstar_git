@@ -490,6 +490,20 @@ def ledger_floor(root: Path, start_date) -> pd.Timestamp | None:
     return max(days) if days else None
 
 
+def forget_cached_bars(cache_dir, tickers) -> None:
+    """Delete the cached bars of `tickers` so the next run downloads them again.
+
+    The cache is reused until the next session closes, so one incomplete download would
+    otherwise be served to every run in between (2026-09-30: the KRX data fetched at
+    23:45 UTC, which ended at 09-28, was reused by every run until 08:00 UTC).
+    """
+    if not cache_dir:
+        return
+    for t in tickers:
+        for q in D._cache_paths(cache_dir, t):
+            q.unlink(missing_ok=True)
+
+
 # ---------------------------------------------------------------------------
 # main
 # ---------------------------------------------------------------------------
@@ -521,6 +535,7 @@ def run(args) -> dict:
         msg = f"{market}: 데이터 미준비 — {why}. 아무것도 커밋하지 않고 종료합니다."
         log.warning(msg)
         print(msg)
+        forget_cached_bars(args.cache_dir, list(cfg["universe"]) + [params["benchmark"]])
         return {"started": cfg["start_date"] is not None, "ready": False, "as_of": _day(as_of), "reason": why}
     if cfg["start_date"] is None:
         # The paper period may only start with a signal file committed before the next open;
