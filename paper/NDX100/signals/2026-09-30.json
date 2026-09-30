@@ -1,0 +1,79 @@
+{
+ "market": "NDX100",
+ "as_of": "2026-09-30",
+ "regime": {
+  "benchmark": "^NDX",
+  "mode": "MA200",
+  "close": 30408.502,
+  "ma200": 27423.2847,
+  "ma20": 29773.4441,
+  "on": true
+ },
+ "entries_next_open": [],
+ "exits_next_open": [],
+ "positions": [],
+ "watchlist": [
+  {
+   "symbol": "STX",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 922.34,
+   "pivot": 944.43,
+   "to_pivot_pct": 2.39,
+   "rs": 95.96
+  },
+  {
+   "symbol": "MRVL",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 264.21,
+   "pivot": 267.48,
+   "to_pivot_pct": 1.24,
+   "rs": 93.94
+  },
+  {
+   "symbol": "CRWD",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 264.75,
+   "pivot": 267.69,
+   "to_pivot_pct": 1.11,
+   "rs": 92.93
+  },
+  {
+   "symbol": "FTNT",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 178.76,
+   "pivot": 181.37,
+   "to_pivot_pct": 1.46,
+   "rs": 87.88
+  },
+  {
+   "symbol": "DDOG",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 273.85,
+   "pivot": 280.7,
+   "to_pivot_pct": 2.5,
+   "rs": 85.86
+  },
+  {
+   "symbol": "ASML",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 1811.67,
+   "pivot": 1841.77,
+   "to_pivot_pct": 1.66,
+   "rs": 81.82
+  },
+  {
+   "symbol": "TXN",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 280.09,
+   "pivot": 284.39,
+   "to_pivot_pct": 1.54,
+   "rs": 79.8
+  }
+ ],
+ "coverage": {
+  "requested": 101,
+  "loaded": 101,
+  "failed": []
+ },
+ "generated_at": "2026-09-30T23:04:55Z"
+}
