@@ -1,0 +1,50 @@
+{
+ "market": "KOSDAQ",
+ "as_of": "2026-09-30",
+ "regime": {
+  "benchmark": "^KQ11",
+  "mode": "NONE",
+  "close": 855.91,
+  "ma200": 984.6321,
+  "ma20": 825.142,
+  "on": true
+ },
+ "entries_next_open": [],
+ "exits_next_open": [],
+ "positions": [
+  "083450.KQ",
+  "252990.KQ"
+ ],
+ "watchlist": [
+  {
+   "symbol": "031980.KQ",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 178600.0,
+   "pivot": 180800.0,
+   "to_pivot_pct": 1.23,
+   "rs": 95.17
+  },
+  {
+   "symbol": "119850.KQ",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 57200.0,
+   "pivot": 58000.0,
+   "to_pivot_pct": 1.4,
+   "rs": 89.66
+  },
+  {
+   "symbol": "096530.KQ",
+   "label": "1순위 · 임박 (피벗 1% 이내)",
+   "close": 35450.0,
+   "pivot": 35600.0,
+   "to_pivot_pct": 0.42,
+   "rs": 70.34
+  }
+ ],
+ "coverage": {
+  "requested": 150,
+  "loaded": 150,
+  "failed": []
+ },
+ "generated_at": "2026-09-30T08:57:39Z"
+}
