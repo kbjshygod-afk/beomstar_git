@@ -477,6 +477,19 @@ def data_ready(market: str, frames: dict, bench: pd.DataFrame, now: datetime,
     return True, ""
 
 
+def ledger_floor(root: Path, start_date) -> pd.Timestamp | None:
+    """Latest bar the ledger already covers: its newest signal file or the start date.
+
+    A run whose data ends before it would rewind the ledger. Yahoo has served such data:
+    2026-09-29 23:45 UTC, 15 minutes before the KRX open, ^KS11 and every KOSPI/KOSDAQ symbol
+    ended at 09-28 although the 09-29 signal files had been committed at 09:13 UTC.
+    """
+    days = [pd.Timestamp(q.stem) for q in (root / "signals").glob("*.json") if "." not in q.stem]
+    if start_date:
+        days.append(pd.Timestamp(start_date))
+    return max(days) if days else None
+
+
 # ---------------------------------------------------------------------------
 # main
 # ---------------------------------------------------------------------------
@@ -500,6 +513,10 @@ def run(args) -> dict:
         raise SystemExit(f"benchmark {params['benchmark']} could not be loaded")
     as_of = bench.index[-1]
     ok, why = data_ready(market, frames, bench, now, args.min_coverage, params["benchmark"])
+    floor = ledger_floor(root, cfg["start_date"])
+    if ok and floor is not None and as_of < floor:
+        ok, why = False, (f"{params['benchmark']} 마지막 확정 봉 {_day(as_of)}이 장부에 이미 있는 "
+                          f"{_day(floor)}보다 이전 (Yahoo가 최근 봉을 빠뜨림)")
     if not ok:
         msg = f"{market}: 데이터 미준비 — {why}. 아무것도 커밋하지 않고 종료합니다."
         log.warning(msg)

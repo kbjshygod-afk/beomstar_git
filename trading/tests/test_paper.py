@@ -135,6 +135,29 @@ def test_bar_is_used_only_after_the_settle_time(tmp_path, ledger_repo, monkeypat
     assert r["started"] and r["snapshot"]["as_of"] == "2024-06-28" and r["signal_state"] == "new"
 
 
+def test_older_data_never_rewinds_the_ledger(tmp_path, ledger_repo, monkeypatch):
+    """Yahoo served KRX data ending a day early just before the open (2026-09-29 23:45 UTC):
+    such a run commits nothing instead of writing an older signal file."""
+    offline = tmp_path / "data"
+    offline.mkdir()
+    days = _write_market(offline)
+    r1 = _run(offline, ledger_repo, _after_close(days[-1]), monkeypatch)
+    assert r1["signal_state"] == "new"
+    head = subprocess.run(["git", "-C", str(ledger_repo), "rev-parse", "HEAD"], capture_output=True, text=True).stdout
+    short = tmp_path / "short"                              # the same data without the last bar
+    short.mkdir()
+    for f in offline.glob("*.csv"):
+        pd.read_csv(f).iloc[:-1].to_csv(short / f.name, index=False)
+    r2 = _run(short, ledger_repo, _after_close(days[-1]) + pd.Timedelta(hours=4), monkeypatch)
+    assert r2["ready"] is False and r2["as_of"] == days[-2].strftime("%Y-%m-%d")
+    root = ledger_repo / "paper" / "SP500"
+    assert sorted(q.name for q in (root / "signals").iterdir()) == [f"{days[-1]:%Y-%m-%d}.json"]
+    assert subprocess.run(["git", "-C", str(ledger_repo), "rev-parse", "HEAD"], capture_output=True, text=True).stdout == head
+    assert json.loads((ledger_repo / "paper" / "latest.json").read_text())["markets"]["SP500"]["as_of"] == f"{days[-1]:%Y-%m-%d}"
+    assert P.main(["--market", "SP500", "--ledger-dir", str(ledger_repo / "paper"), "--offline-dir", str(short),
+                   "--now", (_after_close(days[-1]) + pd.Timedelta(hours=4)).strftime("%Y-%m-%dT%H:%M:%S")]) == P.NOT_READY
+
+
 def test_late_commit_is_flagged(tmp_path, ledger_repo, monkeypatch):
     offline = tmp_path / "data"
     offline.mkdir()
