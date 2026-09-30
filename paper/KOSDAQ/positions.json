@@ -1,1 +1,30 @@
-[]
+[
+ {
+  "symbol": "252990.KQ",
+  "signal_date": "2026-09-29",
+  "exit_signal_date": null,
+  "entry_date": "2026-09-30",
+  "entry_price": 20000.0,
+  "qty": 375.0,
+  "stop_price": 18000.0,
+  "last_close": 19740.0,
+  "exit_ma": 14409.2,
+  "unrealized_pnl": -127305.0,
+  "price_pnl_pct": -1.3000000000000012,
+  "exit_pending": false
+ },
+ {
+  "symbol": "083450.KQ",
+  "signal_date": "2026-09-29",
+  "exit_signal_date": null,
+  "entry_date": "2026-09-30",
+  "entry_price": 52600.0,
+  "qty": 141.0,
+  "stop_price": 47340.0,
+  "last_close": 51000.0,
+  "exit_ma": 45314.0,
+  "unrealized_pnl": -254815.2000000002,
+  "price_pnl_pct": -3.041825095057038,
+  "exit_pending": false
+ }
+]
