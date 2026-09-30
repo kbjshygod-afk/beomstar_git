@@ -23,8 +23,10 @@ permissions:
 
 # One keeper at a time: a new one waits for the running one (only the newest waits), and
 # the hand-over is skipped when a run is cancelled, so keepers cannot restart each other.
+# Push smoke tests use their own group: a waiting smoke test would otherwise replace the
+# next keeper that the running one has just dispatched, and the chain would stop.
 concurrency:
-  group: swing-paper-keeper
+  group: swing-paper-keeper-${{ github.event_name == 'push' && 'smoke' || 'chain' }}
   cancel-in-progress: false
 
 jobs:
