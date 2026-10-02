@@ -329,14 +329,14 @@
    }
   },
   "KOSPI": {
-   "as_of": "2026-10-01",
+   "as_of": "2026-10-02",
    "start_date": "2026-09-29",
    "regime": {
     "benchmark": "^KS11",
     "mode": "MA200_AND_MA20",
-    "close": 6971.3501,
-    "ma200": 6310.5176,
-    "ma20": 6854.5261,
+    "close": 7003.7402,
+    "ma200": 6325.036,
+    "ma20": 6876.5771,
     "on": true
    },
    "entries_next_open": [],
@@ -344,26 +344,42 @@
    "positions": [],
    "watchlist": [
     {
-     "symbol": "001820.KS",
+     "symbol": "010950.KS",
      "label": "2순위 · 근접 (피벗 3% 이내)",
-     "close": 158700.0,
-     "pivot": 163300.0,
-     "to_pivot_pct": 2.9,
-     "rs": 98.99
+     "close": 166200.0,
+     "pivot": 170800.0,
+     "to_pivot_pct": 2.77,
+     "rs": 95.96
     },
     {
      "symbol": "281820.KS",
      "label": "1순위 · 임박 (피벗 1% 이내)",
-     "close": 92500.0,
+     "close": 92000.0,
      "pivot": 92600.0,
-     "to_pivot_pct": 0.11,
+     "to_pivot_pct": 0.65,
      "rs": 90.91
+    },
+    {
+     "symbol": "089860.KS",
+     "label": "1순위 · 임박 (피벗 1% 이내)",
+     "close": 51600.0,
+     "pivot": 52100.0,
+     "to_pivot_pct": 0.97,
+     "rs": 89.9
+    },
+    {
+     "symbol": "028670.KS",
+     "label": "1순위 · 임박 (피벗 1% 이내)",
+     "close": 6240.0,
+     "pivot": 6300.0,
+     "to_pivot_pct": 0.96,
+     "rs": 83.33
     }
    ],
    "performance": {
     "equity": 100000000.0,
     "return_pct": 0.0,
-    "bench_return_pct": 1.46,
+    "bench_return_pct": 1.93,
     "mdd_pct": 0.0,
     "closed_trades": 0,
     "win_rate_pct": null,
@@ -373,8 +389,8 @@
    },
    "status_csv": "KOSPI/status.csv",
    "audit": {
-    "days": 3,
-    "signal_files": 3,
+    "days": 4,
+    "signal_files": 4,
     "missing_days": [],
     "late": [],
     "uncommitted": [],
@@ -473,7 +489,7 @@
    }
   }
  },
- "updated_at": "2026-10-02T07:50:31Z",
+ "updated_at": "2026-10-02T09:36:09Z",
  "disclaimer": "기계적 룰 출력이며 투자 자문이 아닙니다. 매수·매도 결정은 소유자 본인이 합니다.",
  "unconfirmed": "미확인 추정값(스캐너 원본 코드 미확인): 피벗=직전 20봉 최고가(당일 제외) · 거래량 평균=직전 50일(당일 제외) · RS=지수 대비 가중 1년 수익률 ≥ 0%p(스캐너는 유니버스 백분위 ≥ 70) · 52주 고저=종가 기준 · 200일선 상승=22봉 전 대비 · 수축비=10/40일 평균 TR · 비용=편도 0.2%"
 }
