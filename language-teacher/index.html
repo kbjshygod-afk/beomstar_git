@@ -1899,12 +1899,12 @@ function jaKanji() {
     Object.keys(g.k).forEach(k => { m.set(k, String(g.k[k]).split('|')); max = Math.max(max, Array.from(k).length); });
     return (JA_KJ = { m, max });
 }
-function jaReadings(said) {
+function jaReadings(said, targetKana) {
     const all = [];
-    jaNumReadings(said).forEach(s => jaKanjiReadings(s).forEach(x => { if (all.length < 32 && !all.includes(x)) all.push(x); }));
+    jaNumReadings(said).forEach(s => jaKanjiReadings(s, targetKana).forEach(x => { if (all.length < 32 && !all.includes(x)) all.push(x); }));
     return all.length ? all : [said];
 }
-function jaKanjiReadings(said) {
+function jaKanjiReadings(said, targetKana) {
     const d = jaKanji(), cs = Array.from(String(said || ''));
     if (!d || !cs.some(c => /[一-鿿々]/.test(c))) return [said];
     let outs = [''];
@@ -1912,8 +1912,10 @@ function jaKanjiReadings(said) {
         let hit = null;
         if (/[一-鿿々]/.test(cs[i])) for (let L = Math.min(d.max, cs.length - i); L >= 1; L--) { const r = d.m.get(cs.slice(i, i + L).join('')); if (r) { hit = { L, r }; break; } }
         if (!hit) { outs = outs.map(o => o + cs[i]); i++; continue; }
+        // 읽기가 여럿이면(人 = ひと·じん) 목표 문장에 들어 있는 읽기만 — 없으면 모두
+        const inT = targetKana ? hit.r.filter(r => targetKana.includes(r)) : [], rs = inT.length ? inT : hit.r;
         const next = [];
-        outs.forEach(o => hit.r.forEach(r => { if (next.length < 16) next.push(o + r); }));
+        outs.forEach(o => rs.forEach(r => { if (next.length < 16) next.push(o + r); }));
         outs = next; i += hit.L;
     }
     return outs;
@@ -1926,7 +1928,7 @@ const JA_KO = (() => {
     rows.forEach(r => { for (let i = 0; i < r.length; i += 2) m[r[i]] = r[i + 1]; });
     const ya = { 'ゃ': 'ㅑ', 'ゅ': 'ㅠ', 'ょ': 'ㅛ' }, V = { 'ㅑ': 2, 'ㅠ': 17, 'ㅛ': 12 }, VJ = { 'ㅑ': 0, 'ㅠ': 13, 'ㅛ': 8 };   // ㅈ·ㅊ 다음엔 ㅏ·ㅜ·ㅗ(자·주·조)
     'き키し시ち치に니ひ히み미り리ぎ기じ지び비ぴ피'.match(/../g).forEach(p => {
-        const ini = Math.floor((p[1].charCodeAt(0) - 0xAC00) / 588), sj = ini === 9 || ini === 12 || ini === 14;   // ㅅ·ㅈ·ㅊ
+        const ini = Math.floor((p[1].charCodeAt(0) - 0xAC00) / 588), sj = ini === 12 || ini === 14;   // ㅈ·ㅊ(じゃ 자·ちゃ 차, しゃ는 샤)
         Object.keys(ya).forEach(s => { m[p[0] + s] = String.fromCharCode(0xAC00 + (ini * 21 + (sj ? VJ[ya[s]] : V[ya[s]])) * 28); });
     });
     return m;
@@ -1948,6 +1950,14 @@ function jaVowel(c) { for (const v in JA_VOWEL) if (JA_VOWEL[v].includes(c)) ret
 // 장음: 앞 글자와 같은 모음, o단+う, e단+い
 function jaLong(prev, c) { const pv = jaVowel(prev || ''); return !!pv && (jaVowel(c) === pv && 'あいうえお'.includes(c) || c === 'う' && pv === 'o' || c === 'い' && pv === 'e'); }
 
+// 일본어 부정(ません·ない·なかっ)이 있는 단위 위치 — すみません(실례합니다)은 부정이 아니므로 뺀다
+function jaNegPos(units, re) {
+    const ts = units.map(u => u.length === 1 ? u : '＊').join('').replace(/すみません/g, '＊＊＊＊＊'), out = [];
+    re = re || /ません|ない|なかっ/g; let m;
+    while ((m = re.exec(ts))) for (let k = 0; k < m[0].length; k++) out.push(m.index + k);
+    return out;
+}
+
 /* 채점 */
 const SPEAK_PASS = 70;   // 이 점수 아래면 "거의"가 아니라 다시 연습
 // 작은 말(관사·조사 등)을 봐주는 개수: 영·서·불은 화면의 낱말 수, 중·일은 글자 수로
@@ -1966,7 +1976,7 @@ function alignSpeech(code, tgt, sd, eq, opt) {
         for (let q = j0; q < j0 + k; q++) if (!canFree(q) || (code !== 'ja' && k > 1 && free[i].key && wordKey(code, sd[q]) === free[i].key)) return false;
         if (code === 'ja' && free[i].key) {   // 일본어 이름: 사전에 없는 한자(이름 한자)이거나 이름과 비슷한 소리일 때만(がくせい 같은 다른 말은 안 받음)
             const part = sd.slice(j0, j0 + k);
-            return part.every(c => /[一-鿿々]/.test(c)) || editDistance(part.join(''), free[i].key) <= Math.max(1, Math.floor(free[i].key.length / 2));
+            return part.every(c => /[一-鿿々]/.test(c)) || (part[0] === free[i].key[0] && editDistance(part.join(''), free[i].key) <= Math.max(1, Math.floor(free[i].key.length / 2)));
         }
         return true;
     };
@@ -2027,7 +2037,7 @@ function scoreSpeechItem(code, item, said) {
 }
 function scoreSpeech(code, target, said, roman) {
     let cands = [said];
-    if (code === 'ja') cands = jaReadings(said);   // 한자로 알아들었으면 사전으로 가나로 바꾼 후보들
+    if (code === 'ja') cands = jaReadings(said, speechChars('ja', target).join(''));   // 한자·숫자로 알아들었으면 가나로 바꾼 후보들
     let best = null;
     cands.forEach(s => [false, true].forEach(place => {
         if (place && !(code === 'zh' && /\d{3,}/.test(s))) return;   // 중국어 세 자리 이상 숫자: 한 자리씩(전화번호)과 자릿값(六百) 둘 다
@@ -2068,7 +2078,8 @@ function scoreSpeechOne(code, target, said, roman, heard, place) {
     const tKey = new Set(tgt.filter((u, i) => !(free && free[i])).map(u => wordKey(code, u)));
     const isNeg = (arr, i) => { const k = wordKey(code, arr[i]); return (SPEECH_NEG[code] || []).includes(k) && !(code === 'es' && k === 'nada' && arr[i - 1] && wordKey(code, arr[i - 1]) === 'de'); };
     // 이름 자리에는 부정어·숫자·목표 문장의 다른 말이 들어갈 수 없다
-    const canFree = j => !charMode ? !(isNeg(sd, j) || /\d/.test(sd[j]) || tKey.has(wordKey(code, sd[j]))) : !/[不没别]/.test(sd[j]);
+    const negSd = code === 'ja' ? new Set(jaNegPos(sd).concat(jaNegPos(sd, /じゃ|では/g))) : null;
+    const canFree = j => !charMode ? !(isNeg(sd, j) || /\d/.test(sd[j]) || tKey.has(wordKey(code, sd[j]))) : code === 'ja' ? !negSd.has(j) : !/[不没别]/.test(sd[j]);
     const tsyl = code === 'zh' ? zhTargetSyls(tgt, roman) : null;
     const eq = code === 'zh' ? (i, j) => {
         const a = tgt[i], b = sd[j];
@@ -2101,8 +2112,7 @@ function scoreSpeechOne(code, target, said, roman, heard, place) {
         cur.n++;
     });
     const errors = segs.reduce((a, g) => a + g.n, 0);
-    const negJa = [];
-    if (code === 'ja') { const ts = tgt.join(''); let m; const re = /ません|ない|なかっ/g; while ((m = re.exec(ts))) for (let k = 0; k < m[0].length; k++) negJa.push(m.index + k); }
+    const negJa = jaNegPos(tgt), negJaS = jaNegPos(sd);
     // 일본어: 학습 문장에서 띄어 쓴 덩어리의 끝 글자(조사 자리)
     const jaEnd = new Set();
     if (code === 'ja') {
@@ -2110,7 +2120,7 @@ function scoreSpeechOne(code, target, said, roman, heard, place) {
         let k = -1;
         raw.forEach((c, x) => { if (keep(c)) { k++; if (x + 1 >= raw.length || !keep(raw[x + 1])) jaEnd.add(k); } });
     }
-    const ctx = { code, tgt, disp, sd, tsyl, charMode, negJa, isNeg, jaEnd };
+    const ctx = { code, tgt, disp, sd, tsyl, charMode, negJa, negJaS, isNeg, jaEnd };
     const details = segs.map(g => speechDetail(ctx, g));
     // 통과: 뜻이 달라지는 틀림(내용어·성조·부정어·숫자)은 하나도 없고, 작은 말 틀림만 허용 개수 이하
     const minor = details.filter(d => d.minor).reduce((a, d) => a + d.n, 0);
@@ -2175,7 +2185,7 @@ function speechDetail(ctx, g) {
     const W = g.t.map(i => disp[i]), G = g.s.map(j => sd[j]), J = charMode ? '' : ' ';
     const d = { kind: W.length && G.length ? 'sub' : W.length ? 'del' : 'ins', want: W.join(J), got: G.join(J), wantRead: '', gotRead: '', tips: [], crit: false, minor: false, n: g.n };
     const digitW = W.some(u => /\d|[零一二三四五六七八九十百千万]/.test(u));
-    const neg = code === 'ja' ? (g.t.some(i => negJa.includes(i)) || /ない|ません/.test(d.got))
+    const neg = code === 'ja' ? (g.t.some(i => negJa.includes(i)) || g.s.some(j => ctx.negJaS.includes(j)))
         : code === 'zh' ? W.concat(G).some(u => /[不没别]/.test(u)) : g.t.some(i => isNeg(tgt, i)) || g.s.some(j => isNeg(sd, j));
     if (digitW || neg) {
         d.crit = true;
@@ -2209,11 +2219,11 @@ function speechDetail(ctx, g) {
         });
     } else if (code === 'ja') {
         const base = s => s.normalize('NFD').replace(/[゙゚]/g, '');
-        const w = d.want, gg = d.got, prevT = g.t.length ? tgt[g.t[0] - 1] : '', prevS = g.s.length ? sd[g.s[0] - 1] : '';
+        const w = d.want, gg = d.got, prevT = g.t.length ? tgt[g.t[0] - 1] : '', prevS = g.s.length ? sd[g.s[0] - 1] : '', nextT = g.t.length ? tgt[g.t[g.t.length - 1] + 1] || '' : '';
         d.wantRead = w ? jaKo(w) : ''; d.gotRead = gg && !/[一-鿿々]/.test(gg) ? jaKo(gg) : '';
         if (d.kind === 'del' && /^っ+$/.test(w) || /っ/.test(w) && gg === w.replace(/っ/g, '')) d.tips.push('작은 っ는 한 박자 쉬었다가 다음 소리를 내요');
         else if (d.kind === 'ins' && /^っ+$/.test(gg)) d.tips.push('작은 っ가 없는 말이에요 — 멈추지 말고 이어서 말해요');
-        else if (d.kind === 'del' && Array.from(w).every((c, k) => jaLong(k ? w[k - 1] : prevT, c)) || gg && w.length > gg.length && w.replace(/[あいうえおー]/g, '') === gg.replace(/[あいうえおー]/g, '')) d.tips.push('장음(길게 끄는 소리)은 한 박자 더 늘여요(おばあさん ≠ おばさん)');
+        else if (d.kind === 'del' && (Array.from(w).every((c, k) => jaLong(k ? w[k - 1] : prevT, c)) || (/^[あいうえお]$/.test(w) && jaVowel(nextT) === jaVowel(w))) || gg && w.length > gg.length && w.replace(/[あいうえおー]/g, '') === gg.replace(/[あいうえおー]/g, '')) d.tips.push('장음(길게 끄는 소리)은 한 박자 더 늘여요(おばあさん ≠ おばさん)');
         else if (d.kind === 'ins' && Array.from(gg).every((c, k) => jaLong(k ? gg[k - 1] : prevS, c)) || gg && w.length < gg.length && w.replace(/[あいうえおー]/g, '') === gg.replace(/[あいうえおー]/g, '')) d.tips.push('짧은 소리예요 — 길게 끌지 말고 한 박자로(おばさん ≠ おばあさん)');
         else if (gg && w !== gg && base(w) === base(gg)) d.tips.push('탁음(゛゜)이 달라요: ' + w + '(' + jaKo(w) + ')는 ' + (w.normalize('NFD').includes('゙') ? '목을 울려서' : '목을 울리지 않고') + ' 소리 내요');
         else if (d.kind === 'del' && w === 'ん') d.tips.push('ん도 한 박자예요 — 끝까지 소리 내요');
