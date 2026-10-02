@@ -17,7 +17,7 @@ on:
     inputs:
       markets:
         description: 'Markets to run (space separated)'
-        default: 'SP500 NDX100 KOSPI KOSDAQ CRYPTO'
+        default: 'SP500 NDX100 KOSPI KOSDAQ KOSDAQ_V2 CRYPTO'
       tries:
         description: 'Tries per stock market while its data is not ready (10 min apart)'
         default: '3'
@@ -36,7 +36,7 @@ env:
   # Markets whose newly committed signal files are announced after each run
   # (docs/swing-improvement-policy.md R7): Slack when the SLACK_WEBHOOK_URL secret exists,
   # otherwise a comment on the issue "<market> 모의투자 신호 알림", which GitHub notifies the owner about.
-  ALERT_MARKETS: KOSDAQ
+  ALERT_MARKETS: KOSDAQ KOSDAQ_V2
 
 concurrency:
   group: swing-paper
@@ -58,7 +58,7 @@ jobs:
         id: m
         run: |
           if [ -n "${{ github.event.inputs.markets }}" ]; then m="${{ github.event.inputs.markets }}"
-          else m="SP500 NDX100 KOSPI KOSDAQ CRYPTO"; fi
+          else m="SP500 NDX100 KOSPI KOSDAQ KOSDAQ_V2 CRYPTO"; fi   # KOSDAQ_V2: parallel ledger, docs/swing-upgrade-study-2026-10.md
           echo "markets=$m" >> "$GITHUB_OUTPUT"
           # data not ready (exit 75): scheduled and keeper runs (tries=1) leave it to the next run
           # 2 hours later; manual and trial runs retry stocks in place (crypto lags by hours)
