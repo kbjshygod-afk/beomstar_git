@@ -45,7 +45,8 @@ from .status import status_label
 
 log = logging.getLogger("swing_engine.paper")
 
-MARKET_KO = {"SP500": "S&P500", "NDX100": "나스닥100", "KOSPI": "코스피", "KOSDAQ": "코스닥", "CRYPTO": "크립토"}
+MARKET_KO = {"SP500": "S&P500", "NDX100": "나스닥100", "KOSPI": "코스피", "KOSDAQ": "코스닥", "CRYPTO": "크립토",
+             "KOSDAQ_V2": "코스닥 v2"}
 # Session opens used for the "committed before the next open" check. Weekends are skipped;
 # exchange holidays are not modelled, which only makes the deadline earlier (stricter).
 OPENS = {"America/New_York": dtime(9, 30), "Asia/Seoul": dtime(9, 0)}
@@ -210,8 +211,11 @@ def regime_info(prepared: dict, bench: pd.DataFrame, params: dict, as_of) -> dic
     if row is None:
         return {"benchmark": params["benchmark"], "mode": params["regime_mode"], "close": b_close,
                 "ma200": None, "ma20": None, "on": None}
-    return {"benchmark": params["benchmark"], "mode": params["regime_mode"], "close": _num(row.get("b_close")),
-            "ma200": _num(row.get("b_ma200")), "ma20": _num(row.get("b_ma20")), "on": bool(row.get("regime_on"))}
+    out = {"benchmark": params["benchmark"], "mode": params["regime_mode"], "close": _num(row.get("b_close")),
+           "ma200": _num(row.get("b_ma200")), "ma20": _num(row.get("b_ma20")), "on": bool(row.get("regime_on"))}
+    if "b_breadth" in row.index:
+        out["breadth_pct"] = _num(row.get("b_breadth"), 1)     # % of the universe above its 200-day MA
+    return out
 
 
 def watchlist(prepared: dict, held: set, as_of) -> list[dict]:
@@ -426,7 +430,9 @@ def render_report(market, cfg, snap, perf, aud, res, params, stale=()) -> str:
          f"손절 -{params['stop_pct']:g}% · 1회 리스크 {cfg['risk_pct']}% · 비용 편도 {cfg['cost_pct']}%",
          f"- 레짐 ({rg['mode']}): **{'ON' if rg['on'] else 'OFF' if rg['on'] is not None else '?'}** — "
          f"{rg['benchmark']} 종가 {_f(rg['close'])} · 200일선 {_f(rg['ma200'])}"
-         + (f" · 20일선 {_f(rg['ma20'])}" if rg["mode"] == "MA200_AND_MA20" else ""),
+         + (f" · 20일선 {_f(rg['ma20'])}" if rg["mode"] == "MA200_AND_MA20" else "")
+         + (f" · 유니버스 중 200일선 위 {_f(rg['breadth_pct'], '{:.1f}')}% (기준 50%)"
+            if rg.get("breadth_pct") is not None else ""),
          f"- 데이터: 유니버스 {snap['coverage']['requested']}종목 중 {snap['coverage']['loaded']}종목 로드"
          f" (실패 {len(snap['coverage']['failed'])})", ""]
     L += ["## 다음 시가 진입 (오늘 신호)", ""]

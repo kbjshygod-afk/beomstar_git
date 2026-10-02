@@ -23,7 +23,7 @@ Everything here is a mechanical rule output, not investment advice. The engine n
 
 **Benchmark bars.** Daily `date, close` for the market's benchmark. Only the close has to be valid.
 
-**Market preset.** One of `SP500`, `NDX100`, `KOSPI`, `KOSDAQ`, `CRYPTO`, `CUSTOM`.
+**Market preset.** One of `SP500`, `NDX100`, `KOSPI`, `KOSDAQ`, `CRYPTO`, `CUSTOM`. `KOSDAQ_V2` is a rule variant under study (KOSDAQ plus the `BREADTH50` regime, `docs/swing-upgrade-study-2026-10.md`); it shares KOSDAQ's universe, session and benchmark and is not one of the owner's scanner presets.
 
 ## 2. Parameters
 
@@ -51,6 +51,7 @@ Everything here is a mechanical rule output, not investment advice. The engine n
 | `KOSDAQ` | `KRX:KOSDAQ` → `^KQ11` | `NONE` | 10.0 | true | 252 |
 | `CRYPTO` | `BINANCE:BTCUSDT` → `BTC-USD` | `MA200` | 10.0 | **false** | 365 |
 | `CUSTOM` | given | given | given | given | given |
+| `KOSDAQ_V2` (study) | `KRX:KOSDAQ` → `^KQ11` | `BREADTH50` | 10.0 | true | 252 |
 
 ## 3. Primitive semantics (match Pine exactly)
 
@@ -76,6 +77,9 @@ Align to the symbol's dates by taking, for each symbol date d, the last benchmar
 MA200          : regime_on = b_close > b_ma200
 MA200_AND_MA20 : regime_on = b_close > b_ma200 and b_close > b_ma20
 NONE           : regime_on = true
+BREADTH50      : regime_on = b_breadth >= 50, where b_breadth = % of universe symbols with a
+                 200-day MA that day whose close > their own ma200 (cross-sectional; a single
+                 symbol alone leaves the gate open). Study variant, not a scanner rule.
 ```
 
 ### 4.3 Trend template

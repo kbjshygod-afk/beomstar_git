@@ -222,6 +222,12 @@ def compute_indicators(sym: pd.DataFrame, bench: pd.DataFrame | None, p: dict,
         regime = (out["b_close"] > out["b_ma200"]) & (out["b_close"] > out["b_ma20"])
     elif mode == "MA200":
         regime = out["b_close"] > out["b_ma200"]
+    elif mode == "BREADTH50":
+        # Cross-sectional: the share of universe symbols above their own 200-day MA.
+        # One symbol cannot know it; portfolio.apply_breadth_regime fills regime_on and
+        # b_breadth over the whole universe. Alone, the gate is open.
+        regime = pd.Series(True, index=sym.index)
+        out["b_breadth"] = np.nan
     else:
         raise ValueError(f"unknown regime_mode {mode!r}")
     out["regime_on"] = regime.astype(bool)

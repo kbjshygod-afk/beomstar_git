@@ -98,8 +98,9 @@ def render(signal: dict, entry: dict | None, fmt: str = "github", report_url: st
     if revision:
         L.append("앞서 커밋한 신호 파일은 그대로 남고, 이 수정본은 감사 기록에 '수정'으로 집계됩니다.")
     state = "ON" if rg.get("on") else ("OFF — 신규 진입 없음" if rg.get("on") is not None else "?")
-    filt = "필터 없음" if rg.get("mode") == "NONE" else rg.get("mode", "")
-    L.append(f"레짐 {state} ({filt}) — {rg['benchmark']} 종가 {_f(rg.get('close'))} · 200일선 {_f(rg.get('ma200'))}")
+    filt = {"NONE": "필터 없음", "BREADTH50": "폭 레짐 50"}.get(rg.get("mode"), rg.get("mode", ""))
+    L.append(f"레짐 {state} ({filt}) — {rg['benchmark']} 종가 {_f(rg.get('close'))} · 200일선 {_f(rg.get('ma200'))}"
+             + (f" · 200일선 위 비율 {rg['breadth_pct']:.1f}%" if rg.get("breadth_pct") is not None else ""))
 
     ent = signal.get("entries_next_open", [])
     L.append(f"{B}다음 시가 진입 ({len(ent)}){B}" + ("" if ent else ": 없음"))
