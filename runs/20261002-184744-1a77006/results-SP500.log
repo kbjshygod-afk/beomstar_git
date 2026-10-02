@@ -1,8 +1,8 @@
-INFO swing_engine.backtest: simulating proxy (200 symbols)
-INFO swing_engine.backtest: simulating percentile (200 symbols)
-[KOSPI proxy] CAGR +16.6% vs 지수 +13.0% (초과 +3.6%p), MDD -33.9%, 거래 599
-[KOSPI percentile] CAGR +15.6% vs 지수 +13.0% (초과 +2.6%p), MDD -31.5%, 거래 613
-테스트 구간 2016-10-04 ~ 2026-10-02 (10.0년, 기준일 = 마지막 확정 봉)
-로드 200/200 · 결과: results/KOSPI
+INFO swing_engine.backtest: simulating proxy (503 symbols)
+INFO swing_engine.backtest: simulating percentile (503 symbols)
+[SP500 proxy] CAGR +15.2% vs 지수 +13.5% (초과 +1.7%p), MDD -24.0%, 거래 844
+[SP500 percentile] CAGR +14.9% vs 지수 +13.5% (초과 +1.4%p), MDD -24.1%, 거래 822
+테스트 구간 2016-10-03 ~ 2026-10-01 (10.0년, 기준일 = 마지막 확정 봉)
+로드 503/503 · 결과: results/SP500
 미확인 추정값(스캐너 원본 코드 미확인): 피벗=직전 20봉 최고가(당일 제외) · 거래량 평균=직전 50일(당일 제외) · RS=지수 대비 가중 1년 수익률 ≥ 0%p(스캐너는 유니버스 백분위 ≥ 70) · 52주 고저=종가 기준 · 200일선 상승=22봉 전 대비 · 수축비=10/40일 평균 TR · 비용=편도 0.2%
 기계적 룰 출력이며 투자 자문이 아닙니다. 매수·매도 결정은 소유자 본인이 합니다.
