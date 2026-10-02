@@ -45,7 +45,8 @@ from .status import status_label
 
 log = logging.getLogger("swing_engine.paper")
 
-MARKET_KO = {"SP500": "S&P500", "NDX100": "나스닥100", "KOSPI": "코스피", "KOSDAQ": "코스닥", "CRYPTO": "크립토"}
+MARKET_KO = {"SP500": "S&P500", "NDX100": "나스닥100", "KOSPI": "코스피", "KOSDAQ": "코스닥", "CRYPTO": "크립토",
+             "KOSDAQ_V2": "코스닥 v2"}
 # Session opens used for the "committed before the next open" check. Weekends are skipped;
 # exchange holidays are not modelled, which only makes the deadline earlier (stricter).
 OPENS = {"America/New_York": dtime(9, 30), "Asia/Seoul": dtime(9, 0)}
@@ -210,8 +211,11 @@ def regime_info(prepared: dict, bench: pd.DataFrame, params: dict, as_of) -> dic
     if row is None:
         return {"benchmark": params["benchmark"], "mode": params["regime_mode"], "close": b_close,
                 "ma200": None, "ma20": None, "on": None}
-    return {"benchmark": params["benchmark"], "mode": params["regime_mode"], "close": _num(row.get("b_close")),
-            "ma200": _num(row.get("b_ma200")), "ma20": _num(row.get("b_ma20")), "on": bool(row.get("regime_on"))}
+    out = {"benchmark": params["benchmark"], "mode": params["regime_mode"], "close": _num(row.get("b_close")),
+           "ma200": _num(row.get("b_ma200")), "ma20": _num(row.get("b_ma20")), "on": bool(row.get("regime_on"))}
+    if "b_breadth" in row.index:
+        out["breadth_pct"] = _num(row.get("b_breadth"), 1)     # % of the universe above its 200-day MA
+    return out
 
 
 def watchlist(prepared: dict, held: set, as_of) -> list[dict]:
@@ -399,7 +403,25 @@ def _pct(x):
     return "-" if x is None else f"{x:+.2f}%"
 
 
-def render_report(market, cfg, snap, perf, aud, res, params) -> str:
+def stale_positions(res, frames: dict, bench: pd.DataFrame, as_of) -> list[dict]:
+    """Open positions whose symbol has no bar on `as_of` (trading halt, delisting, data gap).
+
+    The simulation marks such a position at its last close and waits for the next valid bar
+    to stop it out, so the ledger can show the loss late and too small. Reported, not acted on.
+    """
+    out = []
+    as_of = pd.Timestamp(as_of)
+    for pos in res.open_positions:
+        f = frames.get(pos["symbol"])
+        last = pd.Timestamp(f.index[-1]) if f is not None and len(f) else None
+        if last is None or last < as_of:
+            missing = int(((bench.index > last) & (bench.index <= as_of)).sum()) if last is not None else None
+            out.append({"symbol": pos["symbol"], "last_bar": _day(last) if last is not None else None,
+                        "sessions_missing": missing})
+    return out
+
+
+def render_report(market, cfg, snap, perf, aud, res, params, stale=()) -> str:
     name = MARKET_KO.get(market, market)
     rg = snap["regime"]
     L = [f"# 모의투자 일일 보고 — {name} ({snap['as_of']})", "",
@@ -408,7 +430,9 @@ def render_report(market, cfg, snap, perf, aud, res, params) -> str:
          f"손절 -{params['stop_pct']:g}% · 1회 리스크 {cfg['risk_pct']}% · 비용 편도 {cfg['cost_pct']}%",
          f"- 레짐 ({rg['mode']}): **{'ON' if rg['on'] else 'OFF' if rg['on'] is not None else '?'}** — "
          f"{rg['benchmark']} 종가 {_f(rg['close'])} · 200일선 {_f(rg['ma200'])}"
-         + (f" · 20일선 {_f(rg['ma20'])}" if rg["mode"] == "MA200_AND_MA20" else ""),
+         + (f" · 20일선 {_f(rg['ma20'])}" if rg["mode"] == "MA200_AND_MA20" else "")
+         + (f" · 유니버스 중 200일선 위 {_f(rg['breadth_pct'], '{:.1f}')}% (기준 50%)"
+            if rg.get("breadth_pct") is not None else ""),
          f"- 데이터: 유니버스 {snap['coverage']['requested']}종목 중 {snap['coverage']['loaded']}종목 로드"
          f" (실패 {len(snap['coverage']['failed'])})", ""]
     L += ["## 다음 시가 진입 (오늘 신호)", ""]
@@ -427,6 +451,11 @@ def render_report(market, cfg, snap, perf, aud, res, params) -> str:
         for p in sorted(res.open_positions, key=lambda x: x["entry_date"]):
             L.append(f"| {p['symbol']} | {p['entry_date']} | {_f(p['entry_price'])} | {_f(p['stop_price'])} | "
                      f"{_f(p['last_close'])} | {_f(p['exit_ma'])} | {_pct(p['price_pnl_pct'])} |")
+        for st in stale:
+            L += ["", f"⚠ **{st['symbol']}: 기준일 시세 없음** (마지막 봉 {st['last_bar'] or '없음'}"
+                      + (f", {st['sessions_missing']}거래일째" if st["sessions_missing"] else "")
+                      + "). 거래정지·상장폐지 의심. 평가는 마지막 종가로 하고, 손절은 다음 시세가 나와야 체결되므로 "
+                        "실제 손실은 표시보다 클 수 있습니다."]
     else:
         L.append("없음")
     L += ["", "## 누적 성과 (시작일 ~ 기준일, 수수료 차감)", "",
@@ -577,7 +606,10 @@ def run(args) -> dict:
     eq.to_csv(root / "equity.csv")
     (root / "positions.json").write_text(json.dumps(_jsonable(res.open_positions), ensure_ascii=False, indent=1))
     universe_status(prepared, res, as_of, params).to_csv(root / "status.csv", index=False)
-    report = render_report(market, cfg, snap, perf, aud, res, params)
+    stale = stale_positions(res, frames, bench, as_of)
+    for st in stale:
+        log.warning("%s: held %s has no bar on %s (last %s)", market, st["symbol"], _day(as_of), st["last_bar"])
+    report = render_report(market, cfg, snap, perf, aud, res, params, stale)
     (root / "report.md").write_text(report)
 
     latest_p = ledger / "latest.json"
@@ -587,8 +619,8 @@ def run(args) -> dict:
     entry = json.loads(json.dumps(_jsonable({
         "as_of": snap["as_of"], "start_date": cfg["start_date"], "regime": snap["regime"],
         "entries_next_open": snap["entries_next_open"], "exits_next_open": snap["exits_next_open"],
-        "positions": res.open_positions, "watchlist": snap["watchlist"], "performance": perf,
-        "status_csv": f"{market}/status.csv",
+        "positions": res.open_positions, "stale_positions": stale, "watchlist": snap["watchlist"],
+        "performance": perf, "status_csv": f"{market}/status.csv",
         "audit": {k: aud[k] for k in ("days", "signal_files", "missing_days", "late", "uncommitted", "mismatched", "revised")},
     })))
     # The schedule reruns every market every 2 hours; a rerun with nothing new leaves the file

@@ -23,7 +23,7 @@ import numpy as np
 import pandas as pd
 
 from .indicators import normalize_bars
-from .params import BENCHMARKS, normalize_preset
+from .params import BENCHMARKS, data_market, normalize_preset
 
 log = logging.getLogger("swing_engine.data")
 
@@ -253,7 +253,7 @@ def session_for(market: str | None, ticker: str | None = None):
     """
     mk = normalize_preset(market) if market else "CUSTOM"
     if mk != "CUSTOM":
-        return _SESSIONS[mk]
+        return _SESSIONS[data_market(mk)]
     t = str(ticker or "").strip().upper()
     if t.endswith((".KS", ".KQ")) or t in _KR_INDEXES:
         return _SEOUL
@@ -670,8 +670,9 @@ def fetch_crypto_top(n: int = 30, exclude_wrapped: bool = True) -> list[str]:
 
 def fetch_universe(market: str, cache_dir=None, max_age_days: float = 7.0,
                    now: datetime | None = None) -> list[str]:
-    """Current constituents for a preset (survivorship bias as in the scanner, SPEC 8.1)."""
-    mk = normalize_preset(market)
+    """Current constituents for a preset (survivorship bias as in the scanner, SPEC 8.1).
+    A rule variant (KOSDAQ_V2) shares its data market's universe and cache."""
+    mk = data_market(market)
     now = now or datetime.now(timezone.utc)
     cache_p = Path(cache_dir) / "universe" / f"{mk}.json" if cache_dir else None
     if cache_p and cache_p.exists():

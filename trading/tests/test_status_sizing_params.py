@@ -106,4 +106,4 @@ def test_resolve_keys_and_overrides():
         resolve("NIKKEI")
     with pytest.raises(ValueError):
         resolve("SP500", regime_mode="MA50")
-    assert set(PRESETS) == {"SP500", "NDX100", "KOSPI", "KOSDAQ", "CRYPTO", "CUSTOM"}
+    assert set(PRESETS) == {"SP500", "NDX100", "KOSPI", "KOSDAQ", "CRYPTO", "CUSTOM", "KOSDAQ_V2"}
