@@ -266,3 +266,16 @@ def test_crypto_needs_yesterdays_candle():
     assert ok                                            # 09-25 still forming: 09-24 is the latest final bar
     ok, _ = P.data_ready("SP500", frames, bench, after_midnight)
     assert ok                                            # stocks: holidays make a date check unreliable
+
+
+def test_stale_positions_are_flagged():
+    """A held symbol without a bar on the as-of date (halt, delisting) is reported."""
+    from types import SimpleNamespace
+    days = pd.bdate_range("2024-06-24", "2024-06-28")
+    bench = pd.DataFrame({"close": range(5)}, index=days)
+    frames = {"LIVE": pd.DataFrame({"close": range(5)}, index=days),
+              "HALT": pd.DataFrame({"close": range(2)}, index=days[:2])}
+    res = SimpleNamespace(open_positions=[{"symbol": "LIVE"}, {"symbol": "HALT"}, {"symbol": "GONE"}])
+    st = P.stale_positions(res, frames, bench, days[-1])
+    assert st == [{"symbol": "HALT", "last_bar": "2024-06-25", "sessions_missing": 3},
+                  {"symbol": "GONE", "last_bar": None, "sessions_missing": None}]
