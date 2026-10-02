@@ -141,6 +141,26 @@ def test_download_single_ticker_and_stale_cache(tmp_path, monkeypatch):
     assert len(fake.calls) == 2                                           # stale, window was open
 
 
+def test_cache_follows_a_longer_grace(tmp_path, monkeypatch):
+    """With a 90-minute grace, a bar fetched 30 minutes after the close is neither cached as
+    final nor served from the cache once the 90 minutes have passed."""
+    fake = FakeYF()
+    monkeypatch.setattr(D, "_yf_download", fake)
+
+    def get(now):
+        return D.download_yahoo(["AAA"], "2024-01-02", "2024-02-01", cache_dir=tmp_path, now=now,
+                                market="SP500", grace_minutes=90)[0]["AAA"]
+
+    get(datetime(2024, 1, 31, 21, 30, tzinfo=timezone.utc))              # 16:30 ET, close + 30 min
+    meta = json.loads(D._cache_paths(tmp_path, "AAA")[1].read_text())
+    assert meta["last_date"] == "2024-01-30"
+    get(datetime(2024, 1, 31, 22, 0, tzinfo=timezone.utc))               # close + 60: cache
+    assert len(fake.calls) == 1
+    get(datetime(2024, 1, 31, 22, 45, tzinfo=timezone.utc))              # close + 105: refetch
+    assert len(fake.calls) == 2
+    assert json.loads(D._cache_paths(tmp_path, "AAA")[1].read_text())["last_date"] == "2024-01-31"
+
+
 # --- unconfirmed bar guard -----------------------------------------------------------
 
 @pytest.mark.parametrize("market,now,dropped", [
