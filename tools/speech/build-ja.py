@@ -42,11 +42,20 @@ for u in data['units']:
 missing = sorted(need - {it['kana'] for it in items})
 for e in errs: print('오류', e)
 if errs: sys.exit(f'오류 {len(errs)}건 — 고친 뒤 다시 실행하세요')
+# 채점용 띄어쓰기(ja-spacing.json): 띄어 쓴 글에서 공백만 빼면 원래 글과 같아야 하고, 원래 글은 학습 데이터에 있어야 해요
+spacing = {k: v for k, v in json.load(open(os.path.join(HERE, 'ja-spacing.json'), encoding='utf8')).items() if k != '_'}
+for k, v in spacing.items():
+    if re.sub(r'\s', '', v) != re.sub(r'\s', '', k): errs.append(f'띄어쓰기 {k!r}: 공백을 빼면 원래 글과 달라요')
+    if k not in src: errs.append(f'띄어쓰기 {k!r}: 학습 데이터에 없는 글이에요')
+if errs:
+    for e in errs: print('오류', e)
+    sys.exit(f'오류 {len(errs)}건 — 고친 뒤 다시 실행하세요')
 out = {k: '|'.join(v) for k, v in sorted(dic.items())}
 body = ('// 일본어 말하기 채점용 한자 읽기 사전 (자동 생성: tools/speech/build-ja.py — 직접 고치지 마세요)\n'
         '// { 한자 덩어리: 읽기(여러 개면 |로) } — 인식기가 한자로 돌려준 글을 가나로 되돌려 학습 문장과 비교\n'
-        'window.SPEECH_JA = ' + json.dumps({'v': 1, 'k': out}, ensure_ascii=False, separators=(',', ':')) + ';\n')
+        '// sp: { 띄어쓰기 없는 학습 문장: 채점용 띄어쓰기 } — 덩어리 끝 조사 자리(빠져도 긴 문장에선 봐줌)\n'
+        'window.SPEECH_JA = ' + json.dumps({'v': 1, 'k': out, 'sp': dict(sorted(spacing.items()))}, ensure_ascii=False, separators=(',', ':')) + ';\n')
 path = os.path.join(ROOT, 'speech-ja.js')
 with open(path, 'w', encoding='utf8') as fh: fh.write(body)
-print(f'문장 {len(items)}개 · 한자 덩어리 {len(out)}개 · {len(body.encode("utf8")) // 1024} KB → {os.path.relpath(path)}')
+print(f'문장 {len(items)}개 · 한자 덩어리 {len(out)}개 · 띄어쓰기 {len(spacing)}개 · {len(body.encode("utf8")) // 1024} KB → {os.path.relpath(path)}')
 if missing: print(f'⚠️ 원본에 없는 말하기 문장 {len(missing)}개(한자로 알아들으면 직접 확인으로 넘어가요):', missing[:20])
