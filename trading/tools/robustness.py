@@ -25,8 +25,9 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from swing_engine.indicators import align_asof, compute_indicators, finalize_signals, normalize_bars  # noqa: E402
-from swing_engine.params import COST_PCT, resolve  # noqa: E402
-from swing_engine.portfolio import PortfolioConfig, period_metrics, prepare_frames, simulate  # noqa: E402
+from swing_engine.params import BREADTH_MIN_PCT, COST_PCT, resolve  # noqa: E402
+from swing_engine.portfolio import (PortfolioConfig, apply_breadth_regime, period_metrics,  # noqa: E402
+                                    prepare_frames, simulate)
 
 MARKETS = ["SP500", "NDX100", "KOSPI", "KOSDAQ", "CRYPTO"]
 TEST_START = "2016-09-25"
@@ -407,6 +408,8 @@ def prepare_pit(frames: dict, bench, cfg, member: pd.DataFrame) -> dict:
             continue
         bars[s] = d
         inds[s] = compute_indicators(d, b, p)
+    if p["regime_mode"] == "BREADTH50":
+        apply_breadth_regime(bars, inds, BREADTH_MIN_PCT, member)     # breadth among members of the day
     panel = pd.DataFrame({s: ind["wp"] for s, ind in inds.items()})
     mem = member.reindex(index=panel.index, columns=panel.columns).fillna(False).astype(bool)
     pct = panel.where(mem).rank(axis=1, pct=True) * 100

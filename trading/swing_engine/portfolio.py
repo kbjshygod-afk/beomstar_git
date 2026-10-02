@@ -33,7 +33,7 @@ import pandas as pd
 
 from .data import truncate
 from .indicators import align_asof, compute_indicators, finalize_signals, normalize_bars
-from .params import COST_PCT, RISK_PCT, RS_PERCENTILE_MIN
+from .params import BREADTH_MIN_PCT, COST_PCT, RISK_PCT, RS_PERCENTILE_MIN
 from .sizing import position_qty
 from .state import PositionMachine
 
@@ -76,6 +76,31 @@ class PortfolioResult:
 # preparation: indicators + RS per symbol
 # ---------------------------------------------------------------------------
 
+def breadth_series(bars: dict, inds: dict, member: pd.DataFrame | None = None) -> pd.Series:
+    """% of universe symbols whose close is above their own 200-day MA, per date. Symbols
+    without a 200-day MA that day are left out; with `member` (dates x symbols, bool) only
+    the index members of the day count (point-in-time studies)."""
+    close = pd.DataFrame({s: bars[s]["close"] for s in inds})
+    ma = pd.DataFrame({s: inds[s]["ma200"] for s in inds})
+    valid = ma.notna()
+    if member is not None:
+        valid &= member.reindex(index=close.index, columns=close.columns).fillna(False).astype(bool)
+    above = (close > ma) & valid
+    return above.sum(axis=1) / valid.sum(axis=1).replace(0, np.nan) * 100
+
+
+def apply_breadth_regime(bars: dict, inds: dict, min_pct: float, member: pd.DataFrame | None = None) -> pd.Series:
+    """Regime BREADTH50 (docs/swing-upgrade-study-2026-10.md U11): new entries only on days
+    when at least `min_pct` % of the universe closes above the 200-day MA. Sets regime_on and
+    b_breadth on every indicator frame; finalize_signals must run afterwards."""
+    breadth = breadth_series(bars, inds, member)
+    for ind in inds.values():
+        b = breadth.reindex(ind.index)
+        ind["b_breadth"] = b
+        ind["regime_on"] = (b >= min_pct).fillna(False).to_numpy()
+    return breadth
+
+
 def prepare_frames(symbols: dict, bench: pd.DataFrame | None, cfg: PortfolioConfig) -> dict:
     """Truncate to as_of, compute indicators, apply the RS mode. Returns per-symbol frames
     with open/high/low/close/exit_ma/full_signal/rs_key (+ all indicator columns)."""
@@ -90,6 +115,8 @@ def prepare_frames(symbols: dict, bench: pd.DataFrame | None, cfg: PortfolioConf
             continue
         bars[s] = d
         inds[s] = compute_indicators(d, b, p)
+    if p["regime_mode"] == "BREADTH50" and inds:
+        apply_breadth_regime(bars, inds, BREADTH_MIN_PCT)
     if cfg.rs_mode == "percentile" and inds:
         # Universe percentile of weighted_perf per day, among symbols with a value that day.
         panel = pd.DataFrame({s: ind["wp"] for s, ind in inds.items()})
@@ -101,6 +128,8 @@ def prepare_frames(symbols: dict, bench: pd.DataFrame | None, cfg: PortfolioConf
             ind["rs_key"] = pr
     else:
         for ind in inds.values():
+            if p["regime_mode"] == "BREADTH50":
+                finalize_signals(ind, p)            # regime_on changed after compute_indicators
             ind["rs_key"] = ind["rs_diff"]
     frames = {}
     for s, ind in inds.items():
