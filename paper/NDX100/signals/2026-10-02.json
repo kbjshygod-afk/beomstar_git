@@ -1,0 +1,73 @@
+{
+ "market": "NDX100",
+ "as_of": "2026-10-02",
+ "regime": {
+  "benchmark": "^NDX",
+  "mode": "MA200",
+  "close": 30807.9316,
+  "ma200": 27478.5122,
+  "ma20": 29907.6361,
+  "on": true
+ },
+ "entries_next_open": [],
+ "exits_next_open": [],
+ "positions": [
+  "LITE"
+ ],
+ "watchlist": [
+  {
+   "symbol": "AMD",
+   "label": "1순위 · 임박 (피벗 1% 이내)",
+   "close": 633.91,
+   "pivot": 639.0,
+   "to_pivot_pct": 0.8,
+   "rs": 96.97
+  },
+  {
+   "symbol": "PANW",
+   "label": "1순위 · 임박 (피벗 1% 이내)",
+   "close": 403.24,
+   "pivot": 404.69,
+   "to_pivot_pct": 0.36,
+   "rs": 89.9
+  },
+  {
+   "symbol": "FTNT",
+   "label": "1순위 · 임박 (피벗 1% 이내)",
+   "close": 180.95,
+   "pivot": 181.37,
+   "to_pivot_pct": 0.23,
+   "rs": 87.88
+  },
+  {
+   "symbol": "DDOG",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 277.22,
+   "pivot": 280.7,
+   "to_pivot_pct": 1.26,
+   "rs": 84.85
+  },
+  {
+   "symbol": "CSCO",
+   "label": "1순위 · 임박 (피벗 1% 이내)",
+   "close": 112.2,
+   "pivot": 112.22,
+   "to_pivot_pct": 0.02,
+   "rs": 76.77
+  },
+  {
+   "symbol": "NVDA",
+   "label": "1순위 · 임박 (피벗 1% 이내)",
+   "close": 233.95,
+   "pivot": 234.76,
+   "to_pivot_pct": 0.35,
+   "rs": 74.75
+  }
+ ],
+ "coverage": {
+  "requested": 101,
+  "loaded": 101,
+  "failed": []
+ },
+ "generated_at": "2026-10-02T23:06:31Z"
+}
