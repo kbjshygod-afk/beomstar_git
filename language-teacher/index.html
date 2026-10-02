@@ -1631,6 +1631,12 @@ function sameWord(code, a, b, names) {
     // 사람 이름은 인식기가 철자를 다르게 쓰기 쉬워서 첫 글자가 같고 조금만 다르면 맞게 본다
     return !!(names && names.has(a) && a[0] === b[0] && editDistance(a, b) <= (a.length >= 4 ? Math.max(2, Math.floor(a.length / 3)) : 1));
 }
+// 수업에 나오는 사람 이름 — 인식기가 외국 이름(특히 Sujin 같은 한국 이름)을 엉뚱하게 받아 적어서(sous Jean 등) 채점하지 않는다.
+// 대문자로 쓴 이 이름 자리는 들린 말 0~3단어를 그대로 받아 준다. 데이터에 새 이름을 넣으면 여기에도 추가(lt_speech_data 시험이 알려 줌)
+const SPEECH_PERSON = new Set(['sujin', 'minho', 'jun', 'kim', 'lee', 'park', 'choi', 'jake', 'emily', 'emilys', 'brown', 'liz', 'elizabeth', 'ryan', 'mia', 'tom', 'ann', 'yuki',
+    'lucas', 'emma', 'kenji', 'victor', 'hugo', 'carlos', 'lucia', 'maria']);
+// 일본어 학습 문장의 사람 이름(가나) — 뒤에 さん·です·は 등이 올 때만
+const JA_PERSON = /(すじん|ゆい|けん|きむ)(?=さん|くん|ちゃん|です|でした|は|も|の|が|を|に|と|$)/g;
 // 문장 가운데의 대문자 단어(사람 이름 등) — 문장 첫 단어와 I는 빼고
 function speechNames(code, text) {
     const out = new Set();
@@ -1784,22 +1790,29 @@ const SPEAK_PASS = 70;   // 이 점수 아래면 "거의"가 아니라 다시 �
 function speechAllowed(code, n) { const k = code === 'zh' ? 10 : code === 'ja' ? 12 : 8; return n >= 2 * k ? 2 : n >= k ? 1 : 0; }
 // 편집 거리로 목표(tgt)와 들린 것(sd)을 맞춘다: 같음 0, 바뀜·빠짐·더함 1.
 // 일본어는 사전에 없는 한자 1자가 목표의 히라가나 1~3자를 대신할 수 있게 봐준다(추정 — 자동 통과는 막음)
-function alignSpeech(code, tgt, sd, eq) {
+// free[i]: 사람 이름 자리 — 들린 말 0~3단위를 비용 없이 받아 준다
+function alignSpeech(code, tgt, sd, eq, free) {
     const n = tgt.length, m = sd.length;
-    const isKanji = c => /[一-鿿々]/.test(c), isHira = c => /[ぁ-ゖ]/.test(c);
-    const D = Array.from({ length: n + 1 }, (_, i) => { const r = new Array(m + 1).fill(0); r[0] = i; return r; });
+    const isKanji = c => /[一-鿿々]/.test(c), isHira = c => /[ぁ-ゖ]/.test(c), fr = i => !!(free && free[i]);
+    const D = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(0));
+    for (let i = 1; i <= n; i++) D[i][0] = D[i - 1][0] + (fr(i - 1) ? 0 : 1);
     for (let j = 0; j <= m; j++) D[0][j] = j;
     const E = Array.from({ length: n }, () => new Array(m).fill(false));
     for (let i = 1; i <= n; i++) for (let j = 1; j <= m; j++) {
         const e = E[i - 1][j - 1] = eq(i - 1, j - 1);
         let best = Math.min(D[i - 1][j] + 1, D[i][j - 1] + 1, D[i - 1][j - 1] + (e ? 0 : 1));
         if (code === 'ja' && isKanji(sd[j - 1])) for (let k = 1; k <= 3 && k <= i && isHira(tgt[i - k]); k++) best = Math.min(best, D[i - k][j - 1]);
+        if (fr(i - 1)) for (let k = 0; k <= 3 && k <= j; k++) best = Math.min(best, D[i - 1][j - k]);
         D[i][j] = best;
     }
     const ops = [];
     let i = n, j = m;
     while (i > 0 || j > 0) {
         if (i > 0 && j > 0 && E[i - 1][j - 1] && D[i][j] === D[i - 1][j - 1]) { ops.push({ k: 'ok', t: i - 1, s: j - 1, same: E[i - 1][j - 1] === 'same' }); i--; j--; continue; }
+        if (i > 0 && fr(i - 1)) {
+            let k = [1, 2, 3, 0].find(q => q <= j && D[i][j] === D[i - 1][j - q]);
+            if (k !== undefined) { ops.push({ k: 'name', t: i - 1 }); i--; j -= k; continue; }
+        }
         if (code === 'ja' && i > 0 && j > 0 && isKanji(sd[j - 1])) {
             let k = 1;
             for (; k <= 3 && k <= i && isHira(tgt[i - k]); k++) if (D[i][j] === D[i - k][j - 1]) break;
@@ -1836,9 +1849,13 @@ function scoreSpeechOne(code, target, said, roman, heard) {
     let sd = charMode ? speechChars(code, said) : speechWords(code, said);
     if (!tgt.length) return { score: 0, units: [], charMode, pass: false, errors: 1, details: [], heard };
     const names = charMode ? null : speechNames(code, target);
-    if (names && names.size) for (let i = 0; i + 1 < sd.length; i++) {   // 이름이 두 단어로 갈라져 들림(Su jin)
-        const j = sd[i] + sd[i + 1];
-        for (const nm of names) if (!sameWord(code, nm, sd[i], names) && !sameWord(code, nm, sd[i + 1], names) && sameWord(code, nm, j, names)) { sd = sd.slice(0, i).concat([j], sd.slice(i + 2)); break; }
+    if (names && names.size) {   // 이름이 두 단어로 갈라져 들림(Sue Jin) — 두 조각 모두 목표 문장에 없는 말이고 합치면 거의 같을 때만
+        const tk = new Set(tgt.map(u => wordKey(code, u)));
+        for (let i = 0; i + 1 < sd.length; i++) {
+            const a = wordKey(code, sd[i]), b = wordKey(code, sd[i + 1]);
+            if (tk.has(a) || tk.has(b)) continue;
+            for (const nm of names) if (nm[0] === a[0] && editDistance(nm, a + b) <= 1) { sd = sd.slice(0, i).concat([sd[i] + sd[i + 1]], sd.slice(i + 2)); break; }
+        }
     }
     const tsyl = code === 'zh' ? zhTargetSyls(tgt, roman) : null;
     const eq = code === 'zh' ? (i, j) => {
@@ -1853,15 +1870,24 @@ function scoreSpeechOne(code, target, said, roman, heard) {
         return false;
     } : code === 'ja' ? (i, j) => tgt[i] === sd[j] || (tgt[i] === 'は' && sd[j] === 'わ') || (tgt[i] === 'へ' && sd[j] === 'え')   // 조사 は·へ는 わ·え로 소리 남
         : (i, j) => sameWord(code, tgt[i], sd[j], names);
-    const ops = alignSpeech(code, tgt, sd, eq);
+    // 사람 이름 자리
+    let free = null;
+    if (charMode) {
+        if (code === 'ja') { const ts = tgt.join(''); let m; JA_PERSON.lastIndex = 0; while ((m = JA_PERSON.exec(ts))) { free = free || new Array(tgt.length).fill(false); for (let k = 0; k < m[1].length; k++) free[m.index + k] = true; } }
+    } else {
+        const caps = new Set();
+        String(target).split(/[\s,.!?¡¿;:"()…–—]+/).forEach(w => { if (/^\p{Lu}/u.test(w)) speechWords(code, w).forEach(x => caps.add(wordKey(code, x))); });
+        tgt.forEach((u, i) => { const k = wordKey(code, u); if (SPEECH_PERSON.has(k) && caps.has(k)) { free = free || new Array(tgt.length).fill(false); free[i] = true; } });
+    }
+    const ops = alignSpeech(code, tgt, sd, eq, free);
     const flags = new Array(tgt.length).fill(false);
     let wild = 0;
-    ops.forEach(o => { if (o.k === 'ok' || o.k === 'wild') flags[o.t] = true; if (o.k === 'wild') wild++; });
+    ops.forEach(o => { if (o.k === 'ok' || o.k === 'wild' || o.k === 'name') flags[o.t] = true; if (o.k === 'wild') wild++; });
     // 연달아 틀린 곳을 한 덩어리로
     const segs = [];
     let cur = null;
     ops.forEach(o => {
-        if (o.k === 'ok' || o.k === 'wild') { cur = null; return; }
+        if (o.k === 'ok' || o.k === 'wild' || o.k === 'name') { cur = null; return; }
         if (!cur) segs.push(cur = { t: [], s: [], n: 0 });
         if (o.t != null) cur.t.push(o.t);
         if (o.s != null) cur.s.push(o.s);
@@ -1907,6 +1933,7 @@ const ES_TIPS = [
     [(w, g) => w.replace(/[aeiou]/g, '') === g.replace(/[aeiou]/g, ''), '모음은 한국어처럼 짧고 또렷하게(a 아·e 에·i 이·o 오·u 우)'],
 ];
 const FR_TIPS = [
+    [(w, g) => /[aeiouy][nm]$/.test(w) && (g === w + 'ne' || g === w + 'e' || g === w + 'me') || /[aeiouy][nm]$/.test(g) && (w === g + 'ne' || w === g + 'e' || w === g + 'me'), '끝이 콧소리(-en·-in·-on, n을 따로 안 냄)인지, n을 또렷이 내는 -enne·-ine인지 달라요(coréen ≠ coréenne)'],
     [(w, g) => /[aeiouy]ss[aeiouy]/.test(w) && w.replace(/ss/g, 's') === g || /[aeiouy]s[aeiouy]/.test(w) && w.replace(/([aeiouy])s([aeiouy])/g, '$1ss$2') === g, '모음 사이 s 하나는 "즈"(z), ss는 "스"(s)예요(poison 독 ≠ poisson 생선)'],
     [(w, g) => /u/.test(w) && !/ou/.test(w) && g.startsWith(w.replace(/u/g, 'ou')) && g.length - w.length <= 2 || /ou/.test(w) && w.replace(/ou/g, 'u') === g, 'u는 입술을 동그랗게 내밀고 "이"라고 해요(tu ≠ tout)'],
     [(w, g) => /[aeiou][nm](?![aeiou])/.test(w) && w.replace(/[nm](?![aeiou])/g, '') !== g.replace(/[nm](?![aeiou])/g, '') && w.replace(/[aeiou][nm](?![aeiou])/g, '') === g.replace(/[aeiou][nm](?![aeiou])/g, ''), '콧소리 모음(an·on·in)은 n을 따로 내지 않고 코로 울려요'],
