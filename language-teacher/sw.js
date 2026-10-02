@@ -5,7 +5,7 @@
      그 밖의 탐색(아이콘·manifest·설정 파일을 주소창으로 연 경우 등)은 건드리지 않음
    - cloud-config.js : 저장본을 먼저 주고 뒤에서 갱신(설정을 바꾸면 그다음에 열 때 반영).
                        저장본이 없을 때만 네트워크를 1.5초 기다리고, 그래도 없으면 '설정 없음'
-   - data-XX.js / stories-XX.js : ?v= 주소 그대로 캐시 우선 + 뒤에서 확인(바뀌었으면 다음에 열 때 새것)
+   - data-XX.js / stories-XX.js / speech-XX.js(말하기 채점 사전) : ?v= 주소 그대로 캐시 우선 + 뒤에서 확인(바뀌었으면 다음에 열 때 새것)
                                    새 버전을 못 받으면(오류 응답·오프라인) 저장된 옛 버전
                                    '다시 시도'가 붙이는 &r= 는 캐시 칸 이름에서 뺌(요청은 그대로 보냄)
                                    DATA_VER는 tools/stamp-data-ver.mjs 가 파일 내용으로 자동으로 정함
@@ -38,7 +38,7 @@ const CONFIG_WAIT = 1500;   // 설정 저장본이 없을 때 기다리는 시�
 
 const isAppPage = u => { const p = new URL(u).pathname; return p === SCOPE_PATH || p === SCOPE_PATH + 'index.html'; };
 const isHtml = res => /^text\/html/i.test(res.headers.get('content-type') || '');
-const isData = path => /\/(data|stories)-[a-z]{2}\.js$/.test(path);
+const isData = path => /\/(data|stories|speech)-[a-z]{2}\.js$/.test(path);
 const isConfig = path => /\/cloud-config\.js$/.test(path);
 const isAudioIndex = path => /\/audio\/[a-z]{2}\/index\.json$/.test(path);
 const isClip = path => /\/audio\/[a-z]{2}\/[0-9a-f]{12}\.mp3$/.test(path);

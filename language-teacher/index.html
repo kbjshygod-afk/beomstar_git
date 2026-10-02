@@ -574,6 +574,17 @@
         .unit-chips { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; margin: 8px 0 12px; }
         .unit-chip { font-size: 13px; border-radius: 8px; padding: 3px 7px; font-weight: 700; font-family: var(--native-font); }
         .unit-chip.ok { background: #ecfdf5; color: #067a57; } .unit-chip.miss { background: #fef2f2; color: var(--error); text-decoration: underline dotted; }
+        .sdiff { margin: 4px 0 12px; text-align: left; }
+        .sdiff-h { font-size: 13px; font-weight: 800; margin-bottom: 6px; }
+        .sd-row { border: 1px solid var(--border); border-left: 4px solid #f59e0b; border-radius: 10px; padding: 8px 10px; margin-bottom: 8px; background: var(--card); }
+        .sd-row.crit { border-left-color: var(--error); }
+        .sd-pair { font-size: 14px; line-height: 1.7; overflow-wrap: anywhere; }
+        .sd-lab { font-size: 11px; color: var(--text-light); font-weight: 700; }
+        .sd-want { font-family: var(--native-font); color: #067a57; } .sd-got { font-family: var(--native-font); color: var(--error); }
+        .sd-want u { text-decoration-thickness: 2px; text-underline-offset: 3px; }
+        .sd-rd { font-size: 12.5px; color: var(--text-light); } .sd-arrow { color: var(--text-light); margin: 0 2px; }
+        .sd-tip { font-size: 12.5px; color: var(--text); margin-top: 4px; line-height: 1.55; }
+        .sd-btns { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
         /* ── 주간 리포트 ───────────────────── */
         .week-bars { display: flex; align-items: flex-end; gap: 8px; height: 96px; margin: 10px 0 4px; }
         .week-bar { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; }
@@ -656,7 +667,7 @@ const INCOMING_IMPORT = (() => {
     return null;
 })();
 /* ═══════════════════ 언어 설정 ═══════════════════ */
-const DATA_VER = '039ae2bb';   // data·stories 파일 내용 해시 — 데이터를 고치면 node tools/stamp-data-ver.mjs 로 갱신
+const DATA_VER = '44b34b3e';   // data·stories·speech 파일 내용 해시 — 데이터를 고치면 node tools/stamp-data-ver.mjs 로 갱신
 const LANGS = {
     en: {
         code: 'en', flag: '🗽', name: '영어', appName: '헬로 영어', tag: '영어',
@@ -669,6 +680,7 @@ const LANGS = {
     zh: {
         code: 'zh', flag: '🐼', name: '중국어', appName: '니하오 중국어', tag: '중국어',
         dataFile: './data-zh.js?v=' + DATA_VER, dataGlobal: 'ZW_DATA', storyFile: './stories-zh.js?v=' + DATA_VER, storyGlobal: 'STORIES_ZH',
+        speechFile: './speech-zh.js?v=' + DATA_VER, speechGlobal: 'SPEECH_ZH',   // 말하기 채점용 병음 사전
         ttsLang: 'zh-CN', trainerTab: 'tone', trainerIco: '🎵', trainerLabel: '성조',
         primary: '#d92332', primaryDark: '#a01526', gold: '#f0a500', goldLight: '#fff4d6', redSoft: '#fdf0f0',
         desc: '성조와 병음부터 여행 회화까지', sampleWord: '你好', joiner: '',
@@ -685,6 +697,7 @@ const LANGS = {
     ja: {
         code: 'ja', flag: '🎏', name: '일본어', appName: '곤니치와 일본어', tag: '일본어',
         dataFile: './data-ja.js?v=' + DATA_VER, dataGlobal: 'JA_DATA', storyFile: './stories-ja.js?v=' + DATA_VER, storyGlobal: 'STORIES_JA',
+        speechFile: './speech-ja.js?v=' + DATA_VER, speechGlobal: 'SPEECH_JA',   // 말하기 채점용 한자 읽기 사전
         ttsLang: 'ja-JP', trainerTab: 'kana', trainerIco: 'あ', trainerLabel: '가나',
         primary: '#bc002d', primaryDark: '#7a0020', gold: '#c9a227', goldLight: '#faf1d9', redSoft: '#fdeef1',
         desc: '히라가나·가타카나부터 여행 회화까지', sampleWord: 'こんにちは', joiner: '',
@@ -1244,12 +1257,7 @@ function ttsAvailable() { return 'speechSynthesis' in window; }
 function stopSpeak() { seqToken++; stopClip(); if (ttsAvailable()) speechSynthesis.cancel(); clearPlaying(); }
 function tuneFor(speaker) {
     const vc = voiceCache[CUR.code] || {};
-    let a = vc.a || null, b = vc.b || null;
-    const pref = store.settings.voice && store.settings.voice[CUR.code];
-    if (pref && vc.list) {
-        const pv = vc.list.find(v => v.name === pref);
-        if (pv) { if (b && b.name === pv.name) b = a; a = pv; }
-    }
+    const a = vc.a || null, b = vc.b || null;   // 목소리는 고르지 않고 자동(가장 좋은 목소리, 대화의 두 번째 화자는 그다음)
     const two = !!(a && b);
     if (speaker === 'B') return { voice: b || a, pitch: two ? 0.98 : 0.86, rate: 0.98 };
     if (speaker === 'C') return { voice: a, pitch: 1.18, rate: 1 };
@@ -1558,19 +1566,22 @@ function micHelpText(code) {
     return '마이크가 막혀 있어요. 주소창의 🔒 아이콘 → 마이크 허용 후 새로고침해 주세요.';
 }
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
-const SPEAK_PASS = 70;
 const CHAR_LANGS = { zh: true, ja: true };   // 띄어쓰기 없는 언어는 글자 단위로 채점
 const EN_CONTRACTIONS = [["i'm", "i am"], ["you're", "you are"], ["we're", "we are"], ["they're", "they are"], ["he's", "he is"], ["she's", "she is"], ["it's", "it is"], ["that's", "that is"], ["what's", "what is"], ["where's", "where is"], ["who's", "who is"], ["there's", "there is"], ["here's", "here is"], ["how's", "how is"], ["let's", "let us"], ["don't", "do not"], ["doesn't", "does not"], ["didn't", "did not"], ["can't", "can not"], ["cannot", "can not"], ["won't", "will not"], ["isn't", "is not"], ["aren't", "are not"], ["wasn't", "was not"], ["weren't", "were not"], ["haven't", "have not"], ["hasn't", "has not"], ["couldn't", "could not"], ["wouldn't", "would not"], ["shouldn't", "should not"], ["i've", "i have"], ["we've", "we have"], ["you've", "you have"], ["i'll", "i will"], ["you'll", "you will"], ["we'll", "we will"], ["it'll", "it will"], ["i'd", "i would"], ["gonna", "going to"], ["wanna", "want to"], ["gotta", "got to"]];
 const SOUND_ALIKE = {
     en: [["to", "two", "too", "2"], ["for", "four", "4"], ["one", "won", "1"], ["ate", "eight", "8"], ["your", "youre"], ["i", "eye"], ["are", "our"], ["there", "their", "theyre"], ["okay", "ok"], ["hi", "high"], ["by", "buy", "bye"], ["know", "no"], ["here", "hear"], ["thank", "thanks"], ["oclock", "clock"], ["mr", "mister"], ["ms", "miss"]],
     es: [["a", "ha"], ["e", "he"], ["o", "oh"], ["si", "sí"], ["tu", "tú"], ["el", "él"], ["mas", "más"], ["que", "qué"]],
-    fr: [["a", "à"], ["ou", "où"], ["est", "et"], ["ca", "ça"], ["cest", "ces", "ses"], ["mr", "monsieur"], ["mme", "madame"]],
+    fr: [["a", "à"], ["ou", "où"], ["est", "et"], ["ca", "ça"], ["cest", "ces", "ses"], ["est", "es"], ["mr", "monsieur"], ["mme", "madame"]],
 };
 const NUM_WORDS = {
     en: { zero: 0, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12, thirteen: 13, fourteen: 14, fifteen: 15, sixteen: 16, seventeen: 17, eighteen: 18, nineteen: 19, twenty: 20, thirty: 30, forty: 40, fifty: 50, sixty: 60, seventy: 70, eighty: 80, ninety: 90 },
     es: { cero: 0, uno: 1, una: 1, un: 1, dos: 2, tres: 3, cuatro: 4, cinco: 5, seis: 6, siete: 7, ocho: 8, nueve: 9, diez: 10, once: 11, doce: 12, trece: 13, catorce: 14, quince: 15, veinte: 20, treinta: 30, cuarenta: 40, cincuenta: 50, cien: 100 },
     fr: { zero: 0, un: 1, une: 1, deux: 2, trois: 3, quatre: 4, cinq: 5, six: 6, sept: 7, huit: 8, neuf: 9, dix: 10, onze: 11, douze: 12, treize: 13, quatorze: 14, quinze: 15, seize: 16, vingt: 20, trente: 30, quarante: 40, cinquante: 50, soixante: 60, cent: 100 },
 };
+// 말을 고르는 동안 나오는 소리(음…)는 빼고 본다
+const SPEECH_FILLERS = { en: ['um', 'umm', 'uh', 'uhm', 'er', 'erm', 'hmm', 'mm'], es: ['eh', 'em', 'mmm'], fr: ['euh', 'heu', 'hum'] };
+// 틀리면 뜻이 반대가 되는 말(부정어)과 숫자는 긴 문장에서도 봐주지 않는다
+const SPEECH_NEG = { en: ['not', 'no', 'never', 'nothing', 'nobody'], es: ['no', 'nunca', 'nada', 'nadie', 'ni', 'tampoco'], fr: ['pas', 'jamais', 'rien', 'non'] };
 const CJK_DIGITS = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
 function stripAccents(t) { return t.normalize('NFD').replace(/[̀-ͯ]/g, ''); }
 function editDistance(a, b) {
@@ -1584,31 +1595,51 @@ function editDistance(a, b) {
 }
 function speechWords(code, text) {
     let t = String(text || '').toLowerCase().replace(/[‘’ʼ`]/g, "'").replace(/[“”«»]/g, '"');
-    if (code === 'en') EN_CONTRACTIONS.forEach(([a, b]) => { t = t.split(a).join(b); });
+    if (code === 'en') { EN_CONTRACTIONS.forEach(([a, b]) => { t = t.split(a).join(b); }); t = t.replace(/\b([ap])\.\s?m\b\.?/g, '$1m'); }   // a.m. = am
     if (code === 'fr') t = t.replace(/'/g, ' ').replace(/-/g, ' ');   // l'eau → l eau, est-ce → est ce
-    t = stripAccents(t).replace(/[.,!?;:"()¿¡…–—\-]/g, ' ').replace(/'/g, '').replace(/\s+/g, ' ').trim();
+    t = t.normalize('NFC').replace(/[.,!?;:"()¿¡…–—\-]/g, ' ').replace(/'/g, '').replace(/\s+/g, ' ').trim();
     if (!t) return [];
-    const nums = NUM_WORDS[code] || {};
+    const nums = NUM_WORDS[code] || {}, fill = SPEECH_FILLERS[code] || [];
     const out = [];
     const words = t.split(' ');
     for (let i = 0; i < words.length; i++) {
         let w = words[i];
-        let m = /^(\d+)([a-z]+)$/.exec(w) || /^([a-z]+)(\d+)$/.exec(w);
+        const k = stripAccents(w);
+        if (fill.includes(k)) continue;
+        let m = /^(\d+)(\p{L}+)$/u.exec(w) || /^(\p{L}+)(\d+)$/u.exec(w);
         if (m) { out.push(m[1], m[2]); continue; }
-        if (nums[w] !== undefined) {
-            let v = nums[w];
-            if (code === 'en' && v >= 20 && v % 10 === 0 && nums[words[i + 1]] !== undefined && nums[words[i + 1]] < 10) { v += nums[words[++i]]; }
+        if (nums[k] !== undefined) {
+            let v = nums[k];
+            const nx = words[i + 1] && stripAccents(words[i + 1]);
+            if (code === 'en' && v >= 20 && v % 10 === 0 && nums[nx] !== undefined && nums[nx] < 10) { v += nums[nx]; i++; }
             out.push(String(v)); continue;
         }
         out.push(w);
     }
     return out;
 }
-function sameWord(code, a, b) {
+// 비교용 열쇠: 악센트는 빼되 스페인어 ñ는 남긴다(año ≠ ano)
+function wordKey(code, w) { return code === 'es' ? stripAccents(w.replace(/ñ/g, '\u0001')).replace(/\u0001/g, 'ñ') : stripAccents(w); }
+// 스페인어는 철자가 달라도 소리가 같은 말이 많다(b/v, ll/y, c·z/s, 묵음 h) — 소리로 바꿔 비교
+function esSound(w) { return w.replace(/ch/g, 'ʧ').replace(/h/g, '').replace(/ll/g, 'y').replace(/v/g, 'b').replace(/g(?=[ei])/g, 'x').replace(/j/g, 'x').replace(/gu(?=[ei])/g, 'g').replace(/qu(?=[ei])/g, 'k').replace(/c(?=[ei])/g, 's').replace(/z/g, 's').replace(/c/g, 'k'); }
+function sameWord(code, a, b, names) {
+    a = wordKey(code, a); b = wordKey(code, b);
     if (a === b) return true;
     const groups = SOUND_ALIKE[code] || [];
     for (const g of groups) { const ga = g.map(stripAccents); if (ga.includes(a) && ga.includes(b)) return true; }
-    return Math.min(a.length, b.length) >= 5 && a[0] === b[0] && editDistance(a, b) <= 1;
+    if (code === 'es' && esSound(a) === esSound(b)) return true;
+    // 사람 이름은 인식기가 철자를 다르게 쓰기 쉬워서 첫 글자가 같고 조금만 다르면 맞게 본다
+    return !!(names && names.has(a) && a[0] === b[0] && editDistance(a, b) <= (a.length >= 4 ? Math.max(2, Math.floor(a.length / 3)) : 1));
+}
+// 문장 가운데의 대문자 단어(사람 이름 등) — 문장 첫 단어와 I는 빼고
+function speechNames(code, text) {
+    const out = new Set();
+    String(text || '').split(/[.!?¡¿]+/).forEach(sent => {
+        sent.split(/[\s,;:"()…–—]+/).filter(Boolean).forEach((w, i) => {
+            if (i > 0 && /^\p{Lu}/u.test(w) && w !== 'I' && !/^I'/.test(w)) speechWords(code, w).forEach(x => out.add(wordKey(code, x)));
+        });
+    });
+    return out;
 }
 function toHiragana(t) { return t.replace(/[ァ-ヶ]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x60)); }
 // 0~99는 十·二十三처럼, 100 이상(전화번호 등)은 한 자리씩 한자로
@@ -1619,62 +1650,347 @@ function numToCjk(ns) {
     const t = Math.floor(n / 10), o = n % 10;
     return (t > 1 ? CJK_DIGITS[t] : '') + '十' + (o ? CJK_DIGITS[o] : '');
 }
-// 인식기가 자주 바꿔 쓰는 같은 소리 글자는 하나로 본다(뜻이 아니라 '알아들었는지'를 보는 점수라서)
+// 인식기가 자주 바꿔 쓰는 같은 뜻 글자는 하나로 본다(소리가 같은 글자는 병음 사전으로 따로 맞춤)
 const ZH_SAME = { '她': '他', '它': '他', '地': '的', '得': '的', '两': '二', '幺': '一', '再': '在', '作': '做', '嘛': '吗', '哪': '那' };
 function speechChars(code, text) {
     let t = String(text || '').normalize('NFKC').replace(/\d+/g, numToCjk);
-    if (code === 'zh') t = Array.from(t).map(c => ZH_SAME[c] || c).join('');
-    if (code === 'ja') t = toHiragana(t);
+    if (code === 'zh') t = Array.from(t.replace(/[嗯呃]/g, '')).map(c => ZH_SAME[c] || c).join('');
+    if (code === 'ja') t = toHiragana(t).replace(/えっと|ええと|えーと|あのー/g, '');
     return Array.from(t.replace(/[\s.,!?;:"'()（）「」『』、。！？・…ー〜~\-]/g, ''));
 }
-// 최장 공통 부분수열로 목표 단위(단어/글자)를 몇 개나 말했는지 센다. 일본어는 인식 결과의 한자 1자가
-// 목표 문장의 히라가나 1~3자를 대신할 수 있게 봐준다(학습 문장은 가나로만 쓰여 있기 때문).
-function alignUnits(code, tgt, said, eq) {
-    const n = tgt.length, m = said.length;
-    const isKanji = c => /[一-鿿]/.test(c), isHira = c => /[ぁ-ゖ]/.test(c);
-    const dp = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(0));
-    for (let i = n - 1; i >= 0; i--) for (let j = m - 1; j >= 0; j--) {
-        let best = Math.max(dp[i + 1][j], dp[i][j + 1]);
-        if (eq(tgt[i], said[j])) best = Math.max(best, 1 + dp[i + 1][j + 1]);
-        if (code === 'ja' && isKanji(said[j]) && isHira(tgt[i])) {
-            for (let k = 1; k <= 3 && i + k <= n && isHira(tgt[i + k - 1]); k++) best = Math.max(best, k + dp[i + k][j + 1]);
-        }
-        dp[i][j] = best;
-    }
-    const flags = new Array(n).fill(false);
-    flags.wild = 0;
-    let i = 0, j = 0;
-    while (i < n && j < m) {
-        if (eq(tgt[i], said[j]) && dp[i][j] === 1 + dp[i + 1][j + 1]) { flags[i] = true; i++; j++; continue; }
-        let used = false;
-        if (code === 'ja' && isKanji(said[j]) && isHira(tgt[i])) {
-            for (let k = 3; k >= 1; k--) {
-                if (i + k <= n && tgt.slice(i, i + k).every(isHira) && dp[i][j] === k + dp[i + k][j + 1]) { for (let q = 0; q < k; q++) flags[i + q] = true; flags.wild += k; i += k; j++; used = true; break; }
-            }
-        }
-        if (used) continue;
-        if (dp[i][j + 1] >= dp[i + 1][j]) j++; else i++;
-    }
-    return flags;
+
+/* 발음 사전(speech-zh.js·speech-ja.js, 언어를 열 때 뒤에서 받음) — 없으면 글자 그대로 비교 */
+const PY_MARK = { 'ā': 'a1', 'á': 'a2', 'ǎ': 'a3', 'à': 'a4', 'ē': 'e1', 'é': 'e2', 'ě': 'e3', 'è': 'e4', 'ī': 'i1', 'í': 'i2', 'ǐ': 'i3', 'ì': 'i4', 'ō': 'o1', 'ó': 'o2', 'ǒ': 'o3', 'ò': 'o4', 'ū': 'u1', 'ú': 'u2', 'ǔ': 'u3', 'ù': 'u4', 'ǖ': 'ü1', 'ǘ': 'ü2', 'ǚ': 'ü3', 'ǜ': 'ü4', 'ń': 'n2', 'ň': 'n3', 'ǹ': 'n4', 'ḿ': 'm2' };
+// 'mǎi' → { s: 'mǎi', b: 'mai', t: 3 } (경성은 5)
+function pyParse(s) {
+    let b = '', t = 5;
+    for (const ch of String(s).normalize('NFC').toLowerCase()) { const x = PY_MARK[ch]; if (x) { b += x[0]; t = +x[1]; } else if (/[a-zü]/.test(ch)) b += ch; }
+    return { s: String(s).normalize('NFC').toLowerCase(), b, t };
 }
-// 대체 표기(alt)가 있으면 그중 가장 높은 점수를 쓴다
+let ZH_PY = null;
+function zhPy() {
+    if (ZH_PY) return ZH_PY;
+    const g = window.SPEECH_ZH;
+    if (!g || !g.py) return null;
+    const read = new Map(), syl = new Set();
+    [g.py, g.py2 || {}].forEach(grp => Object.keys(grp).forEach(r => {
+        syl.add(pyParse(r).b);
+        for (const c of grp[r]) { const a = read.get(c); if (a) { if (!a.includes(r)) a.push(r); } else read.set(c, [r]); }
+    }));
+    return (ZH_PY = { read, syl });
+}
+// 병음 한 덩어리(nǐhǎo)를 소리마디로 나눈다 — 가능한 나눔 중 마디 수가 가장 적은 것
+function pySegment(chunk, syl) {
+    const cs = Array.from(chunk), base = cs.map(c => (PY_MARK[c] || c)[0]), n = cs.length;
+    const best = new Array(n + 1).fill(Infinity), from = new Array(n + 1).fill(-1);
+    best[0] = 0;
+    for (let i = 0; i < n; i++) {
+        if (best[i] === Infinity) continue;
+        for (let L = 1; L <= 6 && i + L <= n; L++) if (syl.has(base.slice(i, i + L).join('')) && best[i] + 1 < best[i + L]) { best[i + L] = best[i] + 1; from[i + L] = i; }
+    }
+    if (best[n] === Infinity) return null;
+    const out = [];
+    for (let e = n; e > 0; e = from[e]) out.unshift(pyParse(cs.slice(from[e], e).join('')));
+    return out;
+}
+// 목표 문장의 병음을 글자마다 붙인다(얼화 nǎr 의 儿 은 소리 없음 = null). 글자 수와 맞지 않으면 null
+function zhTargetSyls(units, roman) {
+    const z = zhPy();
+    if (!z || !roman) return null;
+    const syls = [];
+    for (const chunk of String(roman).normalize('NFC').toLowerCase().split(/[^a-zāáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜüńňǹḿ]+/)) {
+        if (!chunk) continue;
+        let seg = pySegment(chunk, z.syl), er = false;
+        if (!seg && /r$/.test(chunk)) { seg = pySegment(chunk.slice(0, -1), z.syl); er = !!seg; }
+        if (!seg) return null;
+        syls.push(...seg);
+        if (er) syls.push(null);
+    }
+    const out = [];
+    let k = 0;
+    for (const u of units) {
+        if (!/[一-鿿]/.test(u)) { out.push(null); continue; }
+        if (k >= syls.length) return null;
+        const s = syls[k++];
+        if (s === null && u !== '儿') return null;
+        out.push(s);
+    }
+    return k === syls.length ? out : null;
+}
+// 들린 글자 c 의 소리 중 목표 소리 w 에 가장 가까운 것(같은 소리 > 같은 마디 > 첫 소리)
+function zhReadOf(c, w) {
+    const z = zhPy(), rs = z && z.read.get(c);
+    if (!rs) return null;
+    const ps = rs.map(pyParse);
+    return (w && (ps.find(p => p.b === w.b && p.t === w.t) || ps.find(p => p.b === w.b))) || ps[0];
+}
+// 일본어: 들린 글의 한자를 가나로 바꾼 후보들(사전에 있는 한자 덩어리만, 가장 긴 것부터). 모르는 한자는 그대로
+let JA_KJ = null;
+function jaKanji() {
+    if (JA_KJ) return JA_KJ;
+    const g = window.SPEECH_JA;
+    if (!g || !g.k) return null;
+    const m = new Map();
+    let max = 1;
+    Object.keys(g.k).forEach(k => { m.set(k, String(g.k[k]).split('|')); max = Math.max(max, Array.from(k).length); });
+    return (JA_KJ = { m, max });
+}
+function jaReadings(said) {
+    const d = jaKanji(), cs = Array.from(String(said || ''));
+    if (!d || !cs.some(c => /[一-鿿々]/.test(c))) return [said];
+    let outs = [''];
+    for (let i = 0; i < cs.length;) {
+        let hit = null;
+        if (/[一-鿿々]/.test(cs[i])) for (let L = Math.min(d.max, cs.length - i); L >= 1; L--) { const r = d.m.get(cs.slice(i, i + L).join('')); if (r) { hit = { L, r }; break; } }
+        if (!hit) { outs = outs.map(o => o + cs[i]); i++; continue; }
+        const next = [];
+        outs.forEach(o => hit.r.forEach(r => { if (next.length < 16) next.push(o + r); }));
+        outs = next; i += hit.L;
+    }
+    return outs;
+}
+
+// 일본어 가나를 한글 소리로(틀린 곳 옆에 보여 주는 용도, 대략)
+const JA_KO = (() => {
+    const m = {}, rows = ['あ아い이う우え에お오', 'か카き키く쿠け케こ코', 'が가ぎ기ぐ구げ게ご고', 'さ사し시す스せ세そ소', 'ざ자じ지ず즈ぜ제ぞ조', 'た타ち치つ츠て테と토', 'だ다ぢ지づ즈で데ど도',
+        'な나に니ぬ누ね네の노', 'は하ひ히ふ후へ헤ほ호', 'ば바び비ぶ부べ베ぼ보', 'ぱ파ぴ피ぷ푸ぺ페ぽ포', 'ま마み미む무め메も모', 'や야ゆ유よ요', 'ら라り리る루れ레ろ로', 'わ와を오ぁ아ぃ이ぅ우ぇ에ぉ오'];
+    rows.forEach(r => { for (let i = 0; i < r.length; i += 2) m[r[i]] = r[i + 1]; });
+    const ya = { 'ゃ': 'ㅑ', 'ゅ': 'ㅠ', 'ょ': 'ㅛ' }, V = { 'ㅑ': 2, 'ㅠ': 17, 'ㅛ': 12 }, VJ = { 'ㅑ': 0, 'ㅠ': 13, 'ㅛ': 8 };   // ㅈ·ㅊ 다음엔 ㅏ·ㅜ·ㅗ(자·주·조)
+    'き키し시ち치に니ひ히み미り리ぎ기じ지び비ぴ피'.match(/../g).forEach(p => {
+        const ini = Math.floor((p[1].charCodeAt(0) - 0xAC00) / 588), sj = ini === 9 || ini === 12 || ini === 14;   // ㅅ·ㅈ·ㅊ
+        Object.keys(ya).forEach(s => { m[p[0] + s] = String.fromCharCode(0xAC00 + (ini * 21 + (sj ? VJ[ya[s]] : V[ya[s]])) * 28); });
+    });
+    return m;
+})();
+function jaKo(s) {
+    let out = '';
+    const cs = Array.from(s);
+    for (let i = 0; i < cs.length; i++) {
+        const two = JA_KO[cs[i] + (cs[i + 1] || '')];
+        if (two && /[ゃゅょ]/.test(cs[i + 1] || '')) { out += two; i++; continue; }
+        const c = cs[i], last = out.charCodeAt(out.length - 1), fin = c === 'ん' ? 4 : c === 'っ' ? 19 : 0;
+        if (fin && last >= 0xAC00 && last <= 0xD7A3 && (last - 0xAC00) % 28 === 0) { out = out.slice(0, -1) + String.fromCharCode(last + fin); continue; }
+        out += JA_KO[c] || (c === 'ん' ? 'ㄴ' : c === 'っ' ? 'ㅅ' : c === 'ー' ? '-' : c);
+    }
+    return out;
+}
+const JA_VOWEL = { a: 'あかさたなはまやらわがざだばぱぁゃ', i: 'いきしちにひみりぎじぢびぴぃ', u: 'うくすつぬふむゆるぐずづぶぷぅゅ', e: 'えけせてねへめれげぜでべぺぇ', o: 'おこそとのほもよろをごぞどぼぽぉょ' };
+function jaVowel(c) { for (const v in JA_VOWEL) if (JA_VOWEL[v].includes(c)) return v; return ''; }
+// 장음: 앞 글자와 같은 모음, o단+う, e단+い
+function jaLong(prev, c) { const pv = jaVowel(prev || ''); return !!pv && (jaVowel(c) === pv && 'あいうえお'.includes(c) || c === 'う' && pv === 'o' || c === 'い' && pv === 'e'); }
+
+/* 채점 */
+const SPEAK_PASS = 70;   // 이 점수 아래면 "거의"가 아니라 다시 연습
+function speechAllowed(code, n) { const k = code === 'zh' ? 10 : code === 'ja' ? 12 : 8; return n >= 2 * k ? 2 : n >= k ? 1 : 0; }
+// 편집 거리로 목표(tgt)와 들린 것(sd)을 맞춘다: 같음 0, 바뀜·빠짐·더함 1.
+// 일본어는 사전에 없는 한자 1자가 목표의 히라가나 1~3자를 대신할 수 있게 봐준다(추정 — 자동 통과는 막음)
+function alignSpeech(code, tgt, sd, eq) {
+    const n = tgt.length, m = sd.length;
+    const isKanji = c => /[一-鿿々]/.test(c), isHira = c => /[ぁ-ゖ]/.test(c);
+    const D = Array.from({ length: n + 1 }, (_, i) => { const r = new Array(m + 1).fill(0); r[0] = i; return r; });
+    for (let j = 0; j <= m; j++) D[0][j] = j;
+    const E = Array.from({ length: n }, () => new Array(m).fill(false));
+    for (let i = 1; i <= n; i++) for (let j = 1; j <= m; j++) {
+        const e = E[i - 1][j - 1] = eq(i - 1, j - 1);
+        let best = Math.min(D[i - 1][j] + 1, D[i][j - 1] + 1, D[i - 1][j - 1] + (e ? 0 : 1));
+        if (code === 'ja' && isKanji(sd[j - 1])) for (let k = 1; k <= 3 && k <= i && isHira(tgt[i - k]); k++) best = Math.min(best, D[i - k][j - 1]);
+        D[i][j] = best;
+    }
+    const ops = [];
+    let i = n, j = m;
+    while (i > 0 || j > 0) {
+        if (i > 0 && j > 0 && E[i - 1][j - 1] && D[i][j] === D[i - 1][j - 1]) { ops.push({ k: 'ok', t: i - 1, s: j - 1, same: E[i - 1][j - 1] === 'same' }); i--; j--; continue; }
+        if (code === 'ja' && i > 0 && j > 0 && isKanji(sd[j - 1])) {
+            let k = 1;
+            for (; k <= 3 && k <= i && isHira(tgt[i - k]); k++) if (D[i][j] === D[i - k][j - 1]) break;
+            if (k <= 3 && k <= i && isHira(tgt[i - k]) && D[i][j] === D[i - k][j - 1]) { for (let q = 1; q <= k; q++) ops.push({ k: 'wild', t: i - q, s: j - 1 }); i -= k; j--; continue; }
+        }
+        if (i > 0 && j > 0 && D[i][j] === D[i - 1][j - 1] + 1) { ops.push({ k: 'sub', t: i - 1, s: j - 1 }); i--; j--; continue; }
+        if (i > 0 && D[i][j] === D[i - 1][j] + 1) { ops.push({ k: 'del', t: i - 1 }); i--; continue; }
+        ops.push({ k: 'ins', s: j - 1 }); j--;
+    }
+    return ops.reverse();
+}
+// 대체 표기(alt)가 있으면 그중 가장 잘 맞는 것을 쓴다
 function scoreSpeechItem(code, item, said) {
     const cands = [nativeText(item)].concat(Array.isArray(item.alt) ? item.alt : []);
+    const roman = romanText(item);
     let best = null;
-    cands.forEach(t => { const r = scoreSpeech(code, t, said); if (!best || r.score > best.score || (r.score === best.score && !r.uncertain && best.uncertain)) best = r; });
+    cands.forEach((t, k) => {
+        const r = scoreSpeech(code, t, said, k === 0 ? roman : '');
+        if (!best || r.errors < best.errors || (r.errors === best.errors && !r.uncertain && best.uncertain)) best = r;
+    });
     return best;
 }
-function scoreSpeech(code, target, said) {
+function scoreSpeech(code, target, said, roman) {
+    if (code === 'ja') {   // 한자로 알아들었으면 사전으로 가나로 바꾼 후보 중 가장 잘 맞는 것
+        let best = null;
+        jaReadings(said).forEach(s => { const r = scoreSpeechOne(code, target, s, roman, said); if (!best || r.errors < best.errors || (r.errors === best.errors && !r.uncertain && best.uncertain)) best = r; });
+        return best;
+    }
+    return scoreSpeechOne(code, target, said, roman, said);
+}
+function scoreSpeechOne(code, target, said, roman, heard) {
     const charMode = !!CHAR_LANGS[code];
     const tgt = charMode ? speechChars(code, target) : speechWords(code, target);
-    const sd = charMode ? speechChars(code, said) : speechWords(code, said);
-    if (!tgt.length) return { score: 0, units: [], charMode };
-    const flags = alignUnits(code, tgt, sd, charMode ? (a, b) => a === b : (a, b) => sameWord(code, a, b));
-    const matched = flags.filter(Boolean).length;
-    const extra = Math.max(0, sd.length - tgt.length) - (charMode ? 4 : 2);
-    const penalty = Math.min(40, Math.max(0, extra) * (charMode ? 4 : 8));
-    // 일본어: 한자를 가나로 '추정'해 맞춘 부분이 있으면 참고 점수로만 쓰고 자동 통과는 막는다
-    return { score: Math.max(0, Math.min(100, Math.round(matched / tgt.length * 100 - penalty))), units: tgt.map((u, k) => ({ u, ok: flags[k] })), charMode, uncertain: code === 'ja' && flags.wild > 0 };
+    let sd = charMode ? speechChars(code, said) : speechWords(code, said);
+    if (!tgt.length) return { score: 0, units: [], charMode, pass: false, errors: 1, details: [], heard };
+    const names = charMode ? null : speechNames(code, target);
+    if (names && names.size) for (let i = 0; i + 1 < sd.length; i++) {   // 이름이 두 단어로 갈라져 들림(Su jin)
+        const j = sd[i] + sd[i + 1];
+        for (const nm of names) if (!sameWord(code, nm, sd[i], names) && !sameWord(code, nm, sd[i + 1], names) && sameWord(code, nm, j, names)) { sd = sd.slice(0, i).concat([j], sd.slice(i + 2)); break; }
+    }
+    const tsyl = code === 'zh' ? zhTargetSyls(tgt, roman) : null;
+    const eq = code === 'zh' ? (i, j) => {
+        if (tgt[i] === sd[j]) return true;
+        const z = zhPy(), rs = z && z.read.get(sd[j]);
+        if (!rs) return false;
+        const want = tsyl && tsyl[i] ? [tsyl[i]] : (z.read.get(tgt[i]) || []).map(pyParse), next = tsyl && tsyl[i + 1];
+        for (const r of rs) {
+            const p = pyParse(r);
+            for (const w of want) if (p.b === w.b && (p.t === w.t || w.t === 5 || (w.t === 3 && p.t === 2 && next && next.t === 3))) return 'same';   // 같은 소리의 다른 글자(성조 변화 포함)
+        }
+        return false;
+    } : code === 'ja' ? (i, j) => tgt[i] === sd[j] || (tgt[i] === 'は' && sd[j] === 'わ') || (tgt[i] === 'へ' && sd[j] === 'え')   // 조사 は·へ는 わ·え로 소리 남
+        : (i, j) => sameWord(code, tgt[i], sd[j], names);
+    const ops = alignSpeech(code, tgt, sd, eq);
+    const flags = new Array(tgt.length).fill(false);
+    let wild = 0;
+    ops.forEach(o => { if (o.k === 'ok' || o.k === 'wild') flags[o.t] = true; if (o.k === 'wild') wild++; });
+    // 연달아 틀린 곳을 한 덩어리로
+    const segs = [];
+    let cur = null;
+    ops.forEach(o => {
+        if (o.k === 'ok' || o.k === 'wild') { cur = null; return; }
+        if (!cur) segs.push(cur = { t: [], s: [], n: 0 });
+        if (o.t != null) cur.t.push(o.t);
+        if (o.s != null) cur.s.push(o.s);
+        cur.n++;
+    });
+    const errors = segs.reduce((a, g) => a + g.n, 0);
+    const negJa = [];
+    if (code === 'ja') { const ts = tgt.join(''); let m; const re = /ません|ない|なかっ/g; while ((m = re.exec(ts))) for (let k = 0; k < m[0].length; k++) negJa.push(m.index + k); }
+    const critUnit = u => /\d/.test(u) || (code === 'zh' ? /[不没别零一二三四五六七八九十百千万]/.test(u) : code === 'ja' ? /[零一二三四五六七八九十百千万]/.test(u) : (SPEECH_NEG[code] || []).includes(wordKey(code, u)));
+    const details = segs.map(g => speechDetail(code, g, tgt, sd, tsyl, charMode, critUnit, negJa));
+    const crit = details.some(d => d.crit);
+    const allowed = speechAllowed(code, tgt.length);
+    const score = Math.max(0, Math.round((tgt.length - errors) / tgt.length * 100));
+    return { score, units: tgt.map((u, k) => ({ u, ok: flags[k] })), charMode, uncertain: code === 'ja' && wild > 0, errors, allowed, crit, pass: errors <= allowed && !crit, details, heard };
+}
+
+/* 틀린 곳 설명: 무엇이 무엇으로 들렸는지 + 언어별 발음 요령 */
+const TONE_NAME = { 1: '1성', 2: '2성', 3: '3성', 4: '4성', 5: '경성' };
+const TONE_HOW = { 1: '1성은 높은 음에서 평평하게 쭉', 2: '2성은 중간에서 위로 쭉 올려요', 3: '3성은 낮게 눌렀다가 살짝 올려요(뒤에 말이 이어지면 낮게만)', 4: '4성은 위에서 아래로 뚝 떨어뜨려요', 5: '경성은 짧고 가볍게 붙여요' };
+const ZH_INITS = ['zh', 'ch', 'sh', 'b', 'p', 'm', 'f', 'd', 't', 'n', 'l', 'g', 'k', 'h', 'j', 'q', 'x', 'r', 'z', 'c', 's', 'y', 'w'];
+function pySplit(b) { for (const i of ZH_INITS) if (b.length > i.length && b.startsWith(i)) return [i, b.slice(i.length)]; return ['', b]; }
+const ZH_INIT_TIP = [
+    [/^(z\|zh|c\|ch|s\|sh)$/, 'zh·ch·sh는 혀끝을 입천장 쪽으로 말아 올리고, z·c·s는 혀를 펴서 윗니 뒤에 대요'],
+    [/^(j\|zh|ch\|q|sh\|x|j\|z|c\|q|s\|x)$/, 'j·q·x는 혀를 펴고 입을 옆으로 벌려 "지·치·시"처럼, zh·ch·sh는 혀를 말아 올려요'],
+    [/^l\|r$/, 'r은 혀끝을 말아 올려 "르"를 끄는 느낌, l은 혀끝을 윗잇몸에 붙여요'],
+    [/^l\|n$/, 'n은 코로 울리는 소리, l은 혀끝을 윗잇몸에 대고 혀 옆으로 공기를 내요'],
+    [/^(f\|h|f\|p|b\|f)$/, 'f는 윗니를 아랫입술에 살짝 대고 바람을 내요(ㅍ·ㅎ과 달라요)'],
+    [/^(b\|p|d\|t|g\|k|j\|q|c\|z|ch\|zh)$/, 'p·t·k·q·c·ch는 바람을 세게 내뿜고, b·d·g·j·z·zh는 바람 없이 약하게 내요'],
+];
+const EN_TIPS = [
+    [(w, g) => /r/.test(w) && w.replace(/r/g, 'l') === g || /l/.test(w) && w.replace(/l/g, 'r') === g, 'r은 혀끝이 어디에도 닿지 않게 뒤로 말고, l은 혀끝을 윗잇몸에 붙여요'],
+    [(w, g) => /th/.test(w) && ['s', 't', 'd', 'f', 'z'].some(x => w.replace(/th/g, x) === g), 'th는 혀끝을 윗니와 아랫니 사이에 살짝 내밀고 바람을 내요'],
+    [(w, g) => /f/.test(w) && ['p', 'h'].some(x => w.replace(/f/g, x) === g) || /[ph]/.test(w) && w.replace(/[ph]/g, 'f') === g, 'f는 윗니를 아랫입술에 대고 바람을 내요(ㅍ이 아니에요)'],
+    [(w, g) => /v/.test(w) && w.replace(/v/g, 'b') === g || /b/.test(w) && w.replace(/b/g, 'v') === g, 'v는 윗니를 아랫입술에 대고 목을 울려요(ㅂ이 아니에요)'],
+    [(w, g) => /z/.test(w) && ['j', 's'].some(x => w.replace(/z/g, x) === g), 'z는 벌이 윙윙거리듯 "즈~" 하고 떨려요(ㅈ이 아니에요)'],
+    [(w, g) => g.length < w.length && w.startsWith(g) && /^(s|es|d|ed|t|k)$/.test(w.slice(g.length)), w => '끝소리 "' + w + '"까지 약하게라도 꼭 소리 내요'],
+    [(w, g) => w.replace(/[aeiouy]/g, '') === g.replace(/[aeiouy]/g, ''), '모음 소리가 달라요 — 원어민 소리의 입모양·길이를 비교해 들어 보세요'],
+];
+const ES_TIPS = [
+    [(w, g) => /rr/.test(w) && w.replace(/rr/g, 'r') === g || /r/.test(w) && w.replace(/r/g, 'rr') === g, 'rr은 혀끝을 여러 번 떨고(따르르), r은 한 번만 톡 튕겨요'],
+    [(w, g) => /ñ/.test(w) && w.replace(/ñ/g, 'n') === g, 'ñ는 혀를 입천장에 붙여 "냐·녜·뇨"처럼 내요'],
+    [(w, g) => g.length < w.length && w.startsWith(g) && /^(s|n)$/.test(w.slice(g.length)), w => '끝소리 "' + w + '"를 빠뜨리지 말아요(뜻이 바뀌어요)'],
+    [(w, g) => w.replace(/[aeiou]/g, '') === g.replace(/[aeiou]/g, ''), '모음은 한국어처럼 짧고 또렷하게(a 아·e 에·i 이·o 오·u 우)'],
+];
+const FR_TIPS = [
+    [(w, g) => /[aeiouy]ss[aeiouy]/.test(w) && w.replace(/ss/g, 's') === g || /[aeiouy]s[aeiouy]/.test(w) && w.replace(/([aeiouy])s([aeiouy])/g, '$1ss$2') === g, '모음 사이 s 하나는 "즈"(z), ss는 "스"(s)예요(poison 독 ≠ poisson 생선)'],
+    [(w, g) => /u/.test(w) && !/ou/.test(w) && g.startsWith(w.replace(/u/g, 'ou')) && g.length - w.length <= 2 || /ou/.test(w) && w.replace(/ou/g, 'u') === g, 'u는 입술을 동그랗게 내밀고 "이"라고 해요(tu ≠ tout)'],
+    [(w, g) => /[aeiou][nm](?![aeiou])/.test(w) && w.replace(/[nm](?![aeiou])/g, '') !== g.replace(/[nm](?![aeiou])/g, '') && w.replace(/[aeiou][nm](?![aeiou])/g, '') === g.replace(/[aeiou][nm](?![aeiou])/g, ''), '콧소리 모음(an·on·in)은 n을 따로 내지 않고 코로 울려요'],
+    [(w, g) => w.replace(/[aeiouy]/g, '') === g.replace(/[aeiouy]/g, ''), '모음 소리가 달라요 — 입모양을 원어민 소리와 비교해 들어 보세요'],
+];
+function speechDetail(code, g, tgt, sd, tsyl, charMode, critUnit, negJa) {
+    const W = g.t.map(i => tgt[i]), G = g.s.map(j => sd[j]), J = charMode ? '' : ' ';
+    const d = { kind: W.length && G.length ? 'sub' : W.length ? 'del' : 'ins', want: W.join(J), got: G.join(J), wantRead: '', gotRead: '', tips: [], crit: false };
+    if (W.concat(G).some(critUnit) || (code === 'ja' && (g.t.some(i => negJa.includes(i)) || /ない|ません/.test(d.got)))) {
+        d.crit = true;
+        d.tips.push(W.concat(G).some(u => /\d|[零一二三四五六七八九十百千万]/.test(u)) ? (d.kind === 'del' ? '숫자를 빠뜨렸어요 — 숫자는 꼭 정확히' : '숫자가 달라요 — 숫자는 정확히 말해야 해요') : '부정하는 말이 빠지거나 더해지면 뜻이 반대가 돼요');
+    }
+    if (code === 'zh') {
+        const ws = g.t.map(i => (tsyl && tsyl[i]) || zhReadOf(tgt[i], null));
+        const gs = G.map((c, k) => zhReadOf(c, ws[k] || null));
+        d.wantRead = ws.map(p => p ? p.s : '').filter(Boolean).join(' ');
+        d.gotRead = gs.map(p => p ? p.s : '').filter(Boolean).join(' ');
+        if (W.length === G.length) ws.forEach((w, k) => {
+            const p = gs[k];
+            if (!w || !p) return;
+            if (w.b === p.b) { if (w.t !== p.t) d.tips.push('성조: ' + w.s + '(' + TONE_NAME[w.t] + ')인데 ' + p.s + '(' + TONE_NAME[p.t] + ')처럼 들렸어요 — ' + TONE_HOW[w.t]); return; }
+            const [wi, wf] = pySplit(w.b), [pi, pf] = pySplit(p.b);
+            if (wi !== pi && wf !== pf) { d.tips.push(w.s + ' 대신 ' + p.s + '처럼 들렸어요 — 정답 소리를 듣고 첫소리·모음·성조를 따라 해 보세요'); return; }
+            if (wi !== pi) { const key = [wi, pi].sort().join('|'), tip = ZH_INIT_TIP.find(x => x[0].test(key)); d.tips.push('첫소리 ' + (wi || '없음') + ' → ' + (pi || '없음') + (tip ? ': ' + tip[1] : '')); }
+            if (wf !== pf) {
+                if (wf.replace(/ng$/, 'n') === pf.replace(/ng$/, 'n')) d.tips.push('끝소리 -' + (/ng$/.test(wf) ? 'ng' : 'n') + ': -n은 혀끝을 윗잇몸에 대고 끝내고, -ng는 혀뿌리를 올려 "응"처럼 코로 끝내요');
+                else if (wf.replace(/ü/g, 'u') === pf.replace(/ü/g, 'u')) d.tips.push('ü는 "이" 입모양에서 입술만 동그랗게 모아요("위"를 한 번에)');
+                else d.tips.push('모음 ' + wf + ' → ' + pf + ': 입모양을 원어민 소리와 비교해 들어 보세요');
+            }
+            if (w.t !== p.t) d.tips.push('성조도 달라요: ' + w.s + '(' + TONE_NAME[w.t] + ') — ' + TONE_HOW[w.t]);
+        });
+    } else if (code === 'ja') {
+        const base = s => s.normalize('NFD').replace(/[゙゚]/g, '');
+        const w = d.want, gg = d.got, prevT = g.t.length ? tgt[g.t[0] - 1] : '', prevS = g.s.length ? sd[g.s[0] - 1] : '';
+        d.wantRead = w ? jaKo(w) : ''; d.gotRead = gg && !/[一-鿿々]/.test(gg) ? jaKo(gg) : '';
+        if (d.kind === 'del' && /^っ+$/.test(w) || /っ/.test(w) && gg === w.replace(/っ/g, '')) d.tips.push('작은 っ는 한 박자 쉬었다가 다음 소리를 내요');
+        else if (d.kind === 'ins' && /^っ+$/.test(gg)) d.tips.push('작은 っ가 없는 말이에요 — 멈추지 말고 이어서 말해요');
+        else if (d.kind === 'del' && Array.from(w).every((c, k) => jaLong(k ? w[k - 1] : prevT, c)) || gg && w.length > gg.length && w.replace(/[あいうえおー]/g, '') === gg.replace(/[あいうえおー]/g, '')) d.tips.push('장음(길게 끄는 소리)은 한 박자 더 늘여요(おばあさん ≠ おばさん)');
+        else if (d.kind === 'ins' && Array.from(gg).every((c, k) => jaLong(k ? gg[k - 1] : prevS, c)) || gg && w.length < gg.length && w.replace(/[あいうえおー]/g, '') === gg.replace(/[あいうえおー]/g, '')) d.tips.push('짧은 소리예요 — 길게 끌지 말고 한 박자로(おばさん ≠ おばあさん)');
+        else if (gg && w !== gg && base(w) === base(gg)) d.tips.push('탁음(゛゜)이 달라요: ' + w + '(' + jaKo(w) + ')는 ' + (w.normalize('NFD').includes('゙') ? '목을 울려서' : '목을 울리지 않고') + ' 소리 내요');
+        else if (d.kind === 'del' && w === 'ん') d.tips.push('ん도 한 박자예요 — 끝까지 소리 내요');
+        else if (/[ゃゅょ]/.test(w)) d.tips.push('작은 ゃ·ゅ·ょ는 앞 글자와 한 박자로 붙여요');
+    } else if (W.length && W.length === G.length) {
+        const tips = code === 'en' ? EN_TIPS : code === 'es' ? ES_TIPS : FR_TIPS, one = code === 'es' ? s => s : s => s.replace(/(.)\1/g, '$1');
+        W.forEach((w1, k) => {
+            const w0 = wordKey(code, w1), g0 = wordKey(code, G[k]);
+            if (w0 === g0) return;
+            const hit = tips.find(([test]) => test(w0, g0) || test(one(w0), one(g0)));
+            if (hit) { const t = typeof hit[1] === 'function' ? hit[1](w0.slice(g0.length)) : hit[1]; if (!d.tips.includes(t)) d.tips.push(t); return; }
+            if (editDistance(w0, g0) === 1) {   // 철자 하나 차이: 어느 소리가 달랐는지
+                let a = 0; while (a < w0.length && w0[a] === g0[a]) a++;
+                d.tips.push(g0.length < w0.length ? '"' + w0[a] + '" 소리가 안 들렸어요(' + w0 + ')' : g0.length > w0.length ? '"' + g0[a] + '" 소리가 더 들렸어요(' + w0 + ')' : w0 + '의 "' + w0[a] + '"가 "' + g0[a] + '"처럼 들렸어요');
+            }
+        });
+    }
+    if (!d.tips.length) d.tips.push(d.kind === 'del' ? '안 들렸어요 — 빠뜨렸거나 너무 작게 말했어요' : d.kind === 'ins' ? '문장에 없는 말이 들렸어요' : '다른 말로 들렸어요 — 정답 소리를 듣고 따라 해 보세요');
+    return d;
+}
+
+// 틀린 곳 목록: 정답 → 들린 말, 읽기(병음·한글), 발음 요령, 정답·들린 말 듣기
+function speakDiffHtml(res) {
+    const ds = (res && res.details) || [];
+    if (!ds.length) return '';
+    const rd = r => r ? ' <span class="sd-rd">' + esc(r) + '</span>' : '';
+    // 한 단어가 다른 단어로 들렸으면 다른 글자에 밑줄
+    const mark = (w, g) => {
+        if (res.charMode || !g || /\s/.test(w) || /\s/.test(g)) return esc(w);
+        const a = Array.from(w), b = Array.from(g), L = Array.from({ length: a.length + 1 }, () => new Array(b.length + 1).fill(0));
+        for (let i = a.length - 1; i >= 0; i--) for (let j = b.length - 1; j >= 0; j--) L[i][j] = a[i] === b[j] ? 1 + L[i + 1][j + 1] : Math.max(L[i + 1][j], L[i][j + 1]);
+        let out = '', i = 0, j = 0;
+        while (i < a.length) { if (j < b.length && a[i] === b[j]) { out += esc(a[i]); i++; j++; } else if (j < b.length && L[i][j + 1] >= L[i + 1][j]) j++; else { out += '<u>' + esc(a[i]) + '</u>'; i++; } }
+        return out;
+    };
+    let h = '<div class="sdiff"><div class="sdiff-h">🔍 다르게 들린 곳</div>';
+    ds.slice(0, 4).forEach((d, k) => {
+        h += '<div class="sd-row' + (d.crit ? ' crit' : '') + '"><div class="sd-pair">' +
+            (d.want ? '<span class="sd-lab">정답</span> <b class="sd-want" lang="' + CUR.ttsLang + '">' + mark(d.want, d.got) + '</b>' + rd(d.wantRead) : '<span class="sd-lab">문장에 없는 말</span>') +
+            (d.want ? (d.got ? ' <span class="sd-arrow" aria-label="대신">→</span> <span class="sd-lab">들린 말</span> ' : ' <span class="sd-arrow">→</span> <span class="sd-lab">안 들림</span>') : ' ') +
+            (d.got ? '<b class="sd-got" lang="' + CUR.ttsLang + '">' + esc(d.got) + '</b>' + rd(d.gotRead) : '') + '</div>' +
+            '<div class="sd-tip">' + d.tips.map(t => '💡 ' + esc(t)).join('<br>') + '</div>' +
+            '<div class="sd-btns">' + (d.want ? '<button class="btn small ghost" data-sd-want="' + k + '">🔊 정답 듣기</button>' : '') + (d.got ? '<button class="btn small gray" data-sd-got="' + k + '">🔊 들린 말 듣기</button>' : '') + '</div></div>';
+    });
+    if (ds.length > 4) h += '<div class="muted" style="font-size:12px;text-align:center">그 밖에 ' + (ds.length - 4) + '군데 더 — 위의 ✗ 칩을 눌러 들어 보세요</div>';
+    return h + '</div>';
 }
 
 /* 말하기 창: cfg = { item, mode: 'repeat' | 'boss', title, onPass(score) } */
@@ -1779,7 +2095,7 @@ function openSpeak(cfg) {
         let r;
         try { r = new SR(); } catch (e) { ready('음성 인식을 시작할 수 없어요.'); return; }
         recog = r;
-        r.lang = CUR.ttsLang; r.interimResults = true; r.continuous = false; r.maxAlternatives = 3;
+        r.lang = CUR.ttsLang; r.interimResults = true; r.continuous = false; r.maxAlternatives = 1;
         let finalText = '', lastInterim = '', errored = false;
         const btn = stage.querySelector('#micGo'), hint = stage.querySelector('#micHint'), heard = stage.querySelector('#micHeard');
         btn.classList.add('listening'); btn.textContent = '⏹'; hint.textContent = '듣고 있어요... 다 말하면 잠시 기다리거나 ⏹를 누르세요';
@@ -1790,10 +2106,8 @@ function openSpeak(cfg) {
             for (let i = ev.resultIndex; i < ev.results.length; i++) {
                 const res = ev.results[i];
                 if (res.isFinal) {
-                    // 1순위를 기본으로 쓰고, 다른 후보가 확실히(20점 이상) 나을 때만 바꾼다
-                    let best = res[0].transcript, bs = scoreSpeechItem(CUR.code, item, best).score;
-                    for (let k = 1; k < res.length; k++) { const sc = scoreSpeechItem(CUR.code, item, res[k].transcript).score; if (sc >= bs + 20) { bs = sc; best = res[k].transcript; } }
-                    finalText += ' ' + best;
+                    // 인식기가 가장 확신한 1순위만 쓴다(다른 후보 중 정답에 가까운 걸 고르면 틀린 발음도 맞게 보임)
+                    finalText += ' ' + res[0].transcript;
                 } else interim += res[0].transcript;
             }
             if (interim.trim()) lastInterim = interim.trim();
@@ -1846,7 +2160,7 @@ function openSpeak(cfg) {
     }
     function finish(res, said) {
         reveal();
-        if (res && res.uncertain && res.score >= SPEAK_PASS) {   // 한자 인식 → 스스로 확인
+        if (res && res.uncertain && res.pass) {   // 사전에 없는 한자로 알아들음 → 스스로 확인
             stage.innerHTML = '<div class="muted" style="text-align:center">참고 점수</div><div class="score-big" style="color:var(--text-light)">' + res.score + '%</div>' +
                 '<div class="mic-heard">들린 문장: “' + esc(said) + '”</div>' +
                 '<div class="explain-box" style="background:#f8fafc;border:1px solid var(--border);text-align:center">🤔 한자로 알아들어서 정확히 비교하기 어려워요.<br>위 정답 문장과 들린 문장이 같은 뜻인지 직접 확인해 주세요.</div>' +
@@ -1855,18 +2169,19 @@ function openSpeak(cfg) {
             stage.querySelector('#micSelfOk').addEventListener('click', () => finish(null, said));
             return;
         }
-        const passed = !res || res.score >= SPEAK_PASS;
+        const passed = !res || res.pass;
         let h = '';
         if (res) {
             h += '<div class="muted" style="text-align:center">알아듣기 점수</div><div class="score-big ' + (passed ? 'pass' : 'fail') + '">' + res.score + '%</div>' +
+                '<div class="muted" style="text-align:center;font-size:12px">' + (res.details.length ? '다르게 들린 곳 ' + res.details.length + '군데 · ' : '') + (res.allowed ? (res.charMode ? '글자' : '단어') + ' ' + res.allowed + '개까지 틀려도 통과(부정어·숫자는 정확히)' : '틀린 곳 없이 말하면 통과') + '</div>' +
                 (res.units.some(x => !x.ok) ? '<div class="muted" style="text-align:center;font-size:11.5px">✗ 칩을 누르면 그 부분만 들을 수 있어요</div>' : '') +
                 '<div class="unit-chips">' + res.units.map(x => x.ok ? '<span class="unit-chip ok" aria-label="맞음 ' + esc(x.u) + '">✓ ' + esc(x.u) + '</span>'
                     : '<button class="unit-chip miss" data-unit="' + esc(x.u) + '" aria-label="놓침 ' + esc(x.u) + ' 듣기">✗ ' + esc(x.u) + '</button>').join('') + '</div>' +
-                '<div class="mic-heard">들린 문장: “' + esc(said) + '”</div>';
+                '<div class="mic-heard">들린 문장: “' + esc(said) + '”</div>' + speakDiffHtml(res);
         }
         h += '<div class="explain-box ' + (passed ? 'good' : 'bad') + '" style="text-align:center">' +
-            (passed ? (res ? (res.score >= 90 ? '🎉 원어민 같아요!' : '⭕ 통과! 잘 전달됐어요') : '👏 좋아요! 입으로 말한 문장은 오래 남아요') :
-                '💪 빨간 부분을 한 번 더 들어 보고 다시 말해 보세요 (' + SPEAK_PASS + '% 이상 통과)') + '</div>' +
+            (passed ? (res ? (!res.errors ? '🎉 원어민 같아요!' : '⭕ 통과! 위에 다르게 들린 곳만 한 번 더 들어 보세요') : '👏 좋아요! 입으로 말한 문장은 오래 남아요') :
+                (res && res.score >= SPEAK_PASS ? '💪 거의 다 왔어요! ' : '💪 ') + '위에 다르게 들린 곳을 듣고 다시 말해 보세요') + '</div>' +
             '<div style="display:flex;gap:8px"><button class="btn block ghost" id="micRetry">🔁 다시 말하기</button>' +
             '<button class="btn block" id="micDone">' + (passed ? '완료' : '닫기') + '</button></div>';
         stage.innerHTML = h;
@@ -1874,6 +2189,8 @@ function openSpeak(cfg) {
         if (!passed && cfg.onFail && !cfg.failed) { cfg.failed = true; cfg.onFail(res ? res.score : 0); }
         stage.querySelector('#micRetry').addEventListener('click', () => ready());
         stage.querySelectorAll('[data-unit]').forEach(b => b.addEventListener('click', () => speak(b.dataset.unit, 0.8)));
+        stage.querySelectorAll('[data-sd-want]').forEach(b => b.addEventListener('click', () => { const d = res.details[+b.dataset.sdWant]; if (d) speak(d.want, 0.8); }));
+        stage.querySelectorAll('[data-sd-got]').forEach(b => b.addEventListener('click', () => { const d = res.details[+b.dataset.sdGot]; if (d) speak(d.got, 0.8); }));
         stage.querySelector('#micDone').addEventListener('click', () => closeModal(false, 'done'));
         if (passed) {
             passedOnce = true;
@@ -2124,6 +2441,7 @@ async function activateLanguage(code, opts) {
     const slowT = setTimeout(() => { const n = document.getElementById('slowNote'); if (n && gen === langGen) n.textContent = '📶 연결이 느려요 · 계속 기다리는 중이에요'; }, 8000);
     const retry = !!(opts && opts.retry);
     const storyP = loadScriptOnce(L.storyFile, L.storyGlobal, retry).then(() => 'ok', () => 'fail');   // 동화는 데이터와 동시에
+    if (L.speechFile) loadScriptOnce(L.speechFile, L.speechGlobal).catch(() => { });   // 말하기 채점 사전은 뒤에서(없으면 글자 그대로 비교)
     let data;
     try {
         await loadScriptOnce(L.dataFile, L.dataGlobal, retry);
@@ -4859,13 +5177,6 @@ function voiceDesc() {
                     : '컴퓨터의 음성(TTS) 설정에서 ' + CUR.name + ' 음성을 추가하세요';
     return (best ? '고품질 음성을 자동으로 골랐어요' : '더 자연스러운 목소리: ' + how) + (vc.b ? ' · 대화는 두 목소리로' : '');
 }
-function voiceSelectHtml() {
-    const vc = voiceCache[CUR.code];
-    if (!vc || !vc.list || vc.list.length < 2) return '';
-    const cur = (store.settings.voice || {})[CUR.code] || '';
-    return '<select class="sel" id="setVoice" aria-label="목소리 선택"><option value="">자동 (추천)</option>' +
-        vc.list.slice(0, 12).map(v => '<option value="' + esc(v.name) + '"' + (v.name === cur ? ' selected' : '') + '>' + esc(v.name.replace(/Microsoft |Google |\(.*?\)/g, '').trim().slice(0, 26)) + '</option>').join('') + '</select>';
-}
 function pad2(n) { return String(n).padStart(2, '0'); }
 function buildReminderIcs(timeString) {
     const hh = Number(timeString.slice(0, 2)), mm = Number(timeString.slice(3, 5));
@@ -4928,7 +5239,7 @@ function renderSettings() {
             return '<button data-rate="' + v + '" aria-pressed="' + (near === v) + '">' + t + '</button>';
         }).join('') + '</div>') +
         (hasClips ? setRow('🎙️ 자연 음성', '원어민에 가까운 녹음 목소리로 들어요 · 녹음이 없는 문장은 기기 목소리', '<label class="switch"><input type="checkbox" id="setNatural"' + (store.settings.voiceMode !== 'device' ? ' checked' : '') + '><span class="slider"></span></label>') : '') +
-        setRow(hasClips ? '기기 목소리' : '목소리', voiceDesc(), voiceSelectHtml()) +
+        (hasClips ? '' : setRow('목소리', voiceDesc(), '')) +   // 목소리는 고르지 않고 자동(녹음이 있으면 녹음 목소리)
         setRow('글씨 크게', '화면 전체 글씨와 버튼을 조금 크게', '<label class="switch"><input type="checkbox" id="setBig"' + (store.settings.bigText ? ' checked' : '') + '><span class="slider"></span></label>') +
         setRow('효과음', '정답·오답·레벨 업 때 짧은 소리', '<label class="switch"><input type="checkbox" id="setSfx"' + (store.settings.sfx ? ' checked' : '') + '><span class="slider"></span></label>') +
         setRow('자유 탐색 모드', '순서 잠금을 풀고 모든 레슨·읽기 열기 (추천하지 않아요!)', '<label class="switch"><input type="checkbox" id="setFree"' + (store.settings.freeNav ? ' checked' : '') + '><span class="slider"></span></label>') +
@@ -4993,12 +5304,6 @@ function renderSettings() {
     document.getElementById('setSfx').addEventListener('change', e => { store.settings.sfx = e.target.checked; save(); if (e.target.checked) sfx('ok'); });
     const sn = document.getElementById('setNatural');
     if (sn) sn.addEventListener('change', e => { store.settings.voiceMode = e.target.checked ? 'natural' : 'device'; save(); track('voice_mode', { mode: store.settings.voiceMode }); speak(CUR.sampleWord, 0.95); });
-    const vs = document.getElementById('setVoice');
-    if (vs) vs.addEventListener('change', e => {
-        if (!store.settings.voice) store.settings.voice = {};
-        if (e.target.value) store.settings.voice[CUR.code] = e.target.value; else delete store.settings.voice[CUR.code];
-        save(); speak(CUR.sampleWord, 0.95);
-    });
     document.getElementById('setRemind').addEventListener('change', e => { store.settings.reminderTime = e.target.value || '21:00'; save(); });
     document.getElementById('icsBtn').addEventListener('click', () => {
         const t = document.getElementById('setRemind').value || store.settings.reminderTime || '21:00';
@@ -5980,7 +6285,7 @@ if ('serviceWorker' in navigator && window.isSecureContext && /^https?:$/.test(l
         navigator.serviceWorker.register('sw.js').then(reg => {
             const warm = () => {
                 const sw = navigator.serviceWorker.controller || reg.active; if (!sw) return;
-                const urls = performance.getEntriesByType('resource').map(e => e.name).filter(u => /\/language-teacher\/((data|stories)-[a-z]{2}\.js|cloud-config\.js|vendor\/|icons\/)/.test(u));
+                const urls = performance.getEntriesByType('resource').map(e => e.name).filter(u => /\/language-teacher\/((data|stories|speech)-[a-z]{2}\.js|cloud-config\.js|vendor\/|icons\/)/.test(u));
                 // 녹음 목록: 서비스 워커가 켜지기 전에 받은 것(허브·공유 링크 ?lang= 로 온 첫 방문)도 오프라인용으로 담게. 녹음이 있는 언어만
                 const idx = Object.keys(CLIPS).filter(c => CLIPS[c] && CLIPS[c].ids).map(c => new URL('audio/' + c + '/index.json', location.href).href);
                 // 앱 화면은 처음 들어온 주소(?lang= 포함, 시작 코드가 지우기 전) — 방금 받은 그 주소라 HTTP 캐시에서 나온다
