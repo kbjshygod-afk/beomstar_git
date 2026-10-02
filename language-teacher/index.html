@@ -1596,7 +1596,7 @@ const SPEECH_FUNC = {
     es: ['el', 'la', 'los', 'las', 'un', 'una', 'unos', 'unas', 'de', 'del', 'a', 'al', 'en', 'con', 'y', 'o', 'que', 'muy', 'pues', 'bueno'],
     fr: ['le', 'la', 'les', 'l', 'un', 'une', 'des', 'de', 'd', 'du', 'a', 'au', 'aux', 'en', 'et', 'ou', 'que', 'qu', 'ne', 'n', 'c', 's', 'j', 'y', 'tres', 'bien', 'alors'],
     zh: '的了呢吧啊呀哦嘛个也都很',   // 吗는 빠지면 질문이 평서문이 되므로 넣지 않음
-    ja: 'はがをにでともへねよかの',
+    ja: 'はがをにでともへねよの',   // 띄어 쓴 덩어리 끝에 있을 때만 조사로 봄. 질문 か는 넣지 않음
 };
 const CJK_DIGITS = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
 function stripAccents(t) { return t.normalize('NFD').replace(/[̀-ͯ]/g, ''); }
@@ -1741,7 +1741,7 @@ const ZH_SAME = { '她': '他', '它': '他', '地': '的', '得': '的', '两':
 function speechChars(code, text, place) {
     let t = String(text || '').normalize('NFKC').replace(/\d+/g, d => numToCjk(d, place));
     if (code === 'zh') t = t.replace(/[嗯呃]/g, '');
-    if (code === 'ja') t = toHiragana(t).replace(/えっと|ええと|えーと|あのー/g, '');
+    if (code === 'ja') t = toHiragana(t).replace(/([ぁ-ゖ])ー/g, (m, c) => c + ({ a: 'あ', i: 'い', u: 'う', e: 'え', o: 'お' }[jaVowel(c)] || ''));   // 장음 ー = 앞 글자 모음
     return Array.from(t.replace(/[\s.,!?;:"'()（）「」『』、。！？・…ー〜~\-]/g, ''));
 }
 
@@ -1817,6 +1817,77 @@ function zhReadOf(c, w) {
     if (!ps) return null;
     return (w && (ps.find(p => p.b === w.b && p.t === w.t) || ps.find(p => p.b === w.b))) || ps[0];
 }
+// 일본어 숫자 읽기: 인식기는 「4時10分」「1000円」처럼 숫자로 적으므로 단위에 맞는 읽기(よじ·じゅっぷん·せんえん) 후보로 바꾼다
+const JA_ONE = ['ぜろ', 'いち', 'に', 'さん', 'よん', 'ご', 'ろく', 'なな', 'はち', 'きゅう'];
+const JA_HUND = ['', 'ひゃく', 'にひゃく', 'さんびゃく', 'よんひゃく', 'ごひゃく', 'ろっぴゃく', 'ななひゃく', 'はっぴゃく', 'きゅうひゃく'];
+const JA_THOU = ['', 'せん', 'にせん', 'さんぜん', 'よんせん', 'ごせん', 'ろくせん', 'ななせん', 'はっせん', 'きゅうせん'];
+function jaNum(n) {   // 0~99,999,999 → 읽기 후보(7은 なな·しち, 9는 きゅう·く, 4는 よん·し도)
+    if (n === 0) return ['ぜろ', 'れい'];
+    const four = x => { const t = Math.floor(x / 1000), h = Math.floor(x / 100) % 10, te = Math.floor(x / 10) % 10, o = x % 10;
+        const head = JA_THOU[t] + JA_HUND[h] + (te ? (te === 1 ? '' : JA_ONE[te]) + 'じゅう' : '');
+        if (!o) return [head];
+        return [head + JA_ONE[o]].concat(o === 7 ? [head + 'しち'] : o === 9 ? [head + 'く'] : o === 4 && !head ? [head + 'し'] : []); };
+    if (n < 10000) return four(n);
+    const man = Math.floor(n / 10000), rest = n % 10000, mh = four(man)[0] + 'まん';
+    return rest ? four(rest).map(r => mh + r) : [mh];
+}
+const JA_TSU = ['', 'ひとつ', 'ふたつ', 'みっつ', 'よっつ', 'いつつ', 'むっつ', 'ななつ', 'やっつ', 'ここのつ', 'とお'];
+const JA_DAY = { 1: 'ついたち', 2: 'ふつか', 3: 'みっか', 4: 'よっか', 5: 'いつか', 6: 'むいか', 7: 'なのか', 8: 'ようか', 9: 'ここのか', 10: 'とおか', 14: 'じゅうよっか', 20: 'はつか', 24: 'にじゅうよっか' };
+// 촉음·반탁음이 되는 단위: 끝 숫자가 1·6·8·10이면 っ + p(ぷん·ぽん·ぱい), 3·4는 ぷん 등
+function jaCounter(n, c) {
+    const base = jaNum(n), d = n % 10, out = new Set();
+    const swap = (b, from, to) => b.endsWith(from) ? b.slice(0, -from.length) + to : null;
+    const each = f => base.forEach(b => [].concat(f(b) || []).forEach(x => x && out.add(x)));
+    const geminate = (b, kana) => swap(b, 'いち', 'いっ' + kana) || swap(b, 'ろく', 'ろっ' + kana) || swap(b, 'はち', 'はっ' + kana) || (b.endsWith('じゅう') ? [swap(b, 'じゅう', 'じゅっ' + kana), swap(b, 'じゅう', 'じっ' + kana)] : null);
+    switch (c) {
+        case '時': case '時間': { const tail = c === '時' ? 'じ' : 'じかん'; each(b => swap(b, 'よん', 'よ' + tail) || swap(b, 'し', 'よ' + tail) || [b + tail].concat(b.endsWith('く') && d === 9 ? [] : [])); if (d === 9) each(b => swap(b, 'きゅう', 'く' + tail)); if (d === 7) each(b => swap(b, 'なな', 'しち' + tail)); break; }
+        case '分': each(b => d === 0 || d === 1 || d === 6 || d === 8 ? [].concat(geminate(b, 'ぷん') || []).concat(d === 8 ? [b + 'ふん'] : []) : d === 3 || d === 4 ? b + 'ぷん' : b + 'ふん'); break;
+        case '円': each(b => swap(b, 'よん', 'よえん') || b + 'えん'); break;
+        case '歳': case '才': each(b => d === 0 || d === 1 || d === 8 ? geminate(b, 'さい') : b + 'さい'); if (n === 20) out.add('はたち'); break;
+        case '人': if (n === 1) out.add('ひとり'); else if (n === 2) out.add('ふたり'); else each(b => swap(b, 'よん', 'よにん') || b + 'にん'); break;
+        case 'つ': if (n >= 1 && n <= 10) out.add(JA_TSU[n]); else each(b => b); break;
+        case '月': each(b => d === 4 && n < 10 ? 'しがつ' : d === 9 && n < 10 ? 'くがつ' : d === 7 && n < 10 ? ['しちがつ'] : b + 'がつ'); break;
+        case '日': if (JA_DAY[n]) out.add(JA_DAY[n]); else each(b => [b + 'にち'].concat(d === 7 ? [swap(b, 'なな', 'しちにち')] : d === 9 ? [swap(b, 'きゅう', 'くにち')] : [])); break;
+        case '個': each(b => d === 0 || d === 1 || d === 6 || d === 8 ? geminate(b, 'こ') : b + 'こ'); break;
+        case '本': each(b => d === 0 || d === 1 || d === 6 || d === 8 ? geminate(b, 'ぽん') : d === 3 ? b + 'ぼん' : b + 'ほん'); break;
+        case '杯': each(b => d === 0 || d === 1 || d === 6 || d === 8 ? geminate(b, 'ぱい') : d === 3 ? b + 'ばい' : b + 'はい'); break;
+        case '階': case '回': each(b => d === 0 || d === 1 || d === 6 || d === 8 ? geminate(b, 'かい') : [b + 'かい'].concat(c === '階' && d === 3 ? [b + 'がい'] : [])); break;
+        case '冊': each(b => d === 0 || d === 1 || d === 8 ? geminate(b, 'さつ') : b + 'さつ'); break;
+        case '年': each(b => swap(b, 'よん', 'よねん') || b + 'ねん'); break;
+        case '週間': each(b => d === 0 || d === 1 || d === 8 ? geminate(b, 'しゅうかん') : b + 'しゅうかん'); break;
+        case '枚': each(b => b + 'まい'); break;
+        case '番': each(b => b + 'ばん'); break;
+        case '台': each(b => b + 'だい'); break;
+        case '度': each(b => b + 'ど'); break;
+        case '%': each(b => b + 'ぱあせんと'); break;
+        default: each(b => b);
+    }
+    return [...out].slice(0, 6);
+}
+function jaNumReadings(said) {
+    const re = /(\d+)(時間|時|分|円|歳|才|人|つ|ヶ?月|か月|日|個|本|杯|階|回|冊|年|週間|枚|番|台|度|%)?/g;
+    let outs = [''], last = 0, m;
+    const s = String(said || '').normalize('NFKC').replace(/\+/g, 'たす').replace(/×/g, 'かける').replace(/÷/g, 'わる');
+    if (!/\d/.test(s)) return [s];
+    while ((m = re.exec(s))) {
+        const pre = s.slice(last, m.index), ds = m[1], c = (m[2] || '').replace(/^ヶ|^か/, '');
+        let reads;
+        const digits = () => {   // 전화번호처럼 한 자리씩
+            let rs = [''];
+            Array.from(ds).forEach(x => { const r = +x === 0 ? ['ぜろ', 'れい'] : [JA_ONE[+x]].concat(+x === 9 ? ['く'] : +x === 7 ? ['しち'] : []); const nx = []; rs.forEach(a => r.forEach(b => { if (nx.length < 8) nx.push(a + b); })); rs = nx; });
+            return rs;
+        };
+        if (!c && (ds[0] === '0' || ds.length >= 5)) reads = digits();
+        else if (!c && ds.length >= 3) reads = jaNum(+ds).concat(digits().slice(0, 2));   // 1234 = せんにひゃく… 또는 いちにさんよん
+        else reads = c ? jaCounter(+ds, c === '月' && /月/.test(m[2]) && /[ヶか]/.test(m[2]) ? 'かげつ' : c) : jaNum(+ds);
+        if (m[2] && /[ヶか]月/.test(m[2])) reads = jaNum(+ds).map(b => (swapEnd(b) || b) + 'かげつ');
+        const nx = [];
+        outs.forEach(o => reads.forEach(r => { if (nx.length < 24) nx.push(o + pre + r); }));
+        outs = nx; last = m.index + m[0].length;
+    }
+    return outs.map(o => o + s.slice(last));
+    function swapEnd(b) { return b.endsWith('いち') ? b.slice(0, -2) + 'いっ' : b.endsWith('ろく') ? b.slice(0, -2) + 'ろっ' : b.endsWith('はち') ? b.slice(0, -2) + 'はっ' : b.endsWith('じゅう') ? b.slice(0, -3) + 'じゅっ' : null; }
+}
 // 일본어: 들린 글의 한자를 가나로 바꾼 후보들(사전에 있는 한자 덩어리만, 가장 긴 것부터). 모르는 한자는 그대로
 let JA_KJ = null;
 function jaKanji() {
@@ -1829,6 +1900,11 @@ function jaKanji() {
     return (JA_KJ = { m, max });
 }
 function jaReadings(said) {
+    const all = [];
+    jaNumReadings(said).forEach(s => jaKanjiReadings(s).forEach(x => { if (all.length < 32 && !all.includes(x)) all.push(x); }));
+    return all.length ? all : [said];
+}
+function jaKanjiReadings(said) {
     const d = jaKanji(), cs = Array.from(String(said || ''));
     if (!d || !cs.some(c => /[一-鿿々]/.test(c))) return [said];
     let outs = [''];
@@ -1886,7 +1962,14 @@ function alignSpeech(code, tgt, sd, eq, opt) {
     const isKanji = c => /[一-鿿々]/.test(c), isHira = c => /[ぁ-ゖ]/.test(c);
     const fmin = i => (free && free[i] ? free[i].min : 1), fmax = i => (free && free[i] ? free[i].max : 0);
     // 이름 자리: 이름이 그대로 들렸으면 그 한 단어만(Me llamo es Sujin 의 es까지 받지 않게)
-    const absorb = (i, j0, k) => { for (let q = j0; q < j0 + k; q++) if (!canFree(q) || (k > 1 && free[i].key && wordKey(code, sd[q]) === free[i].key)) return false; return true; };
+    const absorb = (i, j0, k) => {
+        for (let q = j0; q < j0 + k; q++) if (!canFree(q) || (code !== 'ja' && k > 1 && free[i].key && wordKey(code, sd[q]) === free[i].key)) return false;
+        if (code === 'ja' && free[i].key) {   // 일본어 이름: 사전에 없는 한자(이름 한자)이거나 이름과 비슷한 소리일 때만(がくせい 같은 다른 말은 안 받음)
+            const part = sd.slice(j0, j0 + k);
+            return part.every(c => /[一-鿿々]/.test(c)) || editDistance(part.join(''), free[i].key) <= Math.max(1, Math.floor(free[i].key.length / 2));
+        }
+        return true;
+    };
     const D = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(0));
     for (let i = 1; i <= n; i++) D[i][0] = D[i - 1][0] + (free && free[i - 1] && free[i - 1].min === 0 ? 0 : 1);
     for (let j = 0; j <= m; j++) D[0][j] = j;
@@ -1956,6 +2039,8 @@ function scoreSpeech(code, target, said, roman) {
 function scoreSpeechOne(code, target, said, roman, heard, place) {
     const charMode = !!CHAR_LANGS[code];
     let disp = charMode ? speechChars(code, target) : speechWords(code, target);   // 화면에 보여 줄 단위(원래 글자)
+    // 일본어 머뭇거림 소리(えっと·あのー)는 빼되, 학습 문장에 있는 말(あの = 저기요)이면 남긴다
+    if (code === 'ja') { const th = toHiragana(String(target)); said = toHiragana(String(said)).replace(/あのー|あのう/g, th.includes('あの') ? 'あの' : '').replace(/えっと|ええと|えーと/g, m => th.includes(m) ? m : ''); }
     const sd = charMode ? speechChars(code, said, place) : speechWords(code, said);
     if (!disp.length) return { score: 0, units: [], charMode, pass: false, errors: 1, allowed: 0, details: [], heard };
     // 채점하지 않는 자리: 외국 이름(들린 말 1~3단위), ~ 자리(0~3단위), « » 안(1~3단위)
@@ -1965,8 +2050,9 @@ function scoreSpeechOne(code, target, said, roman, heard, place) {
         const ts = disp.join(''); let m, last = 0;
         const units = [], dsp = [];
         JA_PERSON.lastIndex = 0;
-        while ((m = JA_PERSON.exec(ts))) { Array.from(ts.slice(last, m.index)).forEach(c => { units.push(c); dsp.push(c); }); units.push('\u0003'); dsp.push(m[1]); last = m.index + m[1].length; }
-        if (last) { Array.from(ts.slice(last)).forEach(c => { units.push(c); dsp.push(c); }); tgt = units; disp = dsp; tgt.forEach((u, i) => { if (u === '\u0003') markFree(i, 1, 4); }); }
+        const keys = [];
+        while ((m = JA_PERSON.exec(ts))) { Array.from(ts.slice(last, m.index)).forEach(c => { units.push(c); dsp.push(c); }); units.push('\u0003'); dsp.push(m[1]); keys.push(m[1]); last = m.index + m[1].length; }
+        if (last) { Array.from(ts.slice(last)).forEach(c => { units.push(c); dsp.push(c); }); tgt = units; disp = dsp; let q = 0; tgt.forEach((u, i) => { if (u === '\u0003') markFree(i, 1, 4, keys[q++]); }); }
     } else if (!charMode) {
         const caps = new Set();
         String(target).split(/[\s,.!?¡¿;:"()…–—]+/).forEach(w => { if (/^\p{Lu}/u.test(w)) speechWords(code, w).forEach(x => caps.add(wordKey(code, x))); });
@@ -2017,7 +2103,14 @@ function scoreSpeechOne(code, target, said, roman, heard, place) {
     const errors = segs.reduce((a, g) => a + g.n, 0);
     const negJa = [];
     if (code === 'ja') { const ts = tgt.join(''); let m; const re = /ません|ない|なかっ/g; while ((m = re.exec(ts))) for (let k = 0; k < m[0].length; k++) negJa.push(m.index + k); }
-    const ctx = { code, tgt, disp, sd, tsyl, charMode, negJa, isNeg };
+    // 일본어: 학습 문장에서 띄어 쓴 덩어리의 끝 글자(조사 자리)
+    const jaEnd = new Set();
+    if (code === 'ja') {
+        const raw = Array.from(toHiragana(String(target).normalize('NFKC'))), keep = c => !/[\s.,!?;:"'()（）「」『』、。！？・…〜~\-]/.test(c);
+        let k = -1;
+        raw.forEach((c, x) => { if (keep(c)) { k++; if (x + 1 >= raw.length || !keep(raw[x + 1])) jaEnd.add(k); } });
+    }
+    const ctx = { code, tgt, disp, sd, tsyl, charMode, negJa, isNeg, jaEnd };
     const details = segs.map(g => speechDetail(ctx, g));
     // 통과: 뜻이 달라지는 틀림(내용어·성조·부정어·숫자)은 하나도 없고, 작은 말 틀림만 허용 개수 이하
     const minor = details.filter(d => d.minor).reduce((a, d) => a + d.n, 0);
@@ -2090,7 +2183,8 @@ function speechDetail(ctx, g) {
     }
     // 작은 말(관사·조사 등)만 틀렸으면 긴 문장에서는 봐준다. 영어 복수·3인칭 -s 차이도 작은 틀림으로
     const fn = SPEECH_FUNC[code], isFunc = u => charMode ? fn.includes(u) : fn.includes(wordKey(code, u));
-    d.minor = !d.crit && (W.concat(G).every(isFunc) || (!charMode && W.length === 1 && G.length === 1 && code === 'en' && (wordKey(code, W[0]) === wordKey(code, G[0]) + 's' || wordKey(code, G[0]) === wordKey(code, W[0]) + 's')));
+    if (code === 'ja') d.minor = !d.crit && W.length > 0 && G.length <= W.length && g.t.every(i => ctx.jaEnd.has(i) && fn.includes(tgt[i])) && G.every(u => fn.includes(u));
+    else d.minor = !d.crit && (W.concat(G).every(isFunc) || (!charMode && W.length === 1 && G.length === 1 && code === 'en' && (wordKey(code, W[0]) === wordKey(code, G[0]) + 's' || wordKey(code, G[0]) === wordKey(code, W[0]) + 's')));
     if (code === 'zh') {
         const ws = g.t.map(i => (tsyl && tsyl[i]) || (tgt[i] === '儿' ? null : zhReadOf(tgt[i], null)));
         const gs = G.map((c, k) => zhReadOf(c, ws[k] || null));
@@ -2344,8 +2438,11 @@ function openSpeak(cfg) {
         if (res && res.uncertain && res.pass) {   // 사전에 없는 한자로 알아들음 → 스스로 확인
             stage.innerHTML = '<div class="muted" style="text-align:center">참고 점수</div><div class="score-big" style="color:var(--text-light)">' + res.score + '%</div>' +
                 '<div class="mic-heard">들린 문장: “' + esc(said) + '”</div>' +
-                '<div class="explain-box" style="background:#f8fafc;border:1px solid var(--border);text-align:center">🤔 한자로 알아들어서 정확히 비교하기 어려워요.<br>위 정답 문장과 들린 문장이 같은 뜻인지 직접 확인해 주세요.</div>' +
-                '<div style="display:flex;gap:8px"><button class="btn block ghost" id="micRetry">🔁 다시</button><button class="btn block" id="micSelfOk">✅ 맞게 말했어요</button></div>';
+                '<div class="explain-box" style="background:#f8fafc;border:1px solid var(--border);text-align:center">🤔 인식기가 사전에 없는 한자로 받아 적어서 정확히 비교하기 어려워요.<br>두 소리를 들어 보고 같은지 직접 확인해 주세요.</div>' +
+                '<div class="sd-btns" style="justify-content:center;margin-bottom:10px"><button class="btn small ghost" id="micUncWant">🔊 정답 듣기</button><button class="btn small gray" id="micUncGot">🔊 들린 말 듣기</button></div>' +
+                '<div style="display:flex;gap:8px"><button class="btn block ghost" id="micRetry">🔁 다시</button><button class="btn block" id="micSelfOk">✅ 같게 말했어요</button></div>';
+            stage.querySelector('#micUncWant').addEventListener('click', () => speak(target, 0.9));
+            stage.querySelector('#micUncGot').addEventListener('click', () => speak(said, 0.9, undefined, false, true));   // 들린 글 그대로 기기 음성으로
             stage.querySelector('#micRetry').addEventListener('click', () => ready());
             stage.querySelector('#micSelfOk').addEventListener('click', () => finish(null, said));
             return;
@@ -2371,7 +2468,7 @@ function openSpeak(cfg) {
         stage.querySelector('#micRetry').addEventListener('click', () => ready());
         stage.querySelectorAll('[data-unit]').forEach(b => b.addEventListener('click', () => speak(b.dataset.unit, 0.8)));
         stage.querySelectorAll('[data-sd-want]').forEach(b => b.addEventListener('click', () => { const d = res.details[+b.dataset.sdWant]; if (d) speak(d.want, 0.8); }));
-        stage.querySelectorAll('[data-sd-got]').forEach(b => b.addEventListener('click', () => { const d = res.details[+b.dataset.sdGot]; if (d) speak(d.got, 0.8); }));
+        stage.querySelectorAll('[data-sd-got]').forEach(b => b.addEventListener('click', () => { const d = res.details[+b.dataset.sdGot]; if (d) speak(d.got, 0.8, undefined, false, true); }));
         stage.querySelector('#micDone').addEventListener('click', () => closeModal(false, 'done'));
         if (passed) {
             passedOnce = true;
