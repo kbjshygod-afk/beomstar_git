@@ -53,7 +53,7 @@ https://raw.githubusercontent.com/kbjshygod-afk/beomstar_git/paper-trading/paper
   - `in_position`, `entry_price`, `stop_price`
 - Use a row only if its `as_of` is the latest completed session.
 - `in_position` / "보유 중" is the **paper portfolio's** position, not the owner's.
-- Until daily paper trading is switched on, only the trial branch `paper-trading-trial` may exist. Use it and say that it is a trial.
+- Daily paper trading runs on `paper-trading` (started 2026-09-25 for SP500, NDX100 and CRYPTO, 2026-09-29 for KOSPI and KOSDAQ). `paper-trading-trial` holds test runs only; never answer from it.
 
 **B. Run the bundled engine.** This needs Python with pandas and numpy. Commands:
 ```bash
@@ -97,9 +97,13 @@ The engine's "보유 중" in a single-symbol run is a *hypothetical* position th
    - Size = equity × 0.75% ÷ stop%, so the weight is 7.5% at a −10% stop and 10.7% at −7%.
    - Liquidity: flag thin names.
    - No leverage.
-   - Market warnings:
-     - **코스피:** the scanner's own backtest trailed the index in all 3 periods.
-     - **크립토:** conditional only. Better risk-adjusted than holding BTC, but lower absolute return.
+   - Market warnings, from the realistic 10-year backtest (each day's actual index members; `references/backtest-ko.md`). State the one for the ticker's market:
+     - **S&P500:** trailed the index by 8.3%p a year, and all 18 parameter variants trailed it too. Effectiveness: low.
+     - **나스닥100:** not measurable without past index membership. The +2.6%p from today's members is likely overstated.
+     - **코스피:** trailed the index by 0.9%p a year (beat it in the first 5 years, trailed by 8.2%p in the last 5). Effectiveness: low.
+     - **코스닥:** the only market that beat its index in every period (+9.9%p a year), but max drawdown −44% and only +2.5% a year in absolute terms over the last 5 years.
+     - **크립토:** trailed holding BTC by 38.1%p a year. Effectiveness: low.
+   - Never quote the older current-constituent numbers (e.g. "S&P500 +0.7%p", "코스닥 +24%p") as expected returns: they are inflated by survivorship bias.
    - A win rate in the 30s% means strings of stop-outs are normal.
 5. **확인 필요.** One line listing the unconfirmed values.
 6. Close with: "기계적 룰 출력이며, 최종 판단은 대표님이 합니다."
@@ -117,7 +121,9 @@ The go/no-go criteria are fixed in advance in `docs/paper-trading-plan.md` of th
 ## Evidence
 
 - **Engine fidelity.** Checked against an independent pure-Python emulation of the TradingView indicator: 540 datasets, 492,965 bars and 7,502 trade events, with **0 mismatches**.
-- **10-year backtest** (2016-09 → 2026-09, current constituents, 0.2% cost per side, scanner RS percentile rule): see `references/backtest-ko.md`. The owner's scanner dashboard numbers are shown next to it for comparison.
+- **10-year backtest** (2016-09 → 2026-09, 0.2% cost per side, scanner RS percentile rule): see `references/backtest-ko.md`.
+  - Use its first table: the backtest rerun on each day's actual index members (2026-09-26 robustness study).
+  - The older numbers on today's index members, shown next to the scanner dashboard's, are survivorship-biased upper bounds.
 
 ## Unconfirmed values
 
