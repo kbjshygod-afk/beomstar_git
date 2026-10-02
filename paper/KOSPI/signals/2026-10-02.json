@@ -1,0 +1,55 @@
+{
+ "market": "KOSPI",
+ "as_of": "2026-10-02",
+ "regime": {
+  "benchmark": "^KS11",
+  "mode": "MA200_AND_MA20",
+  "close": 7003.7402,
+  "ma200": 6325.036,
+  "ma20": 6876.5771,
+  "on": true
+ },
+ "entries_next_open": [],
+ "exits_next_open": [],
+ "positions": [],
+ "watchlist": [
+  {
+   "symbol": "010950.KS",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 166200.0,
+   "pivot": 170800.0,
+   "to_pivot_pct": 2.77,
+   "rs": 95.96
+  },
+  {
+   "symbol": "281820.KS",
+   "label": "1순위 · 임박 (피벗 1% 이내)",
+   "close": 92000.0,
+   "pivot": 92600.0,
+   "to_pivot_pct": 0.65,
+   "rs": 90.91
+  },
+  {
+   "symbol": "089860.KS",
+   "label": "1순위 · 임박 (피벗 1% 이내)",
+   "close": 51600.0,
+   "pivot": 52100.0,
+   "to_pivot_pct": 0.97,
+   "rs": 89.9
+  },
+  {
+   "symbol": "028670.KS",
+   "label": "1순위 · 임박 (피벗 1% 이내)",
+   "close": 6240.0,
+   "pivot": 6300.0,
+   "to_pivot_pct": 0.96,
+   "rs": 83.33
+  }
+ ],
+ "coverage": {
+  "requested": 200,
+  "loaded": 200,
+  "failed": []
+ },
+ "generated_at": "2026-10-02T09:36:09Z"
+}
