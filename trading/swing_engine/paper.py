@@ -1,6 +1,7 @@
 """Daily paper trading with pre-committed signals (docs/paper-trading-plan.md).
 
-One run per market after its close:
+One run per market after its close (the workflow reruns every market every 2 hours; a rerun
+with nothing new commits nothing):
 
 1. Load the frozen universe (fixed on the first run) and confirmed bars up to now.
 2. Simulate the portfolio from the paper start date to the last confirmed bar (as_of).
@@ -53,6 +54,11 @@ OPENS = {"America/New_York": dtime(9, 30), "Asia/Seoul": dtime(9, 0)}
 # 2 h after the close), so the plan requires the signal file before the next bar closes, i.e.
 # within 24 hours of the close. The daily recomputation checks the signals themselves.
 CRYPTO_DEADLINE_HOURS = 24
+# A stock bar is used only from 90 minutes after its close (the separate schedules used to run
+# 95+ minutes after the close). Yahoo keeps updating the day's volume after the close, and the
+# entry trigger reads volume, so a signal file committed minutes after the close could differ
+# from the recomputation made with the final bar. Crypto bars are final at 00:00 UTC.
+SETTLE_MINUTES = 90
 WATCH_MAX = 15
 
 
@@ -174,15 +180,19 @@ def load_bars(market: str, params: dict, universe: list[str], start: date, now: 
     else:
         end = now.date() + timedelta(days=1)
         frames, failed = D.download_yahoo(universe, start, end, cache_dir=args.cache_dir,
-                                          chunk_size=args.chunk_size, market=market, now=now)
+                                          chunk_size=args.chunk_size, market=market, now=now,
+                                          grace_minutes=args.settle_minutes)
         bf, _ = D.download_yahoo([bench_t], start, end, cache_dir=args.cache_dir, market=market,
-                                 now=now, close_only=[bench_t])
+                                 now=now, close_only=[bench_t], grace_minutes=args.settle_minutes)
         bench = bf.get(bench_t)
-    frames = {t: D.drop_unconfirmed_last_bar(df, market, now=now, ticker=t)[0] for t, df in frames.items()}
+    grace = args.settle_minutes
+    frames = {t: D.drop_unconfirmed_last_bar(df, market, now=now, ticker=t, grace_minutes=grace)[0]
+              for t, df in frames.items()}
     frames = {t: D.truncate(df, None, start) for t, df in frames.items()}
     frames = {t: df for t, df in frames.items() if len(df)}
     if bench is not None:
-        bench = D.truncate(D.drop_unconfirmed_last_bar(bench, market, now=now, ticker=bench_t)[0], None, start)
+        bench = D.truncate(D.drop_unconfirmed_last_bar(bench, market, now=now, ticker=bench_t,
+                                                       grace_minutes=grace)[0], None, start)
     return frames, bench, sorted(set(failed) | (set(universe) - set(frames)))
 
 
@@ -467,6 +477,33 @@ def data_ready(market: str, frames: dict, bench: pd.DataFrame, now: datetime,
     return True, ""
 
 
+def ledger_floor(root: Path, start_date) -> pd.Timestamp | None:
+    """Latest bar the ledger already covers: its newest signal file or the start date.
+
+    A run whose data ends before it would rewind the ledger. Yahoo has served such data:
+    2026-09-29 23:45 UTC, 15 minutes before the KRX open, ^KS11 and every KOSPI/KOSDAQ symbol
+    ended at 09-28 although the 09-29 signal files had been committed at 09:13 UTC.
+    """
+    days = [pd.Timestamp(q.stem) for q in (root / "signals").glob("*.json") if "." not in q.stem]
+    if start_date:
+        days.append(pd.Timestamp(start_date))
+    return max(days) if days else None
+
+
+def forget_cached_bars(cache_dir, tickers) -> None:
+    """Delete the cached bars of `tickers` so the next run downloads them again.
+
+    The cache is reused until the next session closes, so one incomplete download would
+    otherwise be served to every run in between (2026-09-30: the KRX data fetched at
+    23:45 UTC, which ended at 09-28, was reused by every run until 08:00 UTC).
+    """
+    if not cache_dir:
+        return
+    for t in tickers:
+        for q in D._cache_paths(cache_dir, t):
+            q.unlink(missing_ok=True)
+
+
 # ---------------------------------------------------------------------------
 # main
 # ---------------------------------------------------------------------------
@@ -490,10 +527,15 @@ def run(args) -> dict:
         raise SystemExit(f"benchmark {params['benchmark']} could not be loaded")
     as_of = bench.index[-1]
     ok, why = data_ready(market, frames, bench, now, args.min_coverage, params["benchmark"])
+    floor = ledger_floor(root, cfg["start_date"])
+    if ok and floor is not None and as_of < floor:
+        ok, why = False, (f"{params['benchmark']} 마지막 확정 봉 {_day(as_of)}이 장부에 이미 있는 "
+                          f"{_day(floor)}보다 이전 (Yahoo가 최근 봉을 빠뜨림)")
     if not ok:
         msg = f"{market}: 데이터 미준비 — {why}. 아무것도 커밋하지 않고 종료합니다."
         log.warning(msg)
         print(msg)
+        forget_cached_bars(args.cache_dir, list(cfg["universe"]) + [params["benchmark"]])
         return {"started": cfg["start_date"] is not None, "ready": False, "as_of": _day(as_of), "reason": why}
     if cfg["start_date"] is None:
         # The paper period may only start with a signal file committed before the next open;
@@ -540,16 +582,20 @@ def run(args) -> dict:
 
     latest_p = ledger / "latest.json"
     latest = json.loads(latest_p.read_text()) if latest_p.exists() else {"markets": {}}
-    latest["updated_at"] = _iso(now)
     latest["disclaimer"] = DISCLAIMER
     latest["unconfirmed"] = UNCONFIRMED_LINE
-    latest["markets"][market] = {
+    entry = json.loads(json.dumps(_jsonable({
         "as_of": snap["as_of"], "start_date": cfg["start_date"], "regime": snap["regime"],
         "entries_next_open": snap["entries_next_open"], "exits_next_open": snap["exits_next_open"],
-        "positions": _jsonable(res.open_positions), "watchlist": snap["watchlist"], "performance": perf,
+        "positions": res.open_positions, "watchlist": snap["watchlist"], "performance": perf,
         "status_csv": f"{market}/status.csv",
         "audit": {k: aud[k] for k in ("days", "signal_files", "missing_days", "late", "uncommitted", "mismatched", "revised")},
-    }
+    })))
+    # The schedule reruns every market every 2 hours; a rerun with nothing new leaves the file
+    # (and the ledger branch) untouched.
+    if latest["markets"].get(market) != entry:
+        latest["markets"][market] = entry
+        latest["updated_at"] = _iso(now)
     latest_p.write_text(json.dumps(_jsonable(latest), ensure_ascii=False, indent=1))
     if not args.no_commit:
         commit_and_push(repo, f"{market} ledger {snap['as_of']}", args.push_branch)
@@ -580,6 +626,8 @@ def build_parser() -> argparse.ArgumentParser:
                    help="start even if the first run is past the next open (not for the official ledger)")
     p.add_argument("--min-coverage", type=float, default=0.9,
                    help="share of symbols that must have the benchmark's last bar (else exit 75, nothing committed)")
+    p.add_argument("--settle-minutes", type=int, default=SETTLE_MINUTES,
+                   help="minutes after a stock market's close before its bar is used")
     p.add_argument("-v", "--verbose", action="store_true")
     return p
 

@@ -2,18 +2,25 @@
 # Signals are committed to the `paper-trading` branch right after each market's close,
 # before the next session's open, so the git history proves no signal was changed afterwards.
 # Scheduled runs only start once this file is on the repository's default branch.
+#
+# Every market runs every 2 hours, dispatched by swing-paper-keeper.yml, with this schedule
+# as a backup. GitHub starts scheduled runs hours late and sometimes not at all (2026-09-28:
+# the Monday KRX run never started), so each close gets several chances before the next open.
+# Reruns are idempotent: a market whose close is already committed, or whose session is still
+# open, commits nothing.
 name: swing-paper
 
 on:
   schedule:
-    - cron: '35 22 * * 1-5'   # US markets: after the NYSE close (22:35 UTC)
-    - cron: '5 8 * * 1-5'     # Korean markets: after the KRX close (17:05 KST)
-    - cron: '40 0,6,12,18 * * *'   # Crypto: every 6 h; the first run with yesterday's candle commits it
+    - cron: '17 */2 * * *'
   workflow_dispatch:
     inputs:
       markets:
         description: 'Markets to run (space separated)'
         default: 'SP500 NDX100 KOSPI KOSDAQ CRYPTO'
+      tries:
+        description: 'Tries per stock market while its data is not ready (10 min apart)'
+        default: '3'
   push:
     branches: [claude/github-top-10-skills-k1u8yp]
     paths: ['trading/swing_engine/paper.py', '.github/workflows/swing-paper.yml']
@@ -41,13 +48,12 @@ jobs:
         id: m
         run: |
           if [ -n "${{ github.event.inputs.markets }}" ]; then m="${{ github.event.inputs.markets }}"
-          elif [ "${{ github.event.schedule }}" = "35 22 * * 1-5" ]; then m="SP500 NDX100"
-          elif [ "${{ github.event.schedule }}" = "5 8 * * 1-5" ]; then m="KOSPI KOSDAQ"
-          elif [ "${{ github.event.schedule }}" = "40 0,6,12,18 * * *" ]; then m="CRYPTO"
           else m="SP500 NDX100 KOSPI KOSDAQ CRYPTO"; fi
           echo "markets=$m" >> "$GITHUB_OUTPUT"
-          # data-not-ready retries (exit 75) for stocks; crypto is retried by its next 6-hourly run
-          echo "tries=3" >> "$GITHUB_OUTPUT"; echo "wait=600" >> "$GITHUB_OUTPUT"
+          # data not ready (exit 75): scheduled and keeper runs (tries=1) leave it to the next run
+          # 2 hours later; manual and trial runs retry stocks in place (crypto lags by hours)
+          if [ "${{ github.event_name }}" = "schedule" ]; then tries=1; else tries="${{ github.event.inputs.tries || '3' }}"; fi
+          echo "tries=$tries" >> "$GITHUB_OUTPUT"; echo "wait=600" >> "$GITHUB_OUTPUT"
           # push-triggered runs are trials: they write to a separate branch
           if [ "${{ github.event_name }}" = "push" ]; then echo "branch=paper-trading-trial" >> "$GITHUB_OUTPUT"; else echo "branch=paper-trading" >> "$GITHUB_OUTPUT"; fi
       - name: Check out the ledger branch
@@ -87,9 +93,8 @@ jobs:
               fi
               break
             done
-            if [ "$rc" -eq 75 ] && [ "$market" = "CRYPTO" ]; then
-              echo "::warning::CRYPTO: yesterday's candle not on Yahoo yet; nothing committed, the next 6-hourly run retries"
-            elif [ "$rc" -eq 75 ]; then echo "::error::$market data still not ready after $TRIES attempts; nothing committed"; status=1
+            if [ "$rc" -eq 75 ]; then
+              echo "::warning::$market data not ready on Yahoo yet; nothing committed, the next 2-hourly run retries"
             elif [ "$rc" -ne 0 ]; then echo "::error::$market failed (exit $rc)"; status=1; fi
             echo "::endgroup::"
           done
