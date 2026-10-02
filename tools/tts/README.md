@@ -9,6 +9,7 @@
 | `tools/tts/clips.mjs` | 데이터(`language-teacher/data-*.js`, `stories-*.js`)와 `index.html`의 훈련소 상수를 읽어 **녹음할 문장 목록**을 만들고, 파일 이름(`clipId`)을 정해요 |
 | `tools/tts/generate.mjs` | 목록을 Google Cloud TTS로 녹음해 `language-teacher/audio/{언어}/{id}.mp3`와 `index.json`을 만들어요 |
 | `tools/tts/check.py` | 녹음 **끝 잘림** 검사 — 의심 파일을 지우면(`--delete`) `generate.mjs`가 그 파일만 다시 녹음해요(ffmpeg 필요) |
+| `tools/tts/loudness.py` | 녹음 **소리 크기 맞추기** — 모든 클립을 -15 LUFS(휴대폰 영상·팟캐스트 수준)로 키우고 최고점만 리미터로 눌러요. 소리가 거의 없는 녹음은 지우고 목록에서 빼요(`--drop-silent`, 앱은 기기 음성으로 읽음). 한 번 맞춘 파일은 표시(ID3 comment `lt-loud`)가 붙어 다시 변환하지 않아요(ffmpeg 필요) |
 | `docs/voice-setup.md` | Google Cloud 쪽 준비(프로젝트·결제·API 키) — 개발자가 아니어도 따라 할 수 있게 |
 
 외부 패키지는 필요 없어요(node 18 이상).
@@ -46,6 +47,17 @@ node tools/tts/generate.mjs
 ```
 
 5번을 5~6번 반복해도 남는 것(보통 10여 개)은 `python3 tools/tts/check.py --delete` 후 `node tools/tts/generate.mjs --pad`로 녹음하세요.
+
+```bash
+# 6) 소리 크기 맞추기 — 끝 잘림 검사를 마친 뒤 마지막에 한 번(새로 녹음한 파일만 바뀌어요)
+python3 tools/tts/loudness.py --drop-silent
+```
+
+Google 녹음은 문장마다 -16~-27 LUFS로 들쭉날쭉하고 휴대폰 스피커로는 작게 들려요. 6번은 바뀐 파일이 있으면 index.json의 `gen`을 올려
+`rev`(앱 주소의 `?v=`)를 바꾸므로, 한 번 들은 사용자도 새 파일을 받아요. 크기를 맞춘 파일은 `check.py`가 건너뛰어요(끝의 작은 소리도 같이 커져
+기준이 맞지 않아서) — 그래서 **끝 잘림 검사(5번)를 먼저** 하세요.
+
+> 2026-10 소리 크기 맞추기: 7,190개를 -15 LUFS 안팎으로(전보다 평균 3~6dB 크게). Chirp가 거의 소리 없이 만든 짧은 녹음 49개(가나 한 글자·oui·hey 등)는 빼서 기기 음성으로 읽어요.
 
 > 2026-09 첫 전체 녹음: 끝 잘림 의심 398개(영어 218·스페인어 167·프랑스어 13, 중국어·일본어 0) → 다시 녹음 6번에 12개 → `--pad`로 0개.
 > Whisper 받아쓰기로 영어·스페인어·프랑스어 전체를 원문과 비교해 뒤 단어가 빠진 녹음이 없는 것도 확인했어요(속도가 녹음마다 달라 길이만으로는 판단할 수 없어요).
@@ -205,4 +217,6 @@ function clipId(slot, text) {
 | `fetch failed`(프록시 뒤에서) | node 22.21+/24+라면 `NODE_USE_ENV_PROXY=1 node tools/tts/generate.mjs …` |
 | 일부 실패 | 같은 명령을 다시 실행하면 없는 파일만 이어서 만들어요 |
 | `HTTP 429: Resource has been exhausted` | 분당 요청 한도예요. 도구가 기다렸다 다시 해요. 6번 넘게 실패한 것은 같은 명령을 다시 실행 |
+| 앱 소리가 작게 들림 | `python3 tools/tts/loudness.py --drop-silent`(6번) — 새로 녹음한 파일까지 같은 크기로 |
+| 한 글자·짧은 낱말을 누르면 소리가 안 남 | Chirp가 거의 소리 없이 만든 녹음이에요. 6번의 `--drop-silent`가 지워 기기 음성으로 읽게 해요(다시 녹음해도 대개 같음) |
 | 짧은 단어 끝이 뚝 끊겨 들림 | Chirp 3 HD가 가끔 끝을 잘라 돌려줘요(속도를 안 줘도 짧은 단어는 몇십 %). `python3 tools/tts/check.py --delete` → `generate.mjs` 반복 |

@@ -15,6 +15,7 @@ index.json의 gen을 1 올리고 `node tools/tts/generate.mjs --lang xx --limit 
 import argparse
 import array
 import math
+import re
 import os
 import shutil
 import subprocess
@@ -26,6 +27,7 @@ AUDIO = os.path.join(ROOT, 'language-teacher', 'audio')
 WIN = 240            # 10ms (24000 Hz)
 TAIL_WINDOWS = 3     # 마지막 30ms
 LIMIT_DB = -45.0
+TAG_RE = re.compile(r'lt-loud')
 
 
 def ffmpeg():
@@ -44,13 +46,21 @@ def rms_db(s):
     return 20 * math.log10(r / 32768) if r else -120.0
 
 
+def tags(ff, path):
+    return subprocess.run([ff, '-hide_banner', '-i', path], capture_output=True, text=True).stderr
+
+
 def check(ff, path):
+    # loudness.py로 크기를 키운 파일은 끝의 작은 소리도 같이 커져서 기준이 맞지 않는다 — 키우기 전(녹음 직후)에 검사한 결과를 따른다
+    if TAG_RE.search(tags(ff, path)):
+        return path, 0.0, 0.0, ''
     p = subprocess.run([ff, '-v', 'error', '-i', path, '-f', 's16le', '-ac', '1', '-ar', '24000', '-'], capture_output=True)
     a = array.array('h', p.stdout)
     if p.returncode or len(a) < WIN * (TAIL_WINDOWS + 1):
         return path, len(a) / 24000, 0.0, '읽기 실패' if p.returncode else '너무 짧음'
     tail = max(rms_db(a[len(a) - WIN * (k + 1):len(a) - WIN * k]) for k in range(TAIL_WINDOWS))
-    return path, len(a) / 24000, tail, '끝 잘림' if tail > LIMIT_DB else ''
+    limit = LIMIT_DB
+    return path, len(a) / 24000, tail, '끝 잘림' if tail > limit else ''
 
 
 def main():
