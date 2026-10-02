@@ -18,12 +18,15 @@ COMPARE_KEYS = (
 EXTRA_KEYS = ("benchmark", "integer_shares")
 PARAM_KEYS = COMPARE_KEYS + EXTRA_KEYS
 
-REGIME_MODES = ("MA200", "MA200_AND_MA20", "NONE")
+REGIME_MODES = ("MA200", "MA200_AND_MA20", "NONE", "BREADTH50")
 
 # Not part of the signal rules, used by sizing / portfolio (SPEC 2, 7, 8.4).
 RISK_PCT = 0.75          # % of equity risked per trade
 COST_PCT = 0.2           # % of traded value per side
 RS_PERCENTILE_MIN = 70.0  # portfolio percentile rule (SPEC 8.2)
+# Regime BREADTH50 (docs/swing-upgrade-study-2026-10.md U11): new entries only while at least
+# this share of the universe closes above its own 200-day MA. Pre-registered value; not tuned.
+BREADTH_MIN_PCT = 50.0
 
 
 @dataclass(frozen=True)
@@ -54,6 +57,7 @@ class MarketPreset:
     year_bars: int
     integer_shares: bool  # whole shares (Korean stocks); fractional otherwise
     currency: str
+    data_market: str | None = None   # preset whose universe and session this one shares (KOSDAQ_V2 -> KOSDAQ)
 
 
 PRESETS: dict[str, MarketPreset] = {
@@ -63,6 +67,10 @@ PRESETS: dict[str, MarketPreset] = {
     "KOSDAQ": MarketPreset("KOSDAQ", "코스닥", "^KQ11", "KRX:KOSDAQ", "NONE", 10.0, True, 252, True, "KRW"),
     # Chase cap is OFF for crypto (Pine line 85: capOn = not isCrypto); a year is 365 bars.
     "CRYPTO": MarketPreset("CRYPTO", "크립토", "BTC-USD", "BINANCE:BTCUSDT", "MA200", 10.0, False, 365, False, "USD"),
+    # KOSDAQ rules plus the breadth-50 regime: the parallel paper ledger of the 2026-10 upgrade
+    # study (docs/swing-upgrade-study-2026-10.md). Same universe, session and benchmark as KOSDAQ.
+    "KOSDAQ_V2": MarketPreset("KOSDAQ_V2", "코스닥 v2", "^KQ11", "KRX:KOSDAQ", "BREADTH50", 10.0, True, 252, True,
+                              "KRW", data_market="KOSDAQ"),
     # CUSTOM starts from the Pine `custom*` input defaults (lines 25-29) and is meant to be overridden.
     "CUSTOM": MarketPreset("CUSTOM", "직접 설정", "^GSPC", "SP:SPX", "MA200", 10.0, True, 252, False, "USD"),
 }
@@ -74,6 +82,7 @@ _ALIASES = {
     "NDX100": "NDX100", "NDX": "NDX100", "NASDAQ100": "NDX100", "NASDAQ-100": "NDX100", "나스닥100": "NDX100",
     "KOSPI": "KOSPI", "코스피": "KOSPI",
     "KOSDAQ": "KOSDAQ", "코스닥": "KOSDAQ",
+    "KOSDAQ_V2": "KOSDAQ_V2", "코스닥 V2": "KOSDAQ_V2",
     "CRYPTO": "CRYPTO", "크립토": "CRYPTO",
     "CUSTOM": "CUSTOM", "직접 설정": "CUSTOM",
 }
@@ -82,6 +91,7 @@ _REGIME_ALIASES = {
     "MA200": "MA200", "200일선": "MA200",
     "MA200_AND_MA20": "MA200_AND_MA20", "200일선+20일선": "MA200_AND_MA20",
     "NONE": "NONE", "무필터": "NONE",
+    "BREADTH50": "BREADTH50", "폭50": "BREADTH50",
 }
 
 _INT_KEYS = {"pivot_len", "vol_len", "year_bars", "ma200_rise_bars", "exit_ma_len"}
@@ -99,6 +109,13 @@ def normalize_preset(name: str) -> str:
 
 def get_preset(name: str) -> MarketPreset:
     return PRESETS[normalize_preset(name)]
+
+
+def data_market(name: str) -> str:
+    """The preset whose universe, session and data caches `name` uses (itself unless it is a
+    rule variant such as KOSDAQ_V2)."""
+    mk = normalize_preset(name)
+    return PRESETS[mk].data_market or mk
 
 
 def normalize_regime(mode: str) -> str:
