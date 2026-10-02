@@ -21,12 +21,22 @@ on:
       tries:
         description: 'Tries per stock market while its data is not ready (10 min apart)'
         default: '3'
+      alert_test:
+        description: 'Signal alert: post the newest signal of each alert market even if it is not new (true/false)'
+        default: 'false'
   push:
     branches: [claude/github-top-10-skills-k1u8yp]
-    paths: ['trading/swing_engine/paper.py', '.github/workflows/swing-paper.yml']
+    paths: ['trading/swing_engine/paper.py', 'trading/tools/signal_alert.py', '.github/workflows/swing-paper.yml']
 
 permissions:
   contents: write
+  issues: write           # signal alerts are issue comments (trading/tools/signal_alert.py)
+
+env:
+  # Markets whose newly committed signal files are announced after each run
+  # (docs/swing-improvement-policy.md R7): Slack when the SLACK_WEBHOOK_URL secret exists,
+  # otherwise a comment on the issue "<market> 모의투자 신호 알림", which GitHub notifies the owner about.
+  ALERT_MARKETS: KOSDAQ
 
 concurrency:
   group: swing-paper
@@ -57,6 +67,7 @@ jobs:
           # push-triggered runs are trials: they write to a separate branch
           if [ "${{ github.event_name }}" = "push" ]; then echo "branch=paper-trading-trial" >> "$GITHUB_OUTPUT"; else echo "branch=paper-trading" >> "$GITHUB_OUTPUT"; fi
       - name: Check out the ledger branch
+        id: ledger
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BRANCH: ${{ steps.m.outputs.branch }}
@@ -66,6 +77,8 @@ jobs:
           git init -q ledger && cd ledger
           git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git"
           if git fetch -q origin "$BRANCH"; then git checkout -q -b "$BRANCH" FETCH_HEAD; else git checkout -q --orphan "$BRANCH"; fi
+          # the signal alert announces the signal files committed after this point
+          echo "head=$(git rev-parse --verify -q HEAD || true)" >> "$GITHUB_OUTPUT"
       - uses: actions/cache@v4
         with:
           path: trading/.cache
@@ -99,6 +112,23 @@ jobs:
             echo "::endgroup::"
           done
           exit $status
+      - name: Signal alert
+        # One message per signal file this run committed (new day or revision); a run that
+        # committed nothing sends nothing. Trial (push) runs only print the message.
+        if: ${{ !cancelled() && steps.ledger.outcome == 'success' }}
+        working-directory: trading
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SINCE: ${{ steps.ledger.outputs.head }}
+          BRANCH: ${{ steps.m.outputs.branch }}
+          FLAGS: ${{ steps.m.outputs.branch != 'paper-trading' && '--dry-run' || '' }} ${{ github.event.inputs.alert_test == 'true' && '--latest' || '' }}
+        run: |
+          for market in $ALERT_MARKETS; do
+            python tools/signal_alert.py --ledger ../ledger/paper --market "$market" --since "$SINCE" \
+              --report-url "https://github.com/$GH_REPO/blob/$BRANCH/paper/$market/report.md" $FLAGS
+          done
       - name: Summary
         if: always()
         run: |
