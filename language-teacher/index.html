@@ -496,7 +496,7 @@
         .today-main .tm-sub { font-size: 11.5px; color: var(--text-light); margin-top: 2px; }
         .lv-bar { height: 7px; background: #eef2f7; border-radius: 4px; overflow: hidden; margin-top: 6px; }
         .lv-bar > div { height: 100%; background: linear-gradient(90deg, var(--gold), var(--primary)); transition: width .4s; }
-        .quest-row { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+        .quest-row { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; align-items: center; }   /* 44px 상자 칩 옆의 작은 칩이 늘어나지 않게 */
         .quest-chip { font-size: 10.5px; font-weight: 700; border-radius: 999px; padding: 3px 8px; background: #f1f5f9; color: var(--text-light); }
         .quest-chip.done { background: #ecfdf5; color: #067a57; }
         /* ── 토스트 · 축하 ─────────────────── */
@@ -920,6 +920,7 @@ const LANG_EXT = {
     best: { clean: v => cleanMap(v, (x, k) => /^[A-Za-z0-9]{1,12}$/.test(k) && typeof x === 'number' && Number.isFinite(x) && (k[0] !== 'm' || x > 0) ? clampInt(x, 0, 1e9, 0) : undefined, 100), merge: (a, b) => mergeKeys(a, b, (x, y, k) => k[0] === 'm' ? Math.min(x, y) : Math.max(x, y)) },
     ghost: { clean: v => cleanMap(v, (x, k) => /^[A-Za-z0-9]{1,12}$/.test(k) && Array.isArray(x) ? x.filter(n => typeof n === 'number' && Number.isFinite(n)).slice(0, 200).map(n => clampInt(n, 0, 3600000, 0)) : undefined, 20), merge: (a, b) => mergeKeys(a, b, longerGhost) },
     puz: { clean: cleanPuz, merge: mergePuz },
+    puzNow: { clean: cleanPuzNow, merge: mergePuzNow },
     blank: { clean: v => capMap(cleanMap(v, (x, k) => BLANK_ID.test(k) && isObj(x) ? { b: clampInt(x.b, 0, 1e6, 0), s: clampInt(x.s, 0, 3, 0), lv: clampInt(x.lv, 0, 2, 0) } : undefined, 1500), 500, byBlank), merge: (a, b) => capMap(mergeKeys(a, b, (x, y) => ({ b: Math.max(x.b, y.b), s: Math.max(x.s, y.s), lv: Math.max(x.lv, y.lv) })), 500, byBlank) },
     shadow: { clean: v => cleanMap(v, (x, k) => EXT_ID.test(k) && isObj(x) ? Object.assign({ k: lineNums(x.k) }, isDate(x.d) ? { d: x.d } : {}) : undefined, 600), merge: (a, b) => mergeKeys(a, b, (x, y) => Object.assign({ k: lineNums(x.k.concat(y.k)) }, (x.d || y.d) ? { d: [x.d, y.d].filter(Boolean).sort()[0] } : {})) },
     sayLater: { clean: cleanSay, merge: mergeSay },
@@ -1007,6 +1008,14 @@ function mergePuz(x, y) {
     const w = x.last !== y.last ? (x.last > y.last ? x : y) : x.t !== y.t ? (x.t < y.t ? x : y) : (JSON.stringify(x) <= JSON.stringify(y) ? x : y);
     return Object.assign({}, w, { bst: Math.max(x.bst, y.bst), n: Math.max(x.n, y.n), dist: x.dist.map((n, i) => Math.max(n, y.dist[i] || 0)) });
 }
+// 오늘 퍼즐 진행(끝내기 전) {d 문제 날짜, u 단계, id 문장, g 시도마다 놓은 조각 키} — 나갔다 오거나 새로고침·다른 기기에서도 이어서 풀게(기회가 새로 생기지 않게)
+function cleanPuzNow(v) {
+    if (!isObj(v) || !isDate(v.d) || typeof v.id !== 'string' || !v.id) return undefined;
+    const g = (Array.isArray(v.g) ? v.g : []).filter(Array.isArray).slice(0, 6).map(r => r.filter(k => typeof k === 'string').slice(0, 6).map(k => clip(k, 60)));   // 기회 6번 · 조각 6개까지
+    return { d: v.d, u: clampInt(v.u, 0, 99, 0), id: clip(v.id, 80), g };
+}
+// 늦은 날 → 시도가 많은 쪽 → 글자 순(어느 쪽에서 합쳐도 같다)
+function mergePuzNow(x, y) { return x.d !== y.d ? (x.d > y.d ? x : y) : x.g.length !== y.g.length ? (x.g.length > y.g.length ? x : y) : (JSON.stringify(x) >= JSON.stringify(y) ? x : y); }
 // 말하기 대기열 {q: [{k, t}], x: {[k]: t}} — t는 넣은 시각·뺀 시각(ms). 뺀 시각이 넣은 시각 이후인 문장은 다른 탭·기기와 합쳐도 되살아나지 않는다
 function sayList(q, x) {
     const m = {};
@@ -1041,48 +1050,59 @@ function lootAdd(f, n) {   // 이 기기 칸에 더한다(저장은 부르는 �
 }
 // 받은 상자 id: 'q:'·'z:'(퀘스트·퍼즐)는 언어 자리를 둘 수 있다('q:zh:2026-10-05' — 언어마다 따로 받게), 리그는 'lg:날짜'
 function gidOk(k) { const m = /^(q|z|lg):(?:([a-z]{2}):)?[0-9]{4}-[0-9]{2}-[0-9]{2}$/.exec(k); return !!m && (!m[2] || (m[1] !== 'lg' && isLang(m[2]))); }
-function pidN(k) { const m = /^p:([1-9][0-9]{0,5})$/.exec(k); return m ? +m[1] : 0; }   // 조각 상자 'p:번호'(조각 3개마다 하나 — 모든 기기 조각을 합쳐 센다)
-function boxIdOk(k) { return gidOk(k) || pidN(k) > 0; }
+// 조각 상자 id 'p:기기id:번호' — 번호는 그 기기가 연 조각 상자 순서라 두 기기가 각자 연 조각 상자가 같은 id로 겹치지 않는다(겹치면 하나로 모여 상자가 또 생김).
+// 옛 'p:번호'(모든 기기 공용 번호)도 읽는다. 조각 상자 수는 모든 기기 조각을 합쳐 센다(조각 3개마다 하나)
+function pidOf(k) { const m = /^p:(?:([a-z0-9_]{1,16}):)?([1-9][0-9]{0,5})$/.exec(k); return m ? { d: m[1] || '', n: +m[2] } : null; }
+function pidKey(d, n) { return 'p:' + (d ? d + ':' : '') + n; }
+function boxIdOk(k) { return gidOk(k) || !!pidOf(k); }
 function boxDone(r) { return r === 'x' || r === 't' || r === 'b3' || r === 's1'; }   // 더 바뀔 것이 없는 결과
-// 같은 상자를 두 기기가 따로 열었으면 결과는 하나만 남긴다: 같은 종류면 더 진행된 쪽(쓴 부스트·바꾼 조각), 다르면 글자 순으로 앞 — 어느 쪽에서 합쳐도 같다
+// 같은 상자를 두 기기가 따로 열었으면 결과는 하나만 남긴다: 같은 종류면 더 진행된 쪽(쓴 부스트·바꾼 조각), 다르면 글자 순으로 앞 — 어느 쪽에서 합쳐도 같다.
+// 알려진 한계: 그때 받은 XP는 두 기기 몫이 다 남는다(총 XP는 기기별 증가분을 더해 합치므로) — 동기화 전에 같은 상자를 둘 다 열 때만이고 상자 하나에 10~30 XP라 되돌리지 않는다
 function mergeBoxRes(a, b) { return a[0] === b[0] ? (a >= b ? a : b) : (a < b ? a : b); }
 function lootPMax(l) { return Math.min(999999, Math.floor(lootSum(l.pcN) / 3)); }   // 지금까지 생긴 조각 상자 수
-// 정리: 받은 상자 칸에서 잘린 id의 열기 기록은 버리고, 조각 상자는 앞에서부터 끝난 것을 pk(여기까지 다 열고 끝남)로 접는다 — 어느 기기에서 해도 같다
+function lootPOpen(l) { return l.pk + lootSum(l.pd) + Object.keys(l.o).filter(k => pidOf(k)).length; }   // 연 조각 상자 수(접은 것 + o에 남은 것)
+// 정리: 받은 상자 칸에서 잘린 id의 열기 기록은 버리고, 조각 상자는 기기마다 앞에서부터 끝난 것을 접는다
+// (pd[기기 id] = 그 기기가 여기까지 다 열고 끝남 · 옛 공용 번호는 pk) — 어느 기기에서 해도 같다
 function lootTidy(l) {
-    const o = {};
+    const o = {}, pd = Object.assign({}, l.pd);
     let pk = l.pk;
-    Object.keys(l.o).forEach(k => { const n = pidN(k); if (n ? n > pk : l.g[k] !== undefined) o[k] = l.o[k]; });
-    while (o['p:' + (pk + 1)] && boxDone(o['p:' + (pk + 1)])) { pk++; delete o['p:' + pk]; }
-    l.o = o; l.pk = pk;
+    const top = d => (d ? pd[d] || 0 : pk);
+    Object.keys(l.o).forEach(k => { const x = pidOf(k); if (x ? x.n > top(x.d) : l.g[k] !== undefined) o[k] = l.o[k]; });
+    const fold = d => { for (let k = pidKey(d, top(d) + 1); o[k] && boxDone(o[k]); k = pidKey(d, top(d) + 1)) { if (d) pd[d] = top(d) + 1; else pk++; delete o[k]; } };
+    fold(''); Array.from(new Set(Object.keys(o).map(pidOf).filter(x => x && x.d).map(x => x.d))).forEach(fold);
+    l.o = o; l.pk = pk; l.pd = pd;
     return l;
 }
-// 다음에 열 상자 id(받은 날 순 → 조각 상자 번호 순) · 없으면 ''
-function lootNext(l) {
+// 다음에 열 상자 id(받은 날 순 → 이 기기의 다음 조각 상자 번호) · 없으면 ''. dev: 기기 id(기본은 이 기기)
+function lootNext(l, dev) {
     const g = Object.keys(l.g).filter(k => !l.o[k]).sort((a, b) => cmpStr(l.g[a], l.g[b]) || cmpStr(a, b))[0];
     if (g) return g;
-    for (let n = l.pk + 1, max = lootPMax(l); n <= max; n++) if (!l.o['p:' + n]) return 'p:' + n;
-    return '';
+    if (lootPOpen(l) >= lootPMax(l)) return '';
+    const d = dev || devId();
+    let n = ((l.pd || {})[d] || 0) + 1;
+    while (l.o[pidKey(d, n)]) n++;
+    return pidKey(d, n);
 }
-// 남은 상자 = 열지 않은 받은 상자 + 열지 않은 조각 상자
+// 남은 상자 = 열지 않은 받은 상자 + (생긴 조각 상자 − 연 조각 상자)
 function lootLeft(l) {
     if (!l) return 0;
-    const max = lootPMax(l), opened = Object.keys(l.o).filter(k => { const n = pidN(k); return n > l.pk && n <= max; }).length;
-    return Object.keys(l.g).filter(k => !l.o[k]).length + Math.max(0, max - l.pk - opened);
+    return Object.keys(l.g).filter(k => !l.o[k]).length + Math.max(0, lootPMax(l) - lootPOpen(l));
 }
 function lootBoxes() { return lootLeft(store.loot); }
-// 상자 칸 {g 받은 상자 {[id]: 받은 날}, o 연 상자 {[id]: 결과}, pk, pcN 조각(기기별 늘기만), tv 잡학 카드 {[id]: 날짜}} — g·o·tv는 합집합이라 합쳐도 늘거나 되살아나지 않는다
+// 상자 칸 {g 받은 상자 {[id]: 받은 날}, o 연 상자 {[id]: 결과}, pk·pd 접은 조각 상자(옛 공용 번호 · 기기별), pcN 조각(기기별 늘기만), tv 잡학 카드 {[id]: 날짜}}
+// — g·o·tv는 합집합, pk·pd·pcN은 큰 쪽이라 합쳐도 늘거나 되살아나지 않는다
 function cleanLoot(v) {
     if (!isObj(v)) return undefined;
-    const o = { g: cleanDateMap(v.g, LOOT_G_MAX, gidOk, true), o: cleanMap(v.o, (r, k) => boxIdOk(k) && typeof r === 'string' && BOX_RES.test(r) ? r : undefined, 3 * LOOT_G_MAX), pk: clampInt(v.pk, 0, 999999, 0), pcN: cleanCount(v.pcN), tv: cleanDateMap(v.tv, 200, triviaOk) };
-    // 옛 형식(연 상자를 수 op로만 셈): 여는 순서대로 앞의 상자들을 연 것으로 옮긴다
+    const o = { g: cleanDateMap(v.g, LOOT_G_MAX, gidOk, true), o: cleanMap(v.o, (r, k) => boxIdOk(k) && typeof r === 'string' && BOX_RES.test(r) ? r : undefined, 3 * LOOT_G_MAX), pk: clampInt(v.pk, 0, 999999, 0), pd: cleanCount(v.pd), pcN: cleanCount(v.pcN), tv: cleanDateMap(v.tv, 200, triviaOk) };
+    // 옛 형식(연 상자를 수 op로만 셈): 여는 순서대로 앞의 상자들을 연 것으로 옮긴다(조각 상자는 어느 기기에서 정리해도 같은 '_' 칸으로)
     let op = isObj(v.o) ? 0 : lootSum(cleanCount(v.op));
-    for (let k = lootNext(o); op > 0 && k; op--, k = lootNext(o)) o.o[k] = 'x';
+    for (let k = lootNext(o, '_'); op > 0 && k; op--, k = lootNext(o, '_')) o.o[k] = 'x';
     return lootTidy(o);
 }
 function triviaOk(k) { const m = /^([a-z]{2})([0-9]{1,2})$/.exec(k); return !!m && isLang(m[1]) && +m[2] >= 1 && +m[2] <= TRIVIA_N; }   // 아는 잡학 카드 id만
 // 받은 상자는 늦은 날짜부터 상한까지(새로 받은 상자가 잘리지 않게) · 연 상자는 상자마다 결과 하나 · 조각은 기기별 칸마다 큰 쪽
 function mergeLoot(x, y) {
-    return lootTidy({ g: capMap(mergeEarlyDate(x.g, y.g), LOOT_G_MAX, (a, b) => cmpStr(b.v, a.v)), o: mergeKeys(x.o, y.o, mergeBoxRes), pk: Math.max(x.pk || 0, y.pk || 0), pcN: cleanCount(mergeMax(x.pcN, y.pcN)), tv: mergeEarlyDate(x.tv, y.tv) });
+    return lootTidy({ g: capMap(mergeEarlyDate(x.g, y.g), LOOT_G_MAX, (a, b) => cmpStr(b.v, a.v)), o: mergeKeys(x.o, y.o, mergeBoxRes), pk: Math.max(x.pk || 0, y.pk || 0), pd: cleanCount(mergeMax(x.pd, y.pd)), pcN: cleanCount(mergeMax(x.pcN, y.pcN)), tv: mergeEarlyDate(x.tv, y.tv) });
 }
 function cleanLeague(v) {
     if (!isObj(v)) return undefined;
@@ -1282,9 +1302,9 @@ function carrySince(hi, lo, at) {
     Object.entries(lo.daily || {}).forEach(([d, v]) => {
         if (d < at || !isObj(v)) return;
         const x = o.daily[d];
-        if (!x) { o.daily[d] = v; extra += (v.xp || 0); return; }
+        if (!x) { o.daily[d] = v; extra += (v.xp || 0) + (v.bx || 0); return; }   // bx: 그날 상자 XP(dl.xp 밖에 따로 적는다)
         const m = Object.assign({}, x); Object.keys(v).forEach(kk => { if (typeof v[kk] === 'number') m[kk] = Math.max(v[kk], x[kk] || 0); });
-        extra += Math.max(0, (v.xp || 0) - (x.xp || 0)); o.daily[d] = m;
+        extra += Math.max(0, (v.xp || 0) - (x.xp || 0)) + Math.max(0, (v.bx || 0) - (x.bx || 0)); o.daily[d] = m;
     });
     o.xp = (hi.xp || 0) + extra;
     ['storiesRead', 'boss'].forEach(f => { o[f] = Object.assign({}, hi[f] || {}); Object.entries(lo[f] || {}).forEach(([k, v]) => { if (!o[f][k] && isObj(v) && (v.date || '') >= at) o[f][k] = v; }); });
@@ -1493,12 +1513,14 @@ function dayLog(date) {
     return p.daily[d];
 }
 function logActivity(kind, n) { const dl = dayLog(); dl[kind] = (dl[kind] || 0) + (n || 1); touchStreak(); save(); setTimeout(checkQuests, 30); }
-function addXp(n, why, quiet) {
+// box: 🎁 상자 XP — 총 XP(레벨)에만 더하고 그날 기록은 dl.bx에 따로 둔다. 오늘 목표(dl.xp)·연속 기록·🛟 부활은 공부로 번 XP만 센다(쌓아 둔 상자만 열어 기록을 잇지 않게)
+function addXp(n, why, quiet, box) {
     if (!n || !CUR) return;
     const p = prog(), before = levelOf(p.xp || 0), dl = dayLog(), goal = store.settings.dailyGoal;
     const wasBelow = dl.xp < goal;
-    p.xp = (p.xp || 0) + n; dl.xp += n;
-    touchStreak(); save();
+    p.xp = (p.xp || 0) + n;
+    if (box) dl.bx = (dl.bx || 0) + n; else { dl.xp += n; touchStreak(); }
+    save();
     if (!quiet) showToast('+' + n + ' XP' + (why ? ' · ' + why : ''));
     setTimeout(() => { checkQuests(); checkBadges(); }, 30);
     const after = levelOf(p.xp);
@@ -6798,7 +6820,7 @@ function rushDraw(r) {
     rushBindResume(r);
     if (kb && !r.paused) rushFocus();
 }
-function rushComboTxt(r) { return r.fever > 0 ? '💥 FEVER 정답마다 +1 · ' + r.combo + '연속' : r.combo >= 3 ? '🔥 ' + r.combo + '연속' : ''; }
+function rushComboTxt(r) { return r.fever > 0 ? '💥 FEVER XP ×2 · ' + r.combo + '연속' : r.combo >= 3 ? '🔥 ' + r.combo + '연속' : ''; }   // 러시 피버: 정답 XP 두 배(feverPay(r, 3))
 function rushFocus() { const f = $main.querySelector('[data-rc="0"]'); if (f) f.focus({ preventScroll: true }); }
 function rushRaceKey(r) { return r.score + ':' + (r.ghost.length ? rushGhostAt(r, rushNow(r)) : -1); }
 function rushLoop(r) { if (!r.raf) r.raf = requestAnimationFrame(() => rushTick(r)); }
@@ -6914,7 +6936,7 @@ function rushOver(r) {
         p.ghost = Object.assign({}, p.ghost, { [k]: r.hits.slice(0, 200) });
     }
     if (r.n) { softXp('rush', Math.floor(r.score / 3), '소리 러시'); logActivity('rush'); }   // 하나라도 답한 판만 기록(틀어 놓기만 한 판은 빼고)
-    r.feverGive = feverPay(r);   // 💥 피버 보너스는 판 끝에 한 번에
+    r.feverGive = feverPay(r, 3, 'rush');   // 💥 피버 보너스는 판 끝에 한 번에 — 피버 정답 3개마다 +1(러시 XP ×2) · 러시와 같은 하루 감쇠 칸(상한이 두 배가 되지 않고 레슨 피버 칸도 쓰지 않음)
     save();
     if ((r.isNew && r.score) || r.cut) { celebrate(); sfx('level'); }
     rushEndScreen(r);
@@ -6949,7 +6971,7 @@ registerPlayTile({
 });
 
 /* ═══════════════════ 💥 콤보 피버 · 🎁 선물 상자 · 🛟 연속 기록 부활 ═══════════════════ */
-// 피버: 정답이 이어져 콤보가 5의 배수가 되면 다음 3문제가 피버(금빛 카드). 피버 중 정답마다 보너스 1을 모아 판 끝에 softXp로 한 번에 준다.
+// 피버: 정답이 이어져 콤보가 5의 배수가 되면 다음 3문제가 피버(금빛 카드). 피버 중 정답마다 보너스 1을 모아 판 끝에 softXp로 한 번에 준다(러시는 정답당 보상이 1/3이라 피버 정답 3개마다 1).
 // 오답은 콤보·피버만 0으로 만든다(다른 손실 없음). 10콤보마다 상자 조각 1개(언어마다 하루 3개까지) — 조각 3개면 상자 1개
 const FEVER_N = 3, PIECE_DAY = 3;
 function feverTick(st, ok) {   // → 이번 정답으로 피버에 들어갔나
@@ -6962,7 +6984,8 @@ function feverTick(st, ok) {   // → 이번 정답으로 피버에 들어갔나
     return enter;
 }
 function feverFx() { sfx('fever'); try { if (navigator.vibrate) navigator.vibrate([20, 30, 20]); } catch (e) { } }   // 레벨 업 소리와 다른 높은 삼각파
-function feverPay(st) { if (st.feverPaid == null) st.feverPaid = st.feverXp ? softXp('fever', st.feverXp, '💥 피버 보너스') : 0; return st.feverPaid; }   // 판 끝에 한 번만
+// 판 끝에 한 번만. per·kind: 정답당 기본 보상이 1보다 작은 놀이용 — 러시는 정답 3개에 1 XP라 피버 정답 3개마다 +1(실제 ×2)을 러시 감쇠 칸에서 준다
+function feverPay(st, per, kind) { if (st.feverPaid == null) st.feverPaid = st.feverXp ? softXp(kind || 'fever', Math.floor(st.feverXp / (per || 1)), '💥 피버 보너스') : 0; return st.feverPaid; }
 // 판 도중 알릴 것: 놀이 판이면 끝 요약으로, 레슨 퀴즈 등은 그 판 결과 화면으로 미룬다(축하 예산)
 function feverNote(st, msg) { if (PLAY.cur) playNote(msg); else (st.notes || (st.notes = [])).push(msg); }
 function pieceAdd(st) {
@@ -7017,7 +7040,7 @@ function boxOpen() {
     else if (res.k === 'shield') res.xp = shieldPiece(res);
     else if (res.k === 'trivia') { const tv = triviaPick(id); if (tv) { l.tv = Object.assign({}, l.tv, { [tv]: todayStr() }); res.tv = tv; } else { res.all = true; res.xp = 30; } }
     lootTidy(l);
-    if (res.xp) addXp(res.xp, '🎁 선물 상자', true); else save();   // addXp도 저장한다(같은 순간이라 연 상자와 결과가 함께 남음)
+    if (res.xp) addXp(res.xp, '🎁 선물 상자', true, true); else save();   // 상자 XP(연속 기록·오늘 목표엔 안 셈) — addXp도 저장한다(같은 순간이라 연 상자와 결과가 함께 남음)
     track('box_open', { k: res.k });
     updateHeader();
     return res;
@@ -7229,7 +7252,8 @@ function triviaShelfHtml() {
 /* ═══════════════════ 🟩 오늘의 소리 퍼즐 ═══════════════════ */
 // 하루 한 문제: 원어민 문장을 듣고 조각을 순서대로 맞히는 Wordle(기회 6번 · 🟩 자리 맞음 🟨 문장에 있지만 자리 틀림 ⬜ 없음).
 // 같은 언어·같은 단계(통과한 레슨의 가장 높은 단계 u)면 같은 날 같은 문제 — 후보를 안정 id로 정렬한 뒤 날짜·단계 시드로 섞어 고른다.
-// 진행 중인 판은 S.puz에만 둔다(새로고침하면 처음부터, 오늘 끝냈으면 결과만). 규칙만 참고해 새로 만들었다(Wordle·汉兜 handle 등)
+// 진행 중인 판은 S.puz에 두고, 오늘 문제는 확인할 때마다 시도를 prog().puzNow에도 적는다 — 나갔다 오거나 새로고침해도 같은 문제·남은 기회·힌트로 이어서(오늘 끝냈으면 결과만).
+// 규칙만 참고해 새로 만들었다(Wordle·汉兜 handle 등)
 const PUZ_EPOCH = '2026-10-01', PUZ_TRIES = 6, PUZ_EMO = ['⬜', '🟨', '🟩'], PUZ_WORD = ['없음', '자리 틀림', '자리 맞음'];
 function puzNo(d) { return dayDiff(PUZ_EPOCH, d || todayStr()) + 1; }   // #N
 function puzUnit() { return ALL.reduce((u, l) => (isDone(l.id) && l.unitId > u ? l.unitId : u), 0); }   // 통과한 레슨의 가장 높은 단계(기기·날짜와 무관)
@@ -7371,7 +7395,12 @@ function puzPinyin(u) {
 function puzTop(sub) { return '<div class="lesson-top"><button class="back-btn tap44" id="puzBack" aria-label="놀이 탭으로">←</button><div><div class="lt-title">🟩 오늘의 소리 퍼즐</div><div class="lt-sub">' + esc(sub) + '</div></div></div>'; }
 function puzBindBack(st) {
     const b = document.getElementById('puzBack');
-    if (b) b.addEventListener('click', () => { if (st && !st.over && PLAY.cur && !confirm('그만할까요? 지금 판 기록은 남지 않아요')) return; resetPlayState(); go('play'); });
+    if (b) b.addEventListener('click', () => {
+        const keep = st && !st.over && st.mode === 'today';   // 오늘 문제는 시도가 저장돼 있어 묻지 않는다(다시 열면 이어서)
+        if (st && !st.over && PLAY.cur && !keep && !confirm('그만할까요? 지금 판 기록은 남지 않아요')) return;
+        if (keep && st.g.length) showToast('🟩 하던 퍼즐은 남아 있어요 — 다시 열면 이어서 풀어요');
+        resetPlayState(); go('play');
+    });
 }
 function renderPuzzle() {
     const t = playTile('puzzle'), st = S.puz;
@@ -7382,10 +7411,15 @@ function renderPuzzle() {
 }
 function puzStart(mode) {
     stopSpeak();
-    const u = puzUnit(), list = puzList(u), c = mode === 'today' ? puzPick(u, todayStr()) : list[Math.floor(Math.random() * list.length)];
+    const sv = mode === 'today' ? puzSaved() : null, u = sv ? sv.u : puzUnit(), list = puzList(u), c = sv ? sv.c : mode === 'today' ? puzPick(u, todayStr()) : list[Math.floor(Math.random() * list.length)];
     if (!c) { $main.innerHTML = puzTop('하루 한 문제') + '<div class="empty-state" style="padding:30px 20px"><div class="es-emoji">🧩</div>문제를 만들 문장이 아직 모자라요.<br>레슨을 하나 더 통과해 보세요!</div>'; puzBindBack(null); return; }
     const st = S.puz = puzState(c, u, mode, mode === 'today' ? hashStr('puzt|' + CUR.code + '|' + todayStr() + '|' + u) : Math.floor(Math.random() * 2147483647));
     playBegin('puzzle');
+    if (sv) {
+        puzRestore(st, sv.g);
+        if (st.won || st.g.length >= PUZ_TRIES) { puzFinish(st); return; }
+        if (st.g.length) playToast('🟩 하던 문제를 이어서 풀어요 · 기회 ' + (PUZ_TRIES - st.g.length) + '번 남음');
+    }
     puzDraw(st);
     setTimeout(() => { if (S.puz === st && !st.over && !st.heard) { st.heard = true; puzPlay(st, 1); } }, 350);   // 처음 한 번 자동
 }
@@ -7427,15 +7461,42 @@ function puzDraw(st) {
     // 키보드로 하던 중이면 다음에 누를 곳으로 포커스(다 채웠으면 확인)
     if (fk) { const f = st.cur.length === n ? document.getElementById('puzCheck') : $main.querySelector(fk === 'pt' ? '[data-pt]:not([disabled])' : '[data-ps]:not([disabled])') || $main.querySelector('[data-pt]:not([disabled])'); if (f) f.focus({ preventScroll: true }); }
 }
-function puzCheck(st) {
-    const n = st.c.toks.length;
-    if (st.over || st.cur.length !== n) return;
+// 놓은 조각(st.cur)을 채점해 시도에 더한다 → 색 목록
+function puzApply(st) {
     const guess = st.cur.map(i => st.tiles[i]), mk = puzGrade(st.c.toks, guess.map(x => x.t));
     st.g.push(st.cur.slice()); st.m.push(mk); st.cur = [];
     guess.forEach((x, j) => { st.best[x.k] = Math.max(st.best[x.k] == null ? -1 : st.best[x.k], mk[j]); });
     st.won = mk.every(v => v === 2);
+    return mk;
+}
+// 오늘 문제의 시도를 조각 키로 저장(타일 번호가 아니라 키라 타일 순서가 달라져도 같은 시도)
+function puzKeep(st) {
+    if (st.mode !== 'today') return;
+    prog().puzNow = { d: st.day, u: st.u, id: st.c.id, g: st.g.map(r => r.map(i => st.tiles[i].k)) };
+    save();
+}
+// 오늘 하던 판(오늘 날짜 · 같은 문장일 때만) → {u, c, g} · 없으면 null. 그사이 단계가 올라도 하던 문제로(새 문제로 기회를 다시 받지 않게)
+function puzSaved() {
+    const v = prog().puzNow, c = v && v.d === todayStr() && v.g.length ? puzPick(v.u, v.d) : null;
+    return c && c.id === v.id ? { u: v.u, c, g: v.g } : null;
+}
+// 저장한 시도를 다시 채점해 판을 되살린다(뜻·발음 힌트·조각 색도 그대로) — 조각을 못 찾으면(자료가 바뀜) 거기까지만
+function puzRestore(st, rows) {
+    for (const r of rows) {
+        if (st.won || st.g.length >= PUZ_TRIES) break;
+        const used = [];
+        r.forEach(k => used.push(st.tiles.findIndex((x, j) => x.k === k && !used.includes(j))));
+        if (used.length !== st.c.toks.length || used.includes(-1)) break;
+        st.cur = used; puzApply(st);
+    }
+}
+function puzCheck(st) {
+    const n = st.c.toks.length;
+    if (st.over || st.cur.length !== n) return;
+    const mk = puzApply(st);
     announce(mk.map(v => PUZ_EMO[v]).join('') + ' ' + mk.filter(v => v === 2).length + '개 자리 맞음');
     if (st.won || st.g.length >= PUZ_TRIES) { puzFinish(st); return; }
+    puzKeep(st);
     sfx(mk.some(v => v === 2) ? 'ok' : 'bad');
     puzDraw(st);
     const b = document.querySelector('[data-pt]:not([disabled])'); if (b) b.focus({ preventScroll: true });
@@ -7445,6 +7506,7 @@ function puzFinish(st) {
     st.tries = st.won ? st.g.length : 7;
     st.rows = st.m.map(m => m.map(v => PUZ_EMO[v]).join(''));
     const p = prog(), o = p.puz, t = st.day;
+    if (st.mode === 'today') delete p.puzNow;   // 끝난 판은 이어 풀 것이 없다(아래 save()로 함께 저장)
     // 오늘 퍼즐은 하루 한 번만 기록·보상(다른 탭에서 먼저 끝냈으면 그대로). 자정을 넘겨 끝내면 시작한 날 문제로 적는다 — 새 날 문제는 그대로 남게
     if (st.mode === 'today' && !(o && o.last >= t)) {
         const run = o && o.last === dateAdd(t, -1) ? o.st + 1 : 1, dist = o ? o.dist.slice() : [0, 0, 0, 0, 0, 0, 0];
@@ -7522,7 +7584,7 @@ registerPlayTile({
     // 1단계 이상 레슨을 통과해야 문제가 생긴다 — 자유 이동이어도(그래야 퀘스트·홈 추천에 풀 수 없는 퍼즐이 오지 않는다)
     need: () => puzUnit() >= 1 && puzList(puzUnit()).length > 0,
     lock: () => puzUnit() < 1 ? '1단계 레슨을 통과하면 열려요' : '레슨을 하나 더 통과하면 열려요',
-    status: () => { const z = prog().puz; return puzDone() ? (z.t <= PUZ_TRIES ? '✅ ' + z.t + '/' + PUZ_TRIES : '💪 X/' + PUZ_TRIES) + ' · 🔥' + puzStreak() + '일' : '🆕 #' + puzNo() + ' 오늘 문제'; },
+    status: () => { const z = prog().puz, sv = !puzDone() && puzSaved(); return puzDone() ? (z.t <= PUZ_TRIES ? '✅ ' + z.t + '/' + PUZ_TRIES : '💪 X/' + PUZ_TRIES) + ' · 🔥' + puzStreak() + '일' : sv ? '▶ #' + puzNo() + ' 이어 풀기 · 기회 ' + (PUZ_TRIES - sv.g.length) + '번' : '🆕 #' + puzNo() + ' 오늘 문제'; },
     open: () => { S.puz = null; go('puzzle'); },
 });
 
