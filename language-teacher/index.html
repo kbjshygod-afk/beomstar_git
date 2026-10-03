@@ -718,7 +718,10 @@
         .rush-cheer { animation: pop .25s ease-out; }
         .rush-pause b { font-size: 18px; }
         .rush-rec { margin-top: 8px; font-size: 16px; font-weight: 900; color: #6d28d9; }
-        .rush-redo summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; }
+        .rush-redo summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; list-style: none; }
+        .rush-redo summary::-webkit-details-marker { display: none; }
+        .rush-redo summary::after { content: '▾'; margin-left: auto; padding-left: 8px; color: var(--text-light); }   /* 눌러서 펼치는 줄임을 보이게 */
+        .rush-redo[open] summary::after { content: '▴'; }
         .rush-redo .rr-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--border); }
         .rush-redo .rr-row:last-of-type { border-bottom: none; }
         .rush-redo .play-btn { width: 44px; height: 44px; flex-shrink: 0; font-size: 16px; }
@@ -1025,6 +1028,7 @@ const LANG_EXT = {
 const LOOT_G_MAX = 2000, SB_MAX = 40;   // 받은 상자 id 상한(늦은 것부터 남김) · 상자 방패 기록 상한
 const BOX_RES = /^(x|t|b[0-3]|s[01])$/;   // 연 상자 결과: x XP · t 잡학 · b0~b3 부스트(쓴 판 수) · s0 방패 조각 · s1 방패로 바꾼 조각
 const TRIVIA_N = 12;   // 언어마다 잡학 카드 수(LANG_TRIVIA) — 저장 정리가 아는 id('zh1'~'zh12')만 남기려고 저장소보다 먼저 둔다
+const DAY_ONLY = /Xr$|^earHit$|^pc$/;   // 그날 판정에만 쓰는 하루 기록 칸(놀이 XP 감쇠·귀 시간 목표 알림·상자 조각 하루 상한) — 지난 날 것은 정리 때 버린다(저장소보다 먼저 둔다)
 const DEV_KEY = LS_KEY + '_dev';   // 이 기기 id(기록 밖에 둔다 — 복원 코드로 다른 기기 id가 들어오지 않게)
 // 최상위 칸(모든 언어 공통): 상자(loot)·리그(league). 세대가 다른 기록을 합칠 때(cloudMerge)는 기존처럼 통째로 바꾼 쪽(높은 세대) 값을 쓴다
 const TOP_EXT = { loot: { clean: cleanLoot, merge: mergeLoot }, league: { clean: cleanLeague, merge: mergeLeague } };
@@ -1267,6 +1271,7 @@ function mergeRv(x, y) {
 }
 function cleanLangProg(p) {
     if (!isObj(p)) return undefined;
+    const today = todayStr();
     const o = {
         completed: cleanMap(p.completed, c => {
             if (!isObj(c) || !isDate(c.date)) return undefined;
@@ -1295,7 +1300,7 @@ function cleanLangProg(p) {
         daily: cleanMap(p.daily, (v, k) => {
             if (!isDate(k) || !isObj(v)) return undefined;
             const x = { xp: clampInt(v.xp, 0, 1e6, 0) };
-            Object.keys(v).forEach(kk => { if (kk !== 'xp' && kk !== 'effort' && typeof v[kk] === 'number' && Number.isFinite(v[kk])) x[clip(kk, 24)] = Math.max(0, Math.round(v[kk])); });
+            Object.keys(v).forEach(kk => { if (kk !== 'xp' && kk !== 'effort' && typeof v[kk] === 'number' && Number.isFinite(v[kk]) && !(k < today && DAY_ONLY.test(kk))) x[clip(kk, 24)] = Math.max(0, Math.round(v[kk])); });   // 지난 날의 그날만 쓰는 칸은 버린다(오늘·앞날은 둔다)
             if (isObj(v.effort)) x.effort = cleanMap(v.effort, () => 1, 300);
             return x;
         }, 3000),
@@ -1671,7 +1676,7 @@ function allLangStats() {
         stories += sr; if (sr > 0 && sr >= ((p.meta && p.meta.stories) || 12)) fullStories = true;
         if ((p.xp || 0) > 0 || comp.length) langs++;
         maxXp = Math.max(maxXp, p.xp || 0);
-        maxEar = Math.max(maxEar, lsSum(p));   // 한 언어 귀 시간(앱 + 앱 밖)
+        maxEar = Math.max(maxEar, lsApp(p));   // 한 언어 귀 시간(앱에서 들은 시간만 — 앱 밖 시간은 배지에 세지 않음)
         ears += earOpenN(p);   // 👂 귀 뚫린 대화(모든 언어 합)
         if (p.meta && p.meta.lessons && comp.length >= p.meta.lessons) finished = true;
     });
@@ -2133,7 +2138,8 @@ function earTts(text, t0) {
     const t = String(text || ''), perChar = /[\u3040-\u30ff\u4e00-\u9fff]/.test(t) ? 380 : 130;
     earAdd(Math.min((Date.now() - t0) / 1000, t.length * perChar * 2 / 1000));
 }
-function lsSum(p) { let s = 0; Object.values((p && p.daily) || {}).forEach(d => { if (d) s += (d.ls || 0) + (d.lx || 0); }); return s; }
+function lsSum(p) { let s = 0; Object.values((p && p.daily) || {}).forEach(d => { if (d) s += (d.ls || 0) + (d.lx || 0); }); return s; }   // 합계(앱 + 앱 밖) — 합계·막대 표시용
+function lsApp(p) { let s = 0; Object.values((p && p.daily) || {}).forEach(d => { if (d) s += d.ls || 0; }); return s; }   // 앱에서 실제로 들은 시간 — 단계·축하·배지는 이것으로만(스스로 적은 앱 밖 시간으로 보상이 나오지 않게)
 function lsTotal(code) { return lsSum(store.byLang[code]); }
 function lsStep(sec) { let n = 0; LS_STEPS.forEach((x, i) => { if (sec >= x.m * 60) n = i + 1; }); return n; }   // 지난 단계 수
 function fmtHM(sec) { const m = Math.floor((sec || 0) / 60); return m >= 60 ? Math.floor(m / 60) + '시간 ' + (m % 60) + '분' : m + '분'; }
@@ -2148,7 +2154,7 @@ function lsAdd(sec) {
     EAR.frac -= n;
     const dl = dayLog(), add = Math.min(n, LS_DAY_MAX - (dl.ls || 0));
     if (add <= 0) return;
-    const before = lsTotal(CUR.code);
+    const before = lsApp(prog());
     dl.ls = (dl.ls || 0) + add;   // touchStreak은 부르지 않는다
     earSaveSoon();
     earStepUp(before, before + add);
@@ -2173,9 +2179,7 @@ window.addEventListener('pagehide', () => { earCut(); earFlush(); });
 function lxAdd(min) {
     const dl = dayLog(), add = Math.min(min * 60, LX_DAY_MAX - (dl.lx || 0));
     if (add <= 0) { showToast('앱 밖 시간은 하루 3시간까지 기록돼요'); return 0; }
-    const before = lsTotal(CUR.code);
-    dl.lx = (dl.lx || 0) + add; save();
-    earStepUp(before, before + add);
+    dl.lx = (dl.lx || 0) + add; save();   // 앱 밖 시간은 합계·막대에만 — 단계 축하·배지는 없다
     return add;
 }
 
@@ -2183,7 +2187,7 @@ function lxAdd(min) {
 function earFirstDay(p) { const ds = Object.keys((p && p.daily) || {}).filter(d => ((p.daily[d].ls || 0) + (p.daily[d].lx || 0)) > 0).sort(); return ds[0] || ''; }
 // 처음 7일(처음 들은 날부터) 또는 1시간 전에는 오늘 들은 시간만 — 첫 주의 작은 누적은 초라해 보이니까
 function earLineHtml() {
-    const p = prog(), tot = lsSum(p), dl = dayLog(), first = earFirstDay(p);
+    const p = prog(), tot = lsApp(p), dl = dayLog(), first = earFirstDay(p);   // 누적·다음 단계는 앱에서 들은 시간(단계와 같은 기준)
     let txt, bar = '';
     if (tot < 3600 || !first || dayDiff(first, todayStr()) < 7) txt = dl.lx ? '🎧 오늘 앱에서 ' + fmtMin(dl.ls || 0) + ' · 앱 밖 ' + fmtMin(dl.lx) : '🎧 오늘 들은 시간 ' + fmtMin(dl.ls || 0);   // 앱 밖 시간은 따로(퀘스트 칩은 앱에서 들은 시간 기준)
     else {
@@ -2194,14 +2198,14 @@ function earLineHtml() {
     return '<button class="ear-line" id="earLine" aria-label="' + esc(txt.slice(3) + ' — 귀 시간 자세히 보기') + '"><span class="el-txt">' + esc(txt) + '</span>' + bar + '</button>';
 }
 function earSheetHtml(ask) {   // ask: 더할지 묻는 중인 앱 밖 시간(분)
-    const p = prog(), tot = lsSum(p), i = lsStep(tot), dl = dayLog(), g = store.settings.earGoal || 0;
+    const p = prog(), tot = lsSum(p), app = lsApp(p), i = lsStep(app), dl = dayLog(), g = store.settings.earGoal || 0;   // 합계는 앱 밖 포함 · 단계(로드맵)는 앱에서 들은 시간
     const langs = Object.keys(LANGS).map(c => ({ c, s: lsTotal(c) })).filter(x => x.s > 0 || x.c === CUR.code);
     const days = [];
     for (let k = 6; k >= 0; k--) { const ds = todayStr(-k), d = (p.daily || {})[ds] || {}; days.push({ ds, ls: d.ls || 0, lx: d.lx || 0, today: !k }); }
     const max = Math.max(600, ...days.map(x => x.ls + x.lx)), hp = v => Math.round(v / max * 100);
     let h = '<div class="ear-sheet"><div class="sheet-head"><b>🎧 귀 시간</b><button class="sheet-close" data-close-overlay aria-label="닫기">✕</button></div>' +
-        '<div class="ear-hero"><b>' + fmtHM(tot) + '</b><span>' + esc(CUR.name) + ' · ' + (i ? LS_STEPS[i - 1].ico + ' ' + esc(LS_STEPS[i - 1].name) : '첫 단계까지 ' + earLeft(LS_STEPS[0].m * 60 - tot)) + '</span></div>' +
-        '<div class="muted">원어민 녹음을 실제로 들은 시간이에요. 시간에는 XP가 없어요 — 듣는 만큼 귀가 열려요.</div>';
+        '<div class="ear-hero"><b>' + fmtHM(tot) + '</b><span>' + esc(CUR.name) + ' · ' + (i ? LS_STEPS[i - 1].ico + ' ' + esc(LS_STEPS[i - 1].name) : '첫 단계까지 ' + earLeft(LS_STEPS[0].m * 60 - app)) + '</span></div>' +
+        '<div class="muted">원어민 녹음을 실제로 들은 시간이에요. 시간에는 XP가 없어요 — 듣는 만큼 귀가 열려요.' + (tot > app ? ' 단계·배지는 앱에서 들은 시간(' + fmtHM(app) + ')으로 올라요.' : '') + '</div>';
     if (langs.length > 1) h += '<div class="ear-langs">' + langs.map(x => LANGS[x.c].flag + ' ' + esc(LANGS[x.c].name) + ' <b>' + fmtHM(x.s) + '</b>').join(' · ') + '</div>';
     h += '<div class="section-title">최근 7일</div><div class="week-bars ear-week">' + days.map(x => {
         const dow = x.today ? '오늘' : DOW_KO[new Date(x.ds + 'T00:00:00').getDay()], m = Math.round((x.ls + x.lx) / 60);
@@ -2209,7 +2213,7 @@ function earSheetHtml(ask) {   // ask: 더할지 묻는 중인 앱 밖 시간(�
             (x.lx ? '<div class="wb-fill out" style="height:' + hp(x.lx) + '%"></div>' : '') + '<div class="wb-fill app' + (x.lx ? ' under' : '') + '" style="height:' + hp(x.ls) + '%"></div><div class="wb-dow">' + dow + '</div></div>';
     }).join('') + '</div><div class="muted ear-keys"><span class="ear-key app"></span>앱에서 들음 <span class="ear-key out"></span>앱 밖(직접 기록) · 막대 위 숫자는 분</div>';
     h += '<div class="section-title">귀 시간 로드맵</div><ol class="ear-road">' + LS_STEPS.map((x, k) => '<li class="' + (k < i ? 'done' : k === i ? 'now' : '') + '"><span class="er-ico" aria-hidden="true">' + (k < i ? '✓' : x.ico) + '</span><b>' + stepTime(x.m) + '</b> ' + esc(x.name) +
-        (k < i ? '<span class="sr-only"> (지남)</span>' : k === i ? '<span class="er-left">' + earLeft(x.m * 60 - tot) + ' 남음</span>' : '') + '</li>').join('') + '</ol>';
+        (k < i ? '<span class="sr-only"> (지남)</span>' : k === i ? '<span class="er-left">' + earLeft(x.m * 60 - app) + ' 남음</span>' : '') + '</li>').join('') + '</ol>';
     h += '<div class="section-title">앱 밖에서 들은 시간</div><div class="muted">드라마·노래·팟캐스트로 ' + esc(CUR.name) + '를 들었다면 직접 더해요(하루 3시간까지). 위 막대에 연한 색으로 따로 보여요.</div>' +
         (ask ? '<div class="ear-lx ask" role="group" aria-label="앱 밖 시간 더하기 확인"><span class="ear-ask">앱 밖에서 ' + ask + '분 들은 걸 더할까요?</span><button class="btn small tap" data-lxok>✔ 더하기</button><button class="btn small ghost tap" data-lxno>취소</button></div>'
             : '<div class="ear-lx"><button class="btn small ghost tap" data-lx="10">+10분</button><button class="btn small ghost tap" data-lx="30">+30분</button><span class="muted">오늘 앱 밖 ' + fmtMin(dl.lx || 0) + '</span></div>');
@@ -2315,8 +2319,8 @@ function warmClips(urls, onProg) {
     let k = 0, n = 0, tried = 0;
     const one = () => {
         if (k >= list.length) return Promise.resolve();
-        const u = list[k++];
-        return fetch(u).then(r => (r.ok ? r.blob().then(() => { n++; }) : null)).catch(() => { }).then(() => { tried++; if (onProg) onProg(tried, list.length); return one(); });
+        const u = list[k++], ac = typeof AbortController === 'function' ? new AbortController() : null, tm = setTimeout(() => { if (ac) ac.abort(); }, CLIP_GIVEUP);   // 응답 없는 망에서 멈추지 않게
+        return fetch(u, ac ? { signal: ac.signal } : undefined).then(r => (r.ok ? r.blob().then(() => { n++; }) : null)).catch(() => { }).then(() => { clearTimeout(tm); tried++; if (onProg) onProg(tried, list.length); return one(); });
     };
     return Promise.all([one(), one(), one(), one()]).then(() => n);   // 동시에 4개씩
 }
@@ -7418,8 +7422,19 @@ function reviveCheck() {
     updateHeader();
     const b = document.getElementById('reviveCard'); if (b) b.remove();
 }
+// 오늘 아직 공부하기 전: 오늘 시작하면 부활 도전이 열리는가(reviveOffer·touchStreak와 같은 조건) → 살릴 수 있는 기록 일수 · 아니면 0
+function reviveSoon() {
+    const st = store.streak, t = todayStr();
+    if (!st.last || st.last >= t || reviveOn()) return 0;
+    const gap = dayDiff(st.last, t) - 1;
+    return gap > st.shields && gap >= 1 && gap <= 3 && st.count >= 3 && !(st.rv && st.rv.m === t.slice(0, 7)) ? st.count : 0;
+}
 function reviveBannerHtml() {
-    if (!reviveOn()) return '';
+    if (!reviveOn()) {   // 열었을 때 바로 알려 준다(기록이 끊겨 그만두려는 순간) — 실제 도전은 오늘 첫 공부(touchStreak)에서
+        const n = reviveSoon();
+        return n ? '<div class="revive-card" id="reviveSoon" role="status"><b>🛟 ' + n + '일 기록, 오늘 살릴 수 있어요!</b><span class="rv-goal">오늘 공부를 시작하면 부활 도전이 열려요 · 오늘 XP ' + reviveNeed() + ' 모으기</span>' +
+            '<span class="muted">못 채워도 잃는 건 없어요 · 모든 언어 XP를 합쳐요</span></div>' : '';
+    }
     const rv = store.streak.rv, need = reviveNeed(), xp = Math.min(need, reviveXp());
     return '<div class="revive-card" id="reviveCard" role="status"><b>🛟 ' + rv.prev + '일 기록, 아직 살릴 수 있어요!</b><span class="rv-goal">오늘 XP ' + need + ' 모으기 · ' + xp + '/' + need + '</span>' +
         '<div class="rv-bar" role="progressbar" aria-label="부활 도전 오늘 XP" aria-valuemin="0" aria-valuemax="' + need + '" aria-valuenow="' + xp + '"><div style="width:' + Math.round(xp / need * 100) + '%"></div></div>' +
@@ -8778,7 +8793,7 @@ function renderSettings() {
         // 놀이 설정 두 줄은 놀이가 하나라도 생긴 뒤에만(그 전에는 켜도 바뀌는 것이 없음)
         (PLAY_TILES.length ? setRow('🤫 조용 모드', '놀이에서 소리 내어 말하는 단계 건너뛰기 · 놀이 탭에서 🚇 이동 중을 고르면 저절로 켜져요', '<label class="switch"><input type="checkbox" id="setQuiet" aria-label="조용 모드"' + (store.settings.quiet ? ' checked' : '') + '><span class="slider"></span></label>') +
             setRow('⏭️ 다음 놀이 자동 시작', '놀이가 끝나면 5초 뒤 다음 놀이로 이어 가요 · 움직임 줄이기를 켠 기기는 버튼만', '<label class="switch"><input type="checkbox" id="setAutoNext" aria-label="다음 놀이 자동 시작"' + (store.settings.autoNext !== false ? ' checked' : '') + '><span class="slider"></span></label>') : '') +
-        (hasClips && swOn ? setRow('📥 오프라인용 녹음 받기', esc(CUR.name) + ' 녹음 전체(약 ' + (CLIP_MB[CUR.code] || 15) + 'MB)를 미리 받아 두면 인터넷이 없어도 들려요', '<button class="btn small ghost tap" id="clipAllBtn">받기</button>') : '');
+        (hasClips && swOn ? setRow('📥 오프라인용 녹음 받기', esc(CUR.name) + ' 녹음 전체(약 ' + (CLIP_MB[CUR.code] || 15) + 'MB)를 미리 받아 두면 인터넷이 없어도 들려요', '<button class="btn small ghost tap" id="clipAllBtn"' + (clipDlOn() ? ' disabled' : '') + '>' + clipDlText() + '</button>') : '');
     if (playSet) h += '<div class="card">' + playSet + '</div>';
     if (!placementChoices().length && nextSkipUnit() !== null) h += '<div class="card">' + setRow('📍 시작 위치', '이미 아는 단계는 건너뛰기 시험으로 넘어갈 수 있어요', '<button class="btn small ghost" id="skipFromSet">' + nextSkipUnit() + '단계 시험</button>') + '</div>';
     if (CUR.code === 'en') {
@@ -8828,7 +8843,7 @@ function renderSettings() {
     if (sq) sq.addEventListener('change', e => { store.settings.quiet = e.target.checked; save(); });
     if (sa) sa.addEventListener('change', e => { store.settings.autoNext = e.target.checked; save(); });
     const cab = document.getElementById('clipAllBtn');
-    if (cab) cab.addEventListener('click', () => downloadAllClips(cab));
+    if (cab) cab.addEventListener('click', () => downloadAllClips());
     const sfs = document.getElementById('skipFromSet');
     if (sfs) sfs.addEventListener('click', () => startSkipTest(nextSkipUnit()));
     const pb = document.getElementById('placeBtn');
@@ -8909,19 +8924,27 @@ function renderSettings() {
 }
 // 📥 이 언어 녹음 전체를 미리 받기(서비스 워커가 담음). 데이터 절약 모드면 먼저 묻고, 남은 공간을 확인한다
 const CLIP_MB = { zh: 13, en: 31, ja: 12, es: 14, fr: 17 };
-async function downloadAllClips(btn) {
+// 지금 돌고 있는 '녹음 전체 받기'(하나만): 설정 화면을 다시 그려도(말하기 속도·다른 화면에 갔다 오기) 진행이 보이고, 다시 눌러 두 번 받지 않게
+const CLIP_DL = { code: '', k: 0, N: 0, on: false };
+function clipDlOn() { return CLIP_DL.on && CLIP_DL.code === CUR.code; }
+function clipDlText() { return clipDlOn() ? '받는 중 ' + Math.floor(CLIP_DL.k / Math.max(1, CLIP_DL.N) * 100) + '%' : '받기'; }
+function clipDlPaint() { const b = document.getElementById('clipAllBtn'); if (b) { b.disabled = clipDlOn(); b.textContent = clipDlText(); } }   // 그때 화면의 버튼을 새로 찾는다
+async function downloadAllClips() {
     const c = CLIPS[CUR.code], code = CUR.code, mb = CLIP_MB[code] || 15;
-    if (!c || !c.ids || btn.disabled) return;
+    if (CLIP_DL.on) { if (CLIP_DL.code !== code) showToast('📥 ' + LANGS[CLIP_DL.code].name + ' 녹음을 받는 중이에요 — 끝나면 다시 눌러 주세요'); return; }
+    if (!c || !c.ids) return;
+    Object.assign(CLIP_DL, { code, k: 0, N: c.ids.size || 0, on: true }); clipDlPaint();   // 묻고 확인하는 동안에도 두 번 시작하지 않게
+    const stop = () => { CLIP_DL.on = false; clipDlPaint(); };
     const conn = navigator.connection;
-    if (conn && conn.saveData && !confirm('데이터 절약 모드가 켜져 있어요. 녹음 약 ' + mb + 'MB를 받을까요?')) return;
+    if (conn && conn.saveData && !confirm('데이터 절약 모드가 켜져 있어요. 녹음 약 ' + mb + 'MB를 받을까요?')) { stop(); return; }
     try {
         const est = navigator.storage && navigator.storage.estimate ? await navigator.storage.estimate() : null;
-        if (est && est.quota && est.quota - (est.usage || 0) < mb * 1.3 * 1048576) { showToast('💾 저장 공간이 모자라요 (약 ' + mb + 'MB 필요)', '', 3600); return; }
+        if (est && est.quota && est.quota - (est.usage || 0) < mb * 1.3 * 1048576) { stop(); showToast('💾 저장 공간이 모자라요 (약 ' + mb + 'MB 필요)', '', 3600); return; }
     } catch (e) { }
     const urls = Array.from(c.ids).map(id => 'audio/' + code + '/' + id + '.mp3?v=' + c.rev);
-    btn.disabled = true;
-    const n = await warmClips(urls, (k, N) => { if (k % 20 === 0 || k === N) btn.textContent = '받는 중 ' + Math.floor(k / N * 100) + '%'; });
-    btn.disabled = false; btn.textContent = '받기';
+    CLIP_DL.N = urls.length;
+    const n = await warmClips(urls, (k, N) => { CLIP_DL.k = k; if (k % 20 === 0 || k === N) clipDlPaint(); });
+    stop();
     track('clips_download', { n, total: urls.length });
     showToast(n >= urls.length ? '📥 ' + LANGS[code].name + ' 녹음을 모두 받았어요 · 인터넷이 없어도 들려요' : '📥 녹음 ' + n + '/' + urls.length + '개를 받았어요 · 다시 누르면 이어 받아요', 'gold', 3600);
 }
