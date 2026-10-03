@@ -1081,8 +1081,9 @@
         .dex-sheet.tier-silver { border-color: #94a3b8; } .dex-sheet.tier-gold { border-color: #eab308; } .dex-sheet.tier-rainbow { border-color: #8b5cf6; }
         .dex-sheet .dex-play { width: 48px; height: 48px; margin-bottom: 8px; font-size: 18px; }
         .dex-meta { margin-bottom: 10px; text-align: center; }
-        .story-sent { position: relative; }
-        .story-mic { float: right; width: 44px !important; height: 44px !important; margin: 0 0 4px 8px; }
+        .story-line { position: relative; }
+        .story-line .story-sent.has-mic { padding-right: 64px; }
+        .story-mic { position: absolute; top: 10px; right: 10px; z-index: 1; width: 44px !important; height: 44px !important; }
         /* ☁️ 계정 카드 */
         .cloud-card .cloud-ava { width: 38px; height: 38px; border-radius: 50%; background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 17px; flex-shrink: 0; }
         .gbtn { display: inline-flex; align-items: center; gap: 8px; background: #fff; color: #1f2937; border: 1.5px solid #d1d5db; font-weight: 700; }
@@ -6601,7 +6602,7 @@ function playIndex() {
         if (st.moral) add(st.moral, 'story', st.id, 'moral', st.unlockAfter, li);
     });
     SENT_INDEX = sent; ARR_TOKENS = arr;
-    Object.assign(PLAYIDX, { code: CUR.code, data: DATA, stories: STORIES, sent, arr, known: {}, words: {}, phr: {}, puz: {}, puzSent: null, puzPy: null, puzProper: null, feedGrp: null, mis: null });   // puz*: 퍼즐 후보·문장·병음 · feedGrp: 피드 같은 뜻 묶음 · mis: 레슨별 미션(언어가 바뀌면 새로)
+    Object.assign(PLAYIDX, { code: CUR.code, data: DATA, stories: STORIES, sent, arr, known: {}, words: {}, phr: {}, puz: {}, puzSent: null, puzPy: null, puzProper: null, feedGrp: null, mis: null, dex: null, dexCk: '' });   // puz*: 퍼즐 후보·문장·병음 · feedGrp: 피드 같은 뜻 묶음 · mis: 레슨별 미션 · dex: 스티커북 앨범(언어가 바뀌면 새로)
     return PLAYIDX;
 }
 // 비교용 키: 소문자, en·es·fr는 악센트를 떼고, 앞뒤 문장부호를 뗀다
@@ -9770,12 +9771,13 @@ function renderStoryRead() {
         '<button class="btn small gray" id="stopAll">⏹ 정지</button></div>';
     (s.sentences || []).forEach((sent, i) => {
         const shown = !!st.showKo[i];
-        h += '<div class="story-sent" data-sent="' + i + '" role="button" tabindex="0">' +
-            (dexOpen() ? '<button class="play-btn mic-btn story-mic" data-mic-st="' + i + '" title="따라 말하기" aria-label="따라 말하기">🎤</button>' : '') +   // 📒 말하기 통과 → 문장 스티커
+        const mic = dexOpen();   // 📒 말하기 통과 → 문장 스티커(🎤는 뜻 보기 카드 밖 — 버튼 안의 버튼은 스크린리더가 읽지 못한다)
+        h += (mic ? '<div class="story-line"><button class="play-btn mic-btn story-mic" data-mic-st="' + i + '" title="따라 말하기" aria-label="따라 말하기">🎤</button>' : '') +
+            '<div class="story-sent' + (mic ? ' has-mic' : '') + '" data-sent="' + i + '" role="button" tabindex="0">' +
             '<div class="native">' + nesc(nativeText(sent)) + '</div>' +
             romanLine(sent) + pronLine(sent.koPron, undefined, sent) +
             (shown ? '<div class="ko" style="margin-top:6px">' + esc(sent.ko) + '</div>' : '<div class="muted" style="margin-top:6px">👆 문장을 눌러 뜻을 확인하세요</div>') +
-            '</div>';
+            '</div>' + (mic ? '</div>' : '');
     });
     if (s.moral) {
         h += '<div class="culture-box"><b>💡 교훈</b><br><span class="native">' + nesc(nativeText(s.moral)) + '</span><br>' + esc(s.moral.ko || '') + '</div>';
