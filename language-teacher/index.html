@@ -651,6 +651,74 @@
         .btn.tap { min-height: 44px; min-width: 64px; }   /* 작은 버튼도 손가락으로 누르기 쉽게(44px) */
         .play-intro .pi-title { font-size: 16px; font-weight: 800; }
         .play-intro ol { margin: 8px 0 12px 20px; font-size: 14px; line-height: 1.7; }
+        /* 🎧 귀 시간 */
+        .ear-line { display: block; width: 100%; min-height: 44px; margin-top: 4px; padding: 6px 0 4px; border: none; background: none; font: inherit; color: #3730a3; text-align: left; cursor: pointer; }
+        .ear-line .el-txt { display: block; font-size: 12px; font-weight: 800; line-height: 1.35; }
+        .ear-line .ear-bar { display: block; height: 5px; margin-top: 4px; border-radius: 3px; background: #eef2f7; overflow: hidden; }
+        .ear-line .ear-bar > span { display: block; height: 100%; background: linear-gradient(90deg, #818cf8, #4f46e5); }
+        .ear-sheet .sheet-close { width: 44px; height: 44px; }
+        .ear-hero { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; margin-bottom: 4px; }
+        .ear-hero b { font-size: 26px; font-weight: 900; color: #4f46e5; }
+        .ear-hero span { font-size: 13px; font-weight: 700; color: var(--text-light); }
+        .ear-langs { font-size: 13px; line-height: 1.7; margin-top: 8px; }
+        .ear-week .wb-fill.app { background: #6366f1; }
+        .ear-week .wb-fill.app.under { border-radius: 0 0 2px 2px; }
+        .ear-week .wb-fill.out { background: #c7d2fe; min-height: 0; }
+        .ear-keys { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; }
+        .ear-key { display: inline-block; width: 10px; height: 10px; border-radius: 3px; background: #6366f1; }
+        .ear-key.out { background: #c7d2fe; margin-left: 6px; }
+        .ear-road { list-style: none; }
+        .ear-road li { display: flex; align-items: center; gap: 8px; padding: 7px 2px; border-bottom: 1px solid var(--border); font-size: 13.5px; }
+        .ear-road li b { min-width: 52px; }
+        .ear-road li.done { color: var(--text-light); }
+        .ear-road li.now { color: #3730a3; font-weight: 700; }
+        .ear-road .er-ico { width: 22px; text-align: center; }
+        .ear-road .er-left { margin-left: auto; font-size: 12px; font-weight: 800; }
+        .ear-lx { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; }
+        .ear-goal button { min-height: 44px; min-width: 56px; font-size: 13px; }
+        /* ⏱️ 소리 러시 */
+        .back-btn.tap44 { width: 44px; height: 44px; }
+        .rush-best { text-align: center; font-size: 20px; font-weight: 900; margin: 2px 0 12px; }
+        .rush-modes { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+        .rush-mode { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-height: 56px; padding: 9px 12px; border: 1.5px solid var(--border); border-radius: 12px; background: var(--card); color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+        .rush-mode[aria-pressed="true"] { border-color: var(--primary); background: var(--red-soft); }
+        .rush-mode .rm-t { font-size: 14.5px; font-weight: 800; }
+        .rush-mode .rm-d { font-size: 12px; color: var(--text-light); }
+        .rush-off { text-align: center; }
+        .rush-off .es-emoji { font-size: 40px; margin-bottom: 6px; }
+        .rush { position: relative; }
+        .rush-top { position: sticky; top: 0; z-index: 2; background: var(--bg); padding-bottom: 4px; }
+        .rush-hp { height: 14px; border-radius: 999px; background: #e2e8f0; overflow: hidden; }
+        .rush-hp > div { height: 100%; transform-origin: left center; background: linear-gradient(90deg, #10b981, #34d399); will-change: transform; }
+        .rush-hp.low > div { background: var(--error); animation: rushPulse .8s ease-in-out infinite; }
+        @keyframes rushPulse { 50% { opacity: .5; } }
+        @media (prefers-reduced-motion: reduce) { .rush-hp.low > div { animation: none; } }   /* 움직임 줄이기: 색만 바뀐다 */
+        .rush-meta { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
+        .rush-x { width: 44px; height: 44px; flex-shrink: 0; border: 1px solid var(--border); border-radius: 12px; background: var(--card); color: var(--text); font: inherit; font-size: 16px; cursor: pointer; }
+        .rush-race { flex: 1; min-width: 0; font-size: 13px; font-weight: 800; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .rush-race .rush-ghost { color: #6d28d9; margin: 0 2px; }
+        .rush-num { flex-shrink: 0; font-size: 12px; font-weight: 700; color: var(--text-light); }
+        .rush-q { min-height: 128px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; margin: 10px 0 12px; text-align: center; }
+        .rush-ear { font-size: 44px; line-height: 1; }
+        .rush-text { font-size: 24px; font-weight: 800; line-height: 1.35; max-width: 100%; }
+        .rush-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+        .rush-ch { height: 72px; min-width: 0; display: flex; align-items: center; justify-content: center; padding: 6px 8px; border: 1.5px solid var(--border); border-radius: 14px; background: var(--card); color: var(--text); font: inherit; font-size: 15px; font-weight: 700; cursor: pointer; }   /* 높이 고정: 엄지 위치가 흔들리지 않게 */
+        .rush-ch > span { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.3; word-break: keep-all; overflow-wrap: anywhere; }
+        .rush-ch.ok { border-color: var(--success); background: #ecfdf5; }
+        .rush-ch.bad { border-color: var(--error); background: #fef2f2; }
+        .rush-ch:disabled { cursor: default; color: var(--text); }
+        .rush-combo { min-height: 22px; margin-top: 10px; text-align: center; font-size: 13px; font-weight: 800; color: #b45309; }
+        .rush-cheer, .rush-pause { position: absolute; inset: 0; z-index: 5; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 16px; border-radius: 16px; background: rgba(248,250,252,.95); text-align: center; }
+        .rush-cheer span { font-size: 60px; line-height: 1; }
+        .rush-cheer b { font-size: 18px; }
+        .rush-cheer { animation: pop .25s ease-out; }
+        .rush-pause b { font-size: 18px; }
+        .rush-rec { margin-top: 8px; font-size: 16px; font-weight: 900; color: #6d28d9; }
+        .rush-redo .rr-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+        .rush-redo .rr-row:last-of-type { border-bottom: none; }
+        .rush-redo .play-btn { width: 44px; height: 44px; flex-shrink: 0; font-size: 16px; }
+        .rush-redo .rr-txt { min-width: 0; display: flex; flex-direction: column; }
+        .rush-btns { display: flex; gap: 10px; margin-bottom: 12px; }
         /* ☁️ 계정 카드 */
         .cloud-card .cloud-ava { width: 38px; height: 38px; border-radius: 50%; background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 17px; flex-shrink: 0; }
         .gbtn { display: inline-flex; align-items: center; gap: 8px; background: #fff; color: #1f2937; border: 1.5px solid #d1d5db; font-weight: 700; }
@@ -1319,7 +1387,7 @@ function softXp(kind, n, why) {
 
 /* ═══════════════════ 배지 ═══════════════════ */
 function allLangStats() {
-    let lessons = 0, perfect = 0, bosses = 0, reviews = 0, speak = 0, langs = 0, maxXp = 0, stories = 0, fullStories = false, finished = false;
+    let lessons = 0, perfect = 0, bosses = 0, reviews = 0, speak = 0, langs = 0, maxXp = 0, stories = 0, fullStories = false, finished = false, maxEar = 0;
     Object.entries(store.byLang).forEach(([code, p]) => {
         if (!p) return;
         const comp = Object.values(p.completed || {});
@@ -1331,11 +1399,12 @@ function allLangStats() {
         stories += sr; if (sr > 0 && sr >= ((p.meta && p.meta.stories) || 12)) fullStories = true;
         if ((p.xp || 0) > 0 || comp.length) langs++;
         maxXp = Math.max(maxXp, p.xp || 0);
+        maxEar = Math.max(maxEar, lsSum(p));   // 한 언어 귀 시간(앱 + 앱 밖)
         if (p.meta && p.meta.lessons && comp.length >= p.meta.lessons) finished = true;
     });
     const en = store.byLang.en;
     const quest30 = en ? Object.keys(en.completed || {}).filter(id => /^u[678]l/.test(id)).length >= 30 : false;
-    return { lessons, perfect, bosses, reviews, speak, langs, maxXp, stories, fullStories, finished, quest30 };
+    return { lessons, perfect, bosses, reviews, speak, langs, maxXp, stories, fullStories, finished, quest30, maxEar };
 }
 const BADGES = [
     { id: 'first', ico: '🐣', name: '첫 걸음', cond: '레슨 1개 통과', ok: s => s.lessons >= 1 },
@@ -1355,6 +1424,8 @@ const BADGES = [
     { id: 'poly', ico: '🌍', name: '다국어', cond: '두 번째 언어 시작', ok: s => s.langs >= 2 },
     { id: 'q30', ico: '🗽', name: '30일 퀘스트', cond: '영어 생활 회화 30일', ok: s => s.quest30 },
     { id: 'grad', ico: '🎖️', name: '수료', cond: '한 언어 전 과정', ok: s => s.finished },
+    { id: 'ear1', ico: '🎧', name: '귀 열림', cond: '한 언어 귀 시간 1시간', ok: s => s.maxEar >= 3600 },
+    { id: 'ear10', ico: '🎼', name: '귀 트임 10시간', cond: '한 언어 10시간', ok: s => s.maxEar >= 36000 },
 ];
 function checkBadges(silent) {
     if (!CUR) return;
@@ -1654,6 +1725,7 @@ function clipBlob(url) {
 }
 // k = clipFor()의 결과. 끝까지 들리면 onEnd, 받지 못하거나 재생이 막히거나 CLIP_WAIT 안에 시작하지 못하면 onFail(한 번만)
 function playClip(k, rate, onEnd, onFail) {
+    earCut();   // 앞 클립이 아직 나오고 있었으면 들은 만큼 먼저 더한다(귀 시간)
     const tok = ++clipTok;
     const r = Math.max(0.5, Math.min(2, rate / (k.rate || 0.95) * curRate()));
     let started = false, over = false;
@@ -1665,15 +1737,15 @@ function playClip(k, rate, onEnd, onFail) {
         a.onended = a.onerror = null;
         a.src = src;
         a.defaultPlaybackRate = r; a.playbackRate = r;
-        const fin = ok => { if (over || tok !== clipTok) return; a.onended = a.onerror = null; if (!ok) { fail(); return; } over = true; clearTimeout(guard); if (onEnd) onEnd(); };
-        const play = () => { if (tok !== clipTok || over) return; started = true; clearTimeout(guard); CLIP_HEALTH.fails = 0; };
+        const fin = ok => { if (over || tok !== clipTok) return; a.onended = a.onerror = null; EAR.cur = null; if (!ok) { fail(); return; } over = true; clearTimeout(guard); earAdd(a.duration / r); if (onEnd) onEnd(); };
+        const play = () => { if (tok !== clipTok || over) return; started = true; clearTimeout(guard); CLIP_HEALTH.fails = 0; EAR.cur = { tok, r }; };   // r: 실제 배속(귀 시간 = 재생 길이 ÷ 배속)
         a.onended = () => fin(true);
         a.onerror = () => fin(false);
         const p = a.play();
         if (p && p.then) p.then(play, () => fin(false)); else play();
     }, () => { if (tok === clipTok) fail(); });
 }
-function stopClip() { clipTok++; if (clipEl) { clipEl.onended = clipEl.onerror = null; try { clipEl.pause(); } catch (e) { } } }
+function stopClip() { earCut(); clipTok++; if (clipEl) { clipEl.onended = clipEl.onerror = null; try { clipEl.pause(); } catch (e) { } } }
 // 아이폰·아이패드: 첫 터치 때 같은 <audio>를 소리 없이 한 번 재생해 두면, 뒤이은 자동 이어 읽기도 막히지 않는다
 const SILENT_WAV = 'data:audio/wav;base64,UklGRsQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YaAAAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA';
 function unlockClip() {
@@ -1690,9 +1762,9 @@ function speak(text, rate = 1, speaker, retried, noClip) {
     stopSpeak();
     try {
         const u = makeUtter(text, rate, speaker);
-        const tok = seqToken;
+        const tok = seqToken, t0 = Date.now();
         u.onerror = ev => { u.__ended = true; if (!retried && tok === seqToken && remoteFailed(u, ev)) { speak(text, rate, speaker, true); return; } if (ttsErrorIsReal(ev)) ttsFail(ev.error); };
-        u.onend = () => { u.__ended = true; ttsGood(); };
+        u.onend = () => { u.__ended = true; ttsGood(); earTts(text, t0); };
         watchUtter(u, tok);
         speechSynthesis.speak(u);
     } catch (e) { /* 재생 실패는 무시 */ }
@@ -1746,13 +1818,138 @@ function speakSeq(items, onDone, onStep) {
         const waitMs = TTS_HEALTH.bad ? Math.max(1200, cur.text.length * perChar * 0.5)
             : Math.max(3000, cur.text.length * perChar / Math.max(0.5, curRate())) * (TTS_HEALTH.ok ? 3 : 1) + 1500;
         dog = setTimeout(() => { if (!advanced && my === seqToken) { if (!TTS_HEALTH.ok) ttsFail('timeout'); go(); } }, waitMs);
-        u.onend = () => { u.__ended = true; ttsGood(); go(); };
+        const t0 = Date.now();
+        u.onend = () => { u.__ended = true; ttsGood(); earTts(cur.text, t0); go(); };
         u.onerror = ev => { u.__ended = true; if (!cur.retried && remoteFailed(u, ev)) { cur.retried = true; i = idx; advanced = true; setTimeout(next, 50); return; } if (ttsErrorIsReal(ev)) ttsFail(ev.error); go(); };
         watchUtter(u, my);
         try { speechSynthesis.speak(u); } catch (e) { go(); }
         }
     };
     next();
+}
+
+/* ═══════════════════ 🎧 귀 시간(들은 시간 재기) ═══════════════════ */
+// 원어민 녹음(없으면 기기 음성)을 실제로 들은 초를 언어별 dayLog().ls에 쌓는다. 앱 밖에서 들은 시간은 dayLog().lx(스스로 기록).
+// 시간에는 XP가 없고 연속 기록도 건드리지 않는다(틀어 놓기만으로 연속 기록이 이어지지 않게). p.ear(영어 소리 훈련 기록)와는 다른 칸이다
+// 세지 않는 것: 효과음(sfx)·무음 깨우기(unlockClip). 같은 날 두 기기에서 들으면 큰 쪽만 남는다(합치기가 날짜별 max — 알려진 한계)
+const LS_STEPS = [
+    { m: 10, ico: '👂', name: '귀가 쫑긋' },
+    { m: 30, ico: '🔎', name: '소리 탐험가' },
+    { m: 60, ico: '🚪', name: '귀 열림' },
+    { m: 180, ico: '🎵', name: '리듬 타기' },
+    { m: 300, ico: '✨', name: '귀 트임' },
+    { m: 600, ico: '🎧', name: '알아듣는 귀' },
+    { m: 1200, ico: '🏹', name: '소리 사냥꾼' },
+    { m: 3000, ico: '🏅', name: '듣기 달인' },
+    { m: 6000, ico: '👑', name: '원어민 귀' },
+];
+const LS_DAY_MAX = 28800, LX_DAY_MAX = 10800;   // 하루 상한: 앱에서 8시간, 앱 밖 3시간
+const EAR = { cur: null, frac: 0, saveT: 0 };     // cur: 재생 중인 녹음 {tok, r} · frac: 1초가 안 되는 나머지(메모리)
+function earAdd(sec) { try { if (Number.isFinite(sec)) lsAdd(sec); } catch (e) { } }   // 재생 코드가 부른다 — 여기서 난 오류가 재생을 막지 않게
+// 녹음이 끊겼을 때(멈춤·다음 녹음): 0.3초 이상 들었으면 들은 만큼
+function earCut() {
+    const c = EAR.cur;
+    EAR.cur = null;
+    if (!c || c.tok !== clipTok || !clipEl) return;
+    const t = clipEl.currentTime;
+    if (t >= 0.3) earAdd(t / c.r);
+}
+// 기기 음성: 끝까지 읽은 시간(글자 수 × 글자당 시간 × 2를 넘지 않게)
+function earTts(text, t0) {
+    const t = String(text || ''), perChar = /[\u3040-\u30ff\u4e00-\u9fff]/.test(t) ? 380 : 130;
+    earAdd(Math.min((Date.now() - t0) / 1000, t.length * perChar * 2 / 1000));
+}
+function lsSum(p) { let s = 0; Object.values((p && p.daily) || {}).forEach(d => { if (d) s += (d.ls || 0) + (d.lx || 0); }); return s; }
+function lsTotal(code) { return lsSum(store.byLang[code]); }
+function lsStep(sec) { let n = 0; LS_STEPS.forEach((x, i) => { if (sec >= x.m * 60) n = i + 1; }); return n; }   // 지난 단계 수
+function fmtHM(sec) { const m = Math.floor((sec || 0) / 60); return m >= 60 ? Math.floor(m / 60) + '시간 ' + (m % 60) + '분' : m + '분'; }
+function fmtMin(sec) { return sec > 0 && sec < 60 ? '1분 미만' : Math.floor((sec || 0) / 60) + '분'; }
+function stepTime(m) { return m >= 60 ? m / 60 + '시간' : m + '분'; }
+function lsAdd(sec) {
+    if (!CUR || !(sec > 0) || !Number.isFinite(sec)) return;
+    EAR.frac += Math.min(sec, 60);   // 한 번에 최대 60초
+    const n = Math.floor(EAR.frac);
+    if (n < 1) return;
+    EAR.frac -= n;
+    const dl = dayLog(), add = Math.min(n, LS_DAY_MAX - (dl.ls || 0));
+    if (add <= 0) return;
+    const before = lsTotal(CUR.code);
+    dl.ls = (dl.ls || 0) + add;   // touchStreak은 부르지 않는다
+    earSaveSoon();
+    earStepUp(before, before + add);
+    const g = store.settings.earGoal || 0;
+    if (g && !dl.earHit && dl.ls >= g * 60) { dl.earHit = 1; playToast('🎧 오늘 귀 시간 ' + g + '분 달성!', 'gold', 3000); setTimeout(checkQuests, 30); }
+}
+// 단계가 오르면 축하(판 도중이면 끝 요약으로). 더하기 전후만 비교하므로 단계를 저장하지 않아도 되풀이되지 않는다
+function earStepUp(before, after) {
+    const a = lsStep(before), b = lsStep(after);
+    if (b <= a) return;
+    const x = LS_STEPS[b - 1], msg = '🎧 귀 시간 ' + stepTime(x.m) + '! 「' + x.name + '」 단계';
+    if (PLAY.cur) { PLAY.cur.notes.push(msg); return; }
+    celebrate(); sfx('level'); showToast(msg, 'gold', 3400);
+    setTimeout(checkBadges, 600);
+}
+// 저장은 3초에 한 번으로 모은다(녹음마다 저장하지 않게). 화면을 숨기거나 떠날 때는 바로
+function earSaveSoon() { if (!EAR.saveT) EAR.saveT = setTimeout(() => { EAR.saveT = 0; save(); }, 3000); }
+function earFlush() { if (EAR.saveT) { clearTimeout(EAR.saveT); EAR.saveT = 0; save(); } }
+document.addEventListener('visibilitychange', () => { if (document.hidden) earFlush(); });   // 위의 stopSpeak(끊긴 녹음 더하기) 다음에 불린다
+window.addEventListener('pagehide', () => { earCut(); earFlush(); });
+// 앱 밖에서 들은 시간(+10분·+30분, 하루 3시간까지) → 더한 초
+function lxAdd(min) {
+    const dl = dayLog(), add = Math.min(min * 60, LX_DAY_MAX - (dl.lx || 0));
+    if (add <= 0) { showToast('앱 밖 시간은 하루 3시간까지 기록돼요'); return 0; }
+    const before = lsTotal(CUR.code);
+    dl.lx = (dl.lx || 0) + add; save();
+    earStepUp(before, before + add);
+    return add;
+}
+
+// 귀 시간 화면: 홈 오늘 카드의 한 줄 → 누르면 시트(언어별 합계 · 최근 7일 · 로드맵 · 앱 밖 시간 · 하루 목표)
+function earFirstDay(p) { const ds = Object.keys((p && p.daily) || {}).filter(d => ((p.daily[d].ls || 0) + (p.daily[d].lx || 0)) > 0).sort(); return ds[0] || ''; }
+// 처음 7일(처음 들은 날부터) 또는 1시간 전에는 오늘 들은 시간만 — 첫 주의 작은 누적은 초라해 보이니까
+function earLineHtml() {
+    const p = prog(), tot = lsSum(p), dl = dayLog(), first = earFirstDay(p);
+    let txt, bar = '';
+    if (tot < 3600 || !first || dayDiff(first, todayStr()) < 7) txt = '🎧 오늘 들은 시간 ' + fmtMin((dl.ls || 0) + (dl.lx || 0));
+    else {
+        const i = lsStep(tot), nx = LS_STEPS[i], lo = i ? LS_STEPS[i - 1].m * 60 : 0;
+        txt = '🎧 귀 시간 ' + fmtHM(tot) + (nx ? ' · 다음 「' + nx.name + '」까지 ' + Math.ceil((nx.m * 60 - tot) / 60) + '분' : ' · 👑 마지막 단계까지 왔어요');
+        bar = '<span class="ear-bar" aria-hidden="true"><span style="width:' + (nx ? Math.round((tot - lo) / (nx.m * 60 - lo) * 100) : 100) + '%"></span></span>';
+    }
+    return '<button class="ear-line" id="earLine" aria-label="' + esc(txt.slice(3) + ' — 귀 시간 자세히 보기') + '"><span class="el-txt">' + esc(txt) + '</span>' + bar + '</button>';
+}
+function earSheetHtml() {
+    const p = prog(), tot = lsSum(p), i = lsStep(tot), dl = dayLog(), g = store.settings.earGoal || 0;
+    const langs = Object.keys(LANGS).map(c => ({ c, s: lsTotal(c) })).filter(x => x.s > 0 || x.c === CUR.code);
+    const days = [];
+    for (let k = 6; k >= 0; k--) { const ds = todayStr(-k), d = (p.daily || {})[ds] || {}; days.push({ ds, ls: d.ls || 0, lx: d.lx || 0, today: !k }); }
+    const max = Math.max(600, ...days.map(x => x.ls + x.lx)), hp = v => Math.round(v / max * 100);
+    let h = '<div class="ear-sheet"><div class="sheet-head"><b>🎧 귀 시간</b><button class="sheet-close" data-close-overlay aria-label="닫기">✕</button></div>' +
+        '<div class="ear-hero"><b>' + fmtHM(tot) + '</b><span>' + esc(CUR.name) + ' · ' + (i ? LS_STEPS[i - 1].ico + ' ' + esc(LS_STEPS[i - 1].name) : '첫 단계까지 ' + Math.ceil((LS_STEPS[0].m * 60 - tot) / 60) + '분') + '</span></div>' +
+        '<div class="muted">원어민 녹음을 실제로 들은 시간이에요. 시간에는 XP가 없어요 — 듣는 만큼 귀가 열려요.</div>';
+    if (langs.length > 1) h += '<div class="ear-langs">' + langs.map(x => LANGS[x.c].flag + ' ' + esc(LANGS[x.c].name) + ' <b>' + fmtHM(x.s) + '</b>').join(' · ') + '</div>';
+    h += '<div class="section-title">최근 7일</div><div class="week-bars ear-week">' + days.map(x => {
+        const dow = x.today ? '오늘' : DOW_KO[new Date(x.ds + 'T00:00:00').getDay()], m = Math.round((x.ls + x.lx) / 60);
+        return '<div class="week-bar' + (x.today ? ' today' : '') + '" aria-label="' + (x.today ? '오늘' : dow + '요일') + ' ' + fmtMin(x.ls) + (x.lx ? ', 앱 밖 ' + fmtMin(x.lx) : '') + '"><div class="wb-xp">' + (m || '') + '</div>' +
+            (x.lx ? '<div class="wb-fill out" style="height:' + hp(x.lx) + '%"></div>' : '') + '<div class="wb-fill app' + (x.lx ? ' under' : '') + '" style="height:' + hp(x.ls) + '%"></div><div class="wb-dow">' + dow + '</div></div>';
+    }).join('') + '</div><div class="muted ear-keys"><span class="ear-key app"></span>앱에서 들음 <span class="ear-key out"></span>앱 밖(직접 기록) · 막대 위 숫자는 분</div>';
+    h += '<div class="section-title">귀 시간 로드맵</div><ol class="ear-road">' + LS_STEPS.map((x, k) => '<li class="' + (k < i ? 'done' : k === i ? 'now' : '') + '"><span class="er-ico" aria-hidden="true">' + (k < i ? '✓' : x.ico) + '</span><b>' + stepTime(x.m) + '</b> ' + esc(x.name) +
+        (k < i ? '<span class="sr-only"> (지남)</span>' : k === i ? '<span class="er-left">' + Math.ceil((x.m * 60 - tot) / 60) + '분 남음</span>' : '') + '</li>').join('') + '</ol>';
+    h += '<div class="section-title">앱 밖에서 들은 시간</div><div class="muted">드라마·노래·팟캐스트로 ' + esc(CUR.name) + '를 들었다면 직접 더해요(하루 3시간까지). 위 막대에 연한 색으로 따로 보여요.</div>' +
+        '<div class="ear-lx"><button class="btn small ghost tap" data-lx="10">+10분</button><button class="btn small ghost tap" data-lx="30">+30분</button><span class="muted">오늘 앱 밖 ' + fmtMin(dl.lx || 0) + '</span></div>';
+    h += '<div class="section-title">하루 듣기 목표</div><div class="seg ear-goal" role="group" aria-label="하루 듣기 목표">' + [0, 10, 20, 30].map(m => '<button data-eg="' + m + '" aria-pressed="' + (g === m) + '">' + (m ? m + '분' : '끔') + '</button>').join('') + '</div>' +
+        '<div class="muted" style="margin-top:6px">목표를 정하면 오늘의 퀘스트에 「귀 시간」이 나올 수 있어요(앱에서 들은 시간 기준).</div></div>';
+    return h;
+}
+function openEarSheet() {
+    const sheet = openModal(earSheetHtml(), () => { if (S.view === 'home') render(); });
+    const bind = () => {
+        sheet.querySelectorAll('[data-lx]').forEach(b => b.addEventListener('click', () => { if (lxAdd(Number(b.dataset.lx))) redraw('[data-lx="' + b.dataset.lx + '"]'); }));
+        sheet.querySelectorAll('[data-eg]').forEach(b => b.addEventListener('click', () => { store.settings.earGoal = Number(b.dataset.eg); save(); redraw('[data-eg="' + b.dataset.eg + '"]'); }));
+    };
+    // 다시 그리면 닫기 버튼도 새로 묶고, 누른 버튼에 포커스를 남긴다
+    const redraw = sel => { sheet.innerHTML = earSheetHtml(); bind(); sheet.querySelector('[data-close-overlay]').addEventListener('click', () => closeModal(false, 'cancel')); const f = sheet.querySelector(sel); if (f) f.focus(); };
+    bind();
 }
 
 /* ═══════════════════ 줄 재생 엔진(놀이 공통) ═══════════════════ */
@@ -1776,8 +1973,8 @@ function playLine(x, o) {
             if (done) return;
             if (!ttsAvailable()) { dog = (clearTimeout(dog), setTimeout(() => fin(false), Math.max(800, text.length * perChar))); return; }   // 소리가 없으면 읽을 시간만큼 기다린다
             try {
-                const u = makeUtter(text, rate, sp);
-                u.onend = () => { u.__ended = true; ttsGood(); fin(true); };
+                const u = makeUtter(text, rate, sp), t1 = Date.now();
+                u.onend = () => { u.__ended = true; ttsGood(); earTts(text, t1); fin(true); };
                 u.onerror = ev => { u.__ended = true; if (ttsErrorIsReal(ev)) ttsFail(ev.error); fin(false); };
                 watchUtter(u, seqToken);
                 speechSynthesis.speak(u);
@@ -1850,9 +2047,12 @@ function lessonClipUrls(l) {
 // 판을 시작하기 전에 녹음을 받아 둔다(러시·피드·도전장). 넣은 순서 그대로, 바로 들려줄 수 있는 문장만 돌려준다:
 // 시간 안에 받은 녹음 문장 + 기기 음성으로 읽을 문장(녹음이 없음 — 자연 음성을 껐거나 녹음 목록을 아직 못 받았을 때도 —, 받기가 실패함).
 // 시간이 다 되도록 아직 받는 중인 문장만 뺀다(판 도중에 기다리지 않게). 같은 seed면 같은 순서여야 하는 도전장이 받은 순서에 흔들리지 않는다
-function prefetchFor(items, timeoutMs) {
-    const list = items || [], ok = new Set();
-    const jobs = list.map(x => { const u = clipUrl(lineText(x), x && x.speaker); if (!u) { ok.add(x); return null; } return clipBlob(u).catch(() => { }).then(() => { ok.add(x); }); }).filter(Boolean);
+// o.strict: 녹음을 받은 문장만(소리 러시 — 소리로만 푸는 놀이) · o.onProg(끝난 수, 전체)
+function prefetchFor(items, timeoutMs, o) {
+    const list = items || [], ok = new Set(), strict = !!(o && o.strict);
+    let n = 0;
+    const tick = () => { n++; if (o && o.onProg) o.onProg(n, list.length); };
+    const jobs = list.map(x => { const u = clipUrl(lineText(x), x && x.speaker); if (!u) { if (!strict) ok.add(x); tick(); return null; } return clipBlob(u).then(() => { ok.add(x); }, () => { if (!strict) ok.add(x); }).then(tick); }).filter(Boolean);
     return Promise.race([Promise.all(jobs), sleepMs(timeoutMs || 8000)]).then(() => list.filter(x => ok.has(x)));
 }
 
@@ -3660,6 +3860,7 @@ function renderView() {
         case 'review': renderReview(); break;
         case 'trainer': renderTrainer(); break;
         case 'play': renderPlay(); break;
+        case 'rush': renderRush(); break;
         case 'story': renderStoryList(); break;
         case 'history': renderHistory(); break;
         case 'storyRead': renderStoryRead(); break;
@@ -3826,6 +4027,8 @@ function renderHome() {
     if (cb) cb.addEventListener('click', () => { if (nextIdx >= 0) openLesson(nextIdx, resumeStep); else { resetTransient(); go('review'); } });
     const gb = document.getElementById('guideBanner');
     if (gb) gb.addEventListener('click', () => go('guide'));
+    const ear = document.getElementById('earLine');
+    if (ear) ear.addEventListener('click', openEarSheet);
     const ppk = document.getElementById('playPick');
     if (ppk) ppk.addEventListener('click', () => { const n = PLAY.pick; if (!n) return; track('play_next', { from: 'home', to: n.id, auto: 0 }); n.go(); });
     const pal = document.getElementById('playAll');
@@ -4020,7 +4223,7 @@ function finishQuick() {
     showToast('⚡ 1분 모드 완료! 🔥 ' + curStreak() + '일 연속', 'gold', 3000);
 }
 function todayQuests() {
-    const p = prog(), dl = dayLog(), cards = Object.keys(p.srs).length;
+    const p = prog(), dl = dayLog(), cards = Object.keys(p.srs).length, eg = store.settings.earGoal || 0;
     const storyOpen = STORIES.some(x => storyUnlocked(x));
     const allDone = nextLessonIdx() < 0;
     const pool = [
@@ -4031,6 +4234,8 @@ function todayQuests() {
         { id: 'match', t: '짝 맞추기 1판', n: 1, v: dl.match || 0, need: cards >= 4 },
         { id: 'story', t: '동화 1편 읽기', n: 1, v: dl.stories || 0, need: storyOpen },
         { id: 'review', t: '복습 카드 10장', n: 10, v: Math.min(10, dl.reviews || 0), need: cards >= 10 },
+        { id: 'ear', t: '귀 시간 ' + eg + '분', n: eg * 60, v: dl.ls || 0, fmt: 'min', need: eg > 0 },   // 하루 듣기 목표(귀 시간 시트)
+        { id: 'rush', t: '소리 러시 1판', n: 1, v: dl.rush || 0, need: !!playTile('rush') && tileOpen(playTile('rush')) },
     ].filter(q => q.need !== false);
     const first = allDone ? { id: 'review', t: '복습 1세션', n: 1, v: dl.reviews ? 1 : 0 } : { id: 'lesson', t: '레슨 1개 통과', n: 1, v: Math.min(1, dl.lessons || 0) };
     const rest = seededShuffle(pool.filter(q => q.id !== first.id), hashStr(todayStr() + CUR.code)).slice(0, 2);
@@ -4063,7 +4268,8 @@ function todayCardHtml(due) {
         '<div class="today-main"><div class="tm-lv">' + L.ico + ' Lv.' + L.lv + ' ' + L.name + ' <span class="muted" style="font-weight:600">· ' + xp + ' XP</span></div>' +
         '<div class="lv-bar"><div style="width:' + lp.pct + '%"></div></div>' +
         '<div class="tm-sub">' + (lp.next ? '다음 레벨 ' + lp.next.ico + ' ' + lp.next.name + '까지 ' + lp.toNext + ' XP' : '최고 레벨 달성! 👑') + '</div>' +
-        '<div class="quest-row">' + quests.map(q => '<span class="quest-chip' + (q.ok ? ' done' : '') + '">' + (q.ok ? '✔ ' : '○ ') + q.t + (q.n > 1 && !q.ok ? ' ' + q.v + '/' + q.n : '') + '</span>').join('') +
+        earLineHtml() +
+        '<div class="quest-row">' + quests.map(q => '<span class="quest-chip' + (q.ok ? ' done' : '') + '">' + (q.ok ? '✔ ' : '○ ') + q.t + (q.n > 1 && !q.ok ? ' ' + (q.fmt === 'min' ? Math.floor(q.v / 60) + '/' + q.n / 60 : q.v + '/' + q.n) : '') + '</span>').join('') +
         '<span class="quest-chip' + (dl.questBonus ? ' done' : '') + '">' + (dl.questBonus ? '🎁 보너스 받음' : '🎁 3개 완료 시 +10') + '</span></div>' +
         '</div></div>';
 }
@@ -4923,7 +5129,13 @@ function renderReview() {
             '<div class="muted" style="margin:6px 0 10px">' + (totalCards >= 4 ? '배운 단어와 뜻을 빠르게 짝지어 보세요. 게임처럼 가볍게 머리를 깨워요! (+' + XP.match + ' XP)' : '레슨을 하나 통과하면 열려요.') + '</div>' +
             '<div style="display:flex;gap:8px"><button class="btn block ghost" id="startMatch"' + (totalCards >= 4 ? '' : ' disabled') + '>게임 시작</button>' +
             '<button class="btn block ghost" id="startMatchEar"' + (totalCards >= 4 ? '' : ' disabled') + '>🔊 듣고 짝 맞추기</button></div></div>';
+        const ro = rushOpen(), rb = rushBest('S');
+        h += '<div class="card"><b style="font-size:14px">⏱️ 소리 러시</b>' +
+            '<div class="muted" style="margin:6px 0 10px">' + (ro ? '소리를 듣고 뜻을 번개처럼 골라요. 👻 내 최고 기록' + (rb ? '(' + rb + ')' : '') + '과 대결!' : esc(playLockText('rush') || '레슨을 통과하면 열려요')) + '</div>' +
+            '<button class="btn block ghost" id="startRush"' + (ro ? '' : ' disabled') + '>⏱️ 러시 시작</button></div>';
         $main.innerHTML = h;
+        const srh = document.getElementById('startRush');
+        if (srh && ro) srh.addEventListener('click', () => { S.rush = null; go('rush'); });
         const sr = document.getElementById('startReview');
         if (sr) sr.addEventListener('click', () => {
             S.review = newReview(due, sessionCap());
@@ -5123,6 +5335,14 @@ function newMatch(size, fromWords, quick) {
         done: {}, selL: null, miss: 0, start: Date.now(), quick: !!quick, back: S.view,
     };
 }
+// 짝 맞추기 최고 기록(초): 키 'm'+쌍 수(+듣고 짝 맞추기 'e') — 짧을수록 좋다(기기끼리 합칠 때 min)
+function matchKey(m) { return 'm' + m.pairs.length + (m.ear ? 'e' : ''); }
+function matchRecord(m, sec) {
+    const p = prog(), k = matchKey(m), old = (p.best || {})[k] || 0, t = Math.max(1, sec);
+    const isNew = !old || t < old;
+    if (isNew) { p.best = Object.assign({}, p.best, { [k]: t }); save(); }
+    return { old, sec: t, isNew };
+}
 function renderMatch() {
     const m = S.match;
     const n = m.pairs.length, got = Object.keys(m.done).length;
@@ -5135,15 +5355,19 @@ function renderMatch() {
             if (m.miss === 0) { store.flags.matchPerfect = todayStr(); }
             logActivity('match'); if (give) addXp(give, '짝 맞추기'); celebrate(); sfx('level');
             if (m.quick) finishQuick();
+            if (!m.quick && !m.fromLesson) m.rec = matchRecord(m, sec);   // 최고 기록은 일반 판만(1분 모드·레슨 속 판은 크기·조건이 달라서)
         }
+        const rec = m.rec;
         $main.innerHTML = '<div class="result-hero"><div class="r-emoji">🧩</div><div class="r-score" style="color:var(--primary)">' + sec + '초</div>' +
-            '<div class="r-msg">' + n + '쌍을 모두 맞혔어요! 실수 ' + m.miss + '번' + (m.miss === 0 ? ' — 완벽! 🏆' : '') + '</div></div>' +
+            '<div class="r-msg">' + n + '쌍을 모두 맞혔어요! 실수 ' + m.miss + '번' + (m.miss === 0 ? ' — 완벽! 🏆' : '') + '</div>' +
+            (rec ? '<div class="rush-rec">' + (rec.isNew ? (rec.old ? '🏆 최고 기록 갱신! ' + rec.old + '초 → ' + rec.sec + '초' : '🏆 첫 기록 ' + rec.sec + '초!') : '<span class="muted">최고 기록 ' + rec.old + '초</span>') + '</div>' : '') + '</div>' +
             '<div style="display:flex;gap:10px"><button class="btn block" id="mAgain">한 판 더!</button><button class="btn block ghost" id="mExit">복습 탭으로</button></div>';
-        document.getElementById('mAgain').addEventListener('click', () => { S.match = newMatch(m.pairs.length, m.fromLesson ? ALL[m.fromLesson - 1].words : null); S.match.fromLesson = m.fromLesson; renderMatch(); });
+        document.getElementById('mAgain').addEventListener('click', () => { S.match = newMatch(m.pairs.length, m.fromLesson ? ALL[m.fromLesson - 1].words : null); S.match.fromLesson = m.fromLesson; S.match.ear = m.ear; renderMatch(); });
         document.getElementById('mExit').addEventListener('click', () => { const back = m.fromLesson; S.match = null; if (back) { openLesson(back - 1, 1); } else if (S.view === 'review') renderReview(); else go('review'); });
         return;
     }
-    let h = '<div class="quiz-prog"><div class="qp-bar"><div style="width:' + (got / n * 100) + '%"></div></div><div class="qp-txt">' + got + ' / ' + n + ' 쌍</div></div>' +
+    const best = !m.quick && !m.fromLesson ? (prog().best || {})[matchKey(m)] : 0;
+    let h = '<div class="quiz-prog"><div class="qp-bar"><div style="width:' + (got / n * 100) + '%"></div></div><div class="qp-txt">' + got + ' / ' + n + ' 쌍' + (best ? ' · 최고 ' + best + '초' : '') + '</div></div>' +
         '<div class="quiz-q">' + (m.ear ? '🔊 왼쪽 소리를 듣고, 알맞은 뜻을 오른쪽에서 고르세요' : '🧩 왼쪽 단어를 누르고, 알맞은 뜻을 오른쪽에서 고르세요') + '</div>' +
         '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">' +
         '<div>' + m.left.map((i, pos) => '<button class="choice-btn' + (m.done[i] ? ' correct' : '') + (m.selL === i ? ' sel' : '') + '" data-ml="' + i + '"' + (m.done[i] ? ' disabled' : '') + ' style="text-align:center;' + (m.selL === i ? 'border-color:var(--primary);background:var(--red-soft)' : '') + '"' + (m.ear && !m.done[i] ? ' aria-label="소리 ' + (pos + 1) + '"' : '') + '>' +
@@ -6067,7 +6291,7 @@ const PLAY_SOON = [
 ];
 const PLAY_TILES = [];
 const PLAY_CTX = [['move', '🚇 이동 중'], ['short', '⏱ 잠깐'], ['home', '🏠 집에서']];
-// 타일 등록: {id, ico, name, view, need: () => 열림, status: () => 상태 한 줄, mic, ctx: ['move','short','home'], open, xpKind, auto}
+// 타일 등록: {id, ico, name, view, need: () => 열림, lock: () => need가 막을 때 잠금 글, status: () => 상태 한 줄, mic, ctx: ['move','short','home'], open, xpKind, auto}
 function registerPlayTile(t) {
     const tile = Object.assign({ ctx: ['move', 'short', 'home'], mic: false, need: () => playUnlocked(t.id), status: () => '', open: () => go(t.view || t.id) }, t);
     const i = PLAY_TILES.findIndex(x => x.id === t.id);
@@ -6085,7 +6309,8 @@ function tileOpen(t) { return playUnlocked(t.id) && t.need(); }   // 하나씩 �
 // 열리는 데 필요한 통과 레슨 수 — 1단계 레슨이 조건이면 처음부터 그 수(0단계 레슨 수 + 1)로 약속한다
 function playNeed(u) { return u.unit1 ? Math.max(u.at, ALL.findIndex(l => l.unitId >= 1) + 1) : u.at; }
 function playLockText(id) {
-    const u = PLAY_SOON.find(x => x.id === id);
+    const u = PLAY_SOON.find(x => x.id === id), t = playTile(id);
+    if (t && t.lock && playUnlocked(id) && !t.need()) return t.lock();   // 레슨 수는 채웠고 기능 자체 조건이 남음(러시: 카드 8장)
     if (!u) return '';
     if (u.week) return '첫 주 결산 뒤에 열려요';
     const n = playNeed(u);
@@ -6194,6 +6419,322 @@ const PLAY_HIST = [
     { k: 'radio', ico: '📻', t: n => '라디오 ' + n + '회차' },
     { k: 'ls', ico: '🎧', t: n => '귀 시간 ' + Math.round(n / 60) + '분', min: 60 },
 ];
+
+/* ═══════════════════ ⏱️ 소리 러시 + 👻 내 최고 기록 유령 ═══════════════════ */
+// 배운 말(복습 카드)의 소리를 듣고 뜻을 번개처럼 고르는 체력 바 게임. 체력은 그 문제의 소리가 끝난 뒤부터 줄어
+// 긴 문장·느린 기기가 손해 보지 않는다. 지난 최고 기록이 맞힌 시각(👻)이 옆에서 같이 달린다.
+// 결과로 복습 상자는 움직이지 않는다(한 판에 2번 틀린 카드만 오늘 복습으로 당긴다). 규칙만 참고해 새로 만들었다(Anki Life Drain 등)
+const RUSH_MODES = {
+    S: { key: 'rush', ico: '🎧', name: '소리 러시', desc: '소리만 듣고 뜻 고르기', drain: 4, sound: true },
+    E: { key: 'rushE', ico: '🐢', name: '느긋하게', desc: '체력이 절반 속도로 줄어요', drain: 2, sound: true },
+    T: { key: 'rushT', ico: '🔤', name: '글자 러시', desc: '이어폰이 없을 때 · 글자를 보고 고르기', drain: 4, sound: false },
+};
+const RUSH_N = 30, RUSH_MIN = 8;   // 한 판 문제 수 · 시작에 필요한 카드 수
+const RUSH_CHEER = ['잘하고 있어요!', '귀가 번쩍 트였네요!', '그 기세 그대로!', '와, 손이 빨라요!', '집중력 최고예요!', '소리가 들리기 시작했죠?', '유령이 긴장하겠어요!', '멋져요, 계속 가요!', '오늘 컨디션 좋네요!', '한 문제씩 차근차근!', '이대로면 새 기록!', '머리보다 귀가 먼저 알아요!'];
+const RUSH_PETS = ['🐶', '🐱', '🐰', '🦊', '🐼', '🐨', '🐯', '🦁', '🐻', '🐧', '🐹', '🐸'];
+function rushCards() { return Object.entries(prog().srs).filter(([, c]) => c.native && c.ko).map(([key, c]) => Object.assign({ key }, c)); }
+function rushReady() { return Object.keys(prog().srs).length >= RUSH_MIN; }
+function rushOpen() { const t = playTile('rush'); return !!t && tileOpen(t); }
+function rushBest(m) { return ((prog().best || {})[RUSH_MODES[m].key]) || 0; }
+function rushClip(c) { return clipFor(c.tts || c.native); }
+function rushVibe(v) { try { if (navigator.vibrate) navigator.vibrate(v); } catch (e) { } }
+// 보기 글: 괄호 설명을 빼고 16자에서 자른다(칸 크기가 흔들리지 않게)
+function rushKo(ko) { const a = Array.from(shortKo(ko || '')); return a.length > 16 ? a.slice(0, 15).join('') + '…' : a.join(''); }
+function rushKoWords(ko) { return shortKo(ko || '').split(/[\s,/·~?!.…'"“”]+/).filter(w => w.length >= 2); }
+// zh·ja: 성조·장음 부호를 뺀 읽기(妈 mā · 马 mǎ → 'ma') — 소리로 구별할 수 없는 말은 한 문제의 보기에 같이 두지 않는다
+function rushSound(c) { return CHAR_LANGS[CUR.code] ? stripAccents(String(c.pinyin || '')).toLowerCase().replace(/[^a-z]/g, '') : ''; }
+// 보기 4개 = 정답 뜻 + 다른 카드 뜻 3개(같은 문구·2글자 이상 같은 낱말을 나누는 뜻·같은 원문·같은 소리는 뺌). 글자 수가 비슷한 것부터, 모자라면 통과한 레슨 낱말에서
+function rushChoices(c, pool) {
+    const ans = rushKo(c.ko), aw = new Set(rushKoWords(c.ko)), as = rushSound(c), an = normKey(CUR.code, c.native), al = Array.from(ans).length;
+    const used = new Set([ans]), out = [];
+    const fits = x => { const t = rushKo(x.ko); return !!t && !used.has(t) && !rushKoWords(x.ko).some(w => aw.has(w)) && normKey(CUR.code, x.native) !== an && !(as && rushSound(x) === as); };
+    const near = x => Math.min(3, Math.floor(Math.abs(Array.from(rushKo(x.ko)).length - al) / 2));
+    const pick = list => seededShuffle(list, hashStr(c.key + list.length + Date.now())).sort((a, b) => near(a) - near(b)).forEach(x => { if (out.length < 3 && fits(x)) { const t = rushKo(x.ko); used.add(t); out.push(t); } });
+    pick(pool.filter(x => x.key !== c.key));
+    if (out.length < 3) pick(ALL.filter(l => isDone(l.id)).flatMap(l => l.words || []).map(w => ({ key: '', native: nativeText(w), pinyin: romanText(w), ko: w.ko || '' })));
+    const list = seededShuffle([ans].concat(out), hashStr(c.key + 'c' + Date.now()));
+    return { list, ans: list.indexOf(ans) };
+}
+// 30문제: 상자 1~2 카드 60% + 무작위 40%. 같은 카드는 한 판에 2번까지(먼저 한 번씩 낸 뒤 두 번째)
+function rushQueue(cards) {
+    const sd = String(Date.now()), cnt = {}, q = [];
+    const take = (list, k) => { for (let round = 1; round <= 2; round++) for (const c of list) { if (k <= 0) return; if ((cnt[c.key] || 0) < round) { cnt[c.key] = (cnt[c.key] || 0) + 1; q.push(c); k--; } } };
+    take(seededShuffle(cards.filter(c => c.box <= 2), hashStr('l' + sd)), Math.round(RUSH_N * 0.6));
+    take(seededShuffle(cards, hashStr('a' + sd)), RUSH_N - q.length);
+    // 섞되 같은 카드가 붙어 나오지 않게: 바로 앞과 다른 카드 중 남은 장수가 많은 것부터(같으면 섞인 순서)
+    const pool = seededShuffle(q, hashStr('q' + sd)), out = [];
+    while (pool.length) {
+        const last = out.length ? out[out.length - 1].key : null;
+        let j = -1;
+        pool.forEach((x, k) => { if (x.key !== last && (j < 0 || cnt[x.key] > cnt[pool[j].key])) j = k; });
+        const x = pool.splice(Math.max(0, j), 1)[0];
+        cnt[x.key]--; out.push(x);
+    }
+    return out;
+}
+function renderRush() {
+    const r = S.rush;
+    if (!r) rushHome();
+    else if (r.st === 'play') { rushDraw(r); rushLoop(r); }
+    else if (r.st === 'end') rushEndScreen(r);
+    else if (r.st === 'off') rushOffScreen();
+    else rushPrepScreen(r);
+}
+function rushTop(sub) { return '<div class="lesson-top"><button class="back-btn tap44" id="rushBack" aria-label="놀이 탭으로">←</button><div><div class="lt-title">⏱️ 소리 러시</div><div class="lt-sub">' + esc(sub) + '</div></div></div>'; }
+function rushBindBack() { const b = document.getElementById('rushBack'); if (b) b.addEventListener('click', () => { resetPlayState(); go('play'); }); }
+// 시작 화면: 내 최고 기록 · 모드 고르기(조용 모드면 글자 러시가 기본)
+function rushHome() {
+    const open = rushOpen(), quiet = quietNow();
+    if (!RUSH_MODES[S.rushMode]) S.rushMode = quiet ? 'T' : 'S';
+    if (open && !store.seen.in_rush) {
+        playIntro('rush', '⏱️ 소리 러시', ['소리를 듣고 알맞은 뜻을 골라요 — 소리가 끝나면 체력이 줄기 시작해요', '맞히면 체력 +12, 틀리면 −15 · 🔁 다시 듣기는 문제마다 1번 무료', '👻 유령은 내 최고 기록이에요 — 유령보다 많이 맞혀 보세요!'], () => rushStart(S.rushMode));
+        return;
+    }
+    const m = S.rushMode, b = rushBest(m);
+    let h = rushTop('소리를 듣고 뜻을 번개처럼 · 체력이 바닥나기 전에!');
+    if (!open) h += '<div class="empty-state" style="padding:30px 20px"><div class="es-emoji">🔒</div>' + esc(playLockText('rush') || '아직 열리지 않았어요') + '</div>';
+    else h += '<div class="card rush-start"><div class="rush-best">' + (b ? '내 최고 ' + b + ' · 👻 유령과 대결' : '👻 첫 기록을 세워 보세요!') + '</div>' +
+        '<div class="rush-modes" role="group" aria-label="모드 고르기">' + Object.keys(RUSH_MODES).map(k => {
+            const x = RUSH_MODES[k], bb = rushBest(k);
+            return '<button class="rush-mode" data-rm="' + k + '" aria-pressed="' + (k === m) + '"><span class="rm-t">' + x.ico + ' ' + x.name + '</span><span class="rm-d">' + esc(x.desc) + (bb ? ' · 최고 ' + bb : '') + '</span></button>';
+        }).join('') + '</div>' +
+        (quiet && m === 'T' ? '<div class="muted" style="margin-bottom:8px">🤫 조용 모드라 🔤 글자 러시를 골라 뒀어요</div>' : '') +
+        '<button class="btn block" id="rushGo">▶ 시작</button>' +
+        '<div class="muted" style="margin-top:8px">맞힌 3문제마다 1 XP · 결과로 복습 상자는 움직이지 않아요</div></div>';
+    $main.innerHTML = h;
+    rushBindBack();
+    $main.querySelectorAll('[data-rm]').forEach(x => x.addEventListener('click', () => { S.rushMode = x.dataset.rm; rushHome(); const f = $main.querySelector('[data-rm="' + x.dataset.rm + '"]'); if (f) f.focus(); }));
+    const g = document.getElementById('rushGo');
+    if (g) g.addEventListener('click', () => rushStart(S.rushMode));
+}
+// 판 준비: 소리 모드는 녹음이 있는 카드만, 시작 전에 받아 둔다(받지 못한 카드는 빼고, 8장이 안 되면 안내)
+function rushStart(m) {
+    if (!rushOpen()) { showToast('🔒 ' + (playLockText('rush') || '아직 열리지 않았어요'), '', 2600); return; }
+    stopSpeak();
+    const mode = RUSH_MODES[m], all = rushCards(), r = { m, mode, st: 'prep', all, got: 0, total: 0 };
+    S.rush = r; S.rushMode = m;
+    const pool = mode.sound ? all.filter(rushClip) : all;
+    if (pool.length < RUSH_MIN) { r.st = 'off'; rushOffScreen(); return; }
+    const q = rushQueue(pool);
+    if (!mode.sound) { rushBegin(r, q); return; }
+    const uniq = Array.from(new Map(q.map(c => [c.key, c])).values());
+    r.total = uniq.length; rushPrepScreen(r);
+    prefetchFor(uniq.map(c => ({ text: c.tts || c.native, c })), 8000, { strict: true, onProg: n => { r.got = n; const el = document.getElementById('rushPrepN'); if (el && S.rush === r) el.textContent = n + '/' + r.total; } }).then(got => {
+        if (S.rush !== r || r.st !== 'prep') return;
+        if (S.view !== 'rush') { S.rush = null; return; }   // 받는 사이 다른 화면으로 갔으면 시작하지 않는다
+        const ok = new Set(got.map(x => x.c.key));
+        if (ok.size < RUSH_MIN) { r.st = 'off'; if (S.view === 'rush') rushOffScreen(); return; }
+        rushBegin(r, q.filter(c => ok.has(c.key)));
+    });
+}
+function rushPrepScreen(r) {
+    $main.innerHTML = rushTop('소리를 미리 받아 두면 판 도중에 기다리지 않아요') + '<div class="empty-state rush-prep"><div class="es-emoji">🎧</div><b>준비 중 <span id="rushPrepN">' + r.got + '/' + r.total + '</span></b></div>';
+    rushBindBack();
+}
+function rushOffScreen() {
+    const why = store.settings.voiceMode === 'device' ? '설정에서 「자연 음성」을 켜면 시작할 수 있어요' : CLIPS[CUR.code] === null ? '이 언어는 녹음이 없어 소리로는 할 수 없어요' : '인터넷에 연결하면 시작할 수 있어요';
+    $main.innerHTML = rushTop('소리를 받지 못했어요') + '<div class="card rush-off" role="alert"><div class="es-emoji" aria-hidden="true">📶</div><b>' + esc(why) + '</b><div class="muted" style="margin:4px 0 12px">🔤 글자 러시는 바로 돼요</div>' +
+        '<button class="btn block" id="rushTextGo">🔤 글자 러시 시작</button><button class="btn block ghost" id="rushOffBack" style="margin-top:8px">돌아가기</button></div>';
+    rushBindBack();
+    document.getElementById('rushTextGo').addEventListener('click', () => rushStart('T'));
+    document.getElementById('rushOffBack').addEventListener('click', () => { S.rush = null; rushHome(); });
+}
+function rushBegin(r, q) {
+    const p = prog(), now = Date.now();
+    Object.assign(r, { st: 'play', q, i: -1, hp: 100, score: 0, combo: 0, n: 0, hits: [], rt: [], wrong: {}, okN: {}, redo: [], t0: now, last: now, pauseMs: 0, paused: false, busy: false, cur: null, after: null, raf: 0,
+        best0: rushBest(r.m), ghost: ((p.ghost || {})[r.mode.key] || []).slice(), cheerAt: 7 + Math.floor(Math.random() * 9) });   // 응원 카드: 7~15번째 정답 사이 한 번
+    playBegin('rush');
+    rushNext(r);
+    rushLoop(r);
+}
+// 시작부터 지난 시간(멈춘 시간 빼고) — 유령 기록과 같은 시계
+function rushNow(r) { return (r.paused ? r.pausedAt : Date.now()) - r.t0 - r.pauseMs; }
+function rushGhostAt(r, t) { let n = 0; while (n < r.ghost.length && r.ghost[n] <= t) n++; return n; }
+function rushRaceHtml(r) {
+    if (!r.ghost.length) return '🏃 ' + r.score + ' <span class="muted">· 첫 기록 도전 중</span>';
+    const g = rushGhostAt(r, rushNow(r)), d = r.score - g;
+    return '🏃 ' + r.score + ' <span class="rush-ghost" id="rushGhost">👻 ' + g + '</span> <b>' + (d > 0 ? '👻보다 +' + d : d < 0 ? '👻까지 −' + (-d) : '👻와 나란히') + '</b>';
+}
+function rushNext(r) {
+    if (S.rush !== r || r.st !== 'play') return;
+    if (++r.i >= r.q.length) { rushOver(r); return; }   // 끝까지 완주
+    const c = r.q[r.i], ch = rushChoices(c, r.all);
+    r.cur = { c, ch: ch.list, ans: ch.ans, at: Date.now(), pz: 0, drain: !r.mode.sound, hold: false, free: true, done: false };   // 글자 러시는 문제가 뜬 순간부터 줄어든다
+    r.busy = false;
+    rushDraw(r);
+    if (r.mode.sound) rushPlay(r, false);
+}
+function rushReplayLabel(q) { return '🔁 다시 듣기' + (q.free ? ' · 1번 무료' : ''); }
+// 문제 소리: 끝나면 체력이 줄기 시작한다. 🔁 첫 번째(소리가 끝난 뒤)는 무료 — 다시 듣는 동안 체력이 줄지 않는다
+function rushPlay(r, replay) {
+    const q = r.cur, k = q && rushClip(q.c);
+    if (!q) return;
+    if (!k) { q.drain = true; rushNoSound(r); return; }
+    if (replay && q.drain) {
+        if (q.free) { q.free = false; q.hold = true; }
+        const b = document.getElementById('rushReplay'); if (b) b.textContent = rushReplayLabel(q);
+    }
+    stopSpeak();
+    const done = ok => { if (S.rush !== r || r.cur !== q) return; q.hold = false; q.drain = true; if (!ok) rushNoSound(r); };
+    playClip(k, 1, () => done(true), () => done(false));
+}
+function rushNoSound(r) {   // 소리를 못 틀면 그 문제는 글자로
+    const el = document.getElementById('rushQ'), q = r.cur;
+    if (el && q) el.innerHTML = '<div class="native rush-text">' + esc(q.c.native) + '</div><div class="muted">소리가 나오지 않아 글자로 보여 줘요</div>';
+}
+// 문제가 바뀔 때만 화면 전체를 다시 쓴다(매 프레임에는 체력 막대 transform만)
+function rushDraw(r) {
+    const q = r.cur;
+    if (!q) return;
+    $main.innerHTML = '<div class="rush" id="rushBox"><div class="rush-top">' +
+        '<div class="rush-hp' + (r.hp < 30 ? ' low' : '') + '" id="rushHp" role="progressbar" aria-label="체력" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + Math.round(r.hp) + '"><div id="rushHpFill" style="transform:scaleX(' + (r.hp / 100).toFixed(3) + ')"></div></div>' +
+        '<div class="rush-meta"><button class="rush-x" id="rushQuit" aria-label="그만하기">✕</button><div class="rush-race" id="rushRace">' + rushRaceHtml(r) + '</div>' +
+        '<span class="rush-num" aria-label="' + (r.i + 1) + '번째 문제 · 모두 ' + r.q.length + '문제">' + (r.i + 1) + '/' + r.q.length + '</span><button class="rush-x" id="rushPauseBtn" aria-label="잠깐 멈춤">⏸</button></div></div>' +
+        '<div class="rush-q" id="rushQ">' + (r.mode.sound ? '<div class="rush-ear" aria-hidden="true">🔊</div><button class="btn small ghost tap" id="rushReplay">' + rushReplayLabel(q) + '</button>' : '<div class="native rush-text">' + esc(q.c.native) + '</div>') + '</div>' +
+        '<div class="rush-grid" role="group" aria-label="뜻 고르기">' + q.ch.map((t, i) => '<button class="rush-ch" data-rc="' + i + '"><span>' + esc(t) + '</span></button>').join('') + '</div>' +
+        '<div class="rush-combo" id="rushCombo" aria-live="polite">' + (r.combo >= 3 ? '🔥 ' + r.combo + '연속' : '') + '</div>' +
+        (r.paused ? rushPauseHtml() : '') + '</div>';
+    r.low = r.hp < 30; r.raceKey = rushRaceKey(r);
+    $main.querySelectorAll('[data-rc]').forEach(b => b.addEventListener('click', () => rushAnswer(r, Number(b.dataset.rc))));
+    const rp = document.getElementById('rushReplay');
+    if (rp) rp.addEventListener('click', () => { if (!r.busy && !r.paused) rushPlay(r, true); });
+    document.getElementById('rushQuit').addEventListener('click', () => { if (!PLAY.cur || confirm('그만할까요? 지금 판 기록은 남지 않아요')) { resetPlayState(); go('play'); } });
+    document.getElementById('rushPauseBtn').addEventListener('click', () => rushPause(r));
+    rushBindResume(r);
+}
+function rushRaceKey(r) { return r.score + ':' + (r.ghost.length ? rushGhostAt(r, rushNow(r)) : -1); }
+function rushLoop(r) { if (!r.raf) r.raf = requestAnimationFrame(() => rushTick(r)); }
+function rushTick(r) {
+    r.raf = 0;
+    if (S.rush !== r || r.st !== 'play') return;
+    if (S.view !== 'rush') { rushPause(r, true); return; }   // 다른 화면으로 가면 멈춘다(돌아오면 이어서)
+    const now = Date.now(), dt = Math.min(250, Math.max(0, now - r.last)), q = r.cur;   // 기기가 잠깐 멈춰도 한 번에 크게 깎이지 않게
+    r.last = now;
+    if (!r.paused && !r.busy && q && q.drain && !q.hold) {
+        r.hp = Math.max(0, r.hp - r.mode.drain * dt / 1000);   // 초당 −4(느긋하게 −2)
+        if (r.hp <= 0) { rushPaint(r); rushOver(r); return; }
+    }
+    rushPaint(r);
+    rushLoop(r);
+}
+function rushPaint(r) {
+    const f = document.getElementById('rushHpFill');
+    if (f) f.style.transform = 'scaleX(' + (r.hp / 100).toFixed(3) + ')';
+    const low = r.hp < 30;
+    if (low !== r.low) { r.low = low; const b = document.getElementById('rushHp'); if (b) b.classList.toggle('low', low); }
+    const key = rushRaceKey(r);   // 나·유령 숫자가 바뀔 때만 글을 바꾼다
+    if (key !== r.raceKey) { r.raceKey = key; const el = document.getElementById('rushRace'); if (el) el.innerHTML = rushRaceHtml(r); }
+}
+// 멈춘 동안 미뤄 둔 일(다음 문제·응원 카드 뒤)은 이어서 할 때
+function rushLater(r, fn, ms) { setTimeout(() => { if (S.rush !== r || r.st !== 'play') return; if (r.paused) r.after = fn; else fn(); }, ms); }
+function rushAnswer(r, i) {
+    const q = r.cur;
+    if (S.rush !== r || r.st !== 'play' || r.busy || r.paused || !q || q.done) return;
+    q.done = true; r.busy = true; r.n++;
+    const ok = i === q.ans, c = q.c;
+    r.rt.push(Math.max(0, Date.now() - q.at - q.pz));
+    $main.querySelectorAll('[data-rc]').forEach((b, k) => { b.disabled = true; if (k === q.ans) b.classList.add('ok'); else if (k === i) b.classList.add('bad'); });
+    if (ok) {
+        r.score++; r.combo++; r.hits.push(rushNow(r));
+        r.hp = Math.min(100, r.hp + 12 + (r.combo % 5 === 0 ? 5 : 0));   // 연속 5번마다 +5 더
+        sfx('ok'); rushVibe(15);
+        r.okN[c.key] = (r.okN[c.key] || 0) + 1;
+        if (c.kind === 'sent' && r.okN[c.key] === 2) dexAdd({ [CUR.nativeField]: c.native });   // 문장 카드를 한 판에 2번(한 판에 나오는 최대) 맞히면 스티커
+    } else {
+        r.combo = 0; r.hp = Math.max(0, r.hp - 15);
+        sfx('bad'); rushVibe([30, 40, 30]);
+        r.wrong[c.key] = (r.wrong[c.key] || 0) + 1;
+        if (!r.redo.some(x => x.key === c.key)) r.redo.push(c);
+        if (r.wrong[c.key] === 2) rushPull(c);
+        announce('정답: ' + q.ch[q.ans]);
+    }
+    const cb = document.getElementById('rushCombo');
+    if (cb) cb.textContent = r.combo >= 3 ? '🔥 ' + r.combo + '연속' : '';
+    const hb = document.getElementById('rushHp');
+    if (hb) hb.setAttribute('aria-valuenow', Math.round(r.hp));
+    rushPaint(r);
+    rushLater(r, () => {
+        if (r.hp <= 0) rushOver(r);
+        else if (ok && r.score === r.cheerAt) rushCheer(r);
+        else rushNext(r);
+    }, ok ? 250 : 800);   // 오답이면 정답을 0.8초 보여 준다
+}
+// 한 판에 2번 틀린 카드: 오늘 복습으로 당긴다(상자는 그대로). rv를 함께 올려야 기기끼리 합칠 때 이 판정이 이긴다
+function rushPull(c) { const card = prog().srs[c.key]; if (!card) return; card.due = todayStr(); card.rv = todayStr(); save(); }
+function rushCheer(r) {   // 응원 카드 0.9초(체력은 그대로)
+    const box = document.getElementById('rushBox'), i = Math.floor(Math.random() * RUSH_CHEER.length);
+    if (box) box.insertAdjacentHTML('beforeend', '<div class="rush-cheer" role="status"><span aria-hidden="true">' + RUSH_PETS[i] + '</span><b>' + esc(RUSH_CHEER[i]) + '</b></div>');
+    rushLater(r, () => rushNext(r), 900);
+}
+function rushPauseHtml() { return '<div class="rush-pause" id="rushPause" role="dialog" aria-label="잠깐 멈춤"><b>⏸ 잠깐 멈췄어요</b><span class="muted">체력은 그대로예요</span><button class="btn" id="rushResume">▶ 이어서</button></div>'; }
+function rushBindResume(r) { const b = document.getElementById('rushResume'); if (b) { b.addEventListener('click', () => rushResume(r)); setTimeout(() => { if (b.isConnected) b.focus(); }, 30); } }
+function rushPause(r, quiet) {
+    if (r.st !== 'play') return;
+    if (!r.paused) {
+        r.paused = true; r.pausedAt = Date.now();
+        const q = r.cur;
+        if (q && !q.drain) q.replay = true;   // 첫 소리가 끝나기 전이면 이어서 할 때 다시 들려준다
+        if (q) q.hold = false;
+        stopClip();
+    }
+    const box = document.getElementById('rushBox');
+    if (!quiet && box && !document.getElementById('rushPause')) { box.insertAdjacentHTML('beforeend', rushPauseHtml()); rushBindResume(r); }
+}
+function rushResume(r) {
+    if (!r.paused || S.rush !== r) return;
+    const d = Date.now() - r.pausedAt;
+    r.pauseMs += d; if (r.cur) r.cur.pz += d;
+    r.paused = false; r.last = Date.now();
+    const el = document.getElementById('rushPause'); if (el) el.remove();
+    if (r.after) { const f = r.after; r.after = null; f(); }
+    else if (r.cur && r.cur.replay && !r.cur.done) { r.cur.replay = false; rushPlay(r, false); }
+    rushLoop(r);
+}
+// 화면을 숨기면(휴대폰 잠금·다른 앱) 일시정지 카드로
+document.addEventListener('visibilitychange', () => { const r = S.rush; if (document.hidden && r && r.st === 'play') rushPause(r, S.view !== 'rush'); });
+function rushOver(r) {
+    if (S.rush !== r || r.st !== 'play') return;
+    r.st = 'end'; r.cur = null;
+    if (r.raf) { cancelAnimationFrame(r.raf); r.raf = 0; }
+    stopClip();
+    const p = prog(), k = r.mode.key, gh = (p.ghost || {})[k] || [];
+    r.isNew = r.score > r.best0;
+    // 최고 점수면 맞힌 시각(멈춘 시간 뺌)을 유령으로 — 같은 점수인데 유령이 없으면(다른 기기 기록 등) 채운다
+    if (r.isNew || (r.score > 0 && r.score === r.best0 && gh.length < r.score)) {
+        if (r.isNew) p.best = Object.assign({}, p.best, { [k]: r.score });
+        p.ghost = Object.assign({}, p.ghost, { [k]: r.hits.slice(0, 200) });
+    }
+    if (r.n) { softXp('rush', Math.floor(r.score / 3), '소리 러시'); logActivity('rush'); }   // 하나라도 답한 판만 기록(틀어 놓기만 한 판은 빼고)
+    save();
+    if (r.isNew && r.score) { celebrate(); sfx('level'); }
+    rushEndScreen(r);
+}
+function rushEndScreen(r) {
+    const x = r.mode, avg = r.rt.length ? (r.rt.reduce((a, b) => a + b, 0) / r.rt.length / 1000).toFixed(1) : '';
+    const rec = r.isNew ? (r.best0 ? '👻 ' + r.best0 + ' → 새 기록 ' + r.score + '! 🎉' : r.score ? '첫 기록 ' + r.score + '! 🎉 다음 판부터 👻 유령이 같이 달려요' : '')
+        : '👻 최고 ' + r.best0 + ' · ' + (r.best0 > r.score ? (r.best0 - r.score) + '개 더 맞히면 새 기록!' : '최고 기록과 같아요!');
+    let h = '<div class="result-hero"><div class="r-emoji">' + (r.isNew && r.score ? '🏆' : '⏱️') + '</div><div class="r-score" style="color:var(--primary)">' + r.score + '</div>' +
+        '<div class="r-msg">' + x.ico + ' ' + x.name + ' · ' + r.n + '문제 중 ' + r.score + '개 맞힘' + (r.i >= r.q.length ? ' · 끝까지 완주! 💪' : '') + '</div>' +
+        (rec ? '<div class="rush-rec">' + esc(rec) + '</div>' : '') + (avg ? '<div class="muted" style="margin-top:4px">평균 반응 ' + avg + '초</div>' : '') + '</div>';
+    if (r.redo.length) h += '<div class="card rush-redo"><b style="font-size:14px">🔁 다시 들어 보기</b>' + r.redo.map((c, i) =>
+        '<div class="rr-row"><button class="play-btn" data-rr="' + i + '" aria-label="' + esc('듣기: ' + shortKo(c.ko)) + '">▶</button><div class="rr-txt"><span class="native">' + esc(c.native) + '</span><span class="muted">' + esc(shortKo(c.ko)) + '</span></div></div>').join('') +
+        (r.redo.some(c => r.wrong[c.key] >= 2) ? '<div class="muted" style="margin-top:6px">두 번 틀린 말은 오늘 복습 카드로 당겨 뒀어요</div>' : '') + '</div>';
+    h += '<div class="rush-btns"><button class="btn block" id="rushAgain">한 판 더!</button><button class="btn block ghost" id="rushExit">놀이 탭으로</button></div><div id="rushEnd"></div>';
+    $main.innerHTML = h;
+    $main.querySelectorAll('[data-rr]').forEach(b => b.addEventListener('click', () => { const c = r.redo[Number(b.dataset.rr)]; if (c) speak(c.tts || c.native, 0.95); }));
+    document.getElementById('rushAgain').addEventListener('click', () => rushStart(r.m));
+    document.getElementById('rushExit').addEventListener('click', () => { resetPlayState(); go('play'); });
+    const root = document.getElementById('rushEnd');
+    if (r.tail == null) r.tail = playEnd({ n: r.n, ok: r.score, root });   // 요약 + 다음 놀이(한 번만)
+    else { root.innerHTML = r.tail; bindPlayNext(root); }
+    setTimeout(() => { const b = document.getElementById('rushAgain'); if (b && S.rush === r) b.focus(); }, 30);   // 기본 포커스는 '한 판 더!'
+}
+registerPlayTile({
+    id: 'rush', ico: '⏱️', name: '소리 러시', view: 'rush', xpKind: 'rush', need: rushReady,
+    lock: () => '복습 카드 ' + RUSH_MIN + '장이 모이면 열려요(지금 ' + Object.keys(prog().srs).length + '장)',
+    status: () => { const b = rushBest('S'); return b ? '최고 ' + b : '👻 첫 기록에 도전!'; },
+    open: () => { S.rush = null; go('rush'); },
+});
 
 /* ═══════════════════ 읽기 (쉬운 동화) ═══════════════════ */
 function storyUnlocked(story) { return store.settings.freeNav || effDone() >= storyNeed(story); }
@@ -6408,16 +6949,25 @@ function weekReportHtml() {
             return '<div class="week-bar' + (xp >= goal ? ' hit' : '') + (x.today ? ' today' : '') + '" title="' + x.ds + ' · ' + xp + ' XP" aria-label="' + (x.today ? '오늘' : dow + '요일') + ' ' + xp + 'XP">' +
                 '<div class="wb-xp">' + (xp || '') + '</div><div class="wb-fill" style="height:' + hgt + '%"></div><div class="wb-dow">' + (x.today ? '오늘' : dow) + '</div></div>';
         }).join('') + '</div>' +
-        '<div class="muted" style="margin-top:6px">학습 ' + active + '일 · 획득 ' + sum + ' XP · 목표 달성 ' + hit + '일 · 복습 ' + reviews + '장 · 말하기 ' + speak + '문장</div>' + weekPlayLine(days, all) +
+        '<div class="muted" style="margin-top:6px">학습 ' + active + '일 · 획득 ' + sum + ' XP · 목표 달성 ' + hit + '일 · 복습 ' + reviews + '장 · 말하기 ' + speak + '문장</div>' + weekEarLine(days, daily) + weekPlayLine(days, all) +
         '<div style="font-size:13px;font-weight:700;margin-top:6px">' + comment + (vs ? '<br><span class="muted" style="font-weight:600">' + vs + '</span>' : '') + '</div></div>';
 }
-// 주간 리포트의 놀이 한 줄(놀이 기록이 있을 때만): 귀 시간 · 즉답 · 미션 별
+// 주간 리포트의 귀 시간 한 줄(앱 + 앱 밖, 지난주 대비) — 들은 시간이 있을 때만
+function weekEarLine(days, daily) {
+    const sec = d => ((d && d.ls) || 0) + ((d && d.lx) || 0), cur = days.reduce((a, x) => a + sec(x.d), 0);
+    let last = 0;
+    for (let k = 7; k <= 13; k++) last += sec(daily[todayStr(-k)]);
+    if (cur < 60 && last < 60) return '';
+    const pct = last >= 60 ? Math.round((cur - last) / last * 100) : null;
+    return '<div class="muted" style="margin-top:2px">🎧 이번 주 들은 시간 ' + Math.round(cur / 60) + '분' + (pct === null ? '' : ' (지난주 대비 ' + (pct >= 0 ? '+' : '−') + Math.abs(pct) + '%)') + '</div>';
+}
+// 주간 리포트의 놀이 한 줄(놀이 기록이 있을 때만): 즉답 · 미션 별(귀 시간은 위 줄)
 function weekPlayLine(days, all) {
-    const ls = days.reduce((a, x) => a + (x.d.ls || 0), 0), feed = days.reduce((a, x) => a + (x.d.feed || 0), 0), from = days[0].ds;
+    const feed = days.reduce((a, x) => a + (x.d.feed || 0), 0), from = days[0].ds;
     let stars = 0;
     (all ? Object.values(store.byLang) : [prog()]).forEach(p => Object.values((p && p.mission) || {}).forEach(m => { if (m.l >= from) stars += m.s || 0; }));
-    if (ls < 60 && !feed && !stars) return '';
-    return '<div class="muted" style="margin-top:2px">🎧 귀 시간 ' + Math.round(ls / 60) + '분 · 💬 즉답 ' + feed + '장 · 🗺️ 미션 ★' + stars + '</div>';
+    if (!feed && !stars) return '';
+    return '<div class="muted" style="margin-top:2px">💬 즉답 ' + feed + '장 · 🗺️ 미션 ★' + stars + '</div>';
 }
 function histLongestStreak(dates) {
     if (!dates.size) return 0;
