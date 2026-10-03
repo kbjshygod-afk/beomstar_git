@@ -3993,7 +3993,7 @@ function showWelcome(code, deqInfo) {
 const S = { view: 'picker', lessonIdx: 0, step: 0, quiz: null, review: null, trainer: null, story: null, storyIdx: null, openUnit: null };
 const $main = document.getElementById('main');
 
-function go(view) { stopSpeak(); seqPlaying = false; rolePlayToken++; closeModal(true); clearPlayNext(); $main.style.overflow = ''; S.view = view; if (view === 'history' || view === 'guide' || view === 'settings') S.meSub = view; render(); }   // overflow: 피드가 바꾼 값을 되돌림
+function go(view) { stopSpeak(); seqPlaying = false; rolePlayToken++; closeModal(true); clearPlayNext(); $main.style.overflow = ''; document.body.classList.remove('feed-on'); S.view = view; if (view === 'history' || view === 'guide' || view === 'settings') S.meSub = view; render(); }   // overflow: 피드가 바꾼 값을 되돌림
 function subnavHtml(cur) {
     return '<div class="subnav" role="tablist">' + [['history', '📅 기록'], ['guide', '📖 가이드'], ['settings', '⚙️ 설정']].map(([v, t]) =>
         '<button data-sub="' + v + '" role="tab" aria-selected="' + (v === cur) + '"' + (v === cur ? ' class="on"' : '') + '>' + t + '</button>').join('') + '</div>';
@@ -4027,6 +4027,7 @@ function renderView() {
         case 'play': renderPlay(); break;
         case 'rush': renderRush(); break;
         case 'puzzle': renderPuzzle(); break;
+        case 'feed': renderFeed(); break;
         case 'story': renderStoryList(); break;
         case 'history': renderHistory(); break;
         case 'storyRead': renderStoryRead(); break;
@@ -4379,7 +4380,7 @@ function startQuick() {
             const due = dueCards();
             if (due.length) { resetTransient(); S.review = newReview(due, 5, true); S.view = 'review'; updateTabs(); renderReview(); }
             else if (Object.keys(prog().srs).length >= 4) { S.match = newMatch(5, null, true); S.view = 'review'; updateTabs(); renderMatch(); }
-            else finishQuick();
+            else { finishQuick(); const fm = feedMoreHtml(); if (fm && S.view === 'home' && !document.querySelector('[data-feed-more]')) $main.insertAdjacentHTML('afterbegin', fm); }   // 💬 한 장 더?
         },
     });
 }
@@ -4405,6 +4406,7 @@ function todayQuests() {
         { id: 'ear', t: '귀 시간 ' + eg + '분', n: eg * 60, v: dl.ls || 0, fmt: 'min', need: eg > 0 },   // 하루 듣기 목표(귀 시간 시트)
         { id: 'rush', t: '소리 러시 1판', n: 1, v: dl.rush || 0, need: !!playTile('rush') && tileOpen(playTile('rush')) },
         { id: 'puz', t: '오늘의 퍼즐', n: 1, v: puzDone() ? 1 : 0, need: !!playTile('puzzle') && tileOpen(playTile('puzzle')) },
+        { id: 'feed', t: '즉답 10장', n: 10, v: dl.feed || 0, need: feedOpenOk() },
     ];
     const first = allDone ? { id: 'review', t: '복습 1세션', n: 1, v: dl.reviews ? 1 : 0 } : { id: 'lesson', t: '레슨 1개 통과', n: 1, v: Math.min(1, dl.lessons || 0) };
     // 늘 같은 전체 목록을 오늘 날짜로 섞은 뒤 조건으로 거른다 — 듣기 목표를 켜고 끄거나 조건 하나가 바뀌어도 많아야 한 칸만 바뀌게
@@ -5446,6 +5448,7 @@ function renderReview() {
             '<div class="r-msg">' + (r.stopped ? '여기까지 한 것도 모두 저장됐어요!' : r.left ? '이번 세션 완료! 남은 카드 ' + r.left + '장은 한 번 더 누르면 이어져요.' : '오늘의 복습 완료! 기억한 카드는 더 긴 간격으로,<br>놓친 카드는 내일 다시 만나요.') +
             (r.grad ? '<br>🎓 ' + r.grad + '장은 완전히 외워서 졸업했어요!' : '') + '<br><span class="muted">내일 복습 예정 ' + tomorrow + '장</span></div></div>' +
             sessTail(r, r.graded * XP.review) +   // 🚀 부스트(복습 세션도 한 판)
+            (r.quick ? feedMoreHtml() : '') +   // ⚡ 1분 모드 끝: 💬 한 장 더?
             '<button class="btn block" id="revHome">학습 경로로</button>';
         document.getElementById('revHome').addEventListener('click', () => { S.review = null; go('home'); });
         return;
@@ -5639,7 +5642,7 @@ function renderMatch() {
         $main.innerHTML = '<div class="result-hero"><div class="r-emoji">🧩</div><div class="r-score" style="color:var(--primary)">' + sec + '초</div>' +
             '<div class="r-msg">' + n + '쌍을 모두 맞혔어요! 실수 ' + m.miss + '번' + (m.miss === 0 ? ' — 완벽! 🏆' : '') + '</div>' +
             (rec ? '<div class="rush-rec">' + (rec.isNew ? (rec.old ? '🏆 최고 기록 갱신! ' + rec.old + '초 → ' + rec.sec + '초' : '🏆 첫 기록 ' + rec.sec + '초!') : '<span class="muted">최고 기록 ' + rec.old + '초</span>') + '</div>' : '') + '</div>' +
-            sessTail(m, m.xpGot || 0) +
+            sessTail(m, m.xpGot || 0) + (m.quick ? feedMoreHtml() : '') +   // ⚡ 1분 모드 끝: 💬 한 장 더?
             '<div style="display:flex;gap:10px"><button class="btn block" id="mAgain">한 판 더!</button><button class="btn block ghost" id="mExit">복습 탭으로</button></div>';
         document.getElementById('mAgain').addEventListener('click', () => { S.match = newMatch(m.pairs.length, m.fromLesson ? ALL[m.fromLesson - 1].words : null); S.match.fromLesson = m.fromLesson; S.match.ear = m.ear; renderMatch(); });
         document.getElementById('mExit').addEventListener('click', () => { const back = m.fromLesson; S.match = null; if (back) { openLesson(back - 1, 1); } else if (S.view === 'review') renderReview(); else go('review'); });
@@ -9192,6 +9195,7 @@ function handleBack() {
     if (S.view === 'skipTest') { S.skip = null; S.quiz = null; go('home'); return true; }
     if (S.view === 'review' && (S.redo || S.match || S.review)) { S.redo = null; S.match = null; S.review = null; S.quiz = null; go('review'); return true; }
     if (S.view === 'trainer' && S.trainer) { S.trainer = null; go('trainer'); return true; }
+    if (DATA && S.view === 'feed') { feedBack(); return true; }   // 💬 즉답 피드: 세트 도중이면 요약 카드로, 요약에서는 놀이 탭으로
     // 놀이 화면: 판 도중이면 물어본 뒤 놀이 탭으로
     if (DATA && S.view !== 'play' && PLAY_VIEWS.includes(S.view)) {
         if (PLAY.cur && !confirm('그만할까요? 지금 판 기록은 남지 않아요')) return true;
