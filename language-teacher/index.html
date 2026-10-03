@@ -1091,6 +1091,126 @@
         .story-line { position: relative; }
         .story-line .story-sent.has-mic { padding-right: 64px; }
         .story-mic { position: absolute; top: 10px; right: 10px; z-index: 1; width: 44px !important; height: 44px !important; }
+        /* 📺 듣기 플레이어: 모드 탭 · 자막 사다리 · 한 줄씩 막대 · 새 단어 칩 · 빈칸 듣기 · 따라 하기 */
+        .pl-modes { display: flex; gap: 4px; background: #eef2f7; border-radius: 12px; padding: 4px; margin-bottom: 12px; }
+        .pl-modes button { flex: 1 1 0; min-width: 0; min-height: 44px; border: none; border-radius: 9px; background: transparent; font: inherit; font-size: 13px; font-weight: 700; color: var(--text-light); cursor: pointer; white-space: nowrap; padding: 0 4px; }
+        .pl-modes button[aria-selected="true"] { background: var(--card); color: var(--primary); box-shadow: 0 1px 3px rgba(0,0,0,.1); }
+        .subs-row { display: flex; gap: 4px; margin-bottom: 8px; }
+        .subs-row button, .subs-each button { flex: 1 1 0; min-width: 0; min-height: 44px; padding: 2px 3px; border: 1.5px solid var(--border); border-radius: 10px; background: var(--card); font: inherit; font-size: 12px; font-weight: 700; color: var(--text-light); cursor: pointer; white-space: nowrap; }
+        .subs-row button[aria-pressed="true"], .subs-each button[aria-pressed="true"] { border-color: var(--primary); color: var(--primary); background: var(--red-soft); }
+        .subs-row .subs-more { flex: 0 0 auto; padding: 2px 9px; }
+        .subs-row .subs-more[aria-expanded="true"] { border-color: var(--text-light); color: var(--text); }
+        .subs-each { display: flex; gap: 6px; margin: 0 0 10px; }
+        .subs-each[hidden], .pl-bar[hidden] { display: none; }
+        .subs-o0 .native { filter: blur(6px); user-select: none; }
+        .subs-o0 .peek .native, .dlg-wrap.blind .bubble.peek .native, .dlg-wrap.blind .narr.peek .native { filter: none; }
+        .subs-r0 .pinyin, .subs-r0 .pron { display: none; }
+        .subs-k0 .ko { display: none; }
+        .subs-k0 .ko-open .ko { display: block; }
+        .story-sent .st-hint { display: none; margin-top: 6px; }
+        .subs-k0 .story-sent:not(.ko-open) .st-hint { display: block; }
+        .story-sent > .ko { margin-top: 6px; }
+        .subs-set:not(.subs-r0) .pron.fade { filter: none; cursor: default; }
+        .story-sent.playing { box-shadow: 0 0 0 3px var(--gold); }
+        .story-sent.past { opacity: .55; }
+        .story-sent.long .native { font-size: 16px; }
+        .st-ctl { display: flex; gap: 8px; margin: 10px 0 14px; flex-wrap: wrap; }
+        .st-ctl .btn, .dlg-ctrl .btn { min-height: 44px; }
+        .subs-tip-btns { display: flex; gap: 8px; margin-top: 8px; }
+        .pl-bar { position: sticky; bottom: 0; z-index: 5; display: flex; gap: 6px; padding: 6px; margin-top: 10px; background: var(--card); border: 1px solid var(--border); border-radius: 14px; box-shadow: 0 -4px 16px rgba(0,0,0,.1); }
+        .pl-bar button { flex: 1 1 0; min-width: 0; min-height: 44px; padding: 2px; border: none; border-radius: 10px; background: #eef2f7; font: inherit; font-size: 12px; font-weight: 700; color: var(--text); cursor: pointer; line-height: 1.2; }
+        .pl-bar #plShadow { background: var(--red-soft); color: var(--primary); }
+        .nw-box .nw-chip { display: flex; align-items: center; gap: 6px; background: var(--card); border: 1px solid #f2d98c; border-radius: 12px; padding: 4px 4px 4px 10px; margin-top: 6px; line-height: 1.4; }
+        .nw-chip .nw-t { flex: 1; min-width: 0; font-size: 13px; }
+        .nw-chip .nw-t .native { font-weight: 700; font-size: 15px; }
+        .nw-chip .nw-r { color: var(--primary); font-size: 12px; font-weight: 600; }
+        .nw-chip .nw-p { color: #7a5200; font-size: 12px; font-weight: 600; }
+        .nw-chip .nw-dev { display: inline-block; font-size: 10.5px; color: var(--text-light); border: 1px solid var(--border); border-radius: 6px; padding: 0 4px; white-space: nowrap; }
+        .nw-b { width: 44px; height: 44px; flex-shrink: 0; border: none; border-radius: 10px; background: var(--gold-light); font-size: 16px; cursor: pointer; color: var(--text); }
+        .nw-b:disabled { opacity: .55; cursor: default; color: var(--success); font-weight: 800; }
+        .story-card .st-fit { margin-top: 4px; font-size: 11.5px; font-weight: 800; color: var(--text-light); }
+        .story-card .st-fit.fit { font-size: 13px; color: #067a57; }
+        .story-card .st-fit.hard { color: #9a3412; }
+        .story-card .st-fit small { font-size: 10.5px; font-weight: 600; color: var(--text-light); margin-left: 2px; }
+        .bl-start .bl-h { font-weight: 800; font-size: 15px; margin-bottom: 6px; }
+        .bl-start .bl-h .muted { font-weight: 600; font-size: 12px; }
+        .bl-rules { margin: 4px 0 8px 18px; font-size: 12.5px; line-height: 1.6; color: var(--text); }
+        .bl-lbl { font-size: 11.5px; font-weight: 700; color: var(--text-light); margin: 10px 0 4px; }
+        .bl-seg { display: flex; gap: 6px; flex-wrap: wrap; }
+        .bl-seg button { flex: 1 1 0; min-width: 0; min-height: 44px; border: 1.5px solid var(--border); border-radius: 10px; background: var(--card); font: inherit; font-size: 12.5px; font-weight: 700; color: var(--text-light); cursor: pointer; padding: 4px; }
+        .bl-seg button[aria-pressed="true"] { border-color: var(--primary); color: var(--primary); background: var(--red-soft); }
+        .bl-seg .bl-st { color: var(--gold); font-size: 11px; white-space: nowrap; }
+        .bl-sug { background: var(--gold-light); border: 1px solid #f2d98c; border-radius: 10px; padding: 8px 10px; font-size: 12.5px; font-weight: 700; color: #7a5b00; margin: 10px 0 0; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: space-between; }
+        .bl-info { margin: 10px 0; }
+        .bl-game { border-radius: 16px; }
+        .bl-game.fever { padding: 8px; background: linear-gradient(135deg, #fff6d8, #fffdf4 60%, #ffefc2); box-shadow: 0 0 0 2px #f5b400; }
+        .bl-top { display: flex; align-items: center; gap: 8px; font-size: 13px; margin-bottom: 8px; }
+        .bl-top .bl-score b { color: var(--primary); font-size: 16px; }
+        .bl-top .bl-combo { font-weight: 800; color: #9a3412; white-space: nowrap; }
+        .bl-top #blQuit { margin-left: auto; }
+        .bl-line { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 10px 12px; margin-bottom: 8px; }
+        .bl-line.past { opacity: .5; }
+        .bl-line.past .native { font-size: 14px; }
+        .bl-line.cur { border: 2px solid var(--primary); }
+        .bl-line.cur .native { font-size: 19px; line-height: 1.7; }
+        .bl-line.cur.long .native { font-size: 16px; }
+        .bl-line .b-name { font-size: 10.5px; color: var(--text-light); font-weight: 700; }
+        .bl-line .ko { font-size: 12.5px; color: #475569; margin-top: 2px; }
+        .bl-slot { display: inline-block; min-width: 2.4em; padding: 0 3px; margin: 0 2px; border-bottom: 2.5px solid #94a3b8; text-align: center; line-height: 1.3; }
+        .bl-slot.full { display: block; min-height: 1.4em; margin: 2px 0; }
+        .bl-slot.now { border-bottom-color: var(--primary); background: var(--red-soft); border-radius: 6px 6px 0 0; }
+        .bl-slot.ok { color: #067a57; border-bottom-color: var(--success); font-weight: 700; }
+        .bl-slot.bad { color: var(--error); border-bottom-color: var(--error); font-weight: 700; }
+        .bl-slot.bad s { color: #94a3b8; font-weight: 400; }
+        .bl-fb { min-height: 20px; font-size: 13px; font-weight: 700; margin: 2px 0 4px; }
+        .bl-ctl { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+        .bl-ctl .muted { font-size: 12px; }
+        .bl-dock { position: sticky; bottom: 0; z-index: 4; background: var(--bg); padding: 8px 0 2px; }
+        .bl-wait { font-size: 12px; text-align: center; margin-bottom: 6px; }
+        .bl-chips { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .bl-chip { min-height: 52px; border: 1.5px solid var(--border); border-radius: 12px; background: var(--card); font: inherit; cursor: pointer; padding: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text); min-width: 0; }
+        .bl-chip .native { font-size: 17px; font-weight: 700; }
+        .bl-chip .py { font-size: 11px; color: var(--text-light); margin-top: 1px; }
+        .bl-chip:disabled { opacity: .45; cursor: default; }
+        .bl-in { display: flex; gap: 6px; }
+        .bl-in input { flex: 1; min-width: 0; min-height: 48px; font: inherit; font-size: 16px; border: 1.5px solid var(--border); border-radius: 12px; padding: 8px 12px; background: var(--card); }
+        .bl-in input:focus { border-color: var(--primary); outline: none; }
+        .bl-give { display: block; margin: 6px auto 0; min-height: 44px; border: none; background: none; color: var(--text-light); font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; padding: 0 12px; }
+        .bl-end .r-score small { font-size: 16px; margin-left: 2px; }
+        .bl-stars { color: var(--gold); font-size: 26px; letter-spacing: 2px; }
+        .bl-wrong { display: flex; gap: 10px; align-items: center; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 8px 10px; margin-bottom: 8px; }
+        .bl-wrong .play-btn { width: 44px; height: 44px; flex-shrink: 0; }
+        .bl-wrong .ko { font-size: 12.5px; color: #475569; }
+        .bl-end-btns { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0; }
+        .bl-end-btns .btn { flex: 1 1 120px; min-height: 44px; }
+        .sh-head .sh-prog { font-size: 13px; font-weight: 700; margin-top: 6px; }
+        .sh-row { display: flex; gap: 10px; align-items: center; background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 10px 10px 10px 12px; margin-bottom: 8px; }
+        .sh-row.done { border-color: #b7e4d0; background: #f6fdf9; }
+        .sh-row .sh-txt { flex: 1; min-width: 0; }
+        .sh-row .native { font-size: 16px; line-height: 1.45; }
+        .sh-row .pinyin { font-size: 12px; color: var(--primary); font-weight: 600; }
+        .sh-row .pron { font-size: 12.5px; color: #7a5200; font-weight: 600; }
+        .sh-row .ko { font-size: 12.5px; color: #475569; margin-top: 2px; }
+        .sh-row .b-name { font-size: 10.5px; color: var(--text-light); font-weight: 700; }
+        .sh-go { width: 52px; height: 52px; flex-shrink: 0; border: none; border-radius: 50%; background: var(--red-soft); font-size: 20px; cursor: pointer; position: relative; }
+        .sh-go .sh-ok { position: absolute; top: -2px; right: -2px; background: var(--success); color: #fff; border-radius: 50%; width: 18px; height: 18px; font-size: 11px; line-height: 18px; font-weight: 800; }
+        .sh-steps { display: flex; gap: 4px; list-style: none; padding: 0; margin: 0 0 12px; }
+        .sh-steps li { flex: 1 1 0; min-width: 0; text-align: center; font-size: 11.5px; font-weight: 700; color: var(--text-light); background: #eef2f7; border-radius: 10px; padding: 6px 2px; }
+        .sh-steps li.on { background: var(--primary); color: #fff; }
+        .sh-steps li.done { background: #ecfdf5; color: #067a57; }
+        .sh-line { text-align: center; padding: 6px 4px 10px; }
+        .sh-line .native { font-size: 20px; line-height: 1.5; }
+        .sh-line .pinyin { font-size: 13px; color: var(--primary); font-weight: 600; }
+        .sh-line .pron { font-size: 13px; color: #7a5200; font-weight: 600; }
+        .sh-line .ko { font-size: 13px; color: #475569; margin-top: 4px; }
+        .sh-line.hide .native { filter: blur(7px); user-select: none; }
+        .sh-line.hide .pinyin, .sh-line.hide .pron { visibility: hidden; }
+        .sh-tip { text-align: center; margin-bottom: 10px; min-height: 18px; }
+        .sh-act { display: flex; gap: 8px; flex-wrap: wrap; }
+        .sh-act .btn { flex: 1 1 90px; min-height: 44px; }
+        .sh-end { text-align: center; margin: 4px 0 12px; font-size: 13.5px; }
+        .sh-end .sh-big { font-size: 22px; font-weight: 800; color: var(--gold); margin-bottom: 4px; }
+        .sh-end .sh-stamp { margin-top: 6px; font-weight: 800; color: #067a57; }
         /* ☁️ 계정 카드 */
         .cloud-card .cloud-ava { width: 38px; height: 38px; border-radius: 50%; background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 17px; flex-shrink: 0; }
         .gbtn { display: inline-flex; align-items: center; gap: 8px; background: #fff; color: #1f2937; border: 1.5px solid #d1d5db; font-weight: 700; }
@@ -1574,7 +1694,7 @@ function cleanSettings(v) {
     if (isObj(v.voice)) Object.keys(v.voice).forEach(k => { if (isLang(k) && typeof v.voice[k] === 'string') o.voice[k] = clip(v.voice[k], 120); });
     if (isObj(v.rateByLang)) Object.keys(v.rateByLang).forEach(k => { const n = Number(v.rateByLang[k]); if (isLang(k) && Number.isFinite(n)) o.rateByLang[k] = Math.max(0.6, Math.min(1.2, Math.round(n * 10) / 10)); });
     // 놀이 설정(기기마다 따로 — 클라우드 합치기는 이 기기 설정을 그대로 둔다)
-    ['autoNext', 'quiet', 'feedKo'].forEach(k => { if (typeof v[k] === 'boolean') o[k] = v[k]; });
+    ['autoNext', 'quiet', 'feedKo', 'shadowX3'].forEach(k => { if (typeof v[k] === 'boolean') o[k] = v[k]; });   // shadowX3: 🗣 따라 하기 ①·② 세 번씩
     if ([0, 1, 2].includes(v.feedLv)) o.feedLv = v.feedLv;
     if ([0, 10, 20, 30].includes(v.earGoal)) o.earGoal = v.earGoal;
     if ([5, 10, 15].includes(v.radioLen)) o.radioLen = v.radioLen;
@@ -2547,6 +2667,7 @@ function runLines(items, o) {
         again() { jump(i); },
         stop() { if (over) return; over = true; cut(); },
         idx() { return i; },
+        to(n) { jump(n); },   // n번째 줄로(한 줄씩 듣기에서 줄을 누름)
     };
 }
 
@@ -4031,7 +4152,7 @@ function applyTheme(L) {
     const tc = document.querySelector('meta[name=theme-color]'); if (tc) tc.setAttribute('content', L.primary);   // 브라우저 상단 색도 언어 색으로
     r.setProperty('--native-font', NATIVE_FONT[L.code] || NATIVE_FONT.zh);
 }
-function resetTransient() { S.review = null; S.redo = null; S.match = null; S.trainer = null; S.story = null; S.storyIdx = null; S.quiz = null; S.skip = null; S.histSel = null; resetPlayState(); }
+function resetTransient() { S.review = null; S.redo = null; S.match = null; S.trainer = null; S.story = null; S.storyIdx = null; S.quiz = null; S.skip = null; S.histSel = null; resetPlayState(); S.pl = null; }
 let langGen = 0;
 // 데이터를 다 불러온 뒤에야 CUR·DATA·진도 대상을 한꺼번에 바꾼다. 늦게 도착한 이전 요청은 버린다.
 async function activateLanguage(code, opts) {
@@ -4383,6 +4504,7 @@ function renderView() {
     }
     updateHeader(); updateTabs();
     if (!DATA) { renderPicker(); return; }
+    plGuard();   // 📺 레슨 회화·이야기를 떠나면 플레이어 상태를 버린다
     switch (S.view) {
         case 'home': renderHome(); break;
         case 'lesson': renderLesson(); break;
@@ -4549,7 +4671,7 @@ function renderHome() {
                 const skipped = !done_ && gi < placeIdx();
                 const cls = done_ ? 'done' : skipped ? 'current skipped' : (unlocked ? 'current' : 'locked');
                 const imp = done_ && prog().completed[l.id].imported;
-                const stateIco = done_ ? ((prog().boss && prog().boss[l.id] ? '👑' : '') + (imp && imp !== 'legacy' ? '<div class="stars" style="color:var(--text-light)">📦 DEQ</div>' : '<div class="stars" aria-label="별 ' + starsOf(l.id) + '개">' + starStr(starsOf(l.id)) + '</div>')) : skipped ? '<span class="muted" style="font-size:11px">⏭ 선택</span>' : (unlocked ? (atHere ? '📍' : '▶') : '🔒');
+                const stateIco = done_ ? ((prog().boss && prog().boss[l.id] ? '👑' : '') + ((prog().shadow || {})[l.id] && prog().shadow[l.id].d ? '<span aria-label="따라 하기 도장">🗣</span>' : '') + (imp && imp !== 'legacy' ? '<div class="stars" style="color:var(--text-light)">📦 DEQ</div>' : '<div class="stars" aria-label="별 ' + starsOf(l.id) + '개">' + starStr(starsOf(l.id)) + '</div>')) : skipped ? '<span class="muted" style="font-size:11px">⏭ 선택</span>' : (unlocked ? (atHere ? '📍' : '▶') : '🔒');
                 html += '<div class="lesson-row ' + cls + '" data-lesson="' + gi + '" ' + (unlocked ? '' : 'data-locked="1"') + ' role="button" tabindex="0">' +
                     '<div class="lesson-num">' + (li + 1) + '</div>' +
                     '<div><div class="l-title">' + esc(l.title) + '</div><div class="l-goal">' + esc(l.goal || '') + '</div></div>' +
@@ -4784,6 +4906,8 @@ function todayQuests() {
         { id: 'puz', t: '오늘의 퍼즐', n: 1, v: puzDone() ? 1 : 0, need: !!playTile('puzzle') && tileOpen(playTile('puzzle')) },
         { id: 'feed', t: '이럴 때 뭐라고? 10장', n: 10, v: dl.feed || 0, need: feedOpenOk() },
         { id: 'mission', t: '🗺️ 생존 미션 1개', n: 1, v: dl.mission || 0, need: missionOpenOk() },   // 「보스 미션」과 헷갈리지 않게
+        { id: 'blank', t: '빈칸 듣기 1판', n: 1, v: dl.blankSong || 0, need: plOpenOk() },   // 📺 듣기 플레이어
+        { id: 'shadow', t: '따라 하기 3문장', n: 3, v: dl.shadow || 0, need: plOpenOk() },
     ];
     const first = allDone ? { id: 'review', t: '복습 1세션', n: 1, v: dl.reviews ? 1 : 0 } : { id: 'lesson', t: '레슨 1개 통과', n: 1, v: Math.min(1, dl.lessons || 0) };
     // 늘 같은 전체 목록을 오늘 날짜로 섞은 뒤 조건으로 거른다 — 듣기 목표를 켜고 끄거나 조건 하나가 바뀌어도 많아야 한 칸만 바뀌게
@@ -4908,8 +5032,9 @@ function renderLesson() {
 
     html += '<div id="stepBody"></div>';
     $main.innerHTML = html;
-    document.getElementById('backBtn').addEventListener('click', () => { S.quiz = null; go('home'); });
+    document.getElementById('backBtn').addEventListener('click', () => { if (!plLeaveOk()) return; S.quiz = null; go(plFromPlay() ? 'play' : 'home'); });   // 📺 놀이 탭에서 온 듣기 플레이어는 놀이 탭으로
     $main.querySelectorAll('.step-chip').forEach(c => c.addEventListener('click', () => {
+        if (S.step === 2 && !plLeaveOk()) return;   // 📺 빈칸 듣기 판 도중이면 묻는다
         stopSpeak(); seqPlaying = false;
         S.step = parseInt(c.dataset.step, 10); S.quiz = null; renderStep();
     }));
@@ -4924,6 +5049,7 @@ function renderStep() {
     const body = document.getElementById('stepBody');
     $main.querySelectorAll('.step-chip').forEach((c, i) => c.classList.toggle('active', i === S.step));
     stopSpeak();
+    if (S.step !== 2 && S.pl) plDrop();   // 📺 회화 단계를 떠나면 빈칸 판·줄 재생은 끝(기록 없이)
 
     if (S.step === 0) {          /* 단어 */
         let h = '';
@@ -4991,16 +5117,21 @@ function renderStep() {
         const mis = missionsOf(l);   // 🗺️ 미션(1단계부터) — 0단계(발음) 레슨은 예전 역할극 그대로
         const firstVisit = !(((prog().steps || {})[l.id] || {})[2]) && !isDone(l.id) && turns.length > 0;
         const asItem = t => ({ text: nativeText(t), speaker: t.speaker, part: t.part });
-        let h = '';
+        // 📺 듣기 플레이어: 모드 탭은 첫 방문의 먼저 듣기(상황 퀴즈)가 끝난 뒤에 — 빈칸·따라 하기 모드면 그 본문만
+        const pl = plCtx('lesson', l.id), tabs = plTabsOn() && !firstVisit;
+        if (!tabs) pl.mode = 'listen';
+        if (pl.mode !== 'listen') { body.innerHTML = plTabsHtml(pl.mode) + '<div id="plBody"></div>'; bindPlTabs(); plModeBody('lesson', l.id); return; }
+        const subs = subsNow();
+        let h = tabs ? plTabsHtml('listen') : '';
         if (d.situation) h += '<div class="dlg-situation' + (firstVisit ? ' sit-hidden' : '') + '" id="dlgSit">🎬 ' + (firstVisit ? '상황 설명은 먼저 듣기가 끝나면 보여 드려요 👂' : esc(d.situation)) + '</div>';
         h += '<div class="dlg-ctrl" style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">' +
             (mis.length ? '<button class="btn small dlg-mis" id="missionGo" aria-label="' + esc('미션: ' + misDlgTitle(l)) + '">🗺️ 미션: ' + esc(misDlgTitle(l)) + (mis.length > 1 ? ' (' + mis.length + '개)' : '') + '</button>' : '') +   // 버튼 수는 그대로(역할극 자리) — 첫 줄 전체, 나머지 셋은 둘째 줄
             '<button class="btn small ghost" id="playAll">🔊 전체 대화 듣기</button>' +
             (hasMe && !mis.length ? '<button class="btn small ghost" id="rolePlay">🎭 역할극' + (function () { const nm = (turns.find(t => t.speaker === 'A') || {}).name; return nm && nm !== '나' ? ' (내가 ' + esc(nm) + ')' : ' (내 대사 말하기)'; })() + '</button>' : '') +
-            '<button class="btn small gray" id="blindBtn" aria-pressed="' + firstVisit + '">' + (firstVisit ? '👀 대본 보기' : '🙈 가리고 듣기') + '</button>' +
-            '<button class="btn small gray" id="stopAll">⏹ 정지</button></div>';
+            '<button class="btn small gray" id="lineMode" aria-pressed="' + !!pl.line + '">⏯ 한 줄씩</button>' +
+            '<button class="btn small gray" id="stopAll">⏹ 정지</button></div>' + subsRowHtml(subs, firstVisit);   // 자막 사다리(🙈 소리만 = 예전 가리고 듣기)
         if (firstVisit) h += '<button class="btn block" id="listenFirst" style="margin-bottom:12px">▶ 먼저 듣기 (대본 가림) — 무슨 상황인지 귀로 맞혀 보세요</button>';
-        h += '<div class="dlg-wrap' + (firstVisit ? ' blind' : '') + '" id="dlgWrap">';
+        h += '<div class="dlg-wrap' + (firstVisit ? ' blind' : subsCls(subs) + (subs ? '' : ' blind')) + '" id="dlgWrap">';
         // 파트 단위 묶음(긴 대본은 아직 안 들은 첫 파트만 펼침)
         const secs = [];
         turns.forEach((t, i) => { if (!secs.length || t.part) secs.push({ part: t.part || '', idx: [] }); secs[secs.length - 1].idx.push(i); });
@@ -5032,8 +5163,10 @@ function renderStep() {
         });
         h += '</div><div class="muted" style="margin:6px 0 10px">💬 말풍선을 누르면 그 문장을 다시 들을 수 있어요. 🙈 먼저 가리고 들어 본 뒤 대본을 확인하면 듣기 실력이 쑥 늘어요.' + (mis.length ? ' 🗺️ 미션에서는 상대 말을 귀로 듣고, 알맞은 대답을 골라 직접 말해요!' : hasMe ? ' 🎭 역할극에서는 상대 대사는 앱이 읽고, 내 대사는 직접 말해요!' : '') + '</div>';
         if (l.culture) h += '<div class="culture-box"><b>' + CUR.flag + ' 문화 노트</b><br>' + esc(l.culture) + '</div>';
-        h += nextStepBtn('문법 보러 가기 →');
+        h += nextStepBtn('문법 보러 가기 →') + plBarHtml();
         body.innerHTML = h;
+        bindSubs('dlgWrap'); bindPlBar();
+        if (tabs) bindPlTabs();
         const turnEl = i => body.querySelector('[data-turn="' + i + '"]');
         const openSecOf = el => { const sc = el && el.closest('.dlg-sec'); if (sc && sc.classList.contains('closed')) { sc.classList.remove('closed'); const tg = sc.querySelector('[data-sec-toggle]'); if (tg) { tg.setAttribute('aria-expanded', 'true'); const ch = tg.querySelector('.dp-chev'); if (ch) ch.textContent = '▾'; } } };
         const hilite = i => { const el = turnEl(i); if (el) { openSecOf(el); el.classList.add('playing'); el.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } };
@@ -5053,8 +5186,9 @@ function renderStep() {
         const lf = document.getElementById('listenFirst');
         const revealScript = () => {
             const sb = document.getElementById('dlgSit'); if (sb) { sb.classList.remove('sit-hidden'); sb.textContent = '🎬 ' + d.situation; }
-            const w = document.getElementById('dlgWrap'); if (w) w.classList.remove('blind');
-            const bb = document.getElementById('blindBtn'); if (bb) { bb.textContent = '🙈 가리고 듣기'; bb.setAttribute('aria-pressed', 'false'); }
+            const w = document.getElementById('dlgWrap'); if (w) { w.classList.remove('blind'); subsApply(w); }   // '모두 공개'가 아니라 고른 자막대로
+            subsSync(subsNow());
+            if (plTabsOn() && !document.getElementById('plModes') && body.isConnected) { body.insertAdjacentHTML('afterbegin', plTabsHtml('listen')); bindPlTabs(); }   // 📺 이제 모드 탭
         };
         if (lf && ttsBadNow()) { revealScript(); lf.remove(); }   // 소리가 안 나는 기기: 가리고 듣기 대신 바로 대본
         else if (lf) lf.addEventListener('click', () => {
@@ -5093,21 +5227,26 @@ function renderStep() {
                 }));
             } else { revealScript(); at.remove(); showToast('👀 이제 대본을 보며 맞게 들었는지 확인해 보세요!', '', 3000); }
         }
-        document.getElementById('playAll').addEventListener('click', () => speakSeq(turns.map(asItem), () => { body.querySelectorAll('[data-sec-toggle]').forEach(tg => markHeard(parseInt(tg.dataset.secToggle, 10))); }, (x, i) => hilite(i)));
-        document.getElementById('stopAll').addEventListener('click', () => { seqPlaying = false; if (S.rpActive && S.rpActive === rolePlayToken) { rolePlayToken++; showToast('🎭 역할극을 멈췄어요' + dexHoldEnd()); } S.rpActive = null; stopSpeak(); });   // 지금 진행 중인 역할극일 때만 알린다(지난 미션의 남은 표시는 조용히 지움)
-        document.getElementById('blindBtn').addEventListener('click', e => {
-            const w = document.getElementById('dlgWrap'), on = !w.classList.contains('blind');
-            w.classList.toggle('blind', on);
-            e.target.setAttribute('aria-pressed', String(on));
-            e.target.textContent = on ? '👀 대본 보기' : '🙈 가리고 듣기';
-            if (on) { showToast('👂 글자 없이 먼저 들어 보세요. 무슨 상황일까요?'); speakSeq(turns.map(asItem), null, (x, i) => hilite(i)); }
+        const heardAll = () => { body.querySelectorAll('[data-sec-toggle]').forEach(tg => markHeard(parseInt(tg.dataset.secToggle, 10))); };
+        const playLines = () => plRun(turns.map((t, k) => Object.assign(asItem(t), { k })), k => { clearPlaying(); hilite(k); }, ok => { clearPlaying(); if (ok) heardAll(); });   // ⏯ 한 줄씩: 줄마다 멈춤
+        document.getElementById('playAll').addEventListener('click', () => { if (pl.line) { playLines(); return; } if (pl.run) { pl.run.stop(); pl.run = null; plBarShow(false); } speakSeq(turns.map(asItem), heardAll, (x, i) => hilite(i)); });
+        document.getElementById('lineMode').addEventListener('click', e => {
+            pl.line = !pl.line; e.currentTarget.setAttribute('aria-pressed', String(pl.line));
+            plStop(); clearPlaying();
+            if (pl.line) { playLines(); showToast('⏯ 한 줄 듣고 멈춰요 — 아래 막대나 빈 곳 왼쪽·가운데·오른쪽을 눌러요', '', 3200); }
         });
+        document.getElementById('stopAll').addEventListener('click', () => { plStop(); seqPlaying = false; if (S.rpActive && S.rpActive === rolePlayToken) { rolePlayToken++; showToast('🎭 역할극을 멈췄어요' + dexHoldEnd()); } S.rpActive = null; stopSpeak(); });   // 지금 진행 중인 역할극일 때만 알린다(지난 미션의 남은 표시는 조용히 지움)
         body.querySelectorAll('[data-turn]').forEach(b => {
             const say = () => {
                 if (S.rpActive && S.rpActive === rolePlayToken) { showToast('🎭 역할극 중이에요 — ⏹ 정지를 누른 뒤 다시 들을 수 있어요'); return; }
-                const i = parseInt(b.dataset.turn, 10), t = turns[i]; if (t) { speak(nativeText(t), 0.92, t.speaker); }
+                const i = parseInt(b.dataset.turn, 10), t = turns[i];
+                if (plJump(i)) return;   // ⏯ 한 줄씩 듣는 중: 그 줄로
+                subsPeek(b, document.getElementById('dlgWrap'));   // 원문이 가려져 있으면 그 줄만 1.2초
+                if (t) { speak(nativeText(t), 0.92, t.speaker); }
             };
             b.addEventListener('click', say);
+            const ti = parseInt(b.dataset.turn, 10);
+            if (plTabsOn() && turns[ti] && turns[ti].speaker !== 'N') longPress(b, () => { if (document.getElementById('plModes') && !(S.rpActive && S.rpActive === rolePlayToken)) shadowOpen('lesson', l.id, ti); });   // 🗣 길게 누르면 따라 하기(모드 탭이 보인 뒤 — 첫 방문 먼저 듣기 중에는 아님)
         });
         const mg = document.getElementById('missionGo');
         if (mg) mg.addEventListener('click', () => { stopSpeak(); seqPlaying = false; missionOpen(l.id, { idx: S.lessonIdx }); });
@@ -6616,7 +6755,7 @@ function playIndex() {
         if (st.moral) add(st.moral, 'story', st.id, 'moral', st.unlockAfter, li);
     });
     SENT_INDEX = sent; ARR_TOKENS = arr;
-    Object.assign(PLAYIDX, { code: CUR.code, data: DATA, stories: STORIES, sent, arr, known: {}, words: {}, phr: {}, puz: {}, puzSent: null, puzPy: null, puzProper: null, feedGrp: null, mis: null, dex: null, dexCk: '', bossK: null });   // puz*: 퍼즐 후보·문장·병음 · feedGrp: 피드 같은 뜻 묶음 · mis: 레슨별 미션 · dex: 스티커북 앨범(언어가 바뀌면 새로)
+    Object.assign(PLAYIDX, { code: CUR.code, data: DATA, stories: STORIES, sent, arr, known: {}, words: {}, phr: {}, puz: {}, puzSent: null, puzPy: null, puzProper: null, feedGrp: null, mis: null, dex: null, dexCk: '', bossK: null, kp: null, blk: null, blkR: null });   // puz*: 퍼즐 후보·문장·병음 · feedGrp: 피드 같은 뜻 묶음 · mis: 레슨별 미션 · dex: 스티커북 앨범 · kp: 이야기 아는 말 % · blk·blkR: 빈칸 보기 낱말·로마자(언어가 바뀌면 새로)
     return PLAYIDX;
 }
 // 비교용 키: 소문자, en·es·fr는 악센트를 떼고, 앞뒤 문장부호를 뗀다
@@ -9806,6 +9945,684 @@ registerPlayTile({
     open: () => dexOpenView('play'),
 });
 
+/* ═══════════════════ 📺 듣기 플레이어: 자막 사다리 · 빈칸 듣기 · 따라 하기 ═══════════════════ */
+// 이야기 읽기와 레슨 회화 단계 위에 모드 탭 하나 [👂 듣기 | ✏️ 빈칸 | 🗣 따라 하기]. 모드 탭은 놀이 타일이 열린 뒤(레슨 4개)부터, 회화 첫 방문은 상황 퀴즈가 끝난 뒤에 보인다.
+// 👂 듣기: 자막 사다리(🙈 소리만 · 👀 원문만 · 📖 모두 · 자세히 — settings.subs[언어] = 'ork'의 부분 문자열, o 원문 · r 발음 · k 뜻) · 이야기 노래방 강조 · ⏯ 한 줄씩(아래 막대) · 새 단어 칩
+// ✏️ 빈칸: 한 판 = 대화 하나(긴 영어 대본은 미션 묶음 하나) 또는 이야기 절반. 줄을 들려주고 멈춰 빈칸을 고르거나(🌱 1칸 · 🌿 2칸) 쓴다(en·es·fr · 🌳 한 줄 받아쓰기)
+// 🗣 따라 하기: ① 보면서 천천히(0.75배) ② 안 보고 같이(1배) ③ 혼자 말하기(openSpeak 콜백만) — 조용 모드면 ③은 말하기 대기로
+// 저장: prog().blank['lesson:u1l1' · 'story:zh-s01#1'] = {b 최고 점수, s 최고 별, lv ★3을 받은 가장 높은 단계} · prog().shadow[레슨·이야기 id] = {k: 따라 한 줄 번호, d?: 도장 받은 날} (등록표 LANG_EXT)
+const PL_MODES = [['listen', '👂 듣기'], ['blank', '✏️ 빈칸'], ['shadow', '🗣 따라 하기']];
+const SUBS_SETS = [['', '🙈 소리만', 'blindBtn'], ['o', '👀 원문만', 'subsO'], ['ork', '📖 모두', 'subsAll']];   // 🙈 소리만은 예전 '가리고 듣기' 버튼 자리(id 그대로)
+const SUBS_EACH = [['o', '원문'], ['r', '발음'], ['k', '뜻']];
+const BLANK_LV = [['🌱', '한 칸'], ['🌿', '두 칸'], ['🌳', '받아쓰기']];
+const BLANK_WRITE = { en: true, es: true, fr: true };   // 쓰기 모드(zh·ja는 휴대폰 입력기 부담이 커서 고르기만)
+const SHADOW_STAMP = { lesson: 4, story: 5 };   // 🗣 도장: 회화 대사 4줄 · 이야기 5문장
+const SH_STEPS = [['보면서 천천히', '0.75배 · 글자를 보며 소리에 맞춰 같이 말해요'], ['안 보고 같이', '1배 · 글자 없이 소리에 겹쳐 말해요'], ['혼자 말하기', '이제 혼자 말해요 — 🎤 채점']];
+function plTabsOn() { return !!CUR && playUnlocked('player'); }   // 모드 탭(빈칸·따라 하기)은 놀이 타일과 같이 열린다
+function plOpenOk() { const t = playTile('player'); return !!t && tileOpen(t); }
+function plFromPlay() { return !!(S.pl && S.pl.from === 'play'); }
+// 화면(레슨 회화·이야기)마다 플레이어 상태 하나: {src, id, mode, from, line(⏯ 한 줄씩), run(줄 재생), map(재생 줄 → 원래 줄 번호), bl(빈칸 시작 카드에서 고른 것)}
+function plCtx(src, id) {
+    if (!S.pl || S.pl.src !== src || S.pl.id !== id) { plDrop(); S.pl = { src, id, mode: 'listen', from: null, line: false }; }
+    return S.pl;
+}
+// 판·재생을 멈추고 빈칸 판 상태를 버린다(모드를 바꾸거나 화면을 떠남) — 끝나지 않은 판은 기록 없이
+function plDrop() {
+    const b = S.blank;
+    S.blank = null;
+    if (S.pl && S.pl.run) { S.pl.run.stop(); S.pl.run = null; }
+    if (b && PLAY.cur && PLAY.cur.mode === 'blank') resetPlayState();
+}
+// 다른 화면으로 가면 플레이어 상태를 버린다(라우터가 부른다)
+function plGuard() { if ((S.pl || S.blank || S.shadow) && S.view !== 'lesson' && S.view !== 'storyRead') { plDrop(); S.pl = null; S.shadow = null; } }
+function plLeaveOk() { const b = S.blank; return !(b && b.stage === 'play' && b.n > 0) || confirm('그만할까요? 지금 판 기록은 남지 않아요'); }
+function plRedraw() { if (S.view === 'lesson') renderStep(); else if (S.view === 'storyRead') renderStoryRead(); }
+function plTabsHtml(mode) { return '<div class="pl-modes" role="tablist" aria-label="듣기 플레이어" id="plModes">' + PL_MODES.map(([m, t]) => '<button role="tab" data-plmode="' + m + '" aria-selected="' + (m === mode) + '">' + t + '</button>').join('') + '</div>'; }
+function bindPlTabs() {
+    $main.querySelectorAll('[data-plmode]').forEach(b => b.addEventListener('click', () => {
+        const pl = S.pl, m = b.dataset.plmode;
+        if (!pl || pl.mode === m || !plLeaveOk()) return;
+        plDrop(); stopSpeak(); seqPlaying = false;
+        pl.mode = m; plRedraw();
+        const f = $main.querySelector('[data-plmode="' + m + '"]');
+        if (f) f.focus({ preventScroll: true });
+    }));
+}
+// 빈칸·따라 하기 모드의 본문(#plBody)
+function plModeBody(src, id) {
+    const box = document.getElementById('plBody'), pl = S.pl;
+    if (!box || !pl) return;
+    if (pl.mode === 'shadow') { box.innerHTML = shadowListHtml(src, id); bindShadowList(box, src, id); return; }
+    const st = S.blank;
+    if (st && st.set.src === src && st.set.id === id) { blankDraw(st); return; }
+    box.innerHTML = blankStartHtml(src, id); bindBlankStart(box, src, id);
+}
+// 줄 목록: 레슨 = 회화 대사(N 해설 빼고 · i = 원래 줄 번호) · 이야기 = 문장
+function plLines(src, id) {
+    if (src === 'story') { const st = STORIES.find(x => x.id === id); return st ? (st.sentences || []).map((x, i) => ({ item: x, i })).filter(x => nativeText(x.item)) : []; }
+    const k = LESSON_BY_ID[id], l = k !== undefined ? ALL[k] : null;
+    return l ? ((l.dialogue && l.dialogue.turns) || []).map((t, i) => ({ item: t, i })).filter(x => x.item.speaker !== 'N' && nativeText(x.item)) : [];
+}
+
+/* ── 👂 자막 사다리 ── */
+function subsNow() { const s = (store.settings.subs || {})[CUR.code]; return typeof s === 'string' ? s : 'ork'; }   // 고르지 않았으면 📖 모두
+function subsPicked() { return typeof (store.settings.subs || {})[CUR.code] === 'string'; }
+function subsSave(v) { v = 'ork'.split('').filter(c => v.includes(c)).join(''); store.settings.subs = Object.assign({}, store.settings.subs, { [CUR.code]: v }); save(); return v; }
+// 줄 묶음(대화 #dlgWrap · 이야기 #stBody)에 자막 상태를: 원문 흐림 · 발음 숨김 · 뜻 숨김. 대화의 🙈 소리만은 예전 '가리고 듣기'(blind)와 같은 상태
+function subsCls(v) { return SUBS_EACH.map(([c]) => v.includes(c) ? '' : ' subs-' + c + '0').join('') + (subsPicked() ? ' subs-set' : ''); }
+function subsApply(el, v) {
+    if (!el) return;
+    v = v == null ? subsNow() : v;
+    SUBS_EACH.forEach(([c]) => el.classList.toggle('subs-' + c + '0', !v.includes(c)));
+    el.classList.toggle('subs-set', subsPicked());   // 직접 고른 자막은 한글 발음 '자동'(3단계부터 흐림)보다 먼저
+    if (el.id === 'dlgWrap') el.classList.toggle('blind', !v);
+}
+// first: 회화 첫 방문(먼저 듣기 중) — 대본이 가려져 있으니 🙈가 눌린 것으로 보인다
+function subsRowHtml(v, first) {
+    const on = s => first ? !s : v === s;
+    return '<div class="subs-row" role="group" aria-label="자막">' + SUBS_SETS.map(([s, t, id]) => '<button id="' + id + '" data-subs="' + s + '" aria-pressed="' + on(s) + '">' + t + '</button>').join('') +
+        '<button class="subs-more" id="subsMore" aria-expanded="false" aria-controls="subsEach">자세히</button></div>' +
+        '<div class="subs-each" id="subsEach" role="group" aria-label="자막 하나씩" hidden>' + SUBS_EACH.map(([c, t]) => '<button data-sub1="' + c + '" aria-pressed="' + (!first && v.includes(c)) + '">' + t + '</button>').join('') + '</div>';
+}
+function subsSync(v) {
+    $main.querySelectorAll('[data-subs]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.subs === v)));
+    $main.querySelectorAll('[data-sub1]').forEach(b => b.setAttribute('aria-pressed', String(v.includes(b.dataset.sub1))));
+}
+function bindSubs(wrapId) {
+    const set = v => { v = subsSave(v); subsApply(document.getElementById(wrapId), v); subsSync(v); };
+    $main.querySelectorAll('[data-subs]').forEach(b => b.addEventListener('click', () => set(b.dataset.subs)));
+    $main.querySelectorAll('[data-sub1]').forEach(b => b.addEventListener('click', () => { const c = b.dataset.sub1, v = subsNow(); set(v.includes(c) ? v.replace(c, '') : v + c); }));
+    const m = document.getElementById('subsMore'), e = document.getElementById('subsEach');
+    if (m && e) m.addEventListener('click', () => { e.hidden = !e.hidden; m.setAttribute('aria-expanded', String(!e.hidden)); });
+}
+// 원문이 가려졌을 때 줄을 누르면 그 줄만 1.2초 보인다(첫 방문 '먼저 듣기' 가림에서는 아님)
+function subsPeek(el, wrap) {
+    if (!el || !wrap || !wrap.classList.contains('subs-o0')) return;
+    el.classList.add('peek'); clearTimeout(el._pk);
+    el._pk = setTimeout(() => el.classList.remove('peek'), 1200);
+}
+// 이야기를 3편 이상 읽고 📖 모두로 듣는 중이면 한 번: '자막 한 칸 떼어 볼래요?'
+function subsTipHtml() {
+    if (store.seen.subsTip || subsNow() !== 'ork' || Object.keys(prog().storiesRead || {}).length < 3) return '';
+    store.seen.subsTip = todayStr(); save();
+    return '<div class="guide-banner subs-tip" id="subsTip" role="note">🎯 자막 한 칸 떼어 볼래요? 뜻을 가리고 들으면 귀가 더 빨리 열려요<div class="subs-tip-btns"><button class="btn small tap" id="subsTipGo">👀 원문만으로</button><button class="btn small gray tap" id="subsTipNo">괜찮아요</button></div></div>';
+}
+function bindSubsTip(wrapId) {
+    const g = document.getElementById('subsTipGo'), n = document.getElementById('subsTipNo'), box = document.getElementById('subsTip');
+    if (g) g.addEventListener('click', e => { e.stopPropagation(); const v = subsSave('o'); subsApply(document.getElementById(wrapId), v); subsSync(v); if (box) box.remove(); showToast('👀 원문만 — 뜻이 궁금하면 문장을 눌러요'); });
+    if (n) n.addEventListener('click', e => { e.stopPropagation(); if (box) box.remove(); });
+}
+
+/* ── ⏯ 한 줄씩 · 아래 막대 ── */
+function plBarHtml() {
+    return '<div class="pl-bar" id="plBar" role="toolbar" aria-label="한 줄씩 듣기" hidden><button id="plPrev" aria-label="이전 줄">⏮ 이전</button><button id="plAgain" aria-label="이 줄 다시 듣기">🔁 다시</button>' +
+        (plTabsOn() ? '<button id="plShadow" aria-label="이 줄 따라 하기">🗣 따라 하기</button>' : '') + '<button id="plNext" aria-label="다음 줄">다음 ⏭</button></div>';
+}
+function plBarShow(on) { const b = document.getElementById('plBar'); if (b) b.hidden = !on; }
+function bindPlBar() {
+    const on = (id, fn) => { const b = document.getElementById(id); if (b) b.addEventListener('click', () => { const r = S.pl && S.pl.run; if (r) fn(r); }); };
+    on('plPrev', r => r.prev()); on('plAgain', r => r.again()); on('plNext', r => r.next());
+    on('plShadow', r => {
+        const pl = S.pl, k = pl.map ? pl.map[r.idx()] : r.idx();
+        if (!plLines(pl.src, pl.id).some(x => x.i === k)) { showToast('해설 줄은 따라 하기가 없어요'); return; }
+        shadowOpen(pl.src, pl.id, k);
+    });
+}
+// 줄 재생(⏯ 한 줄씩이면 줄마다 멈춤) — items: [{text, speaker, k: 원래 줄 번호}] · onStep(k) · onEnd(끝까지 들었나)
+function plRun(items, onStep, onEnd) {
+    const pl = S.pl;
+    if (!pl) return null;
+    if (pl.run) { pl.run.stop(); pl.run = null; }
+    const list = items.filter(x => x.text), line = !!pl.line;
+    const fin = ok => { if (pl.run !== run) return; pl.run = null; plBarShow(false); if (onEnd) onEnd(ok); };
+    const run = runLines(list, { rate: 0.92, pauseEach: line, onStep: i => onStep(list[i].k), onDone: () => fin(true), onStop: () => fin(false) });
+    pl.run = run; pl.map = list.map(x => x.k);
+    plBarShow(line);
+    return run;
+}
+function plStop() { const pl = S.pl; if (pl && pl.run) { pl.run.stop(); pl.run = null; } plBarShow(false); stopSpeak(); seqPlaying = false; }
+// 한 줄씩 재생 중이면 그 줄로 건너뛴다 → true
+function plJump(k) { const pl = S.pl; if (!pl || !pl.run || !pl.map) return false; const i = pl.map.indexOf(k); if (i < 0) return false; pl.run.to(i); return true; }
+// 줄 카드 밖 빈 곳을 누르면 3분할(왼쪽 이전 · 가운데 다시 · 오른쪽 다음) — 한 줄씩 재생 중일 때만
+$main.addEventListener('click', e => {
+    const pl = S.pl;
+    if (!pl || !pl.run || !pl.line || (S.view !== 'lesson' && S.view !== 'storyRead')) return;
+    if (e.target.closest('button, a, input, select, textarea, summary, [role="button"], .bubble, .narr, .story-sent, .card, .tip-box, .culture-box, .subs-row, .subs-each, .pl-modes, .lesson-top, .steps')) return;
+    const r = $main.getBoundingClientRect(), x = (e.clientX - r.left) / Math.max(1, r.width);
+    if (x < 1 / 3) pl.run.prev(); else if (x > 2 / 3) pl.run.next(); else pl.run.again();
+});
+// 길게 누르기(0.55초) — 손을 떼면 짧은 누름(click)은 막는다
+function longPress(el, fn) {
+    let t = 0, fired = false, x0 = 0, y0 = 0;
+    const clear = () => { clearTimeout(t); t = 0; };
+    el.addEventListener('pointerdown', e => { fired = false; clear(); x0 = e.clientX; y0 = e.clientY; t = setTimeout(() => { t = 0; fired = true; try { if (navigator.vibrate) navigator.vibrate(15); } catch (er) { } fn(); }, 550); });
+    el.addEventListener('pointermove', e => { if (t && Math.abs(e.clientX - x0) + Math.abs(e.clientY - y0) > 10) clear(); });
+    ['pointerup', 'pointercancel', 'pointerleave'].forEach(k => el.addEventListener(k, clear));
+    el.addEventListener('click', e => { if (fired) { fired = false; e.stopImmediatePropagation(); e.preventDefault(); } }, true);
+    el.addEventListener('contextmenu', e => { if (t || fired) e.preventDefault(); });
+}
+
+/* ── 📌 새 단어 칩(이야기) ── */
+function newWordsHtml(s) {
+    const p = prog(), ready = clipsReady();
+    return '<div class="tip-box nw-box"><b>📌 새로 나오는 단어</b>' + (s.newWords || []).map((w, i) => {
+        const n = nativeText(w), has = !!p.srs[srsKey(w)], dev = ready && !clipFor(n);   // 녹음이 없으면 기기 음성으로 읽는다(작게 표시)
+        return '<div class="nw-chip"><div class="nw-t"><span class="native">' + nesc(n) + '</span>' + (romanText(w) ? ' <span class="nw-r">' + esc(romanText(w)) + '</span>' : '') +
+            (w.koPron ? ' <span class="nw-p">[' + esc(w.koPron) + ']</span>' : '') + ' <span class="nw-k">= ' + esc(w.ko) + '</span>' + (dev ? ' <span class="nw-dev">기기 음성</span>' : '') + '</div>' +
+            '<button class="nw-b" data-nwp="' + i + '" aria-label="' + esc(n + ' 듣기') + '">▶</button>' +
+            '<button class="nw-b" data-nwa="' + i + '"' + (has ? ' disabled' : '') + ' aria-label="' + esc(has ? n + ' — 복습 카드에 있어요' : n + ' 복습 카드에 넣기') + '">' + (has ? '✓' : '➕') + '</button></div>';
+    }).join('') + '</div>';
+}
+function bindNewWords(s) {
+    $main.querySelectorAll('[data-nwp]').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); const w = s.newWords[Number(b.dataset.nwp)]; if (w) speak(nativeText(w), 0.9); }));
+    $main.querySelectorAll('[data-nwa]').forEach(b => b.addEventListener('click', e => {
+        e.stopPropagation();
+        const w = s.newWords[Number(b.dataset.nwa)];
+        if (!w || prog().srs[srsKey(w)]) return;
+        addWordsToSrs({ words: [w] }); sfx('tap');
+        b.textContent = '✓'; b.disabled = true; b.setAttribute('aria-label', nativeText(w) + ' — 복습 카드에 있어요');
+        showToast('➕ 복습 카드에 넣었어요 — 내일부터 만나요');
+    }));
+}
+
+/* ── 아는 말 % (이야기 목록) ── */
+// zh·ja: 아는 말(knownSpans)이 덮은 글자 비율 · en·es·fr: 아는 낱말(normKey) 비율. 이름·숫자·문장부호는 세지 않는다 → {hit, all}
+// vocab(en·es·fr만): 아는 낱말 키 모음 — 주면 knownSpans 대신 이것으로 센다(배운 문장에 나온 낱말까지)
+function knownCount(text, upToIdx, extra, vocab) {
+    const code = CUR.code, t = String(text == null ? '' : text), pr = personRanges(code, t);
+    let hit = 0, all = 0;
+    if (CHAR_LANGS[code]) {
+        const cov = new Uint8Array(t.length);
+        knownSpans(t, upToIdx, extra).forEach(x => cov.fill(1, x.s, x.e));
+        for (let i = 0; i < t.length; i++) { if (CJK_PUNCT.test(t[i]) || /\d/.test(t[i]) || pr.some(([s, e]) => i >= s && i < e)) continue; all++; if (cov[i]) hit++; }
+        return { hit, all };
+    }
+    const sp = vocab ? null : knownSpans(t, upToIdx, extra), re = /[\p{L}\p{M}\p{N}]+(?:['’][\p{L}\p{M}\p{N}]+)*/gu;
+    let m;
+    while ((m = re.exec(t))) {
+        const s = m.index, e = s + m[0].length;
+        if (/^\d+$/.test(m[0]) || pr.some(([a, b]) => s < b && e > a)) continue;
+        all++;
+        if (vocab ? vocab.has(normKey(code, m[0])) : sp.some(x => x.s <= s && x.e >= e)) hit++;
+    }
+    return { hit, all };
+}
+function knownPct(text, upToIdx, extra, vocab) { const c = knownCount(text, upToIdx, extra, vocab); return c.all ? Math.round(c.hit / c.all * 100) : 100; }
+function plKnownIdx() { let k = -1; ALL.forEach((l, i) => { if (isDone(l.id)) k = i; }); return Math.max(k, placeIdx() - 1); }   // 지금까지 배운 레슨 위치
+// 배운 말(레슨 위치 lim까지): zh·ja = 조각 사전의 아는 말(낱말 + 배열 조각 + 기능어 — knownSet) · en·es·fr = 배운 레슨의 낱말·핵심 문장·대사·문법 예문에 나온 낱말 + 기능어
+function knownVocab(lim) {
+    const code = CUR.code;
+    if (CHAR_LANGS[code]) return { list: Array.from(knownSet(lim).set) };
+    const set = new Set(), re = /[\p{L}\p{M}\p{N}]+(?:['’][\p{L}\p{M}\p{N}]+)*/gu, add = t => (String(t || '').match(re) || []).forEach(w => set.add(normKey(code, w)));
+    ALL.forEach((l, li) => {
+        if (li > lim) return;
+        (l.words || []).forEach(w => add(nativeText(w)));
+        (l.keySentences || []).forEach(x => add(nativeText(x)));
+        ((l.dialogue && l.dialogue.turns) || []).forEach(x => add(nativeText(x)));
+        (l.grammar || []).forEach(g => (g.examples || []).forEach(x => add(nativeText(x))));
+    });
+    (FUNC_WORDS[code] || []).forEach(add);
+    return { set };
+}
+// 이야기 아는 말 %(배운 레슨 위치마다 한 번 — 언어를 열거나 레슨을 통과해 진도가 바뀌면 새로). 📌 새 단어는 이야기 위에서 뜻을 알려 주니 아는 말로 친다
+function storyKnownPct(st) {
+    const ix = playIndex(), lim = plKnownIdx(), code = CUR.code;
+    if (!ix.kp || ix.kp.lim !== lim) ix.kp = { lim, m: new Map(), v: knownVocab(lim) };
+    if (!ix.kp.m.has(st.id)) {
+        const v = ix.kp.v, nw = (st.newWords || []).map(nativeText).filter(Boolean);
+        let set = null, extra = null, hit = 0, all = 0;
+        if (v.set) { set = new Set(v.set); nw.forEach(w => (w.match(/[\p{L}\p{M}\p{N}]+(?:['’][\p{L}\p{M}\p{N}]+)*/gu) || []).forEach(q => set.add(normKey(code, q)))); }
+        else extra = v.list.concat(nw);
+        (st.sentences || []).forEach(x => { const c = knownCount(nativeText(x), -1, extra, set); hit += c.hit; all += c.all; });
+        ix.kp.m.set(st.id, all ? Math.round(hit / all * 100) : 100);
+    }
+    return ix.kp.m.get(st.id);
+}
+function storyFitHtml(st) {
+    const pct = storyKnownPct(st), x = pct >= 98 ? ['easy', '😌 쉬워요'] : pct >= 85 ? ['fit', '👍 지금 딱 좋아요'] : ['hard', '💪 도전'];
+    return '<div class="st-fit ' + x[0] + '">' + x[1] + ' <small>아는 말(대략) ' + pct + '%</small></div>';
+}
+
+/* ── ✏️ 빈칸 듣기 ── */
+function blankRec(key) { return ((prog().blank || {})[key]) || { b: 0, s: 0, lv: 0 }; }
+function blankStars(s) { return '★'.repeat(s || 0) + '☆'.repeat(3 - (s || 0)); }
+function blankMaxLv() { return BLANK_WRITE[CUR.code] ? 2 : 1; }
+function blankSugLv(rec) { return Math.min(blankMaxLv(), rec.s >= 3 ? rec.lv + 1 : rec.lv); }   // ★3을 받았으면 다음 단계
+// 판 목록: 이야기 = 앞·뒤 절반 · 레슨 = 대화 하나(긴 대본은 미션 묶음대로) → [{key, name, lines, src, id, li: 아는 말 기준 레슨 위치, unit, extra: 이야기 새 단어}]
+function blankSets(src, id) {
+    if (src === 'story') {
+        const st = STORIES.find(x => x.id === id), lines = plLines(src, id);
+        if (!st || lines.length < 2) return [];
+        const h = Math.ceil(lines.length / 2), base = { src, id, li: Math.max(0, storyNeed(st) - 1), unit: st.unlockAfter, extra: st.newWords || [] };
+        return [lines.slice(0, h), lines.slice(h)].map((ls, k) => Object.assign({ key: 'story:' + id + '#' + (k + 1), name: k ? '뒤 절반' : '앞 절반', lines: ls }, base));
+    }
+    const li = LESSON_BY_ID[id], l = li !== undefined ? ALL[li] : null, all = l ? plLines(src, id) : [];
+    if (all.length < 2) return [];
+    const base = { src, id, li, unit: l.unitId, extra: [] }, ms = missionsOf(l);
+    if (ms.length > 1) return ms.map(m => { const s = new Set(m.secs.flat()); return Object.assign({ key: 'lesson:' + m.id, name: '(' + m.no + '/' + m.n + ')', lines: all.filter(x => s.has(x.i)) }, base); }).filter(x => x.lines.length);
+    return [Object.assign({ key: 'lesson:' + l.id, name: '', lines: all }, base)];
+}
+// 빈칸 자리: 아는 낱말(그 레슨까지 · 이야기 새 단어 포함)에서 기능어·이름을 빼고, 같은 판·줄·단계면 늘 같은 자리. 🌳는 줄 전체
+function blankPick(set, line, lv) {
+    const code = CUR.code, text = nativeText(line.item);
+    if (lv === 2) return [{ s: 0, e: text.length, ans: text, w: text, full: true }];
+    const fw = new Set((FUNC_WORDS[code] || []).map(w => normKey(code, w)));
+    const sp = knownSpans(text, set.li, set.extra).filter(x => !fw.has(normKey(code, x.w)) && normKey(code, text.slice(x.s, x.e)));
+    if (!sp.length) return [];
+    const n = lv === 1 && sp.length >= 2 && tokensOf(code, text, set.li).length > 3 ? 2 : 1;   // 🌿 두 칸(짧은 줄은 한 칸)
+    return seededShuffle(sp, hashStr(set.key + line.i + lv)).slice(0, n).sort((a, b) => a.s - b.s).map(x => ({ s: x.s, e: x.e, ans: text.slice(x.s, x.e), w: x.w }));
+}
+function blankScript(s) { return /[㐀-鿿]/.test(s) ? 'han' : /[゠-ヿ]/.test(s) ? 'kata' : /[぀-ゟ]/.test(s) ? 'hira' : 'lat'; }
+// 낱말 원문 표(단계마다 · all = 모든 단계): [{t, k: normKey, r: 로마자}] — 기능어·이름 빼고
+function blankWords(unit) {
+    const ix = playIndex();
+    if (!ix.blk) ix.blk = {};
+    if (ix.blk[unit]) return ix.blk[unit];
+    const code = CUR.code, seen = new Set(), out = [], bad = new Set((FUNC_WORDS[code] || []).concat(PERSON_NATIVE[code] || []).map(w => normKey(code, w)));
+    ALL.forEach(l => { if (unit === 'all' || l.unitId === unit) (l.words || []).forEach(w => wordForms(nativeText(w)).forEach(f => { const k = normKey(code, f); if (k && !seen.has(k) && !bad.has(k)) { seen.add(k); out.push({ t: f, k, r: romanText(w) }); } })); });
+    return (ix.blk[unit] = out);
+}
+function blankRoman(w) {
+    const ix = playIndex();
+    if (!ix.blkR) { ix.blkR = new Map(); ALL.forEach(l => (l.words || []).forEach(x => wordForms(nativeText(x)).forEach(f => { if (!ix.blkR.has(f)) ix.blkR.set(f, romanText(x)); }))); STORIES.forEach(st => (st.newWords || []).forEach(x => wordForms(nativeText(x)).forEach(f => { if (!ix.blkR.has(f)) ix.blkR.set(f, romanText(x)); }))); }
+    return ix.blkR.get(w) || '';
+}
+// zh·ja 초급(2단계까지 또는 발음 표시 켬): 칩 아래 병음·로마자(퍼즐과 같은 규칙)
+function blankPyOn(set) { return !!CHAR_LANGS[CUR.code] && (set.unit <= 2 || store.settings.koPron === true); }
+// 고르기 칩 4개: 정답 + 같은 단계 낱말 가운데 글자 수 ±1 · 같은 글자 종류 · normKey가 다른 것 3개(모자라면 넓혀서)
+function blankChoices(set, line, b, j) {
+    const code = CUR.code, len = Array.from(b.ans).length, sc = blankScript(b.ans), k0 = normKey(code, b.ans), used = new Set([k0]), out = [];
+    const near = d => x => blankScript(x.t) === sc && Math.abs(Array.from(x.t).length - len) <= d;
+    const seed = hashStr(set.key + line.i + ':' + j);
+    [[set.unit, near(1)], [set.unit, near(2)], ['all', near(1)], ['all', near(2)], ['all', x => blankScript(x.t) === sc], ['all', () => true]].forEach(([u, f]) => {
+        if (out.length >= 3) return;
+        seededShuffle(blankWords(u).filter(f), seed).forEach(x => { if (out.length < 3 && !used.has(x.k)) { used.add(x.k); out.push(x); } });
+    });
+    const cap = /^\p{Lu}/u.test(b.ans) ? s => s.charAt(0).toUpperCase() + s.slice(1) : s => s;   // 문장 첫 낱말이면 보기도 대문자로(대문자만 보고 고르지 않게)
+    return seededShuffle([{ t: b.ans, ok: true, r: blankRoman(b.w) }].concat(out.map(x => ({ t: cap(x.t), ok: false, r: x.r }))), seed + 7);
+}
+// 쓰기 비교: 소문자 · 악센트 · 문장부호를 빼고 같으면 정답. 악센트만 다르면 정답 + '✏️ 악센트: é'
+function blankFlat(s, keepAcc) {
+    let t = String(s == null ? '' : s).normalize('NFC').toLowerCase().replace(/’/g, "'");
+    if (!keepAcc) t = stripAccents(t);
+    return t.replace(/[^\p{L}\p{M}\p{N}' ]+/gu, ' ').replace(/\s+/g, ' ').trim();
+}
+function blankCheck(input, ans) {
+    if (!blankFlat(input) || blankFlat(input) !== blankFlat(ans)) return { ok: false, accent: '' };
+    if (blankFlat(input, true) === blankFlat(ans, true)) return { ok: true, accent: '' };
+    const acc = Array.from(new Set(Array.from(String(ans).normalize('NFC').toLowerCase()).filter(c => /\p{L}/u.test(c) && stripAccents(c) !== c))).join(' ');   // 악센트가 붙은 글자
+    return { ok: true, accent: acc };
+}
+function blankNew(set, lv, write) {
+    const lines = set.lines.map(x => ({ item: x.item, i: x.i, bl: blankPick(set, x, lv).map(b => Object.assign(b, { got: null, pick: '' })), re: false, done: false }));
+    if (!write) lines.forEach(ln => ln.bl.forEach((b, j) => { b.ch = blankChoices(set, ln, b, j); }));
+    return { set, lv, write: !!write, lines, k: 0, j: 0, ready: false, tok: 0, step: 0, stage: 'play', score: 0, combo: 0, maxCombo: 0, fever: 0, feverXp: 0, n: 0, ok: 0, log: [], fb: '' };
+}
+function blankStart(set, lv, write) {
+    stopSpeak(); plDrop();
+    const st = S.blank = blankNew(set, lv, write);
+    if (S.pl) S.pl.bl = { key: set.key, lv, write };
+    playSeen('player');   // 처음 해 본 놀이(놀이 탭 NEW · 홈 추천)
+    playBegin('blank');
+    blankDraw(st);
+    setTimeout(() => blankPlay(st, 0.92), 250);
+}
+// 지금 줄 듣기(re: 다시 듣기 · 🐢 — 감점 없음, 그 줄은 '한 번에!' 없음). 처음 끝까지 들어야 칩·입력칸이 켜진다
+function blankPlay(st, rate, re) {
+    const ln = st.lines[st.k];
+    if (!ln || S.blank !== st || st.stage !== 'play') return;
+    if (re) ln.re = true;
+    const my = ++st.tok;
+    blankStatus(st, '🔊 듣는 중…');
+    playLine(ln.item, { rate }).then(() => {
+        if (S.blank !== st || st.tok !== my || st.stage !== 'play') return;
+        blankStatus(st, '');
+        if (!st.ready) { st.ready = true; blankDock(st); }
+        if (!ln.bl.length && !ln.done) { ln.done = true; blankNext(st, 600); }   // 아는 낱말이 없는 줄: 듣고 넘어간다
+    });
+}
+function blankStatus(st, t) { const e = document.getElementById('blStat'); if (e && S.blank === st) e.textContent = t; }
+function blankAnswer(st, r, pick) {
+    const ln = st.lines[st.k], b = ln && ln.bl[st.j];
+    if (!b || !st.ready || b.got != null || S.blank !== st) return;
+    b.got = !!r.ok; b.pick = pick || ''; st.n++;
+    if (r.ok) {
+        const pts = Math.round(10 * Math.min(2, 1 + 0.1 * st.combo) * (st.write ? 2 : 1)), bonus = ln.re ? 0 : 5;   // 콤보 배수(최대 ×2) · 쓰기 ×2 · 다시 안 듣고 맞히면 '한 번에!' +5
+        st.score += pts + bonus; st.ok++; st.log.push({ pts, bonus, ok: true });
+        if (feverTick(st, true)) feverFx();
+        st.maxCombo = Math.max(st.maxCombo, st.combo);
+        st.fb = '⭕ +' + pts + (bonus ? ' · 한 번에! +' + bonus : '') + (r.accent ? ' · ✏️ 악센트: ' + r.accent : '');
+        sfx('ok');
+    } else {
+        st.log.push({ pts: 0, bonus: 0, ok: false }); feverTick(st, false);
+        st.fb = '❌ 정답: ' + b.ans;
+        sfx('bad');
+    }
+    st.j++;
+    if (st.j >= ln.bl.length) { ln.done = true; blankDraw(st); blankNext(st, 600); }   // 줄을 다 채우면 0.6초 뒤 다음 줄 자동 재생
+    else blankDraw(st);
+}
+function blankNext(st, ms) {
+    const my = ++st.step;
+    setTimeout(() => {
+        if (S.blank !== st || st.step !== my || st.stage !== 'play') return;
+        st.k++; st.j = 0; st.ready = false; st.fb = '';
+        if (st.k >= st.lines.length) { blankEnd(st); return; }
+        blankDraw(st); blankPlay(st, 0.92);
+    }, ms);
+}
+function blankLineHtml(st, ln, cur) {
+    const text = nativeText(ln.item), CJK = !!CHAR_LANGS[CUR.code];
+    let h = '', at = 0;
+    ln.bl.forEach((b, j) => {
+        h += nesc(text.slice(at, b.s));
+        const now = cur && j === st.j && b.got == null;
+        h += '<span class="bl-slot' + (b.full ? ' full' : '') + (b.got === true ? ' ok' : b.got === false ? ' bad' : now ? ' now' : '') + '">' +
+            (b.got == null ? '<span class="sr-only">빈칸</span>' : b.got ? nesc(b.ans) : (b.pick ? '<s>' + nesc(b.pick) + '</s> ' : '') + nesc(b.ans)) + '</span>';
+        at = b.e;
+    });
+    h += nesc(text.slice(at));
+    const long = Array.from(text).length > (CJK ? 30 : 80);
+    return '<div class="bl-line' + (cur ? ' cur' : ' past') + (long ? ' long' : '') + '">' + (ln.item.name && st.set.src === 'lesson' ? '<div class="b-name">' + esc(ln.item.name) + '</div>' : '') +
+        '<div class="native">' + h + '</div>' + (!cur || ln.done ? '<div class="ko">' + esc(ln.item.ko || '') + '</div>' : '') + '</div>';
+}
+function blankDockHtml(st) {
+    const ln = st.lines[st.k], b = ln && ln.bl[st.j];
+    if (!ln || !b) return '<div class="bl-wait muted">' + (ln && !ln.bl.length ? '🎧 이 줄은 빈칸 없이 들어요' : '') + '</div>';
+    const dis = st.ready ? '' : ' disabled', wait = st.ready ? '' : '<div class="bl-wait muted">🎧 끝까지 들으면 ' + (st.write ? '쓸' : '고를') + ' 수 있어요</div>';
+    if (st.write) return wait + '<div class="bl-in"><input id="blIn" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="done" aria-label="' + (b.full ? '들은 문장 쓰기' : '빈칸에 들어갈 말 쓰기') + '" placeholder="' + (b.full ? '들은 문장을 써요' : '들은 말을 써요') + '"' + dis + '>' +
+        '<button class="btn tap" id="blOk"' + dis + ' aria-label="확인">✔</button></div><button class="bl-give" id="blGive"' + dis + '>🙈 모르겠어요</button>';
+    const py = blankPyOn(st.set);
+    return wait + '<div class="bl-chips" role="group" aria-label="빈칸에 들어갈 말">' + b.ch.map((c, i) => '<button class="bl-chip" data-bc="' + i + '"' + dis + '><span class="native">' + nesc(c.t) + '</span>' + (py && c.r ? '<span class="py">' + esc(c.r) + '</span>' : '') + '</button>').join('') + '</div>';
+}
+// 칩·입력칸만 다시(끝까지 들은 뒤 켜기)
+function blankDock(st) {
+    const d = document.getElementById('blDock');
+    if (!d || S.blank !== st) return;
+    const kb = $main.contains(document.activeElement);
+    d.innerHTML = blankDockHtml(st); bindBlankDock(st);
+    const f = st.ready && (st.write ? document.getElementById('blIn') : kb && d.querySelector('[data-bc]'));
+    if (f) f.focus({ preventScroll: true });
+    blankKb();
+}
+function bindBlankDock(st) {
+    const ln = st.lines[st.k], b = ln && ln.bl[st.j];
+    if (!b) return;
+    document.querySelectorAll('#blDock [data-bc]').forEach(x => x.addEventListener('click', () => { const c = b.ch[Number(x.dataset.bc)]; if (c) blankAnswer(st, { ok: c.ok }, c.t); }));
+    const inp = document.getElementById('blIn'), ok = document.getElementById('blOk'), give = document.getElementById('blGive');
+    const send = () => { if (!inp || !inp.value.trim()) { if (inp) inp.focus(); return; } blankAnswer(st, blankCheck(inp.value, b.ans), inp.value.trim()); };
+    if (ok) ok.addEventListener('click', send);
+    if (inp) { inp.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); send(); } }); inp.addEventListener('focus', () => setTimeout(blankKb, 300)); }
+    if (give) give.addEventListener('click', () => blankAnswer(st, { ok: false }, ''));
+}
+// 쓰기 입력칸을 휴대폰 키보드 위로(visualViewport)
+function blankKb() {
+    const d = document.getElementById('blDock'), vv = window.visualViewport;
+    if (!d || !vv) return;
+    d.style.transform = '';
+    const over = d.getBoundingClientRect().bottom - (vv.offsetTop + vv.height);
+    if (over > 1 && document.activeElement && document.activeElement.id === 'blIn') d.style.transform = 'translateY(' + (-Math.ceil(over)) + 'px)';
+}
+if (window.visualViewport) { visualViewport.addEventListener('resize', blankKb); visualViewport.addEventListener('scroll', blankKb); }
+function blankDraw(st) {
+    const box = document.getElementById('plBody');
+    if (!box || S.blank !== st) return;
+    if (st.stage === 'end') { box.innerHTML = blankEndHtml(st); bindBlankEnd(st, box); return; }
+    const N = st.lines.length, ln = st.lines[st.k], past = st.lines.slice(Math.max(0, st.k - 2), st.k);
+    box.innerHTML = '<div class="bl-game' + (st.fever > 0 ? ' fever' : '') + '">' +
+        '<div class="bl-top"><span class="bl-pos">✏️ <b>' + (st.k + 1) + '</b>/' + N + '줄</span><span class="bl-score">점수 <b id="blScore">' + st.score + '</b></span>' +
+        (st.combo >= 2 ? '<span class="bl-combo">🔥 ' + st.combo + '연속</span>' : '') + (st.fever > 0 ? '<span class="bl-combo">💥 피버</span>' : '') +
+        '<button class="btn small gray tap" id="blQuit">그만</button></div>' +
+        '<div class="bl-lines">' + past.map(x => blankLineHtml(st, x, false)).join('') + (ln ? blankLineHtml(st, ln, true) : '') + '</div>' +
+        '<div class="bl-fb" role="status" id="blFb">' + esc(st.fb) + '</div>' +
+        '<div class="bl-ctl"><button class="btn small ghost tap" id="blAgain">🔁 다시 듣기</button><button class="btn small ghost tap" id="blSlow">🐢 천천히</button><span class="muted" id="blStat" role="status"></span></div>' +
+        '<div class="bl-dock" id="blDock">' + blankDockHtml(st) + '</div></div>';
+    const q = id => document.getElementById(id);
+    q('blQuit').addEventListener('click', () => { if (!plLeaveOk()) return; plDrop(); stopSpeak(); plModeBody(st.set.src, st.set.id); });
+    q('blAgain').addEventListener('click', () => blankPlay(st, 0.92, true));
+    q('blSlow').addEventListener('click', () => blankPlay(st, 0.75, true));
+    bindBlankDock(st);
+    const cur = box.querySelector('.bl-line.cur');
+    if (cur) cur.scrollIntoView({ block: 'nearest', behavior: reducedMotion() ? 'auto' : 'smooth' });
+    if (st.ready && st.write) { const i = q('blIn'); if (i) i.focus({ preventScroll: true }); }
+}
+// 판 끝: 별(정확도 90% ★3 · 75% ★2 · 끝까지 ★1) · 기록 · 보상(XP 감쇠 · 첫 ★3 +5) · 틀린 줄은 복습 카드 · 다 맞힌 줄은 스티커
+function blankEnd(st) {
+    st.stage = 'end';
+    const p = prog(), key = st.set.key, acc = st.n ? st.ok / st.n : 1, stars = acc >= 0.9 ? 3 : acc >= 0.75 ? 2 : 1, rec = blankRec(key);
+    st.stars = stars; st.acc = Math.round(acc * 100); st.first3 = stars === 3 && rec.s < 3; st.best = st.score > rec.b && rec.b > 0;
+    p.blank = LANG_EXT.blank.clean(Object.assign({}, p.blank, { [key]: { b: Math.max(rec.b, st.score), s: Math.max(rec.s, stars), lv: stars === 3 ? Math.max(rec.lv, st.lv) : rec.lv } }));
+    st.lines.forEach(ln => {
+        if (ln.bl.some(b => b.got === false)) addSentCard(ln.item, 1);
+        else if (ln.bl.length && ln.bl.every(b => b.got === true)) dexAdd(ln.item);
+    });
+    if (st.ok) softXp('blank', st.ok, '✏️ 빈칸 듣기');
+    if (st.first3) addXp(5, '✏️ 빈칸 ★3', true);
+    const fever = feverPay(st);
+    if (st.n) logActivity('blank', st.n);
+    logActivity('blankSong', 1);
+    blankDraw(st);
+    const root = document.getElementById('blEnd');
+    st.tail = playEnd({ n: st.n, ok: st.ok, fever, root });
+}
+function blankEndHtml(st) {
+    const sets = blankSets(st.set.src, st.set.id), i = sets.findIndex(s => s.key === st.set.key), nx = sets[i + 1] || null, wrong = st.lines.filter(ln => ln.bl.some(b => b.got === false));
+    const up = st.stars === 3 && st.lv < blankMaxLv() ? st.lv + 1 : -1;
+    let h = '<div class="bl-end" id="blEnd"><div class="result-hero"><div class="r-emoji">✏️</div><div class="r-score">' + st.score + '<small>점</small></div>' +
+        '<div class="bl-stars" aria-label="별 ' + st.stars + '개">' + blankStars(st.stars) + '</div>' +
+        '<div class="r-msg">정확도 ' + st.acc + '% · 최대 콤보 ' + st.maxCombo + (st.best ? ' · 🎉 최고 점수!' : '') + '</div></div>';
+    if (st.first3) h += '<div class="bl-sug">🌟 이 판 첫 ★3! +5 XP</div>';
+    if (up >= 0) h += '<div class="bl-sug">★3! 다음 단계 ' + BLANK_LV[up][0] + ' ' + BLANK_LV[up][1] + '에 도전해 봐요<button class="btn small tap" id="blUp">' + BLANK_LV[up][0] + ' 시작</button></div>';
+    if (wrong.length) h += '<div class="section-title">다시 들어 볼 줄 <span class="muted">(복습 카드에 넣었어요)</span></div>' + wrong.map(ln => '<div class="bl-wrong"><button class="play-btn" data-blw="' + ln.i + '" aria-label="다시 듣기">▶</button><div style="min-width:0"><div class="native">' + nesc(nativeText(ln.item)) + '</div><div class="ko">' + esc(ln.item.ko || '') + '</div></div></div>').join('');
+    h += '<div class="bl-end-btns"><button class="btn ghost tap" id="blRetry">🔁 다시 하기</button>' + (nx ? '<button class="btn ghost tap" id="blNextSet">다음 판 ' + esc(nx.name) + ' →</button>' : '') + '<button class="btn gray tap" id="blListen">👂 듣기로</button></div>' + (st.tail || '') + '</div>';
+    return h;
+}
+function bindBlankEnd(st, box) {
+    const q = id => document.getElementById(id), set = st.set;
+    box.querySelectorAll('[data-blw]').forEach(b => b.addEventListener('click', () => { const ln = st.lines.find(x => x.i === Number(b.dataset.blw)); if (ln) speak(nativeText(ln.item), 0.92, ln.item.speaker); }));
+    if (q('blUp')) q('blUp').addEventListener('click', () => blankStart(set, st.lv + 1, st.lv + 1 === 2 || st.write));
+    q('blRetry').addEventListener('click', () => blankStart(set, st.lv, st.write));
+    if (q('blNextSet')) q('blNextSet').addEventListener('click', () => { const sets = blankSets(set.src, set.id), i = sets.findIndex(s => s.key === set.key); plDrop(); if (S.pl) S.pl.bl = { key: sets[i + 1].key, lv: null, write: st.write }; plModeBody(set.src, set.id); });
+    q('blListen').addEventListener('click', () => { plDrop(); if (S.pl) S.pl.mode = 'listen'; plRedraw(); });
+    if (st.tail) bindPlayNext(box);
+}
+function blankStartHtml(src, id) {
+    const sets = blankSets(src, id);
+    if (!sets.length) return '<div class="empty-state" style="padding:24px 16px">빈칸 듣기를 할 줄이 없어요</div>';
+    const ui = S.pl.bl || (S.pl.bl = { key: sets[0].key, lv: null, write: false });
+    if (!sets.some(s => s.key === ui.key)) ui.key = sets[0].key;
+    const set = sets.find(s => s.key === ui.key), rec = blankRec(set.key), maxLv = blankMaxLv(), sug = blankSugLv(rec), canW = !!BLANK_WRITE[CUR.code];
+    if (ui.lv == null || ui.lv > maxLv) ui.lv = sug;
+    const write = ui.lv === 2 || (canW && ui.write), nb = set.lines.reduce((a, x) => a + blankPick(set, x, ui.lv).length, 0);
+    let h = '<div class="card bl-start"><div class="bl-h">✏️ 빈칸 듣기 <span class="muted">노래방처럼 줄마다 멈춰요</span></div>';
+    if (!store.seen.in_player) h += '<ol class="bl-rules"><li>한 줄을 들려주고 멈춰요 — 빈칸에 들어갈 말을 귀로 잡아요</li><li>🔁 다시 듣기 · 🐢 천천히는 몇 번이든 — 다시 듣지 않고 맞히면 「한 번에!」 +5</li><li>연속으로 맞히면 점수가 커져요(최대 ×2) · 틀려도 잃는 건 없어요</li></ol>';
+    if (sets.length > 1) h += '<div class="bl-lbl">판</div><div class="bl-seg" role="group" aria-label="판 고르기">' + sets.map(s => '<button data-blset="' + esc(s.key) + '" aria-pressed="' + (s === set) + '">' + esc(s.name) + ' <span class="bl-st">' + blankStars(blankRec(s.key).s) + '</span></button>').join('') + '</div>';
+    h += '<div class="bl-lbl">단계</div><div class="bl-seg" role="group" aria-label="단계">' + BLANK_LV.slice(0, maxLv + 1).map(([ico, t], i) => '<button data-bllv="' + i + '" aria-pressed="' + (ui.lv === i) + '">' + ico + ' ' + t + '</button>').join('') + '</div>';
+    if (canW && ui.lv < 2) h += '<div class="bl-lbl">방식</div><div class="bl-seg" role="group" aria-label="방식"><button data-blw="0" aria-pressed="' + !write + '">👆 고르기</button><button data-blw="1" aria-pressed="' + write + '">⌨️ 쓰기 (점수 ×2)</button></div>';
+    if (rec.s >= 3 && sug > rec.lv) h += '<div class="bl-sug">★3을 받았어요! 다음 단계 ' + BLANK_LV[sug][0] + ' ' + BLANK_LV[sug][1] + '에 도전해 봐요</div>';
+    h += '<div class="muted bl-info">' + set.lines.length + '줄 · 빈칸 ' + nb + '개' + (rec.b ? ' · 최고 ' + rec.b + '점 ' + blankStars(rec.s) : '') + (CHAR_LANGS[CUR.code] ? '' : write ? ' · 악센트는 틀려도 정답이에요' : '') + '</div>' +
+        '<button class="btn block tap" id="blGo">▶ 시작</button></div>';
+    return h;
+}
+function bindBlankStart(box, src, id) {
+    const ui = S.pl && S.pl.bl;
+    if (!ui) return;
+    const redraw = sel => { box.innerHTML = blankStartHtml(src, id); bindBlankStart(box, src, id); const f = box.querySelector(sel); if (f) f.focus({ preventScroll: true }); };
+    box.querySelectorAll('[data-blset]').forEach(b => b.addEventListener('click', () => { ui.key = b.dataset.blset; ui.lv = null; redraw('[data-blset="' + ui.key + '"]'); }));
+    box.querySelectorAll('[data-bllv]').forEach(b => b.addEventListener('click', () => { ui.lv = Number(b.dataset.bllv); redraw('[data-bllv="' + ui.lv + '"]'); }));
+    box.querySelectorAll('[data-blw]').forEach(b => b.addEventListener('click', () => { ui.write = b.dataset.blw === '1'; redraw('[data-blw="' + b.dataset.blw + '"]'); }));
+    const go = box.querySelector('#blGo');
+    if (go) go.addEventListener('click', () => { const sets = blankSets(src, id), set = sets.find(s => s.key === ui.key) || sets[0]; if (set) blankStart(set, ui.lv, ui.lv === 2 || (ui.write && !!BLANK_WRITE[CUR.code])); });
+}
+
+/* ── 🗣 따라 하기(쉐도잉) ── */
+function shadowRec(id) { return ((prog().shadow || {})[id]) || { k: [] }; }
+function shadowListHtml(src, id) {
+    const lines = plLines(src, id), rec = shadowRec(id), need = SHADOW_STAMP[src], unit = src === 'story' ? '문장' : '줄', got = lines.filter(x => rec.k.includes(x.i)).length;
+    let h = '<div class="card sh-head"><b>🗣 따라 하기</b><div class="muted">한 줄씩 ① 보면서 천천히 → ② 안 보고 같이 → ③ 혼자 말하기</div>' +
+        '<div class="sh-prog">' + (rec.d ? '🗣 도장 받았어요!' : '🗣 도장까지 ' + Math.max(0, need - got) + unit + ' 남음 <span class="muted">(' + need + unit + '이면 +5 XP)</span>') + ' · 오늘 ' + (dayLog().shadow || 0) + '문장</div>' +
+        (quietNow() ? '<div class="muted">🤫 조용 모드: ①·②만 하고 ③은 「말하기 대기」에 넣어요</div>' : '') + '</div>';
+    if (!lines.length) return h + '<div class="empty-state" style="padding:20px">따라 할 줄이 없어요</div>';
+    return h + lines.map(x => {
+        const done = rec.k.includes(x.i), t = x.item;
+        return '<div class="sh-row' + (done ? ' done' : '') + '"><div class="sh-txt">' + (src === 'lesson' && t.name ? '<div class="b-name">' + esc(t.name) + '</div>' : '') +
+            '<div class="native">' + nesc(nativeText(t)) + '</div>' + romanLine(t) + pronLine(t.koPron, undefined, t) + '<div class="ko">' + esc(t.ko || '') + '</div></div>' +
+            '<button class="sh-go" data-shi="' + x.i + '" aria-label="' + esc((done ? '다시 ' : '') + '따라 하기: ' + (t.ko || nativeText(t))) + '">' + (done ? '<span class="sh-ok">✓</span>' : '') + '🗣</button></div>';
+    }).join('');
+}
+function bindShadowList(box, src, id) { box.querySelectorAll('[data-shi]').forEach(b => b.addEventListener('click', () => shadowOpen(src, id, Number(b.dataset.shi)))); }
+// 따라 하기 목록을 제자리에서 새로(✓ · 도장)
+function shadowListRefresh() {
+    const pl = S.pl, box = document.getElementById('plBody');
+    if (!pl || pl.mode !== 'shadow' || !box) return;
+    const t = $main.scrollTop;
+    box.innerHTML = shadowListHtml(pl.src, pl.id); bindShadowList(box, pl.src, pl.id);
+    $main.scrollTop = t;
+}
+// 시트 열기(문장 카드의 🗣 · 회화 말풍선 길게 누르기 · 한 줄씩 막대의 🗣) — S.shadow = {item, stage(1·2·3·'end'), …}
+function shadowOpen(src, id, i) {
+    const x = plLines(src, id).find(y => y.i === i);
+    if (!x) return;
+    if (S.pl && S.pl.run) { S.pl.run.stop(); S.pl.run = null; plBarShow(false); }
+    stopSpeak(); seqPlaying = false;
+    const st = S.shadow = { src, id, i, item: x.item, stage: 1, rep: store.settings.shadowX3 ? 3 : 1, tok: 0, star: 0, passed: false, done: false, quiet: quietNow(), playing: false };
+    shadowSheet(st);
+    setTimeout(() => { if (S.shadow === st && st.stage === 1 && !st.playing) shadowRun(st); }, 300);
+}
+function shadowSheet(st) {
+    const sh = openModal(shadowHtml(st), () => { if (S.shadow !== st) return; st.tok++; S.shadow = null; stopSpeak(); shadowListRefresh(); });
+    bindShadow(st, sh);
+}
+function shadowHtml(st) {
+    const x = st.item, end = st.stage === 'end';
+    let h = '<div class="sheet-head"><b>🗣 따라 하기</b><button class="sheet-close" data-close-overlay aria-label="닫기">✕</button></div>' +
+        '<ol class="sh-steps">' + SH_STEPS.map((s, k) => '<li class="' + (end || st.stage > k + 1 ? 'done' : st.stage === k + 1 ? 'on' : '') + '"' + (st.stage === k + 1 ? ' aria-current="step"' : '') + '><b>' + '①②③'[k] + '</b> ' + (k === 2 && st.quiet ? '집에서 말하기' : s[0]) + '</li>').join('') + '</ol>' +
+        '<div class="sh-line' + (st.stage === 2 ? ' hide' : '') + '"><div class="native">' + nesc(nativeText(x)) + '</div>' + romanLine(x) + pronLine(x.koPron, 0, x) + '<div class="ko">' + esc(x.ko || '') + '</div></div>';
+    if (end) return h + shadowEndHtml(st);
+    if (st.stage === 3) return h + '<div class="muted sh-tip">' + esc(SH_STEPS[2][1]) + '</div><button class="btn block tap" id="shSpeak">🎤 혼자 말해 보기</button><button class="btn block ghost tap" id="shAgain" style="margin-top:8px">🔁 처음부터 다시 듣기</button>';
+    return h + '<div class="muted sh-tip" role="status" id="shTip">' + esc(SH_STEPS[st.stage - 1][1]) + '</div>' +
+        '<div class="sh-act"><button class="btn tap" id="shPlay">' + (st.playing ? '⏸ 멈춤' : '▶ 다시 듣기') + '</button><button class="btn ghost tap" id="shNext">다음 단계 →</button>' +
+        '<button class="btn gray tap" id="shRep" aria-pressed="' + (st.rep === 3) + '" aria-label="세 번씩 듣기">🔁 ×3</button></div>';
+}
+function shadowEndHtml(st) {
+    const nx = plLines(st.src, st.id).find(y => y.i > st.i);
+    let h = '<div class="sh-end" role="status">';
+    if (st.done) h += '<div class="sh-big">' + (st.passed ? blankStars(st.star) : '🏠 말하기 대기에 넣었어요') + '</div><div>오늘 따라 하기 <b>' + (dayLog().shadow || 0) + '문장</b></div>' + (st.stamp ? '<div class="sh-stamp">🗣 도장 획득! +5 XP</div>' : '');
+    else h += '<div class="sh-big">🎤 아직 통과 전이에요</div><div class="muted">한 번 더 말해 보거나 다음 줄로 가요</div>';
+    return h + '</div><div class="sh-act">' + (!st.quiet && (!st.done || st.star < 3) ? '<button class="btn ghost tap" id="shRetry">🎤 다시 말해 보기</button>' : '') +
+        (nx ? '<button class="btn tap" id="shNextLine">다음 줄 이어서 →</button>' : '<button class="btn tap" id="shDone">끝</button>') + '</div>';
+}
+function shadowRedraw(st) {
+    const sh = document.querySelector('#modalRoot .sheet');
+    if (!sh || S.shadow !== st) return;
+    sh.innerHTML = shadowHtml(st); bindShadow(st, sh);
+}
+function bindShadow(st, sh) {
+    const on = (id, fn) => { const b = sh.querySelector('#' + id); if (b) b.addEventListener('click', fn); };
+    sh.querySelectorAll('[data-close-overlay]').forEach(b => b.addEventListener('click', () => closeModal(false, 'cancel')));
+    on('shPlay', () => { if (st.playing) { st.tok++; st.playing = false; stopSpeak(); shadowRedraw(st); } else shadowRun(st); });
+    on('shNext', () => { st.tok++; st.playing = false; stopSpeak(); shadowStage(st, st.stage + 1); });
+    on('shRep', e => { st.rep = st.rep === 3 ? 1 : 3; store.settings.shadowX3 = st.rep === 3; save(); e.currentTarget.setAttribute('aria-pressed', String(st.rep === 3)); });
+    on('shSpeak', () => shadowSpeak(st));
+    on('shAgain', () => { st.stage = 1; shadowRedraw(st); shadowRun(st); });
+    on('shRetry', () => shadowSpeak(st));
+    on('shNextLine', () => { const nx = plLines(st.src, st.id).find(y => y.i > st.i); if (nx) shadowOpen(st.src, st.id, nx.i); });
+    on('shDone', () => closeModal(false, 'done'));
+}
+// 지금 단계(①·②)를 rep번 들려준다 — 반복 사이·단계 사이 쉼 = 직전 클립 길이 × 1.2(그동안 따라 말한다). 끝나면 다음 단계로
+function shadowRun(st) {
+    if (S.shadow !== st || (st.stage !== 1 && st.stage !== 2)) return;
+    const my = ++st.tok, rate = st.stage === 1 ? 0.75 : 1, alive = () => S.shadow === st && st.tok === my;
+    st.playing = true; shadowRedraw(st);
+    let r = 0;
+    const tip = t => { const e = document.getElementById('shTip'); if (e) e.textContent = t; };
+    const one = () => {
+        if (!alive()) return;
+        tip('🔊 ' + (st.rep > 1 ? (r + 1) + '/' + st.rep + '번째 · ' : '') + (st.stage === 1 ? '천천히 — 글자를 보며 같이' : '보통 빠르기 — 안 보고 같이'));
+        playLine(st.item, { rate }).then(res => {
+            if (!alive()) return;
+            st.last = res.sec;
+            tip('🗣 지금 따라 말해요…');
+            setTimeout(() => {
+                if (!alive()) return;
+                if (++r < st.rep) { one(); return; }
+                st.playing = false;
+                shadowStage(st, st.stage + 1);
+            }, Math.round(Math.max(0.6, res.sec) * 1200));
+        });
+    };
+    one();
+}
+function shadowStage(st, n) {
+    if (S.shadow !== st) return;
+    st.stage = n;
+    if (n === 3 && st.quiet) { sayLaterAdd(st.item); shadowFinish(st, false); return; }   // 🤫 조용 모드: ③ 혼자 말하기는 집에서
+    shadowRedraw(st);
+    if (n === 2) shadowRun(st);
+}
+// ③ 혼자 말하기: openSpeak가 이 시트를 조용히 닫으므로, 말하기 창이 닫히면(onClose) 시트를 다시 열어 끝 화면으로
+function shadowSpeak(st) {
+    st.tok++; stopSpeak();
+    openSpeak({
+        item: st.item, mode: 'repeat', title: '🗣 따라 하기 마무리',
+        onPass: score => { st.passed = true; st.star = Math.max(st.star, score >= 90 ? 3 : score >= 80 ? 2 : 1); },
+        onClose: passed => { if (S.shadow !== st) return; setTimeout(() => { if (S.shadow === st && !document.getElementById('modalRoot').innerHTML) shadowFinish(st, !!passed); }, 60); },
+    });
+}
+// 끝: 처음 끝낸 줄만 보상(오늘 따라 하기 +1 · XP 감쇠 · ★3이면 +1 더 · 📒 스티커 · 줄 번호 · 도장)
+function shadowFinish(st, passed) {
+    st.stage = 'end';
+    if (!st.done && (passed || st.quiet)) {
+        st.done = true;
+        logActivity('shadow', 1);
+        softXp('shadow', st.star >= 3 ? 2 : 1, '🗣 따라 하기');
+        st.xp3 = st.star >= 3;
+        if (passed) dexAdd(st.item);
+        st.stamp = shadowMark(st);
+    } else if (st.done && passed && st.star >= 3 && !st.xp3) { st.xp3 = true; softXp('shadow', 1, '🗣 따라 하기 ★3'); }   // 다시 말해 ★3이 되면 +1만 더
+    shadowSheet(st);
+}
+function shadowMark(st) {
+    const p = prog(), rec = shadowRec(st.id), k = lineNums(rec.k.concat([st.i])), nrec = Object.assign({}, rec, { k });
+    const got = plLines(st.src, st.id).filter(x => k.includes(x.i)).length, stamp = !rec.d && got >= SHADOW_STAMP[st.src];
+    if (stamp) nrec.d = todayStr();
+    p.shadow = Object.assign({}, p.shadow, { [st.id]: nrec }); save();
+    if (stamp) { addXp(5, '🗣 따라 하기 도장', true); celebrate(); }
+    return stamp;
+}
+
+/* ── 📺 놀이 타일 ── */
+// 가장 최근 통과 레슨 3개의 회화(긴 대본은 묶음마다) → 읽은 이야기(앞·뒤 절반) 가운데 빈칸 별이 가장 낮은 것(같으면 앞 — 최근 레슨 먼저)
+function plPicks() {
+    const p = prog(), out = [];
+    let n = 0;
+    for (let i = ALL.length - 1; i >= 0 && n < 3; i--) {
+        if (!isDone(ALL[i].id)) continue;
+        const sets = blankSets('lesson', ALL[i].id);
+        if (!sets.length) continue;
+        n++;
+        sets.forEach(s => out.push({ src: 'lesson', id: ALL[i].id, idx: i, key: s.key, s: blankRec(s.key).s }));
+    }
+    STORIES.forEach((st, i) => { if ((p.storiesRead || {})[st.id] && storyUnlocked(st)) blankSets('story', st.id).forEach(s => out.push({ src: 'story', id: st.id, idx: i, key: s.key, s: blankRec(s.key).s })); });
+    return out;
+}
+function plPick() { let best = null; plPicks().forEach(x => { if (!best || x.s < best.s) best = x; }); return best; }
+function plTileOpen() {
+    const x = plPick();
+    if (!x) { showToast('대화가 있는 레슨을 통과하면 열려요'); return; }
+    plDrop();
+    S.pl = { src: x.src, id: x.id, mode: 'blank', from: 'play', line: false, bl: { key: x.key, lv: null, write: false } };
+    if (x.src === 'lesson') { openLesson(x.idx, 2); return; }
+    S.storyIdx = x.idx; S.story = { i: 0, showKo: {} };
+    go('storyRead');
+}
+registerPlayTile({
+    id: 'player', ico: '📺', name: '듣기 플레이어', ctx: ['move', 'short', 'home'], xpKind: 'blank',
+    need: () => plPicks().length > 0, lock: () => '대화가 있는 레슨을 통과하면 열려요',
+    status: () => { const dl = dayLog(); return dl.blankSong ? '오늘 빈칸 ' + dl.blankSong + '판' + (dl.shadow ? ' · 따라 하기 ' + dl.shadow + '문장' : '') : dl.shadow ? '오늘 따라 하기 ' + dl.shadow + '문장' : '빈칸 듣기 · 따라 하기'; },
+    open: plTileOpen,
+});
+
 /* ═══════════════════ 읽기 (쉬운 동화) ═══════════════════ */
 function storyUnlocked(story) { return store.settings.freeNav || effDone() >= storyNeed(story); }
 function STORIES_REQUIRED_COUNT(afterUnit) {
@@ -9846,12 +10663,12 @@ function renderStoryList() {
     STORIES.forEach((s, i) => {
         const need = storyNeed(s);
         const unlocked = store.settings.freeNav || effDone() >= need;
-        const readDone = prog().storiesRead && prog().storiesRead[s.id];
+        const readDone = prog().storiesRead && prog().storiesRead[s.id], stamp = !!(((prog().shadow || {})[s.id] || {}).d);
         h += '<div class="story-card' + (unlocked ? '' : ' locked') + '" data-story="' + i + '" role="button" tabindex="0">' +
             '<div class="st-emoji">' + esc(s.emoji || '📖') + '</div>' +
-            '<div style="flex:1;min-width:0"><div class="st-title">' + (readDone ? '✅ ' : '') + esc(s.title) + '</div>' +
+            '<div style="flex:1;min-width:0"><div class="st-title">' + (readDone ? '✅ ' : '') + esc(s.title) + (stamp ? ' <span aria-label="따라 하기 도장">🗣</span>' : '') + '</div>' +
             '<div class="st-desc">' + esc(unlocked ? (s.summary || '') : '🔒 레슨 ' + (need - effDone()) + '개만 더 하면 열려요') + '</div>' +
-            (unlocked ? '' : '<div class="lock-prog"><div style="width:' + Math.round(effDone() / need * 100) + '%"></div></div>') + '</div>' +
+            (unlocked ? storyFitHtml(s) : '<div class="lock-prog"><div style="width:' + Math.round(effDone() / need * 100) + '%"></div></div>') + '</div>' +   // 📺 아는 말 %(잠긴 이야기에는 없음)
             '<div class="st-lv">Lv.' + s.level + '</div></div>';
     });
     $main.innerHTML = h;
@@ -9860,47 +10677,75 @@ function renderStoryList() {
         const s = STORIES[i];
         const need = storyNeed(s);
         if (!(store.settings.freeNav || effDone() >= need)) { showToast('🔒 레슨 ' + (need - effDone()) + '개만 더 끝내면 열려요!', '', 2800); return; }
-        S.storyIdx = i; S.story = { i: 0, showKo: {} };
+        S.storyIdx = i; S.story = { i: 0, showKo: {} }; S.pl = null;
         go('storyRead');
     }));
 }
 function renderStoryRead() {
     const s = STORIES[S.storyIdx];
     const st = S.story;
-    let h = '<div class="lesson-top"><button class="back-btn" id="backBtn">←</button>' +
+    stopSpeak(); seqPlaying = false;
+    const pl = plCtx('story', s.id), tabs = plTabsOn();   // 📺 듣기 플레이어
+    if (!tabs || st.quiz) pl.mode = 'listen';
+    const fromPlay = plFromPlay();
+    let h = '<div class="lesson-top"><button class="back-btn" id="backBtn" aria-label="' + (fromPlay ? '놀이 탭으로' : '읽기 목록으로') + '">←</button>' +
         '<div><div class="lt-title">' + esc(s.emoji || '📖') + ' ' + esc(s.title) + '</div>' +
         '<div class="lt-sub">' + esc(s.titleNative || '') + ' · Lv.' + s.level + '</div></div></div>';
-    if (s.newWords && s.newWords.length) {
-        h += '<div class="tip-box"><b>📌 새로 나오는 단어</b><br>' +
-            s.newWords.map(w => esc(nativeText(w)) + (w.koPron ? '[' + esc(w.koPron) + ']' : '') + '=' + esc(w.ko)).join(' · ') + '</div>';
+    if (tabs) h += plTabsHtml(pl.mode);
+    const back = () => { if (!plLeaveOk()) return; const fp = plFromPlay(); S.story = null; go(fp ? 'play' : 'story'); };
+    if (pl.mode !== 'listen') {
+        $main.innerHTML = h + '<div id="plBody"></div>';
+        document.getElementById('backBtn').addEventListener('click', back);
+        bindPlTabs(); plModeBody('story', s.id);
+        return;
     }
-    h += '<div style="display:flex;gap:8px;margin:10px 0 14px">' +
-        '<button class="btn small ghost" id="playAll">🔊 전체 듣기</button>' +
-        '<button class="btn small gray" id="stopAll">⏹ 정지</button></div>';
+    if (s.newWords && s.newWords.length) h += newWordsHtml(s);   // 📌 칩: ▶ 듣기 · ➕ 복습 카드
+    const subs = subsNow(), CJK = !!CHAR_LANGS[CUR.code];
+    h += subsTipHtml() + subsRowHtml(subs) +
+        '<div class="st-ctl"><button class="btn small ghost" id="playAll">🔊 전체 듣기</button>' +
+        '<button class="btn small gray" id="lineMode" aria-pressed="' + !!pl.line + '">⏯ 한 줄씩</button>' +
+        '<button class="btn small gray" id="stopAll">⏹ 정지</button></div><div id="stBody" class="st-body' + subsCls(subs) + '">';
     (s.sentences || []).forEach((sent, i) => {
-        const shown = !!st.showKo[i];
+        const shown = !!st.showKo[i], n = nativeText(sent);
         const mic = dexOpen();   // 📒 말하기 통과 → 문장 스티커(🎤는 뜻 보기 카드 밖 — 버튼 안의 버튼은 스크린리더가 읽지 못한다)
         h += (mic ? '<div class="story-line"><button class="play-btn mic-btn story-mic" data-mic-st="' + i + '" title="따라 말하기" aria-label="따라 말하기">🎤</button>' : '') +
-            '<div class="story-sent' + (mic ? ' has-mic' : '') + '" data-sent="' + i + '" role="button" tabindex="0">' +
-            '<div class="native">' + nesc(nativeText(sent)) + '</div>' +
+            '<div class="story-sent' + (mic ? ' has-mic' : '') + (shown ? ' ko-open' : '') + (Array.from(n).length > (CJK ? 34 : 90) ? ' long' : '') + '" data-sent="' + i + '" role="button" tabindex="0">' +   // 긴 문장은 글씨를 조금 작게
+            '<div class="native">' + nesc(n) + '</div>' +
             romanLine(sent) + pronLine(sent.koPron, undefined, sent) +
-            (shown ? '<div class="ko" style="margin-top:6px">' + esc(sent.ko) + '</div>' : '<div class="muted" style="margin-top:6px">👆 문장을 눌러 뜻을 확인하세요</div>') +
+            '<div class="ko">' + esc(sent.ko) + '</div><div class="muted st-hint">👆 문장을 눌러 뜻을 확인하세요</div>' +   // 뜻을 가렸을 때(자막에 '뜻'이 없음)는 눌러야 보인다
             '</div>' + (mic ? '</div>' : '');
     });
+    h += '</div>';
     if (s.moral) {
         h += '<div class="culture-box"><b>💡 교훈</b><br><span class="native">' + nesc(nativeText(s.moral)) + '</span><br>' + esc(s.moral.ko || '') + '</div>';
     }
-    h += '<button class="btn block" id="storyQuizBtn" style="margin-top:6px">이해도 퀴즈 풀기 →</button>';
+    h += '<button class="btn block" id="storyQuizBtn" style="margin-top:6px">이해도 퀴즈 풀기 →</button>' + plBarHtml();
     $main.innerHTML = h;
-    document.getElementById('backBtn').addEventListener('click', () => { S.story = null; go('story'); });
-    document.getElementById('playAll').addEventListener('click', () => speakSeq((s.sentences || []).map(nativeText)));
-    document.getElementById('stopAll').addEventListener('click', () => { seqPlaying = false; stopSpeak(); });
+    document.getElementById('backBtn').addEventListener('click', back);
+    if (tabs) bindPlTabs();
+    bindNewWords(s); bindSubs('stBody'); bindSubsTip('stBody'); bindPlBar();
+    // 🔊 전체 듣기: 노래방처럼 지금 문장을 강조하고 가운데로(지난 문장은 흐리게) · ⏯ 한 줄씩이면 문장마다 멈춤
+    const sents = () => Array.from($main.querySelectorAll('.story-sent'));
+    const unmark = () => sents().forEach(e => e.classList.remove('playing', 'past'));
+    const playStory = () => plRun((s.sentences || []).map((x, k) => ({ text: nativeText(x), k })), k => {
+        sents().forEach((e, j) => { e.classList.toggle('playing', j === k); e.classList.toggle('past', j < k); });
+        const el = sents()[k];
+        if (el) el.scrollIntoView({ block: 'center', behavior: reducedMotion() ? 'auto' : 'smooth' });
+    }, unmark);
+    document.getElementById('playAll').addEventListener('click', playStory);
+    document.getElementById('lineMode').addEventListener('click', e => {
+        pl.line = !pl.line; e.currentTarget.setAttribute('aria-pressed', String(pl.line));
+        plStop(); unmark();
+        if (pl.line) { playStory(); showToast('⏯ 한 문장 듣고 멈춰요 — 아래 막대나 빈 곳 왼쪽·가운데·오른쪽을 눌러요', '', 3200); }
+    });
+    document.getElementById('stopAll').addEventListener('click', () => { plStop(); unmark(); });
     $main.querySelectorAll('[data-mic-st]').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); const x = (s.sentences || [])[Number(b.dataset.micSt)]; if (x) speakAndDex({ item: x }); }));
     $main.querySelectorAll('.story-sent').forEach(el => el.addEventListener('click', () => {
         const i = parseInt(el.dataset.sent, 10);
+        st.showKo[i] = true; el.classList.add('ko-open');   // 제자리에서(노래방 재생을 끊지 않게)
+        subsPeek(el, document.getElementById('stBody'));
+        if (plJump(i)) return;   // ⏯ 한 줄씩 듣는 중: 그 문장으로
         speak(nativeText(s.sentences[i]), 0.92);
-        st.showKo[i] = true;
-        renderStoryRead();
     }));
     document.getElementById('storyQuizBtn').addEventListener('click', () => { st.quiz = { i: 0, score: 0, answered: false }; renderStoryQuiz(); });
     if (st.quiz) renderStoryQuiz();
@@ -11317,9 +12162,10 @@ function handleBack() {
     if (root && root.innerHTML) { closeModal(false, 'cancel'); return true; }
     if (S.view === 'lesson') {
         if (S.quiz && S.step === 4 && S.quiz.i > 0 && !confirm('퀴즈를 그만할까요? 푼 문제는 저장되지 않아요.')) return true;
-        S.quiz = null; go('home'); return true;
+        if (!plLeaveOk()) return true;   // 📺 빈칸 듣기 판 도중
+        S.quiz = null; go(plFromPlay() ? 'play' : 'home'); return true;
     }
-    if (S.view === 'storyRead') { S.story = null; go('story'); return true; }
+    if (S.view === 'storyRead') { if (!plLeaveOk()) return true; const fp = plFromPlay(); S.story = null; go(fp ? 'play' : 'story'); return true; }
     if (S.view === 'skipTest') { S.skip = null; S.quiz = null; go('home'); return true; }
     if (S.view === 'review' && (S.redo || S.match || S.review)) { S.redo = null; S.match = null; S.review = null; S.quiz = null; go('review'); return true; }
     if (S.view === 'trainer' && S.trainer) { S.trainer = null; go('trainer'); return true; }
