@@ -1109,6 +1109,7 @@
         .subs-k0 .ko-open .ko { display: block; }
         .story-sent .st-hint { display: none; margin-top: 6px; }
         .subs-k0 .story-sent:not(.ko-open) .st-hint { display: block; }
+        .subs-o0.subs-k0 .story-sent .st-hint, .subs-o0.subs-k0 .ko-open .ko { display: none; }   /* 🙈 소리만: 누르면 원문만 잠깐(뜻은 안 열림) — 안내도, 전에 열어 둔 뜻도 숨긴다 */
         .story-sent > .ko { margin-top: 6px; }
         .subs-set:not(.subs-r0) .pron.fade { filter: none; cursor: default; }
         .story-sent.playing { box-shadow: 0 0 0 3px var(--gold); }
@@ -1163,7 +1164,7 @@
         .bl-slot.bad { color: var(--error); border-bottom-color: var(--error); font-weight: 700; }
         .bl-slot.bad s { color: #94a3b8; font-weight: 400; }
         .bl-fb { min-height: 20px; font-size: 13px; font-weight: 700; margin: 2px 0 4px; }
-        .bl-ctl { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+        .bl-ctl { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 6px; }
         .bl-ctl .muted { font-size: 12px; }
         .bl-dock { position: sticky; bottom: 0; z-index: 4; background: var(--bg); padding: 8px 0 2px; }
         .bl-wait { font-size: 12px; text-align: center; margin-bottom: 6px; }
@@ -5125,10 +5126,12 @@ function renderStep() {
         const turns = d.turns || [];
         const hasMe = turns.some(t => t.speaker === 'A');
         const mis = missionsOf(l);   // 🗺️ 미션(1단계부터) — 0단계(발음) 레슨은 예전 역할극 그대로
-        const firstVisit = !(((prog().steps || {})[l.id] || {})[2]) && !isDone(l.id) && turns.length > 0;
+        // 📺 듣기 플레이어 상태(화면마다 하나) — 먼저 듣기를 끝낸 화면(lfDone)·상황 퀴즈에 답한 레슨(lf)은 다시 그려도 첫 방문이 아니다
+        const pl = plCtx('lesson', l.id);
+        const firstVisit = !(((prog().steps || {})[l.id] || {})[2]) && !isDone(l.id) && !(prog().lf || {})[l.id] && !pl.lfDone && turns.length > 0;
         const asItem = t => ({ text: nativeText(t), speaker: t.speaker, part: t.part });
-        // 📺 듣기 플레이어: 모드 탭은 첫 방문의 먼저 듣기(상황 퀴즈)가 끝난 뒤에 — 빈칸·따라 하기 모드면 그 본문만
-        const pl = plCtx('lesson', l.id), tabs = plTabsOn() && !firstVisit;
+        // 모드 탭은 첫 방문의 먼저 듣기(상황 퀴즈)가 끝난 뒤에 — 빈칸·따라 하기 모드면 그 본문만
+        const tabs = plTabsOn() && !firstVisit;
         if (!tabs) pl.mode = 'listen';
         if (pl.mode !== 'listen') { body.innerHTML = plTabsHtml(pl.mode) + '<div id="plBody"></div>'; bindPlTabs(); plModeBody('lesson', l.id); return; }
         const subs = subsNow();
@@ -5179,7 +5182,7 @@ function renderStep() {
         if (tabs) bindPlTabs();
         const turnEl = i => body.querySelector('[data-turn="' + i + '"]');
         const openSecOf = el => { const sc = el && el.closest('.dlg-sec'); if (sc && sc.classList.contains('closed')) { sc.classList.remove('closed'); const tg = sc.querySelector('[data-sec-toggle]'); if (tg) { tg.setAttribute('aria-expanded', 'true'); const ch = tg.querySelector('.dp-chev'); if (ch) ch.textContent = '▾'; } } };
-        const hilite = i => { const el = turnEl(i); if (el) { openSecOf(el); el.classList.add('playing'); el.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } };
+        const hilite = (i, mid) => { const el = turnEl(i); if (el) { openSecOf(el); el.classList.add('playing'); el.scrollIntoView({ block: mid ? 'center' : 'nearest', behavior: reducedMotion() ? 'auto' : 'smooth' }); } };   // mid: ⏯ 한 줄씩 — 아래 막대(#plBar)에 가리지 않게 가운데로
         const markHeard = k => { const p = prog(); if (!p.heard) p.heard = {}; const a = p.heard[l.id] || (p.heard[l.id] = []); if (!a.includes(k)) { a.push(k); save(); } const tg = body.querySelector('[data-sec-toggle="' + k + '"]'); if (tg) tg.classList.add('heard'); };
         body.querySelectorAll('[data-sec-toggle]').forEach(b => b.addEventListener('click', e => {
             if (e.target.closest('[data-sec-play]')) return;
@@ -5195,6 +5198,7 @@ function renderStep() {
         }));
         const lf = document.getElementById('listenFirst');
         const revealScript = () => {
+            pl.lfDone = true;   // 모드를 바꿔 다시 그려도 먼저 듣기로 되돌아가지 않게
             const sb = document.getElementById('dlgSit'); if (sb) { sb.classList.remove('sit-hidden'); sb.textContent = '🎬 ' + d.situation; }
             // '모두 공개'가 아니라 고른 자막대로 — 다만 원문까지 가린 자막(🙈 소리만)이면 확인하라고 한 이 화면만 원문·뜻을 연다(소리가 안 나는 기기에서도 읽을 수 있게)
             const v = subsNow(), shown = v.includes('o') ? v : 'o' + (v.includes('r') ? 'r' : '') + 'k';
@@ -5240,7 +5244,7 @@ function renderStep() {
             } else { revealScript(); at.remove(); showToast('👀 이제 대본을 보며 맞게 들었는지 확인해 보세요!', '', 3000); }
         }
         const heardAll = () => { body.querySelectorAll('[data-sec-toggle]').forEach(tg => markHeard(parseInt(tg.dataset.secToggle, 10))); };
-        const playLines = () => plRun(turns.map((t, k) => Object.assign(asItem(t), { k })), k => { clearPlaying(); hilite(k); }, ok => { clearPlaying(); if (ok) heardAll(); });   // ⏯ 한 줄씩: 줄마다 멈춤
+        const playLines = () => plRun(turns.map((t, k) => Object.assign(asItem(t), { k })), k => { clearPlaying(); hilite(k, true); }, ok => { clearPlaying(); if (ok) heardAll(); });   // ⏯ 한 줄씩: 줄마다 멈춤
         document.getElementById('playAll').addEventListener('click', () => { if (pl.line) { playLines(); return; } if (pl.run) { pl.run.stop(); pl.run = null; plBarShow(false); } speakSeq(turns.map(asItem), heardAll, (x, i) => hilite(i)); });
         document.getElementById('lineMode').addEventListener('click', e => {
             pl.line = !pl.line; e.currentTarget.setAttribute('aria-pressed', String(pl.line));
@@ -6733,10 +6737,11 @@ const PERSON_NATIVE = {
     es: ['Sujin', 'Carlos', 'Lucía', 'María'],
     fr: ['Sujin', 'Lucas', 'Emma'],
 };
-// 이야기 인물·땅 이름(📌 새 단어에 없는 것) — 아는 말 %에서 세지 않는다. 라틴 문자는 대문자 그대로일 때만(rojo·clara 같은 낱말과 헷갈리지 않게)
+// 이야기 인물·땅 이름 — 아는 말 %에서 세지 않고 빈칸으로 내지 않는다(📌 새 단어에 있어도 — 이름 빈칸은 너무 쉽다). 라틴 문자는 대문자 그대로일 때만(rojo·clara 같은 낱말과 헷갈리지 않게)
 const STORY_NAMES = {
     zh: ['帕科', '不来梅', '雷克斯', '汤姆', '罗霍', '克拉拉', '索菲亚', '灰姑娘'],
-    en: ['Bremen'],
+    ja: ['シンデレラ', 'ブレーメン'],
+    en: ['Little Red Riding Hood', 'Cinderella', 'Bremen'],
     es: ['Caperucita Roja', 'Paco', 'Bremen', 'Rex', 'Tom', 'Rojo', 'Clara', 'Sofía', 'Cenicienta'],
     fr: ['Brême', 'Cendrillon'],
 };
@@ -6774,7 +6779,7 @@ function playIndex() {
         if (st.moral) add(st.moral, 'story', st.id, 'moral', st.unlockAfter, li);
     });
     SENT_INDEX = sent; ARR_TOKENS = arr;
-    Object.assign(PLAYIDX, { code: CUR.code, data: DATA, stories: STORIES, sent, arr, known: {}, words: {}, phr: {}, puz: {}, puzSent: null, puzPy: null, puzProper: null, feedGrp: null, mis: null, dex: null, dexCk: '', bossK: null, kp: null, blk: null, blkR: null });   // puz*: 퍼즐 후보·문장·병음 · feedGrp: 피드 같은 뜻 묶음 · mis: 레슨별 미션 · dex: 스티커북 앨범 · kp: 이야기 아는 말 % · blk·blkR: 빈칸 보기 낱말·로마자(언어가 바뀌면 새로)
+    Object.assign(PLAYIDX, { code: CUR.code, data: DATA, stories: STORIES, sent, arr, known: {}, words: {}, phr: {}, puz: {}, puzSent: null, puzPy: null, puzProper: null, feedGrp: null, mis: null, dex: null, dexCk: '', bossK: null, kp: null, blk: null, blkR: null, blHas: null, ksPlus: null });   // puz*: 퍼즐 후보·문장·병음 · feedGrp: 피드 같은 뜻 묶음 · mis: 레슨별 미션 · dex: 스티커북 앨범 · kp: 이야기 아는 말 % · blk·blkR: 빈칸 보기 낱말·로마자 · blHas: 빈칸 있는 판 · ksPlus: 새 단어를 더한 조각 사전(언어가 바뀌면 새로)
     return PLAYIDX;
 }
 // 비교용 키: 소문자, en·es·fr는 악센트를 떼고, 앞뒤 문장부호를 뗀다
@@ -10104,6 +10109,7 @@ function bindPlBar() {
     const on = (id, fn) => { const b = document.getElementById(id); if (b) b.addEventListener('click', () => { const r = S.pl && S.pl.run; if (r) fn(r); }); };
     on('plPrev', r => r.prev()); on('plAgain', r => r.again()); on('plNext', r => r.next());
     on('plShadow', r => {
+        if (!document.getElementById('plModes')) { showToast('👂 먼저 듣기를 끝내면 따라 할 수 있어요'); return; }   // 회화 첫 방문(대본 가림) — 말풍선 길게 누르기와 같은 규칙
         const pl = S.pl, k = pl.map ? pl.map[r.idx()] : r.idx();
         if (!plLines(pl.src, pl.id).some(x => x.i === k)) { showToast('해설 줄은 따라 하기가 없어요'); return; }
         shadowOpen(pl.src, pl.id, k);
@@ -10190,10 +10196,15 @@ function knownCount(text, upToIdx, extra, vocab) {
 }
 function knownPct(text, upToIdx, extra, vocab) { const c = knownCount(text, upToIdx, extra, vocab); return c.all ? Math.round(c.hit / c.all * 100) : 100; }
 function plKnownIdx() { let k = -1; ALL.forEach((l, i) => { if (isDone(l.id)) k = i; }); return Math.max(k, placeIdx() - 1); }   // 지금까지 배운 레슨 위치
-// 배운 말(레슨 위치 lim까지): zh·ja = 조각 사전의 아는 말(낱말 + 배열 조각 + 기능어 — knownSet) · en·es·fr = 배운 레슨의 낱말·핵심 문장·대사·문법 예문에 나온 낱말 + 기능어
+// 배운 말(레슨 위치 lim까지): zh·ja = 조각 사전의 아는 말(낱말 + 배열 조각 + 기능어 — knownSet) + 배운 레슨 핵심 문장·대사의 조각(zh는 글자 하나씩 — 漂亮·对·天처럼 대사에 나온 말)
+// en·es·fr = 배운 레슨의 낱말·핵심 문장·대사·문법 예문에 나온 낱말 + 기능어 — 언어마다 '배운 문장에 나온 말은 안다'는 같은 기준
 function knownVocab(lim) {
     const code = CUR.code;
-    if (CHAR_LANGS[code]) return { list: Array.from(knownSet(lim).set) };
+    if (CHAR_LANGS[code]) {
+        const set = new Set(knownSet(lim).set);
+        ALL.forEach((l, li) => { if (li <= lim) (l.keySentences || []).concat((l.dialogue && l.dialogue.turns) || []).forEach(x => tokensOf(code, nativeText(x), lim).forEach(w => code === 'zh' ? Array.from(w).forEach(c => set.add(c)) : set.add(w))); });
+        return { list: Array.from(set) };
+    }
     const set = new Set(), re = /[\p{L}\p{M}\p{N}]+(?:['’][\p{L}\p{M}\p{N}]+)*/gu, add = t => (String(t || '').match(re) || []).forEach(w => set.add(normKey(code, w)));
     ALL.forEach((l, li) => {
         if (li > lim) return;
@@ -10219,8 +10230,9 @@ function storyKnownPct(st) {
     }
     return ix.kp.m.get(st.id);
 }
+// 첫 이야기는 발음 단계만 마치면 열려 아는 말이 적다 — '💪 도전' 대신 '🌱 첫 이야기'(📌 새 단어를 보며 읽는다)
 function storyFitHtml(st) {
-    const pct = storyKnownPct(st), x = pct >= 98 ? ['easy', '😌 쉬워요'] : pct >= 85 ? ['fit', '👍 지금 딱 좋아요'] : ['hard', '💪 도전'];
+    const pct = storyKnownPct(st), x = pct >= 98 ? ['easy', '😌 쉬워요'] : pct >= 85 ? ['fit', '👍 지금 딱 좋아요'] : st === STORIES[0] ? ['fit', '🌱 첫 이야기'] : ['hard', '💪 도전'];
     return '<div class="st-fit ' + x[0] + '">' + x[1] + ' <small>아는 말(대략) ' + pct + '%</small></div>';
 }
 
@@ -10248,7 +10260,8 @@ function blankPick(set, line, lv) {
     const code = CUR.code, text = nativeText(line.item);
     if (lv === 2) return [{ s: 0, e: text.length, ans: text, w: text, full: true }];
     const fw = new Set((FUNC_WORDS[code] || []).map(w => normKey(code, w)));
-    const sp = knownSpans(text, set.li, set.extra).filter(x => !fw.has(normKey(code, x.w)) && normKey(code, text.slice(x.s, x.e)) && !(code === 'ja' && x.e - x.s <= 2 && JA_TAIL.test(text.slice(x.e))));
+    const nr = storyNameRanges(code, text);   // 이야기 인물·땅 이름(シンデレラ·Cinderella …)은 빈칸 아님
+    const sp = knownSpans(text, set.li, set.extra).filter(x => !fw.has(normKey(code, x.w)) && normKey(code, text.slice(x.s, x.e)) && !nr.some(([s, e]) => x.s < e && x.e > s) && !(code === 'ja' && x.e - x.s <= 2 && JA_TAIL.test(text.slice(x.e))));
     if (!sp.length) return [];
     const n = lv === 1 && sp.length >= 2 && tokensOf(code, text, set.li).length > 3 ? 2 : 1;   // 🌿 두 칸(짧은 줄은 한 칸)
     return seededShuffle(sp, hashStr(set.key + line.i + lv)).slice(0, n).sort((a, b) => a.s - b.s).map(x => ({ s: x.s, e: x.e, ans: text.slice(x.s, x.e), w: x.w }));
@@ -10262,7 +10275,8 @@ function blankWords(unit) {
     if (!ix.blk) ix.blk = {};
     if (ix.blk[unit]) return ix.blk[unit];
     const code = CUR.code, seen = new Set(), out = [], bad = new Set((FUNC_WORDS[code] || []).concat(PERSON_NATIVE[code] || []).map(w => normKey(code, w)));
-    ALL.forEach(l => { if (unit === 'all' || l.unitId === unit) (l.words || []).forEach(w => wordForms(nativeText(w)).forEach(f => { const k = normKey(code, f); if (k && !seen.has(k) && !bad.has(k)) { seen.add(k); out.push({ t: f, k, r: romanText(w) }); } })); });
+    // 'Mr.'·'a.m.' 같은 줄임말은 끝 '.'가 떨어져 'Mr'·'P.m'처럼 깨져 보이니 보기에서 뺀다
+    ALL.forEach(l => { if (unit === 'all' || l.unitId === unit) (l.words || []).forEach(w => /^[\p{L}.]{1,4}\.$/u.test(nativeText(w).trim()) ? 0 : wordForms(nativeText(w)).forEach(f => { const k = normKey(code, f); if (k && !seen.has(k) && !bad.has(k)) { seen.add(k); out.push({ t: f, k, r: romanText(w) }); } })); });
     return (ix.blk[unit] = out);
 }
 function blankRoman(w) {
@@ -10284,17 +10298,21 @@ function blankChoices(set, line, b, j) {
     const cap = /^\p{Lu}/u.test(b.ans) ? s => s.charAt(0).toUpperCase() + s.slice(1) : s => s;   // 문장 첫 낱말이면 보기도 대문자로(대문자만 보고 고르지 않게)
     return seededShuffle([{ t: b.ans, ok: true, r: blankRoman(b.w) }].concat(out.map(x => ({ t: cap(x.t), ok: false, r: x.r }))), seed + 7);
 }
-// 쓰기 비교: 소문자 · 악센트 · 문장부호를 빼고 같으면 정답. 악센트만 다르면 정답 + '✏️ 악센트: é'
-function blankFlat(s, keepAcc) {
-    let t = String(s == null ? '' : s).normalize('NFC').toLowerCase().replace(/’/g, "'");
+// 쓰기 비교: 소문자 · 악센트 · 아포스트로피 · 문장부호를 빼고 같으면 정답('Im'·'l heure'도). 악센트·아포스트로피만 다르면 정답 + '✏️ 악센트: é' · "✏️ 아포스트로피: I'm"
+// apos: 아포스트로피를 바꿀 글자(''·' ' — 없으면 그대로 둔다)
+function blankFlat(s, keepAcc, apos) {
+    let t = String(s == null ? '' : s).normalize('NFC').toLowerCase().replace(/[’‘]/g, "'");
     if (!keepAcc) t = stripAccents(t);
+    if (apos != null) t = t.replace(/'/g, apos);
     return t.replace(/[^\p{L}\p{M}\p{N}' ]+/gu, ' ').replace(/\s+/g, ' ').trim();
 }
 function blankCheck(input, ans) {
-    if (!blankFlat(input) || blankFlat(input) !== blankFlat(ans)) return { ok: false, accent: '' };
-    if (blankFlat(input, true) === blankFlat(ans, true)) return { ok: true, accent: '' };
-    const acc = Array.from(new Set(Array.from(String(ans).normalize('NFC').toLowerCase()).filter(c => /\p{L}/u.test(c) && stripAccents(c) !== c))).join(' ');   // 악센트가 붙은 글자
-    return { ok: true, accent: acc };
+    const a = blankFlat(input, false, '');
+    if (!a || (a !== blankFlat(ans, false, '') && blankFlat(input, false, ' ') !== blankFlat(ans, false, ' '))) return { ok: false, accent: '', apos: '' };   // 한국어 휴대폰 자판은 '를 치려면 기호판으로 바꿔야 한다
+    const sq = (x, acc) => blankFlat(x, acc, '').replace(/ /g, '');
+    const acc = sq(input, true) === sq(ans, true) ? '' : Array.from(new Set(Array.from(String(ans).normalize('NFC').toLowerCase()).filter(c => /\p{L}/u.test(c) && stripAccents(c) !== c))).join(' ');   // 악센트가 붙은 글자
+    const apos = blankFlat(input) === blankFlat(ans) ? '' : Array.from(new Set(String(ans).match(/[\p{L}\p{M}\p{N}]*['’][\p{L}\p{M}\p{N}]+/gu) || [])).slice(0, 3).join(' ');   // 아포스트로피가 든 낱말
+    return { ok: true, accent: acc, apos };
 }
 function blankNew(set, lv, write) {
     const lines = set.lines.map(x => ({ item: x.item, i: x.i, bl: blankPick(set, x, lv).map(b => Object.assign(b, { got: null, pick: '' })), re: false, done: false }));
@@ -10334,7 +10352,7 @@ function blankAnswer(st, r, pick) {
         st.score += pts + bonus; st.ok++; st.log.push({ pts, bonus, ok: true });
         if (feverTick(st, true)) feverFx();
         st.maxCombo = Math.max(st.maxCombo, st.combo);
-        st.fb = '⭕ +' + pts + (bonus ? ' · 한 번에! +' + bonus : '') + (r.accent ? ' · ✏️ 악센트: ' + r.accent : '');
+        st.fb = '⭕ +' + pts + (bonus ? ' · 한 번에! +' + bonus : '') + (r.accent ? ' · ✏️ 악센트: ' + r.accent : '') + (r.apos ? ' · ✏️ 아포스트로피: ' + r.apos : '');
         sfx('ok');
     } else {
         st.log.push({ pts: 0, bonus: 0, ok: false }); feverTick(st, false);
@@ -10380,13 +10398,14 @@ function blankDockHtml(st) {
 }
 // 칩·입력칸만 다시(끝까지 들은 뒤 켜기)
 function blankDock(st) {
-    const d = document.getElementById('blDock');
+    const d = document.getElementById('blPick');
     if (!d || S.blank !== st) return;
     const kb = $main.contains(document.activeElement);
     d.innerHTML = blankDockHtml(st); bindBlankDock(st);
     const f = st.ready && (st.write ? document.getElementById('blIn') : kb && d.querySelector('[data-bc]'));
     if (f) f.focus({ preventScroll: true });
     blankKb();
+    blankSee(false);   // 칩·입력칸이 켜지며 독 높이가 바뀌었을 수 있다
 }
 function bindBlankDock(st) {
     const ln = st.lines[st.k], b = ln && ln.bl[st.j];
@@ -10402,9 +10421,11 @@ function bindBlankDock(st) {
 function blankKb() {
     const d = document.getElementById('blDock'), vv = window.visualViewport;
     if (!d || !vv) return;
-    d.style.transform = '';
+    const up0 = d._up || 0;
+    d.style.transform = ''; d._up = 0;
     const over = d.getBoundingClientRect().bottom - (vv.offsetTop + vv.height);
-    if (over > 1 && document.activeElement && document.activeElement.id === 'blIn') d.style.transform = 'translateY(' + (-Math.ceil(over)) + 'px)';
+    if (over > 1 && document.activeElement && document.activeElement.id === 'blIn') { d._up = Math.ceil(over); d.style.transform = 'translateY(' + (-d._up) + 'px)'; }
+    if (d._up !== up0) blankSee(false);   // 키보드 위로 올린 독이 지금 줄을 덮지 않게
 }
 if (window.visualViewport) { visualViewport.addEventListener('resize', blankKb); visualViewport.addEventListener('scroll', blankKb); }
 function blankDraw(st) {
@@ -10417,17 +10438,23 @@ function blankDraw(st) {
         (st.combo >= 2 ? '<span class="bl-combo">🔥 ' + st.combo + '연속</span>' : '') + (st.fever > 0 ? '<span class="bl-combo">💥 피버</span>' : '') +
         '<button class="btn small gray tap" id="blQuit">그만</button></div>' +
         '<div class="bl-lines">' + past.map(x => blankLineHtml(st, x, false)).join('') + (ln ? blankLineHtml(st, ln, true) : '') + '</div>' +
-        '<div class="bl-fb" role="status" id="blFb">' + esc(st.fb) + '</div>' +
-        '<div class="bl-ctl"><button class="btn small ghost tap" id="blAgain">🔁 다시 듣기</button><button class="btn small ghost tap" id="blSlow">🐢 천천히</button><span class="muted" id="blStat" role="status"></span></div>' +
-        '<div class="bl-dock" id="blDock">' + blankDockHtml(st) + '</div></div>';
+        '<div class="bl-fb" role="status" id="blFb">' + esc(st.fb) + '</div>' +   // 🔁·🐢는 아래 독 안(칩·입력칸 위) — 스크롤하지 않아도 늘 보이게
+        '<div class="bl-dock" id="blDock"><div class="bl-ctl"><button class="btn small ghost tap" id="blAgain">🔁 다시 듣기</button><button class="btn small ghost tap" id="blSlow">🐢 천천히</button><span class="muted" id="blStat" role="status"></span></div>' +
+        '<div id="blPick">' + blankDockHtml(st) + '</div></div></div>';
     const q = id => document.getElementById(id);
     q('blQuit').addEventListener('click', () => { if (!plLeaveOk()) return; plDrop(); stopSpeak(); plModeBody(st.set.src, st.set.id); });
     q('blAgain').addEventListener('click', () => blankPlay(st, 0.92, true));
     q('blSlow').addEventListener('click', () => blankPlay(st, 0.75, true));
     bindBlankDock(st);
-    const cur = box.querySelector('.bl-line.cur');
-    if (cur) cur.scrollIntoView({ block: 'nearest', behavior: reducedMotion() ? 'auto' : 'smooth' });
+    blankSee(true);
     if (st.ready && st.write) { const i = q('blIn'); if (i) i.focus({ preventScroll: true }); }
+}
+// 지금 줄이 아래 독(🔁·🐢·칩·입력칸)에 가리지 않게 — 독 높이(+ 키보드로 올린 만큼 + 본문 아래 여백)를 띄우고 보이게 스크롤
+function blankSee(smooth) {
+    const cur = $main.querySelector('.bl-line.cur'), d = document.getElementById('blDock');
+    if (!cur || !d) return;
+    cur.style.scrollMarginBottom = Math.ceil(d.offsetHeight + (d._up || 0) + (parseFloat(getComputedStyle($main).paddingBottom) || 0) + 8) + 'px';
+    cur.scrollIntoView({ block: 'nearest', behavior: smooth && !reducedMotion() ? 'smooth' : 'auto' });
 }
 // 판 끝: 별(정확도 90% ★3 · 75% ★2 · 끝까지 ★1) · 기록 · 보상(XP 감쇠 · 첫 ★3 +5) · 틀린 줄은 복습 카드 · 다 맞힌 줄은 스티커
 // 빈칸이 하나도 없던 판(듣기만 함)은 별·XP·기록·퀘스트 없이 끝낸다
@@ -10486,7 +10513,7 @@ function blankStartHtml(src, id) {
     h += '<div class="bl-lbl">단계</div><div class="bl-seg" role="group" aria-label="단계">' + BLANK_LV.slice(0, maxLv + 1).map(([ico, t], i) => '<button data-bllv="' + i + '" aria-pressed="' + (ui.lv === i) + '">' + ico + ' ' + t + '</button>').join('') + '</div>';
     if (canW && ui.lv < 2) h += '<div class="bl-lbl">방식</div><div class="bl-seg" role="group" aria-label="방식"><button data-blw="0" aria-pressed="' + !write + '">👆 고르기</button><button data-blw="1" aria-pressed="' + write + '">⌨️ 쓰기 (점수 ×2)</button></div>';
     if (rec.s >= 3 && sug > rec.lv) h += '<div class="bl-sug">★3을 받았어요! 다음 단계 ' + BLANK_LV[sug][0] + ' ' + BLANK_LV[sug][1] + '에 도전해 봐요</div>';
-    const tip = !write ? '' : ACCENT_LANGS[CUR.code] ? ' · 악센트는 틀려도 정답이에요' : ' · 대소문자·문장부호는 신경 쓰지 않아도 돼요';
+    const tip = !write ? '' : ACCENT_LANGS[CUR.code] ? ' · 악센트' + (CUR.code === 'fr' ? "·아포스트로피(')" : '') + '는 틀려도 정답이에요' : " · 대소문자·문장부호는 신경 쓰지 않아도 돼요(I'm → Im도 정답)";
     h += '<div class="muted bl-info">' + set.lines.length + '줄 · 빈칸 ' + nb + '개' + (rec.b ? ' · 최고 ' + rec.b + '점 ' + blankStars(rec.s) : '') + tip + '</div>';
     if (!nb) return h + '<div class="bl-sug" role="note">이 ' + (src === 'story' ? '이야기' : '대화') + '에는 아직 빈칸으로 낼 아는 말이 없어요' +   // 빈칸 0개 판은 시작하지 않는다(🌳 받아쓰기가 되는 언어는 🌳만 권함)
         (canW && ui.lv < 2 ? ' — 🌳 받아쓰기로 들어 봐요<button class="btn small tap" data-bllv="2">🌳 받아쓰기</button>' : ' — 레슨을 더 배우면 생겨요') + '</div></div>';
