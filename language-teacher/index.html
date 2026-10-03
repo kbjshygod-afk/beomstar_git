@@ -1236,13 +1236,22 @@ function mergeLeague(x, y) {
 function reviveDays(rv) { const o = []; if (isDate(rv.brk)) for (let d = dateAdd(rv.brk, 1); d < rv.at && o.length < 7; d = dateAdd(d, 1)) o.push(d); return o; }   // 부활이 메운 날(끊긴 날 다음 ~ 도전한 날 전날)
 function frozenDays(a) { return Array.isArray(a) ? Array.from(new Set(a.filter(isDate))).sort().slice(-60) : []; }   // 날짜 목록: 중복 없이 최근 60일
 // 방패 합치기: 상자에서 받은 방패(sb)가 한쪽 기록에만 있으면 그 기록을 고르지 않아도 사라지지 않게 더한다(최대 2).
-// 같은 날 기록이면 두 쪽 모두로 계산해 큰 쪽 — 어느 쪽에서 합쳐도 같고, 또 합쳐도 늘지 않는다(sb가 같아짐)
+// 쓴 상자 방패(su: 늘기만 하는 기록)는 더하지 않고, 고른 기록이 아직 안 쓴 것으로 아는 상자 방패를 다른 기기가 썼으면 뺀다 —
+// 방패는 상자 방패부터 쓰므로(shieldsUse) su에 없는 sb는 그 기록의 방패 수 안에 남아 있다. 이미 쓴 방패가 합치기로 되살아나지 않게.
+// 같은 날 기록이면 두 쪽 모두로 계산해 큰 쪽 — 어느 쪽에서 합쳐도 같고, 또 합쳐도 늘지 않는다(sb·su가 같아짐)
 function shieldsMerged(w, l, same) {
     const plus = (a, b) => {
-        const ka = a.sb || {}, cut = Object.keys(ka).length >= SB_MAX ? Object.values(ka).sort()[0] : '';   // 상한으로 잘린 옛 기록은 다시 세지 않는다
-        return Math.min(2, a.shields + Object.keys(b.sb || {}).filter(k => ka[k] === undefined && b.sb[k] >= cut).length);
+        const ka = a.sb || {}, ua = a.su || {}, ub = b.su || {}, cut = Object.keys(ka).length >= SB_MAX ? Object.values(ka).sort()[0] : '';   // 상한으로 잘린 옛 기록은 다시 세지 않는다
+        const add = Object.keys(b.sb || {}).filter(k => ka[k] === undefined && ua[k] === undefined && ub[k] === undefined && b.sb[k] >= cut).length;
+        const gone = Object.keys(ka).filter(k => ua[k] === undefined && ub[k] !== undefined).length;   // a는 아직 있다고 알지만 b에서 쓴 상자 방패
+        return Math.max(0, Math.min(2, a.shields + add - gone));
     };
     return same ? Math.max(plus(w, l), plus(l, w)) : plus(w, l);
+}
+// 방패를 n개 쓸 때: 상자 방패(sb) 가운데 아직 안 쓴 것을 이른 것부터 쓴 기록(su)에 적는다(그날 날짜)
+function shieldsUse(st, n, day) {
+    const su = st.su || {}, left = Object.keys(st.sb || {}).filter(k => su[k] === undefined).sort((a, b) => cmpStr(st.sb[a], st.sb[b]) || cmpStr(a, b)).slice(0, n);
+    if (left.length) st.su = capMap(Object.assign({}, su, ...left.map(k => ({ [k]: day }))), SB_MAX, (a, b) => cmpStr(b.v, a.v));
 }
 // 연속 기록 부활 도전(store.streak.rv): {m:'YYYY-MM', prev, brk, at, ok}
 function cleanRv(v) {
@@ -1359,6 +1368,7 @@ function normalizeStreak(d) {
         const o = { last: isDate(x.last) ? x.last : '', count: clampInt(x.count, 0, 100000, 0), best: clampInt(x.best, 0, 100000, 0), shields: clampInt(x.shields, 0, 2, 0), frozen: Array.isArray(x.frozen) ? x.frozen.filter(isDate).slice(-60) : [] };
         const rv = cleanRv(x.rv); if (rv) o.rv = rv;   // 부활 도전
         const sb = cleanDateMap(x.sb, SB_MAX, boxIdOk, true); if (Object.keys(sb).length) o.sb = sb;   // 상자에서 받은 방패(상자 id → 날짜)
+        const su = cleanDateMap(x.su, SB_MAX, boxIdOk, true); if (Object.keys(su).length) o.su = su;   // 그중 쓴 방패(상자 id → 쓴 날) — 합쳐도 되살아나지 않게
         const rf = frozenDays((Array.isArray(x.rf) ? x.rf : []).concat(rv && rv.ok ? reviveDays(rv) : [])); if (rf.length) o.rf = rf;   // 부활로 지킨 날(❄️ 설명) — rf가 없던 기록은 성공한 rv에서 채운다
         return o;
     }
@@ -1454,6 +1464,7 @@ function mergeStores(other, mine, force, otherOld) {
     const rf = frozenDays((so.rf || []).concat(sm.rf || [])); if (rf.length) m.streak.rf = rf; else delete m.streak.rf;
     m.streak.shields = so.last > sm.last ? shieldsMerged(so, sm) : shieldsMerged(sm, so, so.last === sm.last);   // 상자 방패는 사라지지 않게
     const sb = capMap(mergeEarlyDate(so.sb, sm.sb), SB_MAX, (a, b) => cmpStr(b.v, a.v)); if (Object.keys(sb).length) m.streak.sb = sb; else delete m.streak.sb;
+    const su = capMap(mergeEarlyDate(so.su, sm.su), SB_MAX, (a, b) => cmpStr(b.v, a.v)); if (Object.keys(su).length) m.streak.su = su; else delete m.streak.su;   // 쓴 상자 방패는 합집합
     m.badges = Object.assign({}, other.badges, mine.badges);
     m.flags = Object.assign({}, other.flags, mine.flags);
     m.seen = Object.assign({}, other.seen, mine.seen);
@@ -1544,6 +1555,7 @@ function touchStreak() {
     if (st.last && gap === 0) st.count++;
     else if (st.last && gap > 0 && gap <= st.shields) {
         st.shields -= gap;
+        shieldsUse(st, gap, t);   // 상자 방패부터 쓴 것으로 적는다(다른 기기와 합쳐도 되살아나지 않게)
         for (let k = 1; k <= gap; k++) st.frozen.push(dateAdd(st.last, k));
         st.frozen = st.frozen.slice(-60);
         st.count++;
