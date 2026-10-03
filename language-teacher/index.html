@@ -629,9 +629,11 @@
         .play-tile .pt-ico { font-size: 24px; line-height: 1.15; }
         .play-tile .pt-name { font-size: 14px; font-weight: 800; }
         .play-tile .pt-st, .play-tile .pt-tag { display: block; max-width: 100%; font-size: 11.5px; color: var(--text-light); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .play-tile .pt-tag { color: #7a5b00; font-weight: 700; }
-        .play-tile.locked, .play-tile.soon { background: #f1f5f9; }
-        .play-tile.locked .pt-ico, .play-tile.soon .pt-ico { filter: grayscale(1); opacity: .6; }
+        .play-tile .pt-tag { color: #7a5b00; font-weight: 700; white-space: normal; line-height: 1.35; }   /* 꼬리표는 줄바꿈 — '다른 놀이는 XP 그대로'가 잘리지 않게 */
+        .play-tile.locked { background: #f1f5f9; }
+        .play-tile.locked .pt-st { white-space: normal; }   /* 열리는 조건은 끝까지 보이게(큰 글씨에서도) */
+        .play-tile.locked .pt-ico { filter: grayscale(1); opacity: .6; }
+        .play-soon { text-align: center; margin-bottom: 12px; line-height: 1.6; }
         .play-tile .pt-new { position: absolute; top: 8px; right: 8px; padding: 2px 6px; border-radius: 999px; background: var(--error); color: #fff; font-size: 10px; font-weight: 800; }
         .play-pick { display: flex; gap: 8px; margin-bottom: 12px; }
         .play-pick .pp-main { flex: 1; min-width: 0; min-height: 56px; display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 14px; background: var(--card); color: var(--text); font: inherit; text-align: left; cursor: pointer; }
@@ -777,14 +779,16 @@ const LANG_EXT = {
     puz: { clean: cleanPuz, merge: mergePuz },
     blank: { clean: v => capMap(cleanMap(v, (x, k) => BLANK_ID.test(k) && isObj(x) ? { b: clampInt(x.b, 0, 1e6, 0), s: clampInt(x.s, 0, 3, 0), lv: clampInt(x.lv, 0, 2, 0) } : undefined, 1500), 500, byBlank), merge: (a, b) => capMap(mergeKeys(a, b, (x, y) => ({ b: Math.max(x.b, y.b), s: Math.max(x.s, y.s), lv: Math.max(x.lv, y.lv) })), 500, byBlank) },
     shadow: { clean: v => cleanMap(v, (x, k) => EXT_ID.test(k) && isObj(x) ? Object.assign({ k: lineNums(x.k) }, isDate(x.d) ? { d: x.d } : {}) : undefined, 600), merge: (a, b) => mergeKeys(a, b, (x, y) => Object.assign({ k: lineNums(x.k.concat(y.k)) }, (x.d || y.d) ? { d: [x.d, y.d].filter(Boolean).sort()[0] } : {})) },
-    sayLater: { clean: v => Array.isArray(v) ? v.filter(isHex12).filter((x, i, a) => a.indexOf(x) === i).slice(0, 10) : undefined, merge: (a, b) => b.concat(a.filter(x => !b.includes(x))).slice(0, 10) },
+    sayLater: { clean: cleanSay, merge: mergeSay },
     dex: { clean: v => cleanDateMap(v, 6000, isHex12), merge: (a, b) => capMap(mergeEarlyDate(a, b), 6000, byDate) },
     dexA: { clean: v => cleanDateMap(v, 600, k => EXT_ID.test(k)), merge: (a, b) => capMap(mergeEarlyDate(a, b), 600, byDate) },
     dexV: { clean: v => typeof v === 'number' && Number.isFinite(v) ? clampInt(v, 0, 9, 0) : undefined, merge: (a, b) => Math.max(a, b) },
     ba: { clean: v => cleanMap(v, (x, k) => EXT_ID.test(k) && isObj(x) ? Object.assign({ b: clampInt(x.b, 0, 2, 0) }, x.a != null ? { a: clampInt(x.a, 0, 2, 0) } : {}) : undefined, 1000), merge: (a, b) => mergeKeys(a, b, (x, y) => Object.assign({ b: Math.min(x.b, y.b) }, (x.a != null || y.a != null) ? { a: Math.max(x.a || 0, y.a || 0) } : {})) },
     radio: { clean: v => isObj(v) ? { st: cleanMap(v.st, (x, k) => EXT_ID.test(k) && typeof x === 'number' ? clampInt(x, 0, 1e6, 0) : undefined, 300), ep: cleanDateMap(v.ep, 200, k => /^[A-Za-z0-9_:#.-]{1,40}$/.test(k), true) } : undefined, merge: (a, b) => ({ st: mergeMax(a.st, b.st), ep: capMap(mergeEarlyDate(a.ep, b.ep), 200, (x, y) => cmpStr(y.v, x.v)) }) },
 };
-const LOOT_NUM = ['op', 'pcN', 'shN', 'shC', 'buN', 'buU'];   // 상자 숫자 칸(늘기만 함)
+// 상자 숫자 칸(늘기만 함). 기기마다 따로 센다 {[기기 id]: n} — 값은 합계(lootNum). 큰 쪽(max)으로 합치면 두 기기가 각자 늘린 만큼이 하나로 줄어든다
+const LOOT_NUM = ['op', 'pcN', 'shN', 'shC', 'buN', 'buU'];
+const DEV_KEY = LS_KEY + '_dev';   // 이 기기 id(기록 밖에 둔다 — 복원 코드로 다른 기기 id가 들어오지 않게)
 // 최상위 칸(모든 언어 공통): 상자(loot)·리그(league). 세대가 다른 기록을 합칠 때(cloudMerge)는 기존처럼 통째로 바꾼 쪽(높은 세대) 값을 쓴다
 const TOP_EXT = { loot: { clean: cleanLoot, merge: mergeLoot }, league: { clean: cleanLeague, merge: mergeLeague } };
 var newerSchema = false;
@@ -856,16 +860,48 @@ function mergePuz(x, y) {
     const w = x.last !== y.last ? (x.last > y.last ? x : y) : x.t !== y.t ? (x.t < y.t ? x : y) : (JSON.stringify(x) <= JSON.stringify(y) ? x : y);
     return Object.assign({}, w, { bst: Math.max(x.bst, y.bst), n: Math.max(x.n, y.n), dist: x.dist.map((n, i) => Math.max(n, y.dist[i] || 0)) });
 }
-// 상자: 숫자는 늘기만 하므로 큰 쪽, 받은 상자(g)·잡학 카드(tv)는 합집합 → 합쳐도 상자가 늘거나 되살아나지 않는다
+// 말하기 대기열 {q: [{k, t}], x: {[k]: t}} — t는 넣은 시각·뺀 시각(ms). 뺀 시각이 넣은 시각 이후인 문장은 다른 탭·기기와 합쳐도 되살아나지 않는다
+function sayList(q, x) {
+    const m = {};
+    q.forEach(e => { if (!(m[e.k] >= e.t)) m[e.k] = e.t; });
+    return Object.keys(m).filter(k => !(x[k] >= m[k])).map(k => ({ k, t: m[k] })).sort((a, b) => (b.t - a.t) || cmpStr(a.k, b.k)).slice(0, 10);   // 최근 것이 앞, 최대 10
+}
+function cleanSay(v) {
+    if (Array.isArray(v)) v = { q: v.map(k => ({ k, t: 0 })) };   // 작업 중 형식(키 배열)
+    if (!isObj(v)) return undefined;
+    const x = capMap(cleanMap(v.x, (t, k) => isHex12(k) && typeof t === 'number' ? clampInt(t, 0, 1e13, 0) : undefined, 200), 50, (a, b) => b.v - a.v);   // 뺀 기록은 최근 50개
+    const q = (Array.isArray(v.q) ? v.q : []).slice(0, 40).filter(e => isObj(e) && isHex12(e.k)).map(e => ({ k: e.k, t: clampInt(e.t, 0, 1e13, 0) }));
+    return { q: sayList(q, x), x };
+}
+function mergeSay(a, b) { return cleanSay({ q: a.q.concat(b.q), x: mergeMax(a.x, b.x) }); }
+// 기기별 숫자 {[기기 id]: n}: 키마다 큰 쪽으로 합치면 같은 기기의 옛 값은 겹치지 않고, 다른 기기가 늘린 만큼은 더해진다
+function cleanCount(v) {
+    if (typeof v === 'number') v = { _: v };   // 작업 중 형식(숫자 하나)
+    return capMap(cleanMap(v, (n, k) => /^[a-z0-9_]{1,16}$/.test(k) && typeof n === 'number' && n >= 1 ? clampInt(n, 1, 99999, 0) : undefined, 300), 100, (a, b) => b.v - a.v);
+}
+function devId() {
+    if (devId.v) return devId.v;
+    let v = ''; try { v = localStorage.getItem(DEV_KEY) || ''; } catch (e) { }
+    if (!/^[a-z0-9]{6,16}$/.test(v)) { v = (Date.now().toString(36) + Math.random().toString(36).slice(2, 8)).slice(0, 16); try { localStorage.setItem(DEV_KEY, v); } catch (e) { } }
+    return (devId.v = v);
+}
+function lootNum(f) { const c = (store.loot && store.loot[f]) || {}; return Object.keys(c).reduce((s, k) => s + c[k], 0); }
+function lootAdd(f, n) {   // 이 기기 칸에 더한다(저장은 부르는 쪽이 결과와 함께)
+    if (!store.loot) store.loot = cleanLoot({});
+    const c = store.loot[f] = Object.assign({}, store.loot[f]), d = devId();
+    c[d] = (c[d] || 0) + (n || 1);
+}
+function lootBoxes() { const l = store.loot; return l ? Math.max(0, Object.keys(l.g).length + Math.floor(lootNum('pcN') / 3) - lootNum('op')) : 0; }   // 남은 상자
+// 상자: 받은 상자(g)·잡학 카드(tv)는 합집합, 숫자는 기기별 칸마다 큰 쪽 → 합쳐도 상자가 늘거나 되살아나지 않고, 받은 조각도 사라지지 않는다
 function cleanLoot(v) {
     if (!isObj(v)) return undefined;
     const o = { g: cleanDateMap(v.g, 2000, k => /^(q|z|lg):[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(k)), tv: cleanDateMap(v.tv, 200, k => /^[a-z]{2}[0-9]{1,2}$/.test(k) && isLang(k.slice(0, 2))) };
-    LOOT_NUM.forEach(f => { o[f] = clampInt(v[f], 0, 99999, 0); });
+    LOOT_NUM.forEach(f => { o[f] = cleanCount(v[f]); });
     return o;
 }
 function mergeLoot(x, y) {
     const o = { g: capMap(mergeEarlyDate(x.g, y.g), 2000, byDate), tv: mergeEarlyDate(x.tv, y.tv) };
-    LOOT_NUM.forEach(f => { o[f] = Math.max(x[f] || 0, y[f] || 0); });
+    LOOT_NUM.forEach(f => { o[f] = cleanCount(mergeMax(x[f], y[f])); });
     return o;
 }
 function cleanLeague(v) {
@@ -1216,7 +1252,7 @@ const LEVELS = [
     { lv: 9, name: '통역 견습', ico: '🎧', min: 3300 },
     { lv: 10, name: '통역사', ico: '🎙️', min: 4500 },
     { lv: 11, name: '언어 달인', ico: '🏅', min: 6000 },
-    { lv: 12, name: '마스터', ico: '👑', min: 8000 },
+    { lv: 12, name: '고수', ico: '🎖️', min: 8000 },   // '마스터'였으나 13단계부터 칭호가 내려가 보여 중간 칭호로
     // 13단계부터: 구간이 15%씩 커진다(12단계까지의 시작값은 그대로라 레벨이 내려가는 사람은 없다)
     { lv: 13, name: '길잡이', ico: '🧭', min: 10300 },
     { lv: 14, name: '배낭여행자', ico: '🎒', min: 12900 },
@@ -5798,14 +5834,22 @@ function dexAdd(item) {
     if (!p.dex[k]) { p.dex[k] = todayStr(); save(); }
 }
 // 말하기 대기열: 지금 소리 내기 어려운 문장을 '집에서' 말하도록 모아 둔다(최대 10, 최근 것이 앞)
+// 넣고 뺀 시각은 그 문장의 이전 기록보다 늦게 둔다(기기 시계가 조금 달라도 순서가 뒤집히지 않게)
 function sayLaterAdd(item) {
     const n = nativeText(item);
     if (!n || !CUR) return;
-    const p = prog(), k = clipId('a', n);
-    p.sayLater = [k].concat((p.sayLater || []).filter(x => x !== k)).slice(0, 10);
+    const p = prog(), k = clipId('a', n), s = p.sayLater || { q: [], x: {} };
+    p.sayLater = cleanSay({ q: s.q.concat([{ k, t: Math.max(Date.now(), (s.x[k] || 0) + 1) }]), x: s.x });
     save();
 }
-function sayLaterItems() { const ix = playIndex(); return (prog().sayLater || []).map(k => ({ k, e: ix.sent.get(k) })).filter(x => x.e); }
+function sayLaterDone(k) {
+    const p = prog(), s = p.sayLater;
+    if (!s) return;
+    const e = s.q.find(x => x.k === k);
+    p.sayLater = cleanSay({ q: s.q, x: Object.assign({}, s.x, { [k]: Math.max(Date.now(), e ? e.t + 1 : 0) }) });
+    save();
+}
+function sayLaterItems() { const ix = playIndex(); return ((prog().sayLater || {}).q || []).map(x => ({ k: x.k, e: ix.sent.get(x.k) })).filter(x => x.e); }
 function sayLaterRun() {
     const list = sayLaterItems(), N = list.length;
     let n = 0;
@@ -5815,7 +5859,7 @@ function sayLaterRun() {
         const x = list[n++];
         openSpeak({
             item: x.e.item, mode: 'repeat', title: '🗣 집에서 말하기 (' + n + '/' + N + ')',
-            onPass: () => { const p = prog(); p.sayLater = (p.sayLater || []).filter(k => k !== x.k); save(); },
+            onPass: () => sayLaterDone(x.k),
             onClose: (passed, reason) => { if (reason === 'cancel') { render(); return; } setTimeout(next, 60); },   // 창이 다 닫힌 뒤 다음 문장
         });
     };
@@ -5893,7 +5937,7 @@ function nextPlay(after) {
         return Object.assign(t, { why: typeof r.why === 'function' ? r.why() : r.why }, r.auto === false ? { auto: false } : {});
     }
     // 홈에는 '이어서 학습하기'가 이미 있으니 레슨 대신 언어 훈련을 권한다
-    if (after === 'home') return Object.assign(playTarget('trainer'), { why: dayLog().trainer ? '한 판 더 하면 귀가 더 트여요' : '오늘 아직 안 했어요 · 2분이면 끝나요' });
+    if (after === 'home') return Object.assign(playTarget('trainer'), { why: dayLog().trainer ? '한 판 더 하면 더 익숙해져요' : '오늘 아직 안 했어요 · 2분이면 끝나요' });
     const l = after === 'lesson' ? null : playTarget('lesson');
     return l ? Object.assign(l, { why: '배운 걸 바로 다음 레슨으로 이어 가요' }) : null;
 }
@@ -5965,17 +6009,29 @@ function playUnlocked(id) {
     return doneCount() >= u.at && (!u.unit1 || ALL.some(l => l.unitId >= 1 && isDone(l.id)));
 }
 function tileOpen(t) { return playUnlocked(t.id) && t.need(); }   // 하나씩 열림 표 + 기능의 자체 조건
+// 열리는 데 필요한 통과 레슨 수 — 1단계 레슨이 조건이면 처음부터 그 수(0단계 레슨 수 + 1)로 약속한다
+function playNeed(u) { return u.unit1 ? Math.max(u.at, ALL.findIndex(l => l.unitId >= 1) + 1) : u.at; }
 function playLockText(id) {
     const u = PLAY_SOON.find(x => x.id === id);
     if (!u) return '';
     if (u.week) return '첫 주 결산 뒤에 열려요';
-    return doneCount() >= u.at && u.unit1 ? '1단계 레슨을 통과하면 열려요' : '레슨 ' + u.at + '개 통과하면 열려요';
+    const n = playNeed(u);
+    return doneCount() >= n && u.unit1 ? '1단계 레슨을 통과하면 열려요' : '레슨 ' + n + '개 통과하면 열려요';
 }
-// 시간대로 정한 상황(메모리에만 — 아침에 고른 '이동 중'이 밤까지 남지 않게)
+// 상황: 따로 고르지 않았으면 볼 때마다 시각으로 정한다. 고른 값(S.ctx = {v, at})은 메모리에만 두고 3시간 뒤 풀린다 —
+// 홈 화면 앱은 몇 시간씩 살아 있어서, 아침에 고른 '이동 중'이 밤까지 남지 않게
+const CTX_HOLD = 3 * 3600000;
+function ctxByHour() { const h = new Date().getHours(); return (h < 4 || h >= 21) ? 'home' : ((h >= 7 && h < 9) || (h >= 18 && h < 20)) ? 'move' : 'short'; }
+function setPlayCtx(v) { S.ctx = v ? { v, at: Date.now() } : null; }
 function playCtx() {
-    if (!S.ctx) { const h = new Date().getHours(); S.ctx = ((h >= 7 && h < 9) || (h >= 18 && h < 20)) ? 'move' : h >= 21 ? 'home' : 'short'; }
-    return S.ctx;
+    if (S.ctx && !(Date.now() - S.ctx.at < CTX_HOLD)) S.ctx = null;
+    return S.ctx ? S.ctx.v : ctxByHour();
 }
+// 돌아왔을 때 상황이 바뀌었으면 놀이 탭을 다시 그린다(창이 열려 있으면 그대로)
+document.addEventListener('visibilitychange', () => {
+    const root = document.getElementById('modalRoot');
+    if (!document.hidden && CUR && DATA && S.view === 'play' && S.ctxShown && S.ctxShown !== playCtx() && !(root && root.innerHTML)) renderPlay();
+});
 function quietNow() { return !!store.settings.quiet || playCtx() === 'move'; }
 // NEW 점은 하루 1개 타일에만(처음 보인 날을 seen['pn_'+id]에)
 function playNewId() {
@@ -5994,22 +6050,25 @@ function playAfterLesson(l, open0) {
     const urls = lessonClipUrls(l);
     setTimeout(() => warmClips(urls), 2000);
     const fresh = PLAY_TILES.filter(t => !open0.includes(t.id) && tileOpen(t));
-    if (fresh.length) setTimeout(() => showToast('🆕 새 놀이 열림: ' + fresh.map(t => t.ico + ' ' + t.name).join(' · '), 'gold', 3400), 1200);
+    if (!fresh.length) return;
+    // 방금 열린 놀이를 오늘의 NEW로(아침에 붙은 다른 타일은 '아직 안 봄'(false)으로 되돌려 다음에 다시 NEW가 된다) — 토스트를 보고 들어와 바로 찾게
+    const day = todayStr();
+    PLAY_TILES.forEach(t => { if (store.seen['pn_' + t.id] === day) store.seen['pn_' + t.id] = false; });
+    store.seen['pn_' + fresh[0].id] = day; save();
+    setTimeout(() => showToast('🆕 새 놀이 열림: ' + fresh.map(t => t.ico + ' ' + t.name).join(' · '), 'gold', 3400), 1200);
 }
-function playTileHtml(x, ctx, quiet, newId, dl) {
-    const t = x.t, u = x.u || {}, id = t ? t.id : u.id, ico = t ? t.ico : u.ico, name = t ? t.name : u.name;
-    const open = t ? tileOpen(t) : playUnlocked(id);
-    let st = !open ? playLockText(id) : !t ? '🔜 곧 열려요' : (t.status() || '');
-    const tags = [];
-    if (t && open && quiet && t.mic) tags.push('🏠 집에서');
-    if (t && open && t.xpKind && (dl[t.xpKind + 'Xr'] || 0) >= 30) tags.push('오늘 많이 했어요 · 다른 놀이는 XP 그대로');
-    return '<button class="play-tile' + (open ? '' : ' locked') + (t ? '' : ' soon') + '" data-play="' + esc(id) + '" aria-label="' + esc(name + ' — ' + (st || '열림') + (tags.length ? ' · ' + tags.join(' · ') : '') + (newId === id ? ' · 새 놀이' : '')) + '"' + (t && open ? '' : ' aria-disabled="true"') + '>' +
-        (newId === id ? '<span class="pt-new" aria-hidden="true">NEW</span>' : '') +
-        '<span class="pt-ico" aria-hidden="true">' + ico + '</span><span class="pt-name">' + esc(name) + '</span>' +
+function playTileHtml(t, quiet, newId, dl) {
+    const open = tileOpen(t), st = !open ? playLockText(t.id) : (t.status() || ''), tags = [];
+    if (open && quiet && t.mic) tags.push('🏠 집에서');
+    if (open && t.xpKind && (dl[t.xpKind + 'Xr'] || 0) >= 30) tags.push('오늘 많이 했어요 · 다른 놀이는 XP 그대로');
+    return '<button class="play-tile' + (open ? '' : ' locked') + '" data-play="' + esc(t.id) + '" aria-label="' + esc(t.name + ' — ' + (st || '열림') + (tags.length ? ' · ' + tags.join(' · ') : '') + (newId === t.id ? ' · 새 놀이' : '')) + '"' + (open ? '' : ' aria-disabled="true"') + '>' +
+        (newId === t.id ? '<span class="pt-new" aria-hidden="true">NEW</span>' : '') +
+        '<span class="pt-ico" aria-hidden="true">' + t.ico + '</span><span class="pt-name">' + esc(t.name) + '</span>' +
         (st ? '<span class="pt-st">' + esc(st) + '</span>' : '') + tags.map(g => '<span class="pt-tag">' + esc(g) + '</span>').join('') + '</button>';
 }
 function renderPlay() {
     const ctx = playCtx(), quiet = quietNow(), dl = dayLog(), say = sayLaterItems();
+    S.ctxShown = ctx;
     let h = '<div class="ctx-row"><div class="ctx-chips" role="group" aria-label="지금 상황">' +
         PLAY_CTX.map(([id, t]) => '<button data-ctx="' + id + '" aria-pressed="' + (id === ctx) + '">' + t + '</button>').join('') + '</div>' +
         (quiet ? '<span class="quiet-pill" id="quietPill">🤫 조용 모드</span>' : '') + '</div>';
@@ -6017,24 +6076,25 @@ function renderPlay() {
     h += '<button class="play-hero" id="playTrainer"><span class="ph-ico" aria-hidden="true">' + CUR.trainerIco + '</span><span class="ph-txt"><b>' + esc(CUR.trainerLabel) + ' 훈련</b>' +
         '<span>' + (dl.trainer ? '오늘 ' + dl.trainer + '판 했어요 · 한 판 더?' : '10문제 · 2분이면 끝나요') + '</span></span><span class="ph-go" aria-hidden="true">▶</span></button>';
     if (say.length && ctx === 'home') h += '<button class="play-hero say" id="playSay"><span class="ph-ico" aria-hidden="true">🗣</span><span class="ph-txt"><b>말하기 대기 ' + say.length + '문장</b><span>밖에서 미뤄 둔 문장을 소리 내어 말해요</span></span><span class="ph-go" aria-hidden="true">▶</span></button>';
-    // 타일: 지금 상황에 맞는 열린 타일 → 다른 열린 타일 → 잠긴 타일 → 곧 열릴 타일
-    const items = PLAY_SOON.map(u => ({ u, t: playTile(u.id) })).concat(PLAY_TILES.filter(t => !PLAY_SOON.some(u => u.id === t.id)).map(t => ({ u: null, t })));
-    const rank = x => !x.t ? 3 : !tileOpen(x.t) ? 2 : x.t.ctx.includes(ctx) ? 0 : 1;
-    const sorted = items.map((x, i) => ({ x, i, r: rank(x) })).sort((a, b) => a.r - b.r || a.i - b.i).map(o => o.x);
-    const newId = playNewId();
-    h += '<div class="section-title">놀이 — 레슨을 통과할수록 하나씩 열려요</div>' +
-        '<div class="play-grid">' + sorted.map(x => playTileHtml(x, ctx, quiet, newId, dl)).join('') + '</div>';
-    if (!PLAY_TILES.length) h += '<div class="muted" style="text-align:center;margin-bottom:12px">🔜 새 놀이를 만들고 있어요. 그동안 ' + esc(CUR.trainerLabel) + ' 훈련으로 귀를 깨워 보세요!</div>';
+    // 타일은 기능이 등록한 것만(표 순서): 지금 상황에 맞는 열린 타일 → 다른 열린 타일 → 잠긴 타일. 아직 없는 놀이는 아래 한 줄로만
+    const tiles = PLAY_SOON.map(u => playTile(u.id)).filter(Boolean).concat(PLAY_TILES.filter(t => !PLAY_SOON.some(u => u.id === t.id)));
+    const rank = t => !tileOpen(t) ? 2 : t.ctx.includes(ctx) ? 0 : 1;
+    const sorted = tiles.map((t, i) => ({ t, i, r: rank(t) })).sort((a, b) => a.r - b.r || a.i - b.i).map(o => o.t);
+    const newId = playNewId(), soon = PLAY_SOON.filter(u => !playTile(u.id));
+    if (sorted.length) h += '<div class="section-title">놀이 — 레슨을 통과할수록 하나씩 열려요</div>' +
+        '<div class="play-grid">' + sorted.map(t => playTileHtml(t, quiet, newId, dl)).join('') + '</div>';
+    if (soon.length) h += '<div class="muted play-soon">🔜 곧 열려요: ' + soon.map(u => u.ico + ' ' + esc(u.name)).join(' · ') +
+        (sorted.length ? '' : '<br>그동안 ' + esc(CUR.trainerLabel) + ' 훈련으로 감을 깨워 보세요!') + '</div>';
     $main.innerHTML = h;
     if (!store.seen.playTrainerHint) { store.seen.playTrainerHint = todayStr(); save(); }
-    $main.querySelectorAll('[data-ctx]').forEach(b => b.addEventListener('click', () => { S.ctx = b.dataset.ctx; renderPlay(); }));
+    $main.querySelectorAll('[data-ctx]').forEach(b => b.addEventListener('click', () => { setPlayCtx(b.dataset.ctx); renderPlay(); }));
     document.getElementById('playTrainer').addEventListener('click', () => { S.trainer = null; go('trainer'); });
     const ps = document.getElementById('playSay');
     if (ps) ps.addEventListener('click', sayLaterRun);
     $main.querySelectorAll('[data-play]').forEach(b => b.addEventListener('click', () => {
-        const id = b.dataset.play, t = playTile(id);
-        if (t ? !tileOpen(t) : !playUnlocked(id)) { showToast('🔒 ' + (playLockText(id) || '아직 열리지 않았어요'), '', 2600); return; }
-        if (!t) { showToast('🔜 곧 열려요! 조금만 기다려 주세요', '', 2400); return; }
+        const t = playTile(b.dataset.play);
+        if (!t) return;
+        if (!tileOpen(t)) { showToast('🔒 ' + (playLockText(t.id) || '아직 열리지 않았어요'), '', 2600); return; }
         t.open();
     }));
 }
@@ -6960,7 +7020,7 @@ async function cloudLogout(wipeLocal) {
         const g = nextGen(store);
         store = normalizeStore({ gen: g, genAt: todayStr() }); save();
         // 통계 끄기 선택(STATS_OFF_KEY)은 기기 설정이라 남긴다
-        try { [LS_KEY + '_before_restore', LS_KEY + '_corrupt_backup', CLOUD_HINT_KEY, LEGACY_DONE_KEY, 'nihao_zh_v1', 'hola_es_v1', DEQ_KEY].forEach(k => localStorage.removeItem(k)); } catch (e) { }
+        try { [LS_KEY + '_before_restore', LS_KEY + '_corrupt_backup', CLOUD_HINT_KEY, LEGACY_DONE_KEY, 'nihao_zh_v1', 'hola_es_v1', DEQ_KEY, DEV_KEY].forEach(k => localStorage.removeItem(k)); } catch (e) { }   // 기기 id도 새로(지운 뒤 다시 센 상자 수가 계정의 옛 칸과 겹치지 않게)
         reloadOtherTabs();
         showToast('👋 로그아웃하고 이 기기의 기록을 지웠어요');
         setTimeout(() => location.reload(), 600);
