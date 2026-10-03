@@ -1542,7 +1542,7 @@ function softXp(kind, n, why) {
 
 /* ═══════════════════ 배지 ═══════════════════ */
 function allLangStats() {
-    let lessons = 0, perfect = 0, bosses = 0, reviews = 0, speak = 0, langs = 0, maxXp = 0, stories = 0, fullStories = false, finished = false, maxEar = 0;
+    let lessons = 0, perfect = 0, bosses = 0, reviews = 0, speak = 0, langs = 0, maxXp = 0, stories = 0, fullStories = false, finished = false, maxEar = 0, ears = 0;
     Object.entries(store.byLang).forEach(([code, p]) => {
         if (!p) return;
         const comp = Object.values(p.completed || {});
@@ -1555,11 +1555,12 @@ function allLangStats() {
         if ((p.xp || 0) > 0 || comp.length) langs++;
         maxXp = Math.max(maxXp, p.xp || 0);
         maxEar = Math.max(maxEar, lsSum(p));   // 한 언어 귀 시간(앱 + 앱 밖)
+        ears += earOpenN(p);   // 👂 귀 뚫린 대화(모든 언어 합)
         if (p.meta && p.meta.lessons && comp.length >= p.meta.lessons) finished = true;
     });
     const en = store.byLang.en;
     const quest30 = en ? Object.keys(en.completed || {}).filter(id => /^u[678]l/.test(id)).length >= 30 : false;
-    return { lessons, perfect, bosses, reviews, speak, langs, maxXp, stories, fullStories, finished, quest30, maxEar };
+    return { lessons, perfect, bosses, reviews, speak, langs, maxXp, stories, fullStories, finished, quest30, maxEar, ears };
 }
 const BADGES = [
     { id: 'first', ico: '🐣', name: '첫 걸음', cond: '레슨 1개 통과', ok: s => s.lessons >= 1 },
@@ -1581,6 +1582,7 @@ const BADGES = [
     { id: 'grad', ico: '🎖️', name: '수료', cond: '한 언어 전 과정', ok: s => s.finished },
     { id: 'ear1', ico: '🎧', name: '귀 열림', cond: '한 언어 귀 시간 1시간', ok: s => s.maxEar >= 3600 },
     { id: 'ear10', ico: '🎼', name: '귀 트임 10시간', cond: '한 언어 10시간', ok: s => s.maxEar >= 36000 },
+    { id: 'ears10', ico: '👂', name: '귀가 뚫렸다', cond: '귀 뚫린 대화 10개', ok: s => s.ears >= 10 },
 ];
 function checkBadges(silent) {
     if (!CUR) return;
@@ -4123,7 +4125,8 @@ function renderHome() {
             '<div class="cc-goal">' + (resumeStep > 0
                 ? '지난번 「' + STEP_NAMES[resumeStep] + '」 단계까지 보셨어요 — 여기서 이어집니다'
                 : esc(next.goal || '')) + '</div>' +
-            '<span class="cc-btn">▶ ' + (resumeStep > 0 ? '이어서 하기' : '시작하기') + ' · 약 ' + lessonMinutes(next) + '분</span></div>';
+            '<span class="cc-btn">▶ ' + (resumeStep > 0 ? '이어서 하기' : '시작하기') + ' · 약 ' + lessonMinutes(next) + '분</span></div>' +
+            lastEpHtml();   // 🎬 지난 화 명대사(카드 밖 한 줄 — 카드 안이면 버튼이 겹친다)
     } else if (placeIdx() > 0 && ALL.slice(0, placeIdx()).some(l => !isDone(l.id))) {
         html += '<div class="continue-card" id="continueBtn" role="button" tabindex="0"><div class="cc-label">🎉 실전 과정 수료!</div>' +
             '<div class="cc-title">30일 생활 회화를 모두 마쳤어요</div>' +
@@ -4193,6 +4196,7 @@ function renderHome() {
     if (gb) gb.addEventListener('click', () => go('guide'));
     const ear = document.getElementById('earLine');
     if (ear) ear.addEventListener('click', openEarSheet);
+    bindLastEp();
     const ppk = document.getElementById('playPick');
     if (ppk) ppk.addEventListener('click', () => { const n = PLAY.pick; if (!n) return; track('play_next', { from: 'home', to: n.id, auto: 0 }); n.go(); });
     const pal = document.getElementById('playAll');
@@ -4676,23 +4680,7 @@ function renderStep() {
             showToast('👂 글자 없이 들어 보세요. 무슨 상황일까요?');
             speakSeq(turns.map(asItem), () => {
                 if (ttsBadNow()) { revealScript(); if (lf.isConnected) lf.remove(); showToast('🔇 소리가 나지 않아 대본을 바로 보여 드려요', '', 3200); return; }
-                // 무슨 상황이었을까요? — 이 레슨 상황 + 다른 레슨 상황 2개
-                const others = ALL.filter(x => x.id !== l.id && x.dialogue && x.dialogue.situation).map(x => x.dialogue.situation);
-                if (d.situation && others.length >= 2) {
-                    const pick2 = seededShuffle(others, hashStr(l.id + todayStr())).slice(0, 2);
-                    const opts = seededShuffle([d.situation].concat(pick2), hashStr(l.id));
-                    lf.outerHTML = '<div class="card" id="sitQuiz"><b>🤔 무슨 상황이었을까요?</b>' + opts.map(o => '<button class="choice-btn" data-sit="' + (o === d.situation ? 1 : 0) + '" style="margin-top:8px;font-size:13px">' + esc(o) + '</button>').join('') + '</div>';
-                    const sq = document.getElementById('sitQuiz');
-                    if (sq) { sq.scrollIntoView({ block: 'center', behavior: 'smooth' }); showToast('🤔 방금 들은 대화, 무슨 상황이었을까요?'); }
-                    document.querySelectorAll('[data-sit]').forEach(b => b.addEventListener('click', () => {
-                        const ok = b.dataset.sit === '1';
-                        document.querySelectorAll('[data-sit]').forEach(x => { x.disabled = true; if (x.dataset.sit === '1') x.classList.add('correct'); else if (x === b) x.classList.add('wrong'); });
-                        sfx(ok ? 'ok' : 'bad'); revealScript();
-                        const p = prog(); if (!p.lf) p.lf = {};
-                        if (!p.lf[l.id]) { p.lf[l.id] = todayStr(); save(); addXp(5, '먼저 듣기'); }
-                        showToast(ok ? '⭕ 귀로 알아들었어요! 이제 대본으로 확인해 보세요' : '👀 대본을 보며 다시 들어 보세요', '', 3000);
-                    }));
-                } else { revealScript(); lf.remove(); showToast('👀 이제 대본을 보며 맞게 들었는지 확인해 보세요!', '', 3000); }
+                if (lf.isConnected) earBefore(l, lf, sitAsk);   // 👂 얼마나 들렸어요? → 상황 퀴즈
             }, (x, i) => {
                 // 듣는 중에 '소리 안 남'으로 판정되면 끝까지 기다리지 않고 바로 대본을 연다
                 if (ttsBadNow()) {
@@ -4704,6 +4692,26 @@ function renderStep() {
                 hilite(i);
             });
         });
+        // 무슨 상황이었을까요? — 이 레슨 상황 + 다른 레슨 상황 2개(at: 바꿔 끼울 자리 — 먼저 듣기 버튼이나 귀 체크 카드)
+        function sitAsk(at) {
+            if (!at.isConnected) return;
+            const others = ALL.filter(x => x.id !== l.id && x.dialogue && x.dialogue.situation).map(x => x.dialogue.situation);
+            if (d.situation && others.length >= 2) {
+                const pick2 = seededShuffle(others, hashStr(l.id + todayStr())).slice(0, 2);
+                const opts = seededShuffle([d.situation].concat(pick2), hashStr(l.id));
+                at.outerHTML = '<div class="card" id="sitQuiz"><b>🤔 무슨 상황이었을까요?</b>' + opts.map(o => '<button class="choice-btn" data-sit="' + (o === d.situation ? 1 : 0) + '" style="margin-top:8px;font-size:13px">' + esc(o) + '</button>').join('') + '</div>';
+                const sq = document.getElementById('sitQuiz');
+                if (sq) { sq.scrollIntoView({ block: 'center', behavior: 'smooth' }); showToast('🤔 방금 들은 대화, 무슨 상황이었을까요?'); }
+                document.querySelectorAll('[data-sit]').forEach(b => b.addEventListener('click', () => {
+                    const ok = b.dataset.sit === '1';
+                    document.querySelectorAll('[data-sit]').forEach(x => { x.disabled = true; if (x.dataset.sit === '1') x.classList.add('correct'); else if (x === b) x.classList.add('wrong'); });
+                    sfx(ok ? 'ok' : 'bad'); revealScript();
+                    const p = prog(); if (!p.lf) p.lf = {};
+                    if (!p.lf[l.id]) { p.lf[l.id] = todayStr(); save(); addXp(5, '먼저 듣기'); }
+                    showToast(ok ? '⭕ 귀로 알아들었어요! 이제 대본으로 확인해 보세요' : '👀 대본을 보며 다시 들어 보세요', '', 3000);
+                }));
+            } else { revealScript(); at.remove(); showToast('👀 이제 대본을 보며 맞게 들었는지 확인해 보세요!', '', 3000); }
+        }
         document.getElementById('playAll').addEventListener('click', () => speakSeq(turns.map(asItem), () => { body.querySelectorAll('[data-sec-toggle]').forEach(tg => markHeard(parseInt(tg.dataset.secToggle, 10))); }, (x, i) => hilite(i)));
         document.getElementById('stopAll').addEventListener('click', () => { seqPlaying = false; if (S.rpActive) { rolePlayToken++; S.rpActive = null; showToast('🎭 역할극을 멈췄어요'); } stopSpeak(); });
         document.getElementById('blindBtn').addEventListener('click', e => {
@@ -5134,6 +5142,7 @@ function renderQuizResult(body, l) {
         (gained ? '<br><b style="color:var(--primary)">+' + gained + ' XP' + (!pass && !partial ? ' (노력 보상)' : '') + '</b>' : '') + '</div></div>';
     h += sessTail(q, gained);   // 💥 피버 보너스 · 🚀 부스트(한 번만) · 🎁 상자 열기
     h += '@@ACTIONS@@';
+    if (pass && !partial) h += earAfterHtml(l);   // 👂 처음 그 대화 다시 듣기(첫 방문에 '얼마나 들렸어요?'에 답했고 아직 비교 전일 때만)
     if (boss) {
         h += '<div class="card" style="border:2px solid var(--gold);text-align:center">' +
             '<div style="font-size:15px;font-weight:800">' + (bossDone ? '👑 보스 클리어! (' + (bossDone.score != null ? bossDone.score + '%' : '완료') + ')' : '🔥 보스 미션') + '</div>' +
@@ -5149,6 +5158,7 @@ function renderQuizResult(body, l) {
         const b3 = [boss].concat((l.keySentences || []).filter(x => x !== boss).sort((a, c) => nativeText(a).length - nativeText(c).length).slice(0, 2)).filter(Boolean);
         if (b3.length) h += '<div class="card"><b>🧠 오늘 배운 문장 떠올리기</b><div class="muted">뜻을 보고 먼저 말해 본 뒤 눌러서 확인하세요</div>' +
             b3.map((x, i) => '<div class="recall-sent" data-recall="' + i + '" role="button" tabindex="0">' + esc(shortKo(x.ko)) + '<div class="native">' + nesc(nativeText(x)) + '</div></div>').join('') + '</div>';
+        if (feedOpenOk()) h += '<button class="btn block ghost tap" id="toFeed" style="margin:-4px 0 12px">💬 즉답 피드로 계속</button>';   // 떠올리기를 그대로 이어서(배운 문장 + 지난 문장)
     }
     if (pass && !partial) {
         const acts = (l.nextActions && l.nextActions.length) ? l.nextActions : (boss ? ['오늘 「' + nativeText(boss) + '」(' + boss.ko + ')를 혼잣말로 3번 말해 보세요.'] : []);
@@ -5177,7 +5187,7 @@ function renderQuizResult(body, l) {
     } else if (l.redo) {
         acts += '<button class="btn block" id="rBackReview">복습 탭으로</button>';
     } else if (pass && !partial) {
-        if (hasNext) acts += '<button class="btn block" id="rNext">다음 레슨 →</button>';
+        if (hasNext) acts += nextEpHtml(l, ALL[gIdx + 1]) + '<button class="btn block" id="rNext">다음 레슨 →</button>';   // 🎬 다음 화 예고(단계 끝이면 시즌 완결 카드)
         acts += '<button class="btn block ' + (hasNext ? 'ghost' : '') + '" id="rHome">학습 경로로</button>';
     } else {
         acts += '<button class="btn block" id="rRetry">다시 도전!</button>' +
@@ -5220,6 +5230,9 @@ function renderQuizResult(body, l) {
     });
     const rno = document.getElementById('remindNo');
     if (rno) rno.addEventListener('click', () => { store.seen.remindOffer = todayStr(); save(); const c = document.getElementById('remindOffer'); if (c) c.remove(); });
+    bindEarAfter(l);
+    const tf = document.getElementById('toFeed');
+    if (tf) tf.addEventListener('click', () => { S.quiz = null; feedOpen(); });
     const ct = document.getElementById('copyToday');
     if (ct) ct.addEventListener('click', () => copyText((l.keySentences || []).map((x, i) => (i + 1) + '. ' + nativeText(x) + (romanText(x) ? ' (' + romanText(x) + ')' : '') + ' — ' + x.ko).join('\n'), '📋 오늘 문장을 복사했어요. 카톡 나에게 보내기로 다시 보세요!'));
     const bgb = document.getElementById('bragBoss');
@@ -5241,6 +5254,99 @@ function renderQuizResult(body, l) {
         onClose: () => { if (S.view === 'lesson' && S.quiz === q) renderQuizResult(body, l); },
     }));
     refreshTtsWarnLink();   // 결과 화면은 render()를 거치지 않으므로, 방금 저장한 기록을 소리 배너의 '기본 브라우저로 열기'에 싣는다
+}
+
+/* ═══════════════════ 👂 귀 체크 비포·애프터 · 🎬 다음 화 예고 · 지난 화 명대사 ═══════════════════ */
+// 회화 첫 방문에 '먼저 듣기'가 끝나면 얼마나 들렸는지(b) 묻고, 퀴즈를 통과한 뒤 같은 대화를 대본 없이 다시 들려주고 또 묻는다(a).
+// 점수가 아니라 느낌 기록 — a > b면 '귀가 뚫렸어요'(레슨당 처음 한 번 +2 XP). 저장: prog().ba[레슨 id] = {b, a?} (등록표: b는 작은 쪽, a는 큰 쪽)
+const EAR_LV = ['거의 못 들었어요', '반쯤', '거의 다'];
+function ear3Html(title) { return '<div class="ear3" role="group" aria-label="' + esc(title) + '">' + EAR_LV.map((t, i) => '<button class="btn ghost" data-ear3="' + i + '">' + esc(t) + '</button>').join('') + '</div>'; }
+function earOpenN(p) { return Object.values((p && p.ba) || {}).filter(x => x && x.a != null && x.a > x.b).length; }   // 귀 뚫린 대화 수
+// 비포: at(먼저 듣기 버튼) 자리에 3지 카드 → 고르거나 건너뛰면 next(카드)로 상황 퀴즈. 0단계(발음 연습)·이미 답한 레슨은 묻지 않는다
+function earBefore(l, at, next) {
+    if (!(l.unitId >= 1) || (prog().ba || {})[l.id]) { next(at); return; }
+    at.outerHTML = '<div class="card ear-chk" id="earChk"><b>👂 얼마나 들렸어요?</b><div class="muted">점수가 아니라 느낌이에요 — 퀴즈를 통과한 뒤 다시 듣고 비교해요</div>' + ear3Html('얼마나 들렸어요?') +
+        '<button class="ear-skip" id="earSkip">건너뛰기</button></div>';
+    const box = document.getElementById('earChk');
+    box.scrollIntoView({ block: 'center', behavior: reducedMotion() ? 'auto' : 'smooth' });
+    box.querySelectorAll('[data-ear3]').forEach(b => b.addEventListener('click', () => {
+        const p = prog();
+        p.ba = Object.assign({}, p.ba, { [l.id]: { b: Number(b.dataset.ear3) } }); save(); sfx('tap');
+        next(box);
+    }));
+    document.getElementById('earSkip').addEventListener('click', () => next(box));
+}
+function earLines(l) { return ((l.dialogue && l.dialogue.turns) || []).filter(t => t.speaker !== 'N' && nativeText(t)).map(t => ({ text: nativeText(t), speaker: t.speaker })); }
+// 애프터: 통과 화면(보스 카드 위)에 '처음 그 대화, 다시 들어 볼까요?' — b가 있고 a가 없을 때만
+function earAfterHtml(l) {
+    const x = (prog().ba || {})[l.id];
+    if (!x || x.a != null || !earLines(l).length) return '';
+    return '<div class="card ear-after" id="earAfter"><b>🎧 처음 그 대화, 다시 들어 볼까요?</b><div class="muted">처음엔 「' + esc(EAR_LV[x.b]) + '」 — 대본 없이 들어 봐요</div>' +
+        '<div id="earAfterBody"><button class="btn block tap" id="earPlay">▶ 다시 듣기</button></div></div>';
+}
+function bindEarAfter(l) {
+    const box = document.getElementById('earAfterBody'), pb = document.getElementById('earPlay');
+    if (!box || !pb) return;
+    const lines = earLines(l);
+    let run = null;
+    const ask = () => {
+        box.innerHTML = '<div class="ear-q">지금은 얼마나 들렸어요?</div>' + ear3Html('지금은 얼마나 들렸어요?');
+        box.querySelectorAll('[data-ear3]').forEach(b => b.addEventListener('click', () => earAfterDone(l, Number(b.dataset.ear3), box)));
+    };
+    const start = () => {
+        box.innerHTML = '<div class="ear-playing" role="status"><span id="earNow">🔊 듣는 중… 1/' + lines.length + '</span><button class="btn small gray tap" id="earStop">⏹ 멈춤</button></div>';
+        document.getElementById('earStop').addEventListener('click', () => { if (run) run.stop(); box.innerHTML = '<button class="btn block tap" id="earPlay">▶ 다시 듣기</button>'; document.getElementById('earPlay').addEventListener('click', start); });
+        run = runLines(lines, { rate: 0.92, onStep: i => { const n = document.getElementById('earNow'); if (n) n.textContent = '🔊 듣는 중… ' + (i + 1) + '/' + lines.length; }, onDone: () => { if (box.isConnected) ask(); } });
+    };
+    pb.addEventListener('click', start);
+}
+function earAfterDone(l, a, box) {
+    const p = prog(), x = (p.ba || {})[l.id];
+    if (!x || x.a != null) return;
+    p.ba = Object.assign({}, p.ba, { [l.id]: { b: x.b, a } }); save();
+    if (a > x.b) {
+        box.innerHTML = '<div class="ear-res good">🎉 귀가 뚫렸어요! (' + esc(EAR_LV[x.b]) + ' → ' + esc(EAR_LV[a]) + ')<span>+2 XP</span></div>';
+        celebrate(); sfx('level'); addXp(2, '👂 귀 체크', true);
+        setTimeout(checkBadges, 600);
+    } else box.innerHTML = '<div class="ear-res">괜찮아요, 다음 복습 때 다시 들어 봐요 👂</div>';
+}
+function earOpenLineHtml() {
+    const ba = prog().ba || {};
+    if (!Object.values(ba).some(x => x && x.a != null)) return '';
+    return '<div class="ear-open-line">👂 귀 뚫린 대화 <b>' + earOpenN(prog()) + '개</b> <span class="muted">· 처음보다 더 들린 회화</span></div>';
+}
+// 🎬 다음 화 예고: 등장인물 = 다음 레슨 대사의 이름(나·해설 빼고 앞 3명). 상황 설명은 넣지 않는다(첫 방문 상황 퀴즈의 답이라서)
+function nextEpLine(nx, lbl) {
+    const who = Array.from(new Set(((nx.dialogue && nx.dialogue.turns) || []).filter(t => t.speaker !== 'N' && t.name && t.name !== '나').map(t => t.name))).slice(0, 3);
+    const txt = lbl + ' ' + nx.unitIcon + ' 「' + nx.title + '」' + (who.length ? ' — ' + who.join('·') + ' 등장' : '');
+    return '<div class="next-ep" title="' + esc(txt) + '">' + esc(txt) + '</div>';
+}
+function nextEpHtml(l, nx) {
+    if (!nx) return '';
+    if (nx.unitId === l.unitId) return nextEpLine(nx, '🎬 다음 화:');
+    return '<div class="card season-end"><b>🏁 시즌 ' + l.unitId + ' 「' + esc(l.unitTitle) + '」 완결!</b>' + nextEpLine(nx, '🎬 새 시즌 첫 화:') + '</div>';
+}
+// 지난 화 = 통과한 날이 가장 늦은 레슨(같으면 과정에서 뒤의 것) → 그 레슨의 보스 문장
+function lastEpLesson() {
+    const comp = prog().completed;
+    let best = null;
+    ALL.forEach(l => { const c = comp[l.id]; if (c && c.date && (!best || c.date >= comp[best.id].date)) best = l; });
+    return best;
+}
+function lastEpHtml() {
+    const l = lastEpLesson(), b = l && bossOf(l);
+    if (!b || !nativeText(b)) return '';
+    const r = CHAR_LANGS[CUR.code] ? romanText(b) : '';
+    return '<div class="last-ep" id="lastEp"><div class="le-row"><span class="le-txt">🎬 지난 화 명대사 「<span class="native">' + nesc(nativeText(b)) + '</span>」</span>' +
+        '<button class="le-btn" id="lastEpPlay" aria-label="명대사 듣기">▶</button><button class="le-btn le-ko" id="lastEpKo" aria-expanded="false">뜻 보기</button></div>' +
+        (r ? '<div class="le-roman">' + esc(r) + '</div>' : '') + '<div class="le-mean" id="lastEpMean" hidden>' + esc(shortKo(b.ko)) + '</div></div>';
+}
+function bindLastEp() {
+    const pb = document.getElementById('lastEpPlay'), kb = document.getElementById('lastEpKo');
+    if (!pb) return;
+    const b = bossOf(lastEpLesson());
+    pb.addEventListener('click', () => speak(nativeText(b), 0.95));
+    kb.addEventListener('click', () => { const m = document.getElementById('lastEpMean'), on = m.hidden; m.hidden = !on; kb.setAttribute('aria-expanded', String(on)); kb.textContent = on ? '뜻 숨기기' : '뜻 보기'; });
 }
 
 /* ═══════════════════ SRS 복습 ═══════════════════ */
@@ -7843,6 +7949,7 @@ function renderHistory() {
     let h = subnavHtml('history');
     const totalDone = Object.values(store.byLang).reduce((a, p) => a + Object.keys((p && p.completed) || {}).length, 0);
     if (totalDone >= 5 && !(store.seen.lastBackup && dayDiff(store.seen.lastBackup, todayStr()) < 30)) h += '<div class="muted" style="margin:-4px 0 10px" id="backupHint">💾 마지막 백업: ' + esc(store.seen.lastBackup || '없음') + ' — 기기를 바꿀 때 필요해요 <button class="btn small gray" id="goBackup" style="padding:4px 8px">백업하기</button></div>';
+    h += earOpenLineHtml();   // 👂 귀 뚫린 대화 N개(귀 체크를 한 적이 있을 때)
     h += badgeShelfHtml();
     h += triviaShelfHtml();   // 🃏 잡학 카드(선물 상자)
     h += weekReportHtml();
