@@ -647,6 +647,8 @@
         .play-sum .ps-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
         .play-sum .ps-note { font-size: 12.5px; margin-top: 6px; }
         .play-next .pn-lbl { font-size: 12px; font-weight: 800; color: var(--text-light); margin-bottom: 6px; }
+        .play-next .pn-auto { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px; font-size: 13px; font-weight: 700; color: var(--text-light); }
+        .btn.tap { min-height: 44px; min-width: 64px; }   /* 작은 버튼도 손가락으로 누르기 쉽게(44px) */
         .play-intro .pi-title { font-size: 16px; font-weight: 800; }
         .play-intro ol { margin: 8px 0 12px 20px; font-size: 14px; line-height: 1.7; }
         /* ☁️ 계정 카드 */
@@ -895,7 +897,9 @@ function lootBoxes() { const l = store.loot; return l ? Math.max(0, Object.keys(
 // 상자: 받은 상자(g)·잡학 카드(tv)는 합집합, 숫자는 기기별 칸마다 큰 쪽 → 합쳐도 상자가 늘거나 되살아나지 않고, 받은 조각도 사라지지 않는다
 function cleanLoot(v) {
     if (!isObj(v)) return undefined;
-    const o = { g: cleanDateMap(v.g, 2000, k => /^(q|z|lg):[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(k)), tv: cleanDateMap(v.tv, 200, k => /^[a-z]{2}[0-9]{1,2}$/.test(k) && isLang(k.slice(0, 2))) };
+    // 받은 상자 id: 'q:'·'z:'(퀘스트·퍼즐)는 언어 자리를 둘 수 있다('q:zh:2026-10-05' — 언어마다 따로 받게), 리그는 'lg:날짜'
+    const gid = k => { const m = /^(q|z|lg):(?:([a-z]{2}):)?[0-9]{4}-[0-9]{2}-[0-9]{2}$/.exec(k); return !!m && (!m[2] || (m[1] !== 'lg' && isLang(m[2]))); };
+    const o = { g: cleanDateMap(v.g, 2000, gid), tv: cleanDateMap(v.tv, 200, k => /^[a-z]{2}[0-9]{1,2}$/.test(k) && isLang(k.slice(0, 2))) };
     LOOT_NUM.forEach(f => { o[f] = cleanCount(v[f]); });
     return o;
 }
@@ -1843,11 +1847,13 @@ function lessonClipUrls(l) {
     ((l.dialogue && l.dialogue.turns) || []).forEach(t => { if (t.speaker !== 'N') out.push(clipUrl(nativeText(t), t.speaker)); });
     return out.filter(Boolean);
 }
-// 판을 시작하기 전에 녹음을 받아 둔다. 시간 안에 받은 문장만 돌려준다(러시·피드·도전장)
+// 판을 시작하기 전에 녹음을 받아 둔다(러시·피드·도전장). 넣은 순서 그대로, 바로 들려줄 수 있는 문장만 돌려준다:
+// 시간 안에 받은 녹음 문장 + 기기 음성으로 읽을 문장(녹음이 없음 — 자연 음성을 껐거나 녹음 목록을 아직 못 받았을 때도 —, 받기가 실패함).
+// 시간이 다 되도록 아직 받는 중인 문장만 뺀다(판 도중에 기다리지 않게). 같은 seed면 같은 순서여야 하는 도전장이 받은 순서에 흔들리지 않는다
 function prefetchFor(items, timeoutMs) {
-    const got = [];
-    const jobs = (items || []).map(x => { const u = clipUrl(lineText(x), x && x.speaker); return u ? clipBlob(u).then(() => { got.push(x); }) : Promise.resolve(); });
-    return Promise.race([Promise.allSettled(jobs), sleepMs(timeoutMs || 8000)]).then(() => got.slice());
+    const list = items || [], ok = new Set();
+    const jobs = list.map(x => { const u = clipUrl(lineText(x), x && x.speaker); if (!u) { ok.add(x); return null; } return clipBlob(u).catch(() => { }).then(() => { ok.add(x); }); }).filter(Boolean);
+    return Promise.race([Promise.all(jobs), sleepMs(timeoutMs || 8000)]).then(() => list.filter(x => ok.has(x)));
 }
 
 /* ═══════════════════ 모달 (접근성: Esc 닫기 · 포커스 가두기) ═══════════════════ */
@@ -5741,30 +5747,33 @@ function knownSet(upToIdx) {
 // 일본어 조각: 띄어쓰기·문장부호로 나눈 덩어리마다 아는 말로 나눈다 → [{t: 조각, c: 덩어리 번호}]
 // 맨 앞부터 긴 말을 고르면 'しゅみはなん'이 'しゅみ|はな|ん', 'げんきです'가 'げんきで|す'가 되므로, 덩어리 전체를 보고
 // ① 모르는 글자가 가장 적고 ② 조각이 가장 적고 ③ 기능어(です·は …)가 많은 나누기를 고른다. 지키는 규칙:
-// · 한 글자 말(は·と·て·き …)은 바로 앞이 아는 말(또는 덩어리 처음)이고, 바로 뒤가 덩어리 끝·두 글자 이상 아는 말일 때만.
-//   아는 말 뒤에서는 한 글자 말 둘까지 이어질 수 있다('じゅう|じ|に|あいます', 'わたし|に|は')
+// · 한 글자 말(は·と·て·き …)은 바로 앞이 아는 말(또는 덩어리 처음)이고, 바로 뒤가 덩어리 끝·두 글자 이상 아는 말일 때만
 //   — 'とても'가 'と|て|も'로, 'わかりました'가 'わ|か|りました'로 갈라지지 않게
+//   덩어리 처음의 기능어(は·の·に …)는 그 한 글자가 덩어리 전체일 때만('の|みます'로 자르지 않음)
+//   아는 말 뒤에서는 한 글자 말 둘까지 이어질 수 있다 — 둘 중 하나만 기능어이거나, 덩어리 끝에서 하나 이상 기능어일 때
+//   ('じゅう|じ|に|あいます', 'でんしゃ|で|ご|ふん', 'わたし|に|は' / 'また|きて'·'を|のみます'는 'き|て'·'を|の|みます'로 자르지 않음)
 // · 모르는 글자는 이어 붙여 한 덩어리로, 한 글자짜리 모르는 조각은 덩어리 전체일 때만('あ、')
 // · 작은 가나·'ー'로 시작하는 조각은 없다(덩어리 처음 빼고)
 function jaPieces(text, known) {
     const out = [], fw = new Set(FUNC_WORDS.ja), has = w => known.set.has(w);
     text.split(new RegExp(CJK_PUNCT.source + '+')).filter(Boolean).forEach((ch, c) => {
         const n = ch.length, best = Array.from({ length: n + 1 }, () => []);
-        // 상태: 0 덩어리 처음 · 1 두 글자 이상 아는 말 뒤 · 2 처음의 한 글자 말 뒤 · 3 아는 말 뒤의 한 글자 말 뒤 · 4 모르는 글자 1개 뒤 · 5 모르는 글자 2개 이상 뒤 · 6 한 글자 말 둘째 뒤
+        // 상태: 0 덩어리 처음 · 1 두 글자 이상 아는 말 뒤 · 2 처음의 한 글자 말 뒤 · 3 아는 말 뒤의 한 글자 말 뒤(7: 그 말이 기능어) · 4 모르는 글자 1개 뒤 · 5 모르는 글자 2개 이상 뒤 · 6 한 글자 말 둘째 뒤
         const cmp = (a, b) => (a.u - b.u) || (a.t - b.t) || (b.f - a.f);
         const go = (j, s, v, pj, ps) => { if (!best[j][s] || cmp(v, best[j][s]) < 0) best[j][s] = Object.assign(v, { pj, ps }); };
         best[0][0] = { u: 0, t: 0, f: 0 };
-        for (let j = 0; j < n; j++) for (let s = 0; s < 7; s++) {
+        for (let j = 0; j < n; j++) for (let s = 0; s < 8; s++) {
             const v = best[j][s];
             if (!v) continue;
             const lead = j > 0 && SMALL_KANA.test(ch[j]);
             if (s !== 4 && !lead) for (let L = 2; L <= Math.min(known.max, n - j); L++) { const w = ch.substr(j, L); if (has(w)) go(j + L, 1, { u: v.u, t: v.t + 1, f: v.f + (fw.has(w) ? 1 : 0) }, j, s); }
-            if (!lead && has(ch[j]) && s <= 3 && s !== 2) go(j + 1, s === 3 ? 6 : j ? 3 : 2, { u: v.u, t: v.t + 1, f: v.f + (fw.has(ch[j]) ? 1 : 0) }, j, s);
+            const f1 = fw.has(ch[j]), ns = s === 0 ? (f1 && n > 1 ? -1 : 2) : s === 1 ? (f1 ? 7 : 3) : ((s === 3 && f1) || (s === 7 && (!f1 || j + 1 === n))) ? 6 : -1;
+            if (!lead && has(ch[j]) && ns >= 0) go(j + 1, ns, { u: v.u, t: v.t + 1, f: v.f + (f1 ? 1 : 0) }, j, s);
             if (s === 4 || s === 5) go(j + 1, 5, { u: v.u + 1, t: v.t, f: v.f }, j, s);
             else if ((s === 0 || s === 1) && !lead) go(j + 1, 4, { u: v.u + 1, t: v.t + 1, f: v.f }, j, s);
         }
         let s = -1;
-        [1, 2, 3, 5, 6].concat(n === 1 ? [4] : []).forEach(k => { if (best[n][k] && (s < 0 || cmp(best[n][k], best[n][s]) < 0)) s = k; });
+        [1, 2, 3, 5, 6, 7].concat(n === 1 ? [4] : []).forEach(k => { if (best[n][k] && (s < 0 || cmp(best[n][k], best[n][s]) < 0)) s = k; });
         const seg = [];
         for (let j = n; j > 0 && s >= 0;) { const v = best[j][s]; seg.unshift({ t: ch.slice(v.pj, j), unk: s === 4 || s === 5 }); j = v.pj; s = v.ps; }
         seg.forEach((x, i) => { if (x.unk && i && seg[i - 1].unk) out[out.length - 1].t += x.t; else out.push({ t: x.t, c }); });
@@ -5961,11 +5970,16 @@ function playSummaryHtml(sum) {
 // 다음 놀이 고르기: 아래에서 처음 맞는 것(방금 한 놀이·잠긴 놀이·아직 없는 놀이는 건너뜀, 조용 모드면 마이크 놀이도)
 const NEXT_RULES = [
     { id: 'puzzle', when: () => !(prog().puz && prog().puz.last === todayStr()), why: '오늘의 퍼즐을 아직 안 풀었어요' },
-    { id: 'missions', when: () => !!PLAY.lastLesson && !((prog().mission || {})[PLAY.lastLesson] || {}).s, why: '방금 배운 회화로 미션에 도전해요', auto: false },
+    { id: 'missions', when: () => missionFresh(PLAY.lastLesson), why: '방금 배운 회화로 미션에 도전해요', auto: false },
     { id: 'review', when: () => dueCards().length >= 8, why: () => '잊어버릴 때쯤인 카드가 ' + Math.min(dueCards().length, sessionCap()) + '장 모였어요' },
     { id: 'feed', when: () => (dayLog().feed || 0) < 10, why: '오늘 즉답 10장을 채워 봐요' },
     { id: 'radio', when: () => (store.settings.earGoal || 0) * 60 > (dayLog().ls || 0), why: '오늘 귀 시간 목표가 남았어요', auto: false },
 ];
+// 방금 통과한 레슨에 아직 도전하지 않은 미션이 있나: 0단계(발음) 레슨은 미션이 없고, 긴 대본 미션은 'u6l2#1'처럼 나뉜다(하나라도 별이 있으면 도전한 것)
+function missionFresh(id) {
+    const l = id && ALL.find(x => x.id === id), m = prog().mission || {};
+    return !!l && l.unitId > 0 && !Object.keys(m).some(k => (k === id || k.startsWith(id + '#')) && m[k].s > 0);
+}
 function playTile(id) { return PLAY_TILES.find(t => t.id === id) || null; }
 function playTarget(id) {
     if (id === 'review') return { id, ico: '🃏', name: '복습 카드', go: () => { resetTransient(); go('review'); } };
@@ -5978,7 +5992,7 @@ function playTarget(id) {
 }
 function nextPlay(after) {
     for (const r of NEXT_RULES) {
-        if (r.id === after) continue;
+        if (r.id === after || (after === 'home' && r.id === 'review')) continue;   // 홈에는 복습 배너가 이미 있다(같은 권유를 두 번 하지 않게)
         const t = playTarget(r.id);
         if (!t || !r.when()) continue;
         return Object.assign(t, { why: typeof r.why === 'function' ? r.why() : r.why }, r.auto === false ? { auto: false } : {});
@@ -5996,28 +6010,40 @@ function nextPlayHtml(mode) {
     if (!n) return '';
     const auto = store.settings.autoNext !== false && !reducedMotion() && n.auto !== false;
     PLAY.next = { n, from: mode, auto };
+    // 카운트다운과 '취소'는 큰 버튼 아래 한 줄(버튼 안에서 줄바꿈되지 않게) · 버튼은 모두 44px 이상
     return '<div class="card play-next"><div class="pn-lbl">다음 놀이</div>' +
-        '<button class="btn block" id="playNextGo">' + n.ico + ' ' + esc(n.name) + (auto ? ' <span id="playNextSec">(5초 뒤 시작)</span>' : '') + '</button>' +
-        '<div class="muted" style="margin-top:6px">' + esc(n.why) + '</div>' + (auto ? '<button class="btn small gray" id="playNextCancel" style="margin-top:8px">취소</button>' : '') + '</div>';
+        '<button class="btn block tap" id="playNextGo">' + n.ico + ' ' + esc(n.name) + '</button>' +
+        '<div class="muted" style="margin-top:6px">' + esc(n.why) + '</div>' +
+        (auto ? '<div class="pn-auto" id="playNextAuto"><span id="playNextSec" role="timer">⏱ 5초 뒤 시작</span><button class="btn small gray tap" id="playNextCancel" aria-label="자동 시작 취소">취소</button></div>' : '') + '</div>';
 }
 function clearPlayNext() { clearTimeout(PLAY.nextTimer); PLAY.nextTimer = 0; }
+// 자동 시작을 멈추고 '다음' 버튼만 남긴다(취소·화면을 떠남)
+function stopAutoNext() {
+    clearPlayNext();
+    const a = document.getElementById('playNextAuto');
+    if (a) a.remove();
+}
+// 휴대폰을 잠그거나 다른 앱으로 가면 자동 시작을 멈춘다 — 돌아왔을 때 다음 놀이로 넘어가 있지 않게
+document.addEventListener('visibilitychange', () => { if (document.hidden && PLAY.nextTimer) stopAutoNext(); });
 function bindPlayNext(root) {
     const nx = PLAY.next, b = root && root.querySelector('#playNextGo');
     if (!nx || !b) return;
     const start = auto => { clearPlayNext(); PLAY.next = null; track('play_next', { from: nx.from, to: nx.n.id, auto: auto ? 1 : 0 }); nx.n.go(); };
     b.addEventListener('click', () => start(false));
     if (!nx.auto) return;
+    if (document.hidden) { stopAutoNext(); return; }
     let left = 5;
     const tick = () => {
         const s = root.querySelector('#playNextSec');
         if (!s || !s.isConnected || PLAY.next !== nx) { clearPlayNext(); return; }
+        if (document.hidden) { stopAutoNext(); return; }
         if (--left <= 0) { start(true); return; }
-        s.textContent = '(' + left + '초 뒤 시작)';
+        s.textContent = '⏱ ' + left + '초 뒤 시작';
         PLAY.nextTimer = setTimeout(tick, 1000);
     };
     clearPlayNext(); PLAY.nextTimer = setTimeout(tick, 1000);
     const c = root.querySelector('#playNextCancel');
-    if (c) c.addEventListener('click', () => { clearPlayNext(); const s = root.querySelector('#playNextSec'); if (s) s.remove(); c.remove(); });
+    if (c) c.addEventListener('click', () => { stopAutoNext(); b.focus(); });
 }
 // 놀이마다 처음 들어가면 규칙 3줄 카드와 '시작'(seen['in_'+id]) — 이미 봤으면 바로 start()
 function playIntro(id, title, rules, start) {
@@ -6116,7 +6142,8 @@ function playTileHtml(t, quiet, newId, dl) {
 function renderPlay() {
     const ctx = playCtx(), quiet = quietNow(), dl = dayLog(), say = sayLaterItems();
     S.ctxShown = ctx;
-    let h = '<div class="ctx-row"><div class="ctx-chips" role="group" aria-label="지금 상황">' +
+    // 상황 칩·조용 모드는 바뀌는 것이 있을 때만(등록된 놀이 타일이나 말하기 대기가 있을 때) — 눌러도 아무것도 바뀌지 않는 칩은 두지 않는다
+    let h = !PLAY_TILES.length && !say.length ? '' : '<div class="ctx-row"><div class="ctx-chips" role="group" aria-label="지금 상황">' +
         PLAY_CTX.map(([id, t]) => '<button data-ctx="' + id + '" aria-pressed="' + (id === ctx) + '">' + t + '</button>').join('') + '</div>' +
         (quiet ? '<span class="quiet-pill" id="quietPill">🤫 조용 모드</span>' : '') + '</div>';
     if (!store.seen.playTrainerHint) h += '<div class="guide-banner" role="note">👇 ' + esc(CUR.trainerLabel) + ' 훈련은 여기 맨 위에 있어요</div>';
@@ -6643,11 +6670,12 @@ function renderSettings() {
         '</div>';
     // 🎮 놀이 설정(기기마다 따로)
     const swOn = 'serviceWorker' in navigator && !!navigator.serviceWorker.controller;
-    h += '<div class="card">' +
-        setRow('🤫 조용 모드', '소리 내어 말하는 단계 건너뛰기 · 놀이 탭에서 🚇 이동 중을 고르면 저절로 켜져요', '<label class="switch"><input type="checkbox" id="setQuiet" aria-label="조용 모드"' + (store.settings.quiet ? ' checked' : '') + '><span class="slider"></span></label>') +
-        setRow('⏭️ 다음 놀이 자동 시작', '놀이가 끝나면 5초 뒤 다음 놀이로 이어 가요 · 움직임 줄이기를 켠 기기는 버튼만', '<label class="switch"><input type="checkbox" id="setAutoNext" aria-label="다음 놀이 자동 시작"' + (store.settings.autoNext !== false ? ' checked' : '') + '><span class="slider"></span></label>') +
-        (hasClips && swOn ? setRow('📥 오프라인용 녹음 받기', esc(CUR.name) + ' 녹음 전체(약 ' + (CLIP_MB[CUR.code] || 15) + 'MB)를 미리 받아 두면 인터넷이 없어도 들려요', '<button class="btn small ghost" id="clipAllBtn">받기</button>') : '') +
-        '</div>';
+    const playSet =
+        // 놀이 설정 두 줄은 놀이가 하나라도 생긴 뒤에만(그 전에는 켜도 바뀌는 것이 없음)
+        (PLAY_TILES.length ? setRow('🤫 조용 모드', '놀이에서 소리 내어 말하는 단계 건너뛰기 · 놀이 탭에서 🚇 이동 중을 고르면 저절로 켜져요', '<label class="switch"><input type="checkbox" id="setQuiet" aria-label="조용 모드"' + (store.settings.quiet ? ' checked' : '') + '><span class="slider"></span></label>') +
+            setRow('⏭️ 다음 놀이 자동 시작', '놀이가 끝나면 5초 뒤 다음 놀이로 이어 가요 · 움직임 줄이기를 켠 기기는 버튼만', '<label class="switch"><input type="checkbox" id="setAutoNext" aria-label="다음 놀이 자동 시작"' + (store.settings.autoNext !== false ? ' checked' : '') + '><span class="slider"></span></label>') : '') +
+        (hasClips && swOn ? setRow('📥 오프라인용 녹음 받기', esc(CUR.name) + ' 녹음 전체(약 ' + (CLIP_MB[CUR.code] || 15) + 'MB)를 미리 받아 두면 인터넷이 없어도 들려요', '<button class="btn small ghost tap" id="clipAllBtn">받기</button>') : '');
+    if (playSet) h += '<div class="card">' + playSet + '</div>';
     if (!placementChoices().length && nextSkipUnit() !== null) h += '<div class="card">' + setRow('📍 시작 위치', '이미 아는 단계는 건너뛰기 시험으로 넘어갈 수 있어요', '<button class="btn small ghost" id="skipFromSet">' + nextSkipUnit() + '단계 시험</button>') + '</div>';
     if (CUR.code === 'en') {
         const di = readDeq(), rec = prog().deqImport;
@@ -6692,8 +6720,9 @@ function renderSettings() {
     document.getElementById('setKoPron').addEventListener('change', e => { store.settings.koPron = e.target.value === 'auto' ? 'auto' : e.target.value === 'on'; save(); });
     $main.querySelectorAll('[data-rate]').forEach(b => b.addEventListener('click', () => { store.settings.rateByLang[CUR.code] = parseFloat(b.dataset.rate); save(); renderSettings(); speak(CUR.sampleWord, 0.95); }));
     document.getElementById('setFree').addEventListener('change', e => { store.settings.freeNav = e.target.checked; save(); });
-    document.getElementById('setQuiet').addEventListener('change', e => { store.settings.quiet = e.target.checked; save(); });
-    document.getElementById('setAutoNext').addEventListener('change', e => { store.settings.autoNext = e.target.checked; save(); });
+    const sq = document.getElementById('setQuiet'), sa = document.getElementById('setAutoNext');
+    if (sq) sq.addEventListener('change', e => { store.settings.quiet = e.target.checked; save(); });
+    if (sa) sa.addEventListener('change', e => { store.settings.autoNext = e.target.checked; save(); });
     const cab = document.getElementById('clipAllBtn');
     if (cab) cab.addEventListener('click', () => downloadAllClips(cab));
     const sfs = document.getElementById('skipFromSet');
