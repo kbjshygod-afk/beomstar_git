@@ -1950,14 +1950,14 @@ function earSheetHtml(ask) {   // ask: 더할지 묻는 중인 앱 밖 시간(�
     return h;
 }
 // 앱 밖 시간은 한 번 더 묻고 더한다 — 저장하면 곧 클라우드로 올라가고 기기끼리는 큰 쪽으로 합쳐져 나중에 줄일 수 없으니까.
-// 확인 버튼은 묻는 글 아래 줄에 있어 +10분·+30분을 두 번 눌러도 그 자리에 닿지 않는다
+// 확인 버튼은 묻는 글 아래 줄에 있고, 묻고 0.5초 안의 누름은 받지 않는다(+30분을 두 번 눌러 확인까지 되지 않게 — 화면이 밀려 같은 자리에 와도)
 function openEarSheet() {
-    let ask = 0;
+    let ask = 0, askAt = 0;
     const sheet = openModal(earSheetHtml(), () => { if (S.view === 'home') render(); });
     const on = (sel, fn) => { const b = sheet.querySelector(sel); if (b) b.addEventListener('click', fn); };
     const bind = () => {
-        sheet.querySelectorAll('[data-lx]').forEach(b => b.addEventListener('click', () => { const n = Number(b.dataset.lx); if ((dayLog().lx || 0) >= LX_DAY_MAX) { lxAdd(n); return; } ask = n; redraw('[data-lxok]'); }));
-        on('[data-lxok]', () => { const n = ask; ask = 0; lxAdd(n); redraw('[data-lx="' + n + '"]'); });
+        sheet.querySelectorAll('[data-lx]').forEach(b => b.addEventListener('click', () => { const n = Number(b.dataset.lx); if ((dayLog().lx || 0) >= LX_DAY_MAX) { lxAdd(n); return; } ask = n; askAt = Date.now(); redraw('[data-lxok]'); }));
+        on('[data-lxok]', () => { if (Date.now() - askAt < 500) return; const n = ask; ask = 0; lxAdd(n); redraw('[data-lx="' + n + '"]'); });
         on('[data-lxno]', () => { const n = ask; ask = 0; redraw('[data-lx="' + n + '"]'); });
         sheet.querySelectorAll('[data-eg]').forEach(b => b.addEventListener('click', () => { store.settings.earGoal = Number(b.dataset.eg); save(); redraw('[data-eg="' + b.dataset.eg + '"]'); }));
     };
