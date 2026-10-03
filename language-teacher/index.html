@@ -792,6 +792,90 @@
         .puz-dist .pd-bar { flex: 1; min-width: 0; }
         .puz-dist .pd-bar > div { min-width: 22px; padding: 2px 6px; border-radius: 6px; background: #94a3b8; color: #fff; text-align: right; }
         .puz-dist .pd-row.now .pd-bar > div { background: #15803d; }
+        /* 👂 귀 체크 · 🎬 다음 화 예고 · 지난 화 명대사 */
+        .ear3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 10px; }
+        .ear3 .btn { min-height: 48px; padding: 6px 4px; font-size: 13.5px; line-height: 1.3; }
+        .ear-skip { display: block; min-height: 44px; margin: 4px auto 0; padding: 0 14px; border: none; background: none; color: var(--text-light); font: inherit; font-size: 12.5px; text-decoration: underline; cursor: pointer; }
+        .ear-after { border: 1.5px solid #a5b4fc; background: #eef2ff; }
+        .ear-after #earAfterBody { margin-top: 10px; }
+        .ear-q { font-size: 14px; font-weight: 800; }
+        .ear-playing { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 13.5px; font-weight: 800; color: #3730a3; }
+        .ear-res { padding: 4px 0; text-align: center; font-size: 14.5px; font-weight: 800; }
+        .ear-res.good { color: #3730a3; }
+        .ear-res span { display: block; margin-top: 2px; font-size: 12.5px; color: var(--primary); }
+        .ear-open-line { margin: -2px 0 10px; font-size: 13.5px; }
+        .next-ep { margin: 0 0 8px; font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .season-end { text-align: center; border: 2px solid var(--gold); background: var(--gold-light); }
+        .season-end b { display: block; font-size: 15px; margin-bottom: 6px; }
+        .season-end .next-ep { margin: 0; }
+        .last-ep { margin: -4px 0 12px; padding: 2px 6px 2px 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--card); }
+        .last-ep .le-row { display: flex; align-items: center; gap: 6px; }
+        .last-ep .le-txt { flex: 1; min-width: 0; font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .last-ep .le-btn { flex-shrink: 0; min-width: 44px; height: 44px; padding: 0 8px; border: 1px solid var(--border); border-radius: 10px; background: var(--card); color: var(--primary); font: inherit; font-size: 12.5px; font-weight: 800; cursor: pointer; }
+        .last-ep .le-roman { margin: -4px 0 4px; font-size: 11.5px; color: var(--text-light); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .last-ep .le-mean { margin: 0 0 6px; font-size: 13px; }
+        /* 💬 이럴 때 뭐라고? 즉답 피드 */
+        body.feed-on { overscroll-behavior-y: contain; }
+        .feed { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+        .feed-top { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+        .feed-top .ft-t { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+        .feed-top .ft-t b { font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .feed-top .ft-t span { font-size: 12px; font-weight: 700; color: var(--text-light); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .feed-tg { width: 44px; height: 44px; flex-shrink: 0; border: 1.5px solid var(--border); border-radius: 12px; background: var(--card); font: inherit; font-size: 18px; cursor: pointer; }
+        .feed-tg[aria-pressed="true"] { border-color: var(--primary); background: var(--red-soft); }
+        .feed-tg:disabled { opacity: .4; cursor: default; }
+        .feed-stage { flex: 1; min-height: 0; display: flex; touch-action: none; user-select: none; -webkit-user-select: none; }   /* 카드 영역만 손가락 넘기기(스크롤 없음) */
+        .feed-stage.sum { display: block; overflow-y: auto; touch-action: pan-y; user-select: auto; -webkit-user-select: auto; }
+        .feed-card { position: relative; flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 10px; padding: 16px; border: 1px solid var(--border); border-radius: 18px; background: var(--card); overflow: hidden; }
+        .feed-card.in-up { animation: feedInUp .22s ease-out; }
+        .feed-card.in-down { animation: feedInDown .22s ease-out; }
+        .feed-card.out-up { transition: transform .22s ease-in, opacity .22s; transform: translateY(-48px); opacity: 0; }
+        .feed-card.out-down { transition: transform .22s ease-in, opacity .22s; transform: translateY(48px); opacity: 0; }
+        @keyframes feedInUp { from { transform: translateY(48px); opacity: 0; } }
+        @keyframes feedInDown { from { transform: translateY(-48px); opacity: 0; } }
+        .feed-card.fever { background: linear-gradient(135deg, #fff6d8, #fffdf4 60%, #ffefc2); box-shadow: 0 0 0 2px #f5b400, 0 0 16px rgba(245,180,0,.45); }
+        .feed-fav { position: absolute; top: 8px; right: 8px; width: 44px; height: 44px; border: none; border-radius: 50%; background: none; color: #e11d48; font: inherit; font-size: 24px; cursor: pointer; }
+        .fc-head { display: flex; flex-direction: column; gap: 2px; padding-right: 40px; }
+        .fc-from { font-size: 12.5px; font-weight: 800; color: var(--text-light); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .fc-sit { font-size: 12px; color: var(--text-light); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .fc-ko { font-size: 24px; font-weight: 900; line-height: 1.35; margin-top: 6px; }
+        .fc-hint { padding: 8px 12px; border-radius: 12px; background: var(--gold-light); font-size: 13px; }
+        .fc-ask { font-size: 13px; color: var(--text-light); line-height: 1.5; }
+        .fc-tap { flex: 1; min-height: 64px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; border: 2px dashed var(--border); border-radius: 14px; font-size: 14px; font-weight: 800; color: var(--text-light); cursor: pointer; }
+        .fc-ring { width: 44px; height: 44px; transform: rotate(-90deg); }
+        .fc-ring circle { fill: none; stroke: #e2e8f0; stroke-width: 4; }
+        .fc-ring circle.on { stroke: var(--primary); stroke-dasharray: 100; stroke-dashoffset: 0; }
+        .fc-ring circle.on.run { animation: feedRing linear forwards; }
+        @keyframes feedRing { to { stroke-dashoffset: 100; } }
+        .fc-ans { padding: 12px; border-radius: 14px; background: var(--red-soft); }
+        .fc-ans-row { display: flex; align-items: flex-start; gap: 8px; }
+        .fc-native { flex: 1; min-width: 0; font-size: 24px; line-height: 1.4; }
+        .fc-native.long { font-size: 18px; }
+        .fc-play { width: 44px; height: 44px; font-size: 18px; }
+        .fc-ans .pinyin { font-size: 18px; font-weight: 700; color: var(--primary); margin-top: 4px; }   /* zh 병음·ja 로마자는 크게 */
+        .fc-ans .pron { font-size: 13px; font-weight: 600; color: #7a5200; margin-top: 2px; }
+        .fc-note { font-size: 13px; line-height: 1.5; }
+        .fc-also { font-size: 13px; color: var(--text-light); }
+        .fc-graded { align-self: flex-start; padding: 4px 10px; border-radius: 999px; background: #eef2f7; font-size: 12.5px; font-weight: 800; }
+        .feed-btns { display: flex; gap: 8px; flex-shrink: 0; }
+        .fb-main, .fb-g { min-height: 52px; }   /* 엄지 영역 버튼(요약 카드의 다음 세트 포함) */
+        .fb-g { flex: 1; min-width: 0; padding: 4px; border: 1.5px solid var(--border); border-radius: 14px; background: var(--card); color: var(--text); font: inherit; font-size: 13px; font-weight: 800; line-height: 1.25; cursor: pointer; }
+        .fb-g.ok { flex: 1.3; border-color: var(--primary); background: var(--primary); color: #fff; }
+        .feed-ask { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 8px 10px; border-radius: 12px; background: #eef2ff; font-size: 13px; font-weight: 800; }
+        .feed-sum { gap: 8px; overflow: visible; }
+        .feed-sum .fs-hero { font-size: 18px; font-weight: 900; }
+        .feed-sum .btn.block { margin: 0; }
+        .feed-empty { align-items: center; justify-content: center; text-align: center; font-weight: 800; }
+        .feed-stamp { padding: 10px 12px; border-radius: 12px; background: #f8fafc; }
+        .feed-stamp b { display: block; font-size: 13.5px; }
+        .feed-stamp .muted { display: block; margin-bottom: 6px; }
+        .fst-grid { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 3px; max-width: 230px; }   /* 10×10 도장판은 작게(요약 카드가 길어지지 않게) */
+        .fst-grid i { aspect-ratio: 1; border-radius: 4px; background: #e2e8f0; }
+        .fst-grid i.on { background: var(--primary); }
+        .feed-opt .seg button { min-height: 44px; min-width: 60px; font-size: 13px; }
+        .feed-opt .sheet-close { width: 44px; height: 44px; }
+        .feed-more { display: block; width: 100%; min-height: 44px; font: inherit; font-size: 13px; text-align: left; }
+        @media (prefers-reduced-motion: reduce) { .feed-card.in-up, .feed-card.in-down { animation: none; } .feed-card.out-up, .feed-card.out-down { transition: none; transform: none; } }
         /* ☁️ 계정 카드 */
         .cloud-card .cloud-ava { width: 38px; height: 38px; border-radius: 50%; background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 17px; flex-shrink: 0; }
         .gbtn { display: inline-flex; align-items: center; gap: 8px; background: #fff; color: #1f2937; border: 1.5px solid #d1d5db; font-weight: 700; }
@@ -5307,8 +5391,10 @@ function earAfterDone(l, a, box) {
     if (!x || x.a != null) return;
     p.ba = Object.assign({}, p.ba, { [l.id]: { b: x.b, a } }); save();
     if (a > x.b) {
-        box.innerHTML = '<div class="ear-res good">🎉 귀가 뚫렸어요! (' + esc(EAR_LV[x.b]) + ' → ' + esc(EAR_LV[a]) + ')<span>+2 XP</span></div>';
-        celebrate(); sfx('level'); addXp(2, '👂 귀 체크', true);
+        const msg = '🎉 귀가 뚫렸어요! (' + EAR_LV[x.b] + ' → ' + EAR_LV[a] + ')';
+        box.innerHTML = '<div class="ear-res good">' + esc(msg) + '<span>+2 XP</span></div>';
+        celebrate(); sfx('level'); showToast(msg + ' +2 XP', 'gold', 3200);
+        addXp(2, '', true);   // 레슨당 처음 한 번(a가 없을 때만 이 카드가 나온다)
         setTimeout(checkBadges, 600);
     } else box.innerHTML = '<div class="ear-res">괜찮아요, 다음 복습 때 다시 들어 봐요 👂</div>';
 }
@@ -7695,6 +7781,379 @@ registerPlayTile({
     lock: () => puzUnit() < 1 ? '1단계 레슨을 통과하면 열려요' : '레슨을 하나 더 통과하면 열려요',
     status: () => { const z = prog().puz, sv = !puzDone() && puzSaved(); return puzDone() ? (z.t <= PUZ_TRIES ? '✅ ' + z.t + '/' + PUZ_TRIES : '💪 X/' + PUZ_TRIES) + ' · 🔥' + puzStreak() + '일' : sv ? '▶ #' + puzNo() + ' 이어 풀기 · 기회 ' + (PUZ_TRIES - sv.g.length) + '번' : '🆕 #' + puzNo() + ' 오늘 문제'; },
     open: () => { S.puz = null; go('puzzle'); },
+});
+
+/* ═══════════════════ 💬 이럴 때 뭐라고? 즉답 피드 ═══════════════════ */
+// 한국어 상황을 보고 먼저 입으로(또는 속으로) 말한 뒤 원어민 정답을 듣는 한 장 10초짜리 말하기 인출 연습 — 쇼츠처럼 위로 넘기면 '말했어요'.
+// 재료: 통과한 레슨 + 지금 레슨의 핵심 문장(1단계 이상 · 연습·괄호 문장 빼고 · 녹음이 있는 것). 일정은 복습함과 하나로 쓴다:
+//  · 복습함에 있는 문장 → 그 카드의 상자·복습일로 채점(복습 탭과 같은 규칙, 복습 1장으로 셈 — 그날 복습 탭에는 다시 안 나옴)
+//  · 없는 문장 → prog().feed[클립 id] = {b, d}로 가볍게. ✕·△면 복습함(문장 카드)으로 옮긴다
+// 세트(최대 10장): 복습할 문장 → 피드 복습 → 새 문장(2개, 복습이 없으면 3개 — 세트 안 i·i+2·i+6번째에 3번) → 모자라면 오래 안 본 문장
+const FEED_MIN = 6, FEED_GAP = [1, 2, 4, 7, 15, 30], FEED_PAT = [[0, 2, 6], [0, 2, 4], [0, 4], [0, 2], [0]];   // 새 문장 자리(들어가지 않으면 다음 모양)
+const FEED_G = { ok: '😎 말했어요', hard: '🤏 비슷', fail: '🙈 못했어요' };
+const FEED_UI = { no: 0, mic: false, good: 0, askFast: false };   // 세트 번호 · 🎤 채점 모드(이 세션만) · ○ 70% 이상으로 끝낸 세트 수 · 스피드 모드 제안함
+function feedNorm(ko) { return String(ko || '').replace(/[\s\p{P}\p{S}]/gu, ''); }
+function feedOkSent(x) { return !!nativeText(x) && !/[()（）]|연습/.test(x.ko || ''); }   // bossOf와 같은 거름(메모·연습 문장 빼기)
+// 녹음이 있는 문장만 — 녹음 목록을 아직 못 받았거나 이 언어에 녹음이 없으면 거르지 않는다(그때는 기기 음성으로 읽음)
+function feedHasClip(n) { const c = CUR && CLIPS[CUR.code]; return !(c && c.ids) || c.ids.has(clipId('a', n)); }
+// 같은 뜻(기호·공백 뺀 한국어)에 원문이 여럿인 묶음: 뜻 → 원문 목록(언어마다 한 번 — ja '안녕하세요' 3개 등)
+function feedGroups() {
+    const ix = playIndex();
+    if (ix.feedGrp) return ix.feedGrp;
+    const m = new Map();
+    ALL.forEach(l => { if (l.unitId >= 1) (l.keySentences || []).forEach(x => { if (!feedOkSent(x)) return; const k = feedNorm(x.ko), n = nativeText(x); if (!m.has(k)) m.set(k, []); if (!m.get(k).includes(n)) m.get(k).push(n); }); });
+    return (ix.feedGrp = m);
+}
+function feedCut(t, n) { const a = Array.from(String(t || '')); return a.length > n ? a.slice(0, n).join('') + '…' : a.join(''); }
+// 카드: 묶음 문장은 공개 전 힌트(메모 앞 20자, 없으면 레슨 제목)
+function feedCard(x, l, cur) {
+    const n = nativeText(x), group = (feedGroups().get(feedNorm(x.ko)) || []).filter(y => y !== n);
+    return { item: x, key: clipId('a', n), sk: srsKeyOf(n, romanText(x)), l, cur, group, hint: group.length ? (x.note ? feedCut(x.note, 20) : l.title) : '' };
+}
+function feedSents(l) { return l && l.unitId >= 1 ? (l.keySentences || []).filter(x => feedOkSent(x) && feedHasClip(nativeText(x))) : []; }
+// 쓸 수 있는 문장: 통과한 레슨 + 지금 레슨(과정 순서, 같은 원문은 한 번)
+function feedPool() {
+    const rt = resumeTarget(), cur = rt ? ALL[rt.idx] : null, out = [], seen = new Set();
+    ALL.forEach(l => { if (isDone(l.id) || l === cur) feedSents(l).forEach(x => { const c = feedCard(x, l, l === cur); if (!seen.has(c.key)) { seen.add(c.key); out.push(c); } }); });
+    return out;
+}
+function feedOpenOk() { const t = playTile('feed'); return !!t && tileOpen(t); }
+function feedOpen() { S.feed = null; go('feed'); }
+function feedSrs(c) { return prog().srs[c.sk] || null; }
+function feedDue(c, t) { const s = feedSrs(c), f = (prog().feed || {})[c.key]; return s ? !s.mastered && s.due <= t : !!f && f.d <= t; }
+// 세트 만들기 → [{c, rep: 세트 안에서 몇 번째로 나온 새 문장인지}]
+function feedBuild(st) {
+    const t = todayStr(), p = prog(), fm = p.feed || {}, rnd = hashStr(t + CUR.code + st.no);
+    let pool = feedPool();
+    if (st.mic) pool = pool.filter(c => !c.group.length);   // 채점 모드: 같은 뜻 묶음은 자기 채점에서만
+    if (st.mode === 'fav') return seededShuffle(pool.filter(c => (p.fav || {})[c.key]), rnd).slice(0, 10).map(c => ({ c }));
+    const size = Math.min(10, pool.length * 2), slots = new Array(size).fill(null);
+    const srsDue = pool.filter(c => { const s = feedSrs(c); return s && !s.mastered && s.due <= t; }).sort((a, b) => feedSrs(a).box - feedSrs(b).box);
+    const fdDue = pool.filter(c => !feedSrs(c) && fm[c.key] && fm[c.key].d <= t).sort((a, b) => fm[a.key].b - fm[b.key].b);
+    const fresh = pool.filter(c => !feedSrs(c) && !fm[c.key]).sort((a, b) => b.cur - a.cur);   // 지금 레슨 먼저(같으면 과정 순서)
+    const rev = srsDue.concat(fdDue);
+    fresh.slice(0, rev.length ? 2 : 3).forEach(c => {
+        for (const pat of FEED_PAT) for (let s = 0; s < size; s++) {
+            const at = pat.map(k => s + k);
+            if (at.every(k => k < size && !slots[k])) { at.forEach((k, j) => { slots[k] = { c, rep: j }; }); return; }
+        }
+    });
+    const free = slots.filter(x => !x).length, used = new Set(slots.filter(Boolean).map(x => x.c.key));
+    const fill = seededShuffle(rev.slice(0, free), rnd);
+    fill.forEach(c => used.add(c.key));
+    const old = pool.filter(c => !used.has(c.key) && !feedSrs(c) && fm[c.key]).sort((a, b) => cmpStr(fm[a.key].d, fm[b.key].d));   // 오래 안 본 문장
+    const more = fill.concat(old);
+    let k = 0;
+    return slots.map(x => x || (more[k] ? { c: more[k++] } : null)).filter(Boolean);   // 그래도 비면 세트를 짧게
+}
+// 맛보기: 통과 레슨이 0개면 1단계 첫 레슨으로 3장(XP·기록 없음)
+function feedTaste() { const l = ALL.find(x => x.unitId >= 1); return feedSents(l).slice(0, 3).map(x => ({ c: feedCard(x, l, true) })); }
+function feedNew(mode) {
+    const st = { mode, no: ++FEED_UI.no, i: 0, vi: 0, rev: false, grades: [], ok: 0, n: 0, rv: 0, done: new Set(), combo: 0, fever: 0, feverXp: 0, sum: false, tok: 0, xRun: 0, slowAsk: false, xp0: prog().xp || 0 };
+    st.mic = mode !== 'taste' && FEED_UI.mic && !quietNow();
+    st.set = mode === 'taste' ? feedTaste() : feedBuild(st);
+    return st;
+}
+function renderFeed() {
+    if (S.feed) { feedDraw(S.feed); return; }
+    if (!doneCount()) { feedStart('taste'); return; }   // 👀 맛보기
+    if (!feedOpenOk()) {
+        $main.innerHTML = '<div class="lesson-top"><button class="back-btn tap44" id="feedBack" aria-label="놀이 탭으로">←</button><div><div class="lt-title">💬 이럴 때 뭐라고?</div></div></div><div class="empty-state" style="padding:30px 20px"><div class="es-emoji">🔒</div>' + esc(playLockText('feed') || '아직 열리지 않았어요') + '</div>';
+        document.getElementById('feedBack').addEventListener('click', () => go('play'));
+        return;
+    }
+    playIntro('feed', '💬 이럴 때 뭐라고?', ['한국어 상황을 보고 먼저 입으로(또는 속으로) 말해 봐요', '탭하면 원어민 정답이 나와요 — 말했으면 위로 넘기기(😎)', '못했으면 🙈, 비슷하면 🤏 — 그 문장은 복습 카드로 다시 만나요'], () => feedStart('all'));
+}
+function feedStart(mode) {
+    stopSpeak();
+    const st = S.feed = feedNew(mode);
+    if (mode !== 'taste' && st.set.length) playBegin('feed');
+    feedDraw(st);
+}
+function feedH() { return Math.max(380, $main.clientHeight - 32); }   // .app 높이가 고정이고 #main이 스크롤 칸이라 100dvh가 아니라 #main 높이로
+window.addEventListener('resize', () => { const b = document.getElementById('feedBox'); if (b && S.view === 'feed') b.style.height = feedH() + 'px'; });
+function feedDraw(st, anim) {
+    if (S.feed !== st || S.view !== 'feed') return;
+    $main.style.overflow = 'hidden'; document.body.classList.add('feed-on');   // 위로 넘기기가 스크롤·당겨서 새로고침과 부딪히지 않게(go()가 되돌림)
+    clearTimeout(st.timer); st.tok++;
+    const quiet = quietNow(), n = st.set.length;
+    if (quiet) st.mic = false;
+    const sub = st.sum ? (st.mode === 'taste' ? '맛보기 끝' : '세트 끝') : !n ? '' : (st.mode === 'taste' ? '👀 맛보기 ' : st.mode === 'fav' ? '♥ 내 표현장 ' : '') + (st.vi + 1) + '/' + n + (st.ok ? ' · 😎 ' + st.ok : '');
+    let h = '<div class="feed" id="feedBox" style="height:' + feedH() + 'px"><div class="feed-top"><button class="back-btn tap44" id="feedBack" aria-label="' + (st.sum || !n ? '놀이 탭으로' : '세트 끝내기') + '">←</button>' +
+        '<div class="ft-t"><b>💬 이럴 때 뭐라고?</b><span>' + esc(sub) + '</span></div>' +
+        (st.mode === 'taste' ? '' : '<button class="feed-tg" id="feedMic" aria-pressed="' + !!st.mic + '" aria-label="🎤 채점 모드' + (quiet ? ' — 조용 모드에서는 쓸 수 없어요' : '') + '"' + (quiet ? ' disabled' : '') + '>🎤</button><button class="feed-tg" id="feedOpt" aria-label="피드 설정">⚙</button>') + '</div>';
+    h += st.sum ? feedSumHtml(st) : !n ? '<div class="feed-stage"><div class="feed-card feed-empty">' + (st.mode === 'fav' ? '♥ 내 표현장이 비어 있어요' : '지금은 낼 문장이 없어요') + '<button class="btn block tap" id="feedAll" style="margin-top:12px">💬 처음부터</button></div></div>' : feedCardHtml(st, anim);
+    $main.innerHTML = h + '</div>';
+    feedBind(st);
+}
+function feedCardHtml(st, anim) {
+    const k = st.vi, c = st.set[k].c, x = c.item, l = c.l, past = k < st.i, rev = past || st.rev, mic = !past && st.mic && !c.group.length;
+    const sit = (l.dialogue && l.dialogue.situation) || '', fav = !!(prog().fav || {})[c.key], spd = !rev && !mic && st.mode !== 'taste' ? (store.settings.feedLv || 0) : 0;
+    let h = '<div class="feed-stage" id="feedStage"><div class="feed-card' + (st.fever > 0 && !past ? ' fever' : '') + (anim ? ' in-' + anim : '') + '" id="feedCard">' +
+        (st.mode === 'taste' ? '' : '<button class="feed-fav" id="feedFav" aria-pressed="' + fav + '" aria-label="내 표현장에 담기">' + (fav ? '♥' : '♡') + '</button>') +
+        '<div class="fc-head"><span class="fc-from">' + esc(l.unitIcon) + ' 「' + esc(l.title) + '」에서</span>' + (sit ? '<span class="fc-sit">🎬 ' + esc(feedCut(sit, 60)) + '</span>' : '') + '</div>' +
+        '<div class="fc-ko">' + esc(shortKo(x.ko)) + '</div>';
+    if (!rev) {
+        if (c.hint) h += '<div class="fc-hint">💡 ' + esc(c.hint) + '</div>';
+        h += '<div class="fc-ask">이럴 때 뭐라고 할까요? 소리 내거나 속으로 말해 보세요(입 모양만 해도 돼요)</div>' +
+            (mic ? '<div class="fc-tap">🎤 아래 버튼을 누르고 말해 보세요</div>'
+                : spd ? '<div class="fc-tap" id="feedTap"><svg class="fc-ring" viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="18" r="15" pathLength="100"></circle><circle class="on" id="feedRing" cx="18" cy="18" r="15" pathLength="100"></circle></svg><span id="feedCd" role="timer">⚡ 곧 공개 — 탭해도 돼요</span></div>'
+                    : '<div class="fc-tap" id="feedTap">👆 준비되면 탭</div>');
+        if (st.slowAsk) h += '<div class="feed-ask" role="note">🐢 한 단계 천천히?<button class="btn small gray tap" id="feedSlowYes">천천히</button><button class="btn small ghost tap" id="feedSlowNo">괜찮아요</button></div>';
+    } else {
+        const note = x.note || (l.tips && l.tips[0]) || l.goal;
+        h += '<div class="fc-ans"><div class="fc-ans-row"><div class="native fc-native' + (nativeText(x).length > 60 ? ' long' : '') + '">' + nesc(nativeText(x)) + '</div><button class="play-btn fc-play" id="feedPlay" aria-label="다시 듣기">🔊</button></div>' +
+            romanLine(x) + pronLine(x.koPron, l.unitId, x) + '</div>' +
+            (note ? '<div class="fc-note">💬 ' + esc(note) + '</div>' : '') +
+            (c.group.length ? '<div class="fc-also">이렇게도 말해요: <span class="native">' + c.group.slice(0, 2).map(nesc).join(' · ') + '</span></div>' : '') +
+            (past ? '<div class="fc-graded">' + FEED_G[st.grades[k]] + '</div>' : '');
+    }
+    h += '</div></div><div class="feed-btns">';
+    if (past) h += '<button class="btn block fb-main" id="feedFwd">다음 ↑</button>';
+    else if (!rev) h += mic ? '<button class="btn block fb-main" id="feedSay">🎤 말해 보기</button>' : '<button class="btn block fb-main" id="feedReveal">👀 정답 보기</button>';
+    else h += '<button class="fb-g fail" data-fg="fail">🙈 못했어요 ✕</button><button class="fb-g hard" data-fg="hard">🤏 비슷 △</button><button class="fb-g ok" data-fg="ok">😎 말했어요 ↑</button>';
+    return h + '</div>';
+}
+function feedBind(st) {
+    const on = (id, fn) => { const b = document.getElementById(id); if (b) b.addEventListener('click', fn); };
+    on('feedBack', feedBack);
+    on('feedMic', () => { if (quietNow()) { showToast('🤫 조용 모드에서는 채점 모드를 쓸 수 없어요'); return; } FEED_UI.mic = st.mic = !st.mic; feedDraw(st); showToast(st.mic ? '🎤 채점 모드: 말하면 점수로 판정해요' : '🎤 채점 모드를 껐어요 — 스스로 채점'); });
+    on('feedOpt', () => feedOptions(st));
+    on('feedAll', () => feedStart('all'));
+    if (st.sum) { feedBindSum(st); return; }
+    on('feedFav', () => feedFavToggle(st));
+    on('feedReveal', () => feedReveal(st));
+    on('feedSay', () => feedReveal(st));
+    on('feedFwd', () => feedFwd(st));
+    on('feedPlay', () => playLine(st.set[st.vi].c.item, { rate: 0.92 }));
+    on('feedSlowYes', () => { store.settings.feedLv = Math.max(0, (store.settings.feedLv || 0) - 1); save(); st.slowAsk = false; feedDraw(st); });
+    on('feedSlowNo', () => { st.slowAsk = false; feedDraw(st); });
+    $main.querySelectorAll('[data-fg]').forEach(b => b.addEventListener('click', () => feedGrade(st, b.dataset.fg)));
+    const stage = document.getElementById('feedStage');
+    if (stage) feedSwipe(stage, dir => {
+        if (dir === 'down') { if (st.vi > 0) { clearTimeout(st.timer); stopSpeak(); feedGo(st, st.vi - 1, 'down'); } return; }   // 이전 장 다시 보기(채점은 그대로)
+        if (st.vi < st.i) { if (dir === 'up') feedFwd(st); return; }
+        if (!st.rev) feedReveal(st);   // 공개 전: 위로 넘기기·탭은 공개만
+        else if (dir === 'up') feedGrade(st, 'ok');   // 공개 뒤 위로 넘기기 = 😎 말했어요
+    });
+    if (st.vi === st.i && !st.rev && st.set[st.i]) feedArm(st);
+}
+// 카드 영역 손가락: 위로 −60px 넘으면 'up', 아래로 60px 넘으면 'down', 거의 안 움직이면 'tap'(버튼에서 시작한 손가락은 버튼에 맡김)
+function feedSwipe(el, fn) {
+    let y0 = null, x0 = 0;
+    el.addEventListener('pointerdown', e => { if (e.target.closest('button, a') || (e.pointerType === 'mouse' && e.button !== 0)) { y0 = null; return; } y0 = e.clientY; x0 = e.clientX; });
+    el.addEventListener('pointercancel', () => { y0 = null; });
+    el.addEventListener('pointerup', e => {
+        if (y0 === null) return;
+        const dy = e.clientY - y0, dx = e.clientX - x0;
+        y0 = null;
+        if (dy < -60) fn('up'); else if (dy > 60) fn('down'); else if (Math.abs(dy) < 12 && Math.abs(dx) < 12) fn('tap');
+    });
+}
+// 카드가 나오면: 한국어 읽어 주기(켰을 때) → 스피드 모드 카운트다운(켰을 때). 기본은 '준비되면 탭'(자동 공개 없음)
+function feedArm(st) {
+    const tok = st.tok, c = st.set[st.i].c, ko = shortKo(c.item.ko);
+    const cd = () => {
+        const lv = st.mode === 'taste' || (st.mic && !c.group.length) ? 0 : store.settings.feedLv || 0;
+        if (!lv || S.feed !== st || st.tok !== tok) return;
+        const ms = Math.round((2.5 + Array.from(ko).length * 0.08) * (lv === 1 ? 0.75 : 0.5) * 1000);
+        const r = document.getElementById('feedRing'), t = document.getElementById('feedCd');
+        if (r) { r.style.animationDuration = ms + 'ms'; r.classList.add('run'); }
+        if (t) t.textContent = '⚡ ' + (ms / 1000).toFixed(1) + '초 뒤 공개 — 탭해도 돼요';
+        st.timer = setTimeout(() => { if (S.feed === st && st.tok === tok && S.view === 'feed' && !document.getElementById('modalRoot').innerHTML) feedReveal(st); }, ms);
+    };
+    if (store.settings.feedKo) speakKo(ko, cd); else cd();
+    feedPre(st, st.i);
+}
+// 한국어도 읽어 주기: 기기의 한국어 목소리로(makeUtter는 지금 언어 고정이라 따로). 목소리가 없으면 바로 다음으로 · 귀 시간에는 세지 않는다
+function speakKo(text, onDone) {
+    let vs = [], over = false, dog = 0;
+    const done = () => { if (over) return; over = true; clearTimeout(dog); if (onDone) onDone(); };
+    try { vs = ttsAvailable() ? speechSynthesis.getVoices() || [] : []; } catch (e) { vs = []; }
+    const ko = vs.filter(v => /^ko/i.test(String(v.lang || ''))).map((v, i) => ({ v, i, s: VOICE_HINTS.reduce((a, [re, n]) => a + (re.test(String(v.name || '') + ' ' + String(v.voiceURI || '')) ? n : 0), 0) })).sort((a, b) => (b.s - a.s) || (a.i - b.i));
+    if (!ko.length || !text) { done(); return; }
+    try {
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = 'ko-KR'; u.voice = ko[0].v; u.rate = 1;
+        u.onend = u.onerror = done;
+        dog = setTimeout(done, Math.max(2500, Array.from(text).length * 300));   // 끝 신호가 오지 않는 기기
+        speechSynthesis.speak(u);
+    } catch (e) { done(); }
+}
+function feedPre(st, k) { const e = st.set[k + 1]; if (e) { const u = clipUrl(nativeText(e.c.item)); if (u) clipBlob(u).catch(() => { }); } }   // 다음 장 녹음 미리 받기
+function feedReveal(st) {
+    if (S.feed !== st || st.sum || st.busy || st.vi !== st.i || st.rev || !st.set[st.i]) return;
+    const c = st.set[st.i].c;
+    clearTimeout(st.timer);
+    if (st.mic && !c.group.length) { feedMic(st); return; }
+    st.rev = true; sfx('tap');
+    feedDraw(st);
+    playLine(c.item, { rate: 0.92 });
+}
+// 🎤 채점 모드: 뜻만 보고 말하기(boss — 말하기 XP 없음). 도움 없이 85점 이상이면 😎, 그 밖의 통과는 🤏, 통과하지 못하고 닫으면 🙈
+function feedMic(st) {
+    const k = st.i, c = st.set[k].c;
+    let best = '';
+    openSpeak({
+        item: c.item, mode: 'boss', title: '💬 이럴 때 뭐라고?',
+        onPass: (score, info) => { if (best !== 'ok') best = !(info && info.help) && score >= 85 ? 'ok' : 'hard'; },
+        onClose: () => {
+            if (S.feed !== st || st.i !== k || st.sum) return;
+            const g = best || 'fail', enter = feedApply(st, k, g);
+            if (enter) feverFx();
+            st.grades[k] = g; st.i++; st.vi = k; st.rev = false;
+            if (S.view === 'feed') feedDraw(st);   // 채점한 장을 정답과 함께 → '다음 ↑'
+        },
+    });
+}
+function feedGrade(st, g) {
+    if (S.feed !== st || st.sum || st.busy || st.vi !== st.i || !st.rev || !FEED_G[g]) return;
+    const enter = feedApply(st, st.i, g);
+    st.grades[st.i] = g; st.i++; st.rev = false;
+    if (g === 'ok') { if (enter) feverFx(); else sfx('ok'); }
+    if (st.i >= st.set.length) { feedFinish(st, false); return; }
+    stopSpeak(); feedGo(st, st.i, 'up');
+}
+function feedFwd(st) {
+    if (st.busy || st.vi >= st.i) return;
+    stopSpeak();
+    if (st.vi + 1 >= st.set.length) { feedFinish(st, false); return; }
+    feedGo(st, st.vi + 1, 'up');
+}
+// 카드 넘기기: 220ms 미끄러지기(움직임 줄이기면 바로)
+function feedGo(st, vi, dir) {
+    st.vi = vi;
+    const card = document.getElementById('feedCard');
+    if (!card || reducedMotion()) { feedDraw(st); return; }
+    st.busy = true;
+    card.classList.add('out-' + dir);
+    setTimeout(() => { st.busy = false; feedDraw(st, dir); }, 220);
+}
+// 한 장 채점: 기록·일정·보상 → 피버에 들어갔나(feverTick)
+function feedApply(st, k, g) {
+    const c = st.set[k].c, ok = g === 'ok';
+    st.n++; if (ok) st.ok++;
+    if (st.mode !== 'taste') {
+        const p = prog(), t = todayStr();
+        if (!st.done.has(c.key)) {   // 일정은 세트마다 그 문장의 첫 채점만 바꾼다(세트 안에서 되풀이되는 새 문장은 익히는 연습)
+            st.done.add(c.key);
+            const card = p.srs[c.sk];
+            if (card) {   // 복습함 문장: 복습 탭 grade()와 같은 규칙
+                if (ok && card.box >= SRS_MAX) card.mastered = t;
+                else if (ok) { card.box = Math.min(SRS_MAX, card.box + 1); card.due = todayStr(SRS_INTERVALS[card.box]); }
+                else if (g === 'hard') card.due = todayStr(1);
+                else { card.box = Math.max(1, card.box - 2); card.due = todayStr(1); }
+                card.rv = t; card.rt = Date.now();
+                const dl = dayLog(); dl.reviews = (dl.reviews || 0) + 1; st.rv++;
+            } else if (ok) {
+                const f = (p.feed || {})[c.key], b = Math.min(5, (f ? f.b : 0) + 1);
+                p.feed = Object.assign({}, p.feed, { [c.key]: { b, d: todayStr(FEED_GAP[b]) } });
+            } else {   // ✕·△: 복습함으로 옮긴다(새 카드처럼 하루 12장씩 나눠서)
+                addSentCard(c.item, 'spread');
+                if (p.feed && p.feed[c.key]) { p.feed = Object.assign({}, p.feed); delete p.feed[c.key]; }
+            }
+        }
+        if (ok) { const dl = dayLog(); dl.feedOk = (dl.feedOk || 0) + 1; dexAdd(c.item); softXp('feed', 1, '💬 즉답'); }
+        logActivity('feed');   // dl.feed +1 · 저장 · 연속 기록 · 퀘스트
+        if (store.settings.feedLv && !(st.mic && !c.group.length)) { st.xRun = g === 'fail' ? st.xRun + 1 : 0; if (st.xRun >= 3) { st.slowAsk = true; st.xRun = 0; } }   // 스피드 모드에서 ✕ 3장 연속 → 천천히 제안
+    }
+    return feverTick(st, ok);
+}
+function feedFinish(st, quit) {
+    if (st.sum) return;
+    st.sum = true; st.quit = quit; st.busy = false;
+    clearTimeout(st.timer); stopSpeak();
+    if (st.mode !== 'taste') {
+        const full = !quit && st.i >= st.set.length && st.n > 0;
+        if (full) { softXp('feed', 3, '💬 세트 완주'); celebrate(); sfx('level'); if (st.n >= 5 && st.ok / st.n >= 0.7) FEED_UI.good++; }
+        st.feverGive = feverPay(st);
+        st.xpGot = (prog().xp || 0) - st.xp0;
+        st.tail = playEnd({ n: st.n, ok: st.ok, quit, fever: st.feverGive, noAuto: true });   // 계속 넘기면 다음 세트라 다음 놀이는 자동 시작 없이 버튼만
+    }
+    feedDraw(st);
+}
+function feedBack() {
+    const st = S.feed;
+    if (st && !st.sum && st.set.length) { feedFinish(st, true); return; }   // 세트 도중 → 요약 카드
+    resetPlayState(); go('play');
+}
+// 다음 레슨을 하면 피드에 더해질 새 문장 수(지금 레슨 문장은 이미 피드에 있으니 그 뒤 레슨부터)
+function feedNextN(rt) {
+    if (!rt) return 0;
+    const have = new Set(feedPool().map(c => c.key));
+    for (let i = rt.idx; i < ALL.length; i++) { const n = feedSents(ALL[i]).filter(x => !have.has(clipId('a', nativeText(x)))).length; if (n) return n; }
+    return 0;
+}
+// 100일 표현 챌린지: 즉답 10장을 한 날 수(따로 저장하지 않고 하루 기록에서 센다)
+function feedStampHtml() {
+    const k = Math.min(100, Object.values(prog().daily || {}).filter(d => d && (d.feed || 0) >= 10).length);
+    return '<div class="feed-stamp"><b>📅 100일 표현 챌린지 ' + k + '/100</b><span class="muted">즉답 10장을 한 날마다 도장 1개</span>' +
+        '<div class="fst-grid" aria-hidden="true">' + Array.from({ length: 100 }, (_, i) => '<i' + (i < k ? ' class="on"' : '') + '></i>').join('') + '</div></div>';
+}
+function feedSumHtml(st) {
+    let h = '<div class="feed-stage sum" id="feedStage"><div class="feed-card feed-sum" id="feedCard">';
+    const rt = resumeTarget();
+    if (st.mode === 'taste') return h + '<div class="fs-hero">👀 맛보기 끝!</div><div class="muted" style="margin-bottom:12px">레슨 1개를 통과하면 「이럴 때 뭐라고?」가 열려요 — 배운 문장이 여기로 모여요</div>' +
+        (rt ? '<button class="btn block tap" id="feedLesson">📖 레슨 시작하기</button>' : '') + '</div></div>';
+    const favN = feedPool().filter(c => (prog().fav || {})[c.key]).length, nx = feedNextN(rt), lv = store.settings.feedLv || 0;
+    h += '<div class="fs-hero">' + (st.quit ? '여기까지!' : '🎉 세트 끝!') + ' 😎 ' + st.ok + '/' + st.n + (st.xpGot > 0 ? ' · ⭐ +' + st.xpGot + ' XP' : '') + '</div>' +
+        (st.rv ? '<div class="muted">🃏 복습 카드 ' + st.rv + '장도 함께 했어요(오늘 복습 탭에는 다시 안 나와요)</div>' : '') +
+        (!lv && FEED_UI.good >= 2 && !FEED_UI.askFast ? '<div class="feed-ask" role="note">⚡ 스피드 모드 켜 볼까요?<button class="btn small tap" id="feedFastYes">켜기</button><button class="btn small ghost tap" id="feedFastNo">괜찮아요</button></div>' : '') +
+        '<button class="btn block fb-main" id="feedMore">▶ 다음 세트 ↑</button>' +
+        (rt ? '<button class="btn block ghost tap" id="feedLesson">' + (nx ? '📖 다음 레슨을 하면 새 문장 ' + nx + '개 추가' : '📖 다음 레슨 이어 하기') + '</button>' : '') +
+        (favN && st.mode !== 'fav' ? '<button class="btn block ghost tap" id="feedFavSet">♥ 내 표현장 ' + favN + '</button>' : '') +
+        feedStampHtml() + '<div id="feedTail"></div>';
+    return h + '</div></div>';
+}
+function feedBindSum(st) {
+    const on = (id, fn) => { const b = document.getElementById(id); if (b) b.addEventListener('click', fn); };
+    on('feedMore', () => feedStart(st.mode === 'fav' ? 'fav' : 'all'));
+    on('feedLesson', () => { const r = resumeTarget(); if (r) { resetPlayState(); openLesson(r.idx, r.step); } });
+    on('feedFavSet', () => feedStart('fav'));
+    on('feedFastYes', () => { FEED_UI.askFast = true; store.settings.feedLv = 1; save(); showToast('⚡ 스피드 모드 1단계 — ⚙에서 바꿀 수 있어요'); feedDraw(st); });
+    on('feedFastNo', () => { FEED_UI.askFast = true; feedDraw(st); });
+    const tail = document.getElementById('feedTail');
+    if (tail && st.tail) { tail.innerHTML = st.tail; bindPlayNext(tail); }
+    const stage = document.getElementById('feedStage');   // 요약도 위로 넘기면 다음 세트(내용이 길어 스크롤되면 버튼으로)
+    if (stage && st.mode !== 'taste') feedSwipe(stage, dir => { if (dir === 'up' && stage.scrollHeight <= stage.clientHeight + 2) feedStart(st.mode === 'fav' ? 'fav' : 'all'); });
+}
+function feedFavToggle(st) {
+    const c = st.set[st.vi].c, p = prog(), on = !(p.fav || {})[c.key], f = Object.assign({}, p.fav);
+    if (on) f[c.key] = todayStr(); else delete f[c.key];   // 끈 것은 이 기기에서만(다른 기기와 합치면 담긴 쪽이 남는다 — 알려진 한계)
+    p.fav = f; save();
+    if (on) addSentCard(c.item, 'spread');   // 담은 문장은 복습 카드로도
+    const b = document.getElementById('feedFav');
+    if (b) { b.textContent = on ? '♥' : '♡'; b.setAttribute('aria-pressed', String(on)); }
+    showToast(on ? '♥ 내 표현장에 담았어요 · 복습 카드로도 나와요' : '내 표현장에서 뺐어요');
+}
+function feedOptions(st) {
+    const html = () => {
+        const lv = store.settings.feedLv || 0, ko = !!store.settings.feedKo;
+        return '<div class="feed-opt"><div class="sheet-head"><b>⚙ 즉답 피드 설정</b><button class="sheet-close" data-close-overlay aria-label="닫기">✕</button></div>' +
+            '<div class="section-title">⚡ 스피드 모드</div><div class="muted">끄면 준비될 때 탭해서 정답을 봐요. 켜면 정해진 시간 뒤 저절로 열려요(2단계가 더 빨라요)</div>' +
+            '<div class="seg" role="group" aria-label="스피드 모드">' + ['끔', '1단계', '2단계'].map((t, i) => '<button data-flv="' + i + '" aria-pressed="' + (lv === i) + '">' + t + '</button>').join('') + '</div>' +
+            '<div class="section-title">🔊 한국어도 읽어 주기</div><div class="muted">상황 문장을 한국어로 먼저 들려줘요(기기에 한국어 목소리가 없으면 건너뛰어요)</div>' +
+            '<div class="seg" role="group" aria-label="한국어도 읽어 주기"><button data-fko="0" aria-pressed="' + !ko + '">끔</button><button data-fko="1" aria-pressed="' + ko + '">켬</button></div></div>';
+    };
+    clearTimeout(st.timer);
+    const sheet = openModal(html(), () => { if (S.feed === st && S.view === 'feed') feedDraw(st); });
+    const bind = () => {
+        sheet.querySelectorAll('[data-flv]').forEach(b => b.addEventListener('click', () => { store.settings.feedLv = Number(b.dataset.flv); save(); redraw('[data-flv="' + b.dataset.flv + '"]'); }));
+        sheet.querySelectorAll('[data-fko]').forEach(b => b.addEventListener('click', () => { store.settings.feedKo = b.dataset.fko === '1'; save(); redraw('[data-fko="' + b.dataset.fko + '"]'); }));
+    };
+    // 다시 그리면 닫기 버튼도 새로 묶고, 누른 버튼에 포커스를 남긴다
+    const redraw = sel => { sheet.innerHTML = html(); bind(); sheet.querySelector('[data-close-overlay]').addEventListener('click', () => closeModal(false, 'cancel')); const f = sheet.querySelector(sel); if (f) f.focus(); };
+    bind();
+}
+// ⚡ 1분 모드 끝 '한 장 더?' — 피드가 열렸으면 피드, 통과 레슨이 0개면 맛보기
+function feedMoreHtml() { return feedOpenOk() || (!doneCount() && feedTaste().length) ? '<button class="guide-banner feed-more" data-feed-more>💬 한 장 더? 이럴 때 뭐라고? →</button>' : ''; }
+document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-feed-more]'); if (b && CUR && DATA) { resetTransient(); feedOpen(); } });
+registerPlayTile({
+    id: 'feed', ico: '💬', name: '이럴 때 뭐라고?', view: 'feed', xpKind: 'feed',
+    need: () => feedPool().length >= FEED_MIN,
+    lock: () => '레슨 1개 더 하면 열려요',
+    status: () => { const t = todayStr(), n = feedPool().filter(c => feedDue(c, t)).length; return '오늘 ' + (dayLog().feed || 0) + '장' + (n ? ' · 복습 ' + n : ''); },
+    open: feedOpen,
 });
 
 /* ═══════════════════ 읽기 (쉬운 동화) ═══════════════════ */
