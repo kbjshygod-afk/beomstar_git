@@ -1865,6 +1865,7 @@ function lsStep(sec) { let n = 0; LS_STEPS.forEach((x, i) => { if (sec >= x.m * 
 function fmtHM(sec) { const m = Math.floor((sec || 0) / 60); return m >= 60 ? Math.floor(m / 60) + '시간 ' + (m % 60) + '분' : m + '분'; }
 function fmtMin(sec) { return sec > 0 && sec < 60 ? '1분 미만' : Math.floor((sec || 0) / 60) + '분'; }
 function stepTime(m) { return m >= 60 ? m / 60 + '시간' : m + '분'; }
+function earLeft(sec) { const m = Math.ceil(sec / 60); return m > 60 ? fmtHM(m * 60) : m + '분'; }   // 다음 단계까지 남은 시간(1시간이 넘으면 'N시간 M분')
 function lsAdd(sec) {
     if (!CUR || !(sec > 0) || !Number.isFinite(sec)) return;
     EAR.frac += Math.min(sec, 60);   // 한 번에 최대 60초
@@ -1910,10 +1911,10 @@ function earFirstDay(p) { const ds = Object.keys((p && p.daily) || {}).filter(d 
 function earLineHtml() {
     const p = prog(), tot = lsSum(p), dl = dayLog(), first = earFirstDay(p);
     let txt, bar = '';
-    if (tot < 3600 || !first || dayDiff(first, todayStr()) < 7) txt = '🎧 오늘 들은 시간 ' + fmtMin((dl.ls || 0) + (dl.lx || 0));
+    if (tot < 3600 || !first || dayDiff(first, todayStr()) < 7) txt = dl.lx ? '🎧 오늘 앱에서 ' + fmtMin(dl.ls || 0) + ' · 앱 밖 ' + fmtMin(dl.lx) : '🎧 오늘 들은 시간 ' + fmtMin(dl.ls || 0);   // 앱 밖 시간은 따로(퀘스트 칩은 앱에서 들은 시간 기준)
     else {
         const i = lsStep(tot), nx = LS_STEPS[i], lo = i ? LS_STEPS[i - 1].m * 60 : 0;
-        txt = '🎧 귀 시간 ' + fmtHM(tot) + (nx ? ' · 다음 「' + nx.name + '」까지 ' + Math.ceil((nx.m * 60 - tot) / 60) + '분' : ' · 👑 마지막 단계까지 왔어요');
+        txt = '🎧 귀 시간 ' + fmtHM(tot) + (nx ? ' · 다음 「' + nx.name + '」까지 ' + earLeft(nx.m * 60 - tot) : ' · 👑 마지막 단계까지 왔어요');
         bar = '<span class="ear-bar" aria-hidden="true"><span style="width:' + (nx ? Math.round((tot - lo) / (nx.m * 60 - lo) * 100) : 100) + '%"></span></span>';
     }
     return '<button class="ear-line" id="earLine" aria-label="' + esc(txt.slice(3) + ' — 귀 시간 자세히 보기') + '"><span class="el-txt">' + esc(txt) + '</span>' + bar + '</button>';
@@ -1925,7 +1926,7 @@ function earSheetHtml() {
     for (let k = 6; k >= 0; k--) { const ds = todayStr(-k), d = (p.daily || {})[ds] || {}; days.push({ ds, ls: d.ls || 0, lx: d.lx || 0, today: !k }); }
     const max = Math.max(600, ...days.map(x => x.ls + x.lx)), hp = v => Math.round(v / max * 100);
     let h = '<div class="ear-sheet"><div class="sheet-head"><b>🎧 귀 시간</b><button class="sheet-close" data-close-overlay aria-label="닫기">✕</button></div>' +
-        '<div class="ear-hero"><b>' + fmtHM(tot) + '</b><span>' + esc(CUR.name) + ' · ' + (i ? LS_STEPS[i - 1].ico + ' ' + esc(LS_STEPS[i - 1].name) : '첫 단계까지 ' + Math.ceil((LS_STEPS[0].m * 60 - tot) / 60) + '분') + '</span></div>' +
+        '<div class="ear-hero"><b>' + fmtHM(tot) + '</b><span>' + esc(CUR.name) + ' · ' + (i ? LS_STEPS[i - 1].ico + ' ' + esc(LS_STEPS[i - 1].name) : '첫 단계까지 ' + earLeft(LS_STEPS[0].m * 60 - tot)) + '</span></div>' +
         '<div class="muted">원어민 녹음을 실제로 들은 시간이에요. 시간에는 XP가 없어요 — 듣는 만큼 귀가 열려요.</div>';
     if (langs.length > 1) h += '<div class="ear-langs">' + langs.map(x => LANGS[x.c].flag + ' ' + esc(LANGS[x.c].name) + ' <b>' + fmtHM(x.s) + '</b>').join(' · ') + '</div>';
     h += '<div class="section-title">최근 7일</div><div class="week-bars ear-week">' + days.map(x => {
@@ -1934,7 +1935,7 @@ function earSheetHtml() {
             (x.lx ? '<div class="wb-fill out" style="height:' + hp(x.lx) + '%"></div>' : '') + '<div class="wb-fill app' + (x.lx ? ' under' : '') + '" style="height:' + hp(x.ls) + '%"></div><div class="wb-dow">' + dow + '</div></div>';
     }).join('') + '</div><div class="muted ear-keys"><span class="ear-key app"></span>앱에서 들음 <span class="ear-key out"></span>앱 밖(직접 기록) · 막대 위 숫자는 분</div>';
     h += '<div class="section-title">귀 시간 로드맵</div><ol class="ear-road">' + LS_STEPS.map((x, k) => '<li class="' + (k < i ? 'done' : k === i ? 'now' : '') + '"><span class="er-ico" aria-hidden="true">' + (k < i ? '✓' : x.ico) + '</span><b>' + stepTime(x.m) + '</b> ' + esc(x.name) +
-        (k < i ? '<span class="sr-only"> (지남)</span>' : k === i ? '<span class="er-left">' + Math.ceil((x.m * 60 - tot) / 60) + '분 남음</span>' : '') + '</li>').join('') + '</ol>';
+        (k < i ? '<span class="sr-only"> (지남)</span>' : k === i ? '<span class="er-left">' + earLeft(x.m * 60 - tot) + ' 남음</span>' : '') + '</li>').join('') + '</ol>';
     h += '<div class="section-title">앱 밖에서 들은 시간</div><div class="muted">드라마·노래·팟캐스트로 ' + esc(CUR.name) + '를 들었다면 직접 더해요(하루 3시간까지). 위 막대에 연한 색으로 따로 보여요.</div>' +
         '<div class="ear-lx"><button class="btn small ghost tap" data-lx="10">+10분</button><button class="btn small ghost tap" data-lx="30">+30분</button><span class="muted">오늘 앱 밖 ' + fmtMin(dl.lx || 0) + '</span></div>';
     h += '<div class="section-title">하루 듣기 목표</div><div class="seg ear-goal" role="group" aria-label="하루 듣기 목표">' + [0, 10, 20, 30].map(m => '<button data-eg="' + m + '" aria-pressed="' + (g === m) + '">' + (m ? m + '분' : '끔') + '</button>').join('') + '</div>' +
@@ -4236,9 +4237,10 @@ function todayQuests() {
         { id: 'review', t: '복습 카드 10장', n: 10, v: Math.min(10, dl.reviews || 0), need: cards >= 10 },
         { id: 'ear', t: '귀 시간 ' + eg + '분', n: eg * 60, v: dl.ls || 0, fmt: 'min', need: eg > 0 },   // 하루 듣기 목표(귀 시간 시트)
         { id: 'rush', t: '소리 러시 1판', n: 1, v: dl.rush || 0, need: !!playTile('rush') && tileOpen(playTile('rush')) },
-    ].filter(q => q.need !== false);
+    ];
     const first = allDone ? { id: 'review', t: '복습 1세션', n: 1, v: dl.reviews ? 1 : 0 } : { id: 'lesson', t: '레슨 1개 통과', n: 1, v: Math.min(1, dl.lessons || 0) };
-    const rest = seededShuffle(pool.filter(q => q.id !== first.id), hashStr(todayStr() + CUR.code)).slice(0, 2);
+    // 늘 같은 전체 목록을 오늘 날짜로 섞은 뒤 조건으로 거른다 — 듣기 목표를 켜고 끄거나 조건 하나가 바뀌어도 많아야 한 칸만 바뀌게
+    const rest = seededShuffle(pool, hashStr(todayStr() + CUR.code)).filter(q => q.need !== false && q.id !== first.id).slice(0, 2);
     return [first].concat(rest).map(q => Object.assign(q, { ok: q.v >= q.n }));
 }
 function checkQuests() {
@@ -6153,7 +6155,11 @@ const PLAY = { cur: null, last: null, lastLesson: null, next: null, nextTimer: 0
 const PLAY_END = [];   // 판이 끝날 때 요약에 더할 것(부스트 등 뒤 기능이 등록) — fn(sum, o)
 const PLAY_STATE = ['feed', 'puz', 'rush', 'mission', 'shadow', 'blank', 'radioUi', 'chal'];   // 판 상태(S의 칸)
 const PLAY_VIEWS = ['play', 'trainer', 'feed', 'puzzle', 'rush', 'missions', 'radio', 'dex', 'league', 'sayLater', 'challenge'];
-function resetPlayState() { PLAY_STATE.forEach(k => { S[k] = null; }); PLAY.cur = null; clearPlayNext(); }
+function resetPlayState() {
+    const c = PLAY.cur;
+    if (c && c.notes.length) showToast(c.notes.join(' · '), 'gold', 3400);   // 판을 그만둬도 끝 요약으로 미뤄 둔 축하(귀 시간 단계 등)는 한 번 보여 준다
+    PLAY_STATE.forEach(k => { S[k] = null; }); PLAY.cur = null; clearPlayNext();
+}
 function dexCount() { return Object.keys(prog().dex || {}).length; }
 function playBegin(mode) {
     clearPlayNext();
@@ -6438,8 +6444,14 @@ function rushOpen() { const t = playTile('rush'); return !!t && tileOpen(t); }
 function rushBest(m) { return ((prog().best || {})[RUSH_MODES[m].key]) || 0; }
 function rushClip(c) { return clipFor(c.tts || c.native); }
 function rushVibe(v) { try { if (navigator.vibrate) navigator.vibrate(v); } catch (e) { } }
-// 보기 글: 괄호 설명을 빼고 16자에서 자른다(칸 크기가 흔들리지 않게)
-function rushKo(ko) { const a = Array.from(shortKo(ko || '')); return a.length > 16 ? a.slice(0, 15).join('') + '…' : a.join(''); }
+// 보기 글: 괄호 설명을 빼고 16자에서 자른다(칸 크기가 흔들리지 않게). 두 레슨의 뜻이 합쳐진 카드('안녕하세요 / 안녕하세요', '저/나 / 저, 나')는
+// 낱말을 한 번씩만 쉼표로 이어 쓴다 — 같은 말이 되풀이되는 모양이 보기 하나에만 있으면 정답이 티 나니까
+function rushKo(ko) {
+    let t = shortKo(ko || '');
+    if (/ \/ /.test(t)) t = Array.from(new Map(t.split(/\s*[\/,;]\s*/).filter(Boolean).map(w => [w.replace(/\s+/g, ''), w])).values()).join(', ');
+    const a = Array.from(t);
+    return a.length > 16 ? a.slice(0, 15).join('') + '…' : a.join('');
+}
 function rushKoWords(ko) { return shortKo(ko || '').split(/[\s,/·~?!.…'"“”]+/).filter(w => w.length >= 2); }
 // zh·ja: 성조·장음 부호를 뺀 읽기(妈 mā · 马 mǎ → 'ma') — 소리로 구별할 수 없는 말은 한 문제의 보기에 같이 두지 않는다
 function rushSound(c) { return CHAR_LANGS[CUR.code] ? stripAccents(String(c.pinyin || '')).toLowerCase().replace(/[^a-z]/g, '') : ''; }
@@ -6482,15 +6494,17 @@ function renderRush() {
 }
 function rushTop(sub) { return '<div class="lesson-top"><button class="back-btn tap44" id="rushBack" aria-label="놀이 탭으로">←</button><div><div class="lt-title">⏱️ 소리 러시</div><div class="lt-sub">' + esc(sub) + '</div></div></div>'; }
 function rushBindBack() { const b = document.getElementById('rushBack'); if (b) b.addEventListener('click', () => { resetPlayState(); go('play'); }); }
-// 시작 화면: 내 최고 기록 · 모드 고르기(조용 모드면 글자 러시가 기본)
+// 시작 화면: 내 최고 기록 · 모드 고르기. 직접 고른 모드(S.rushPick)가 없으면 볼 때마다 정한다(조용 모드면 글자 러시) —
+// 홈 화면 앱은 몇 시간씩 살아 있어서, 집에서 정해진 소리 모드가 출근길까지 남지 않게
 function rushHome() {
-    const open = rushOpen(), quiet = quietNow();
-    if (!RUSH_MODES[S.rushMode]) S.rushMode = quiet ? 'T' : 'S';
+    const open = rushOpen(), quiet = quietNow(), m = RUSH_MODES[S.rushPick] ? S.rushPick : quiet ? 'T' : 'S';
     if (open && !store.seen.in_rush) {
-        playIntro('rush', '⏱️ 소리 러시', ['소리를 듣고 알맞은 뜻을 골라요 — 소리가 끝나면 체력이 줄기 시작해요', '맞히면 체력 +12, 틀리면 −15 · 🔁 다시 듣기는 문제마다 1번 무료', '👻 유령은 내 최고 기록이에요 — 유령보다 많이 맞혀 보세요!'], () => rushStart(S.rushMode));
+        playIntro('rush', '⏱️ 소리 러시', (RUSH_MODES[m].sound ? ['소리를 듣고 알맞은 뜻을 골라요 — 소리가 끝나면 체력이 줄기 시작해요', '맞히면 체력 +12, 틀리면 −15 · 🔁 다시 듣기는 문제마다 1번 무료']
+            : ['🔤 글자를 보고 알맞은 뜻을 골라요 — 문제가 뜨면 바로 체력이 줄기 시작해요', '맞히면 체력 +12, 틀리면 −15' + (quiet ? ' · 🤫 조용 모드라 글자로 시작해요(이어폰을 끼면 🎧 소리로도 돼요)' : '')])
+            .concat('👻 유령은 내 최고 기록이에요 — 유령보다 많이 맞혀 보세요!'), () => rushStart(m));
         return;
     }
-    const m = S.rushMode, b = rushBest(m);
+    const b = rushBest(m);
     let h = rushTop('소리를 듣고 뜻을 번개처럼 · 체력이 바닥나기 전에!');
     if (!open) h += '<div class="empty-state" style="padding:30px 20px"><div class="es-emoji">🔒</div>' + esc(playLockText('rush') || '아직 열리지 않았어요') + '</div>';
     else h += '<div class="card rush-start"><div class="rush-best">' + (b ? '내 최고 ' + b + ' · 👻 유령과 대결' : '👻 첫 기록을 세워 보세요!') + '</div>' +
@@ -6498,21 +6512,21 @@ function rushHome() {
             const x = RUSH_MODES[k], bb = rushBest(k);
             return '<button class="rush-mode" data-rm="' + k + '" aria-pressed="' + (k === m) + '"><span class="rm-t">' + x.ico + ' ' + x.name + '</span><span class="rm-d">' + esc(x.desc) + (bb ? ' · 최고 ' + bb : '') + '</span></button>';
         }).join('') + '</div>' +
-        (quiet && m === 'T' ? '<div class="muted" style="margin-bottom:8px">🤫 조용 모드라 🔤 글자 러시를 골라 뒀어요</div>' : '') +
+        (quiet && m === 'T' && !S.rushPick ? '<div class="muted" style="margin-bottom:8px">🤫 조용 모드라 🔤 글자 러시를 골라 뒀어요</div>' : '') +
         '<button class="btn block" id="rushGo">▶ 시작</button>' +
         '<div class="muted" style="margin-top:8px">맞힌 3문제마다 1 XP · 결과로 복습 상자는 움직이지 않아요</div></div>';
     $main.innerHTML = h;
     rushBindBack();
-    $main.querySelectorAll('[data-rm]').forEach(x => x.addEventListener('click', () => { S.rushMode = x.dataset.rm; rushHome(); const f = $main.querySelector('[data-rm="' + x.dataset.rm + '"]'); if (f) f.focus(); }));
+    $main.querySelectorAll('[data-rm]').forEach(x => x.addEventListener('click', () => { S.rushPick = x.dataset.rm; rushHome(); const f = $main.querySelector('[data-rm="' + x.dataset.rm + '"]'); if (f) f.focus(); }));
     const g = document.getElementById('rushGo');
-    if (g) g.addEventListener('click', () => rushStart(S.rushMode));
+    if (g) g.addEventListener('click', () => rushStart(m));
 }
 // 판 준비: 소리 모드는 녹음이 있는 카드만, 시작 전에 받아 둔다(받지 못한 카드는 빼고, 8장이 안 되면 안내)
 function rushStart(m) {
     if (!rushOpen()) { showToast('🔒 ' + (playLockText('rush') || '아직 열리지 않았어요'), '', 2600); return; }
     stopSpeak();
-    const mode = RUSH_MODES[m], all = rushCards(), r = { m, mode, st: 'prep', all, got: 0, total: 0 };
-    S.rush = r; S.rushMode = m;
+    const mode = RUSH_MODES[m], all = rushCards(), r = { m, mode, st: 'prep', all, got: 0, total: 0, kb: $main.contains(document.activeElement) };   // kb: 키보드로 시작했으면 준비 화면 뒤 첫 보기로 포커스
+    S.rush = r;
     const pool = mode.sound ? all.filter(rushClip) : all;
     if (pool.length < RUSH_MIN) { r.st = 'off'; rushOffScreen(); return; }
     const q = rushQueue(pool);
@@ -6525,6 +6539,7 @@ function rushStart(m) {
         const ok = new Set(got.map(x => x.c.key));
         if (ok.size < RUSH_MIN) { r.st = 'off'; if (S.view === 'rush') rushOffScreen(); return; }
         rushBegin(r, q.filter(c => ok.has(c.key)));
+        if (document.hidden) rushPause(r);   // 받는 사이 휴대폰을 잠갔으면 일시정지 카드로 시작(첫 소리는 이어서 할 때 — 유령 시계도 그때부터)
     });
 }
 function rushPrepScreen(r) {
@@ -6571,7 +6586,7 @@ function rushPlay(r, replay) {
     if (!q) return;
     if (!k) { q.drain = true; rushNoSound(r); return; }
     if (replay && q.drain) {
-        if (q.free) { q.free = false; q.hold = true; }
+        q.hold = q.free; q.free = false;   // 무료는 한 번: 그 도중 또 누르면 앞 소리가 끊겨 끝 신호가 오지 않으니 여기서 멈춤을 푼다
         const b = document.getElementById('rushReplay'); if (b) b.textContent = rushReplayLabel(q);
     }
     stopSpeak();
@@ -6583,9 +6598,12 @@ function rushNoSound(r) {   // 소리를 못 틀면 그 문제는 글자로
     if (el && q) el.innerHTML = '<div class="native rush-text">' + esc(q.c.native) + '</div><div class="muted">소리가 나오지 않아 글자로 보여 줘요</div>';
 }
 // 문제가 바뀔 때만 화면 전체를 다시 쓴다(매 프레임에는 체력 막대 transform만)
+// 키보드·스크린리더로 하던 중이면(포커스가 판 안에 있었으면) 다시 그린 뒤 첫 보기로 포커스를 옮긴다 — 문제마다 Tab으로 찾아가지 않게
 function rushDraw(r) {
     const q = r.cur;
     if (!q) return;
+    const kb = r.kb || $main.contains(document.activeElement);
+    r.kb = false;
     $main.innerHTML = '<div class="rush" id="rushBox"><div class="rush-top">' +
         '<div class="rush-hp' + (r.hp < 30 ? ' low' : '') + '" id="rushHp" role="progressbar" aria-label="체력" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + Math.round(r.hp) + '"><div id="rushHpFill" style="transform:scaleX(' + (r.hp / 100).toFixed(3) + ')"></div></div>' +
         '<div class="rush-meta"><button class="rush-x" id="rushQuit" aria-label="그만하기">✕</button><div class="rush-race" id="rushRace">' + rushRaceHtml(r) + '</div>' +
@@ -6601,7 +6619,9 @@ function rushDraw(r) {
     document.getElementById('rushQuit').addEventListener('click', () => { if (!PLAY.cur || confirm('그만할까요? 지금 판 기록은 남지 않아요')) { resetPlayState(); go('play'); } });
     document.getElementById('rushPauseBtn').addEventListener('click', () => rushPause(r));
     rushBindResume(r);
+    if (kb && !r.paused) rushFocus();
 }
+function rushFocus() { const f = $main.querySelector('[data-rc="0"]'); if (f) f.focus({ preventScroll: true }); }
 function rushRaceKey(r) { return r.score + ':' + (r.ghost.length ? rushGhostAt(r, rushNow(r)) : -1); }
 function rushLoop(r) { if (!r.raf) r.raf = requestAnimationFrame(() => rushTick(r)); }
 function rushTick(r) {
@@ -6631,6 +6651,7 @@ function rushAnswer(r, i) {
     const q = r.cur;
     if (S.rush !== r || r.st !== 'play' || r.busy || r.paused || !q || q.done) return;
     q.done = true; r.busy = true; r.n++;
+    r.kb = $main.contains(document.activeElement);   // 보기를 막기 전에(막힌 버튼은 포커스를 잃을 수 있다)
     const ok = i === q.ans, c = q.c;
     r.rt.push(Math.max(0, Date.now() - q.at - q.pz));
     $main.querySelectorAll('[data-rc]').forEach((b, k) => { b.disabled = true; if (k === q.ans) b.classList.add('ok'); else if (k === i) b.classList.add('bad'); });
@@ -6666,7 +6687,7 @@ function rushCheer(r) {   // 응원 카드 0.9초(체력은 그대로)
     if (box) box.insertAdjacentHTML('beforeend', '<div class="rush-cheer" role="status"><span aria-hidden="true">' + RUSH_PETS[i] + '</span><b>' + esc(RUSH_CHEER[i]) + '</b></div>');
     rushLater(r, () => rushNext(r), 900);
 }
-function rushPauseHtml() { return '<div class="rush-pause" id="rushPause" role="dialog" aria-label="잠깐 멈춤"><b>⏸ 잠깐 멈췄어요</b><span class="muted">체력은 그대로예요</span><button class="btn" id="rushResume">▶ 이어서</button></div>'; }
+function rushPauseHtml() { return '<div class="rush-pause" id="rushPause" role="dialog" aria-label="잠깐 멈춤"><b>⏸ 잠깐 멈췄어요</b><span class="muted">체력은 그대로예요</span><button class="btn tap" id="rushResume">▶ 이어서</button></div>'; }
 function rushBindResume(r) { const b = document.getElementById('rushResume'); if (b) { b.addEventListener('click', () => rushResume(r)); setTimeout(() => { if (b.isConnected) b.focus(); }, 30); } }
 function rushPause(r, quiet) {
     if (r.st !== 'play') return;
@@ -6685,7 +6706,9 @@ function rushResume(r) {
     const d = Date.now() - r.pausedAt;
     r.pauseMs += d; if (r.cur) r.cur.pz += d;
     r.paused = false; r.last = Date.now();
-    const el = document.getElementById('rushPause'); if (el) el.remove();
+    const el = document.getElementById('rushPause'), kb = !!el && el.contains(document.activeElement);
+    if (el) el.remove();
+    if (kb) rushFocus();   // '▶ 이어서'에 있던 포커스는 첫 보기로
     if (r.after) { const f = r.after; r.after = null; f(); }
     else if (r.cur && r.cur.replay && !r.cur.done) { r.cur.replay = false; rushPlay(r, false); }
     rushLoop(r);
@@ -6712,7 +6735,7 @@ function rushOver(r) {
 function rushEndScreen(r) {
     const x = r.mode, avg = r.rt.length ? (r.rt.reduce((a, b) => a + b, 0) / r.rt.length / 1000).toFixed(1) : '';
     const rec = r.isNew ? (r.best0 ? '👻 ' + r.best0 + ' → 새 기록 ' + r.score + '! 🎉' : r.score ? '첫 기록 ' + r.score + '! 🎉 다음 판부터 👻 유령이 같이 달려요' : '')
-        : '👻 최고 ' + r.best0 + ' · ' + (r.best0 > r.score ? (r.best0 - r.score) + '개 더 맞히면 새 기록!' : '최고 기록과 같아요!');
+        : !r.best0 ? '👻 다음 판에 첫 기록을 세워 봐요!' : '👻 최고 ' + r.best0 + ' · ' + (r.best0 > r.score ? (r.best0 - r.score) + '개 더 맞히면 새 기록!' : '최고 기록과 같아요!');
     let h = '<div class="result-hero"><div class="r-emoji">' + (r.isNew && r.score ? '🏆' : '⏱️') + '</div><div class="r-score" style="color:var(--primary)">' + r.score + '</div>' +
         '<div class="r-msg">' + x.ico + ' ' + x.name + ' · ' + r.n + '문제 중 ' + r.score + '개 맞힘' + (r.i >= r.q.length ? ' · 끝까지 완주! 💪' : '') + '</div>' +
         (rec ? '<div class="rush-rec">' + esc(rec) + '</div>' : '') + (avg ? '<div class="muted" style="margin-top:4px">평균 반응 ' + avg + '초</div>' : '') + '</div>';
@@ -6721,13 +6744,14 @@ function rushEndScreen(r) {
         (r.redo.some(c => r.wrong[c.key] >= 2) ? '<div class="muted" style="margin-top:6px">두 번 틀린 말은 오늘 복습 카드로 당겨 뒀어요</div>' : '') + '</div>';
     h += '<div class="rush-btns"><button class="btn block" id="rushAgain">한 판 더!</button><button class="btn block ghost" id="rushExit">놀이 탭으로</button></div><div id="rushEnd"></div>';
     $main.innerHTML = h;
-    $main.querySelectorAll('[data-rr]').forEach(b => b.addEventListener('click', () => { const c = r.redo[Number(b.dataset.rr)]; if (c) speak(c.tts || c.native, 0.95); }));
+    $main.querySelectorAll('[data-rr]').forEach(b => b.addEventListener('click', () => { stopAutoNext(); const c = r.redo[Number(b.dataset.rr)]; if (c) speak(c.tts || c.native, 0.95); }));   // 다시 듣는 동안 다음 놀이로 넘어가지 않게
     document.getElementById('rushAgain').addEventListener('click', () => rushStart(r.m));
     document.getElementById('rushExit').addEventListener('click', () => { resetPlayState(); go('play'); });
     const root = document.getElementById('rushEnd');
     if (r.tail == null) r.tail = playEnd({ n: r.n, ok: r.score, root });   // 요약 + 다음 놀이(한 번만)
     else { root.innerHTML = r.tail; bindPlayNext(root); }
-    setTimeout(() => { const b = document.getElementById('rushAgain'); if (b && S.rush === r) b.focus(); }, 30);   // 기본 포커스는 '한 판 더!'
+    $main.scrollTop = 0;   // 점수·기록 줄부터 보이게(판 도중 내려가 있었어도)
+    setTimeout(() => { const b = document.getElementById('rushAgain'); if (b && S.rush === r) b.focus({ preventScroll: true }); }, 30);   // 기본 포커스는 '한 판 더!' — 다시 들어 보기가 길어도 화면은 내리지 않는다
 }
 registerPlayTile({
     id: 'rush', ico: '⏱️', name: '소리 러시', view: 'rush', xpKind: 'rush', need: rushReady,
