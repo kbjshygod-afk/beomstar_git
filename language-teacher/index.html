@@ -10311,7 +10311,7 @@ function blankCheck(input, ans) {
     if (!a || (a !== blankFlat(ans, false, '') && blankFlat(input, false, ' ') !== blankFlat(ans, false, ' '))) return { ok: false, accent: '', apos: '' };   // 한국어 휴대폰 자판은 '를 치려면 기호판으로 바꿔야 한다
     const sq = (x, acc) => blankFlat(x, acc, '').replace(/ /g, '');
     const acc = sq(input, true) === sq(ans, true) ? '' : Array.from(new Set(Array.from(String(ans).normalize('NFC').toLowerCase()).filter(c => /\p{L}/u.test(c) && stripAccents(c) !== c))).join(' ');   // 악센트가 붙은 글자
-    const apos = blankFlat(input) === blankFlat(ans) ? '' : Array.from(new Set(String(ans).match(/[\p{L}\p{M}\p{N}]*['’][\p{L}\p{M}\p{N}]+/gu) || [])).slice(0, 3).join(' ');   // 아포스트로피가 든 낱말
+    const apos = blankFlat(input) === blankFlat(ans) ? '' : Array.from(new Set(String(ans).match(/[\p{L}\p{M}\p{N}]+['’][\p{L}\p{M}\p{N}]+/gu) || [])).slice(0, 3).join(' ');   // 아포스트로피가 든 낱말(따옴표 'cat'은 아님)
     return { ok: true, accent: acc, apos };
 }
 function blankNew(set, lv, write) {
@@ -10449,12 +10449,15 @@ function blankDraw(st) {
     blankSee(true);
     if (st.ready && st.write) { const i = q('blIn'); if (i) i.focus({ preventScroll: true }); }
 }
-// 지금 줄이 아래 독(🔁·🐢·칩·입력칸)에 가리지 않게 — 독 높이(+ 키보드로 올린 만큼 + 본문 아래 여백)를 띄우고 보이게 스크롤
+// 지금 줄이 아래 독(🔁·🐢·칩·입력칸)에 가리지 않게 스크롤 — 독 위 끝 = 본문 아래 끝 − 아래 여백 − 독 높이 − 키보드로 올린 만큼
+// (scrollIntoView 'nearest'는 줄이 화면 안에 있으면 scroll-margin을 보지 않아 독 뒤에 둔다 — 직접 잰다)
 function blankSee(smooth) {
     const cur = $main.querySelector('.bl-line.cur'), d = document.getElementById('blDock');
     if (!cur || !d) return;
-    cur.style.scrollMarginBottom = Math.ceil(d.offsetHeight + (d._up || 0) + (parseFloat(getComputedStyle($main).paddingBottom) || 0) + 8) + 'px';
-    cur.scrollIntoView({ block: 'nearest', behavior: smooth && !reducedMotion() ? 'smooth' : 'auto' });
+    const mr = $main.getBoundingClientRect(), r = cur.getBoundingClientRect(), low = mr.bottom - (parseFloat(getComputedStyle($main).paddingBottom) || 0) - d.offsetHeight - (d._up || 0) - 8;
+    let dy = Math.max(0, r.bottom - low);
+    if (r.top - dy < mr.top + 8) dy = r.top - mr.top - 8;   // 줄이 위로 벗어났거나 아주 길면 위 끝부터
+    if (Math.abs(dy) >= 1) $main.scrollBy({ top: dy, behavior: smooth && !reducedMotion() ? 'smooth' : 'auto' });
 }
 // 판 끝: 별(정확도 90% ★3 · 75% ★2 · 끝까지 ★1) · 기록 · 보상(XP 감쇠 · 첫 ★3 +5) · 틀린 줄은 복습 카드 · 다 맞힌 줄은 스티커
 // 빈칸이 하나도 없던 판(듣기만 함)은 별·XP·기록·퀘스트 없이 끝낸다
