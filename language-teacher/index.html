@@ -929,8 +929,9 @@ const LANG_EXT = {
     ba: { clean: v => cleanMap(v, (x, k) => EXT_ID.test(k) && isObj(x) ? Object.assign({ b: clampInt(x.b, 0, 2, 0) }, x.a != null ? { a: clampInt(x.a, 0, 2, 0) } : {}) : undefined, 1000), merge: (a, b) => mergeKeys(a, b, (x, y) => Object.assign({ b: Math.min(x.b, y.b) }, (x.a != null || y.a != null) ? { a: Math.max(x.a || 0, y.a || 0) } : {})) },
     radio: { clean: v => isObj(v) ? { st: cleanMap(v.st, (x, k) => EXT_ID.test(k) && typeof x === 'number' ? clampInt(x, 0, 1e6, 0) : undefined, 300), ep: cleanDateMap(v.ep, 200, k => /^[A-Za-z0-9_:#.-]{1,40}$/.test(k), true) } : undefined, merge: (a, b) => ({ st: mergeMax(a.st, b.st), ep: capMap(mergeEarlyDate(a.ep, b.ep), 200, (x, y) => cmpStr(y.v, x.v)) }) },
 };
-// 상자 숫자 칸(늘기만 함). 기기마다 따로 센다 {[기기 id]: n} — 값은 합계(lootNum). 큰 쪽(max)으로 합치면 두 기기가 각자 늘린 만큼이 하나로 줄어든다
-const LOOT_NUM = ['op', 'pcN', 'shN', 'shC', 'buN', 'buU'];
+// 상자: 받은 상자(g)·연 상자(o)는 상자 id로 적는다 — 두 기기가 같은 상자를 각자 열어도 하나로 모이고(빚이 생기지 않음), 새 상자가 사라지지 않는다
+const LOOT_G_MAX = 2000, SB_MAX = 40;   // 받은 상자 id 상한(늦은 것부터 남김) · 상자 방패 기록 상한
+const BOX_RES = /^(x|t|b[0-3]|s[01])$/;   // 연 상자 결과: x XP · t 잡학 · b0~b3 부스트(쓴 판 수) · s0 방패 조각 · s1 방패로 바꾼 조각
 const TRIVIA_N = 12;   // 언어마다 잡학 카드 수(LANG_TRIVIA) — 저장 정리가 아는 id('zh1'~'zh12')만 남기려고 저장소보다 먼저 둔다
 const DEV_KEY = LS_KEY + '_dev';   // 이 기기 id(기록 밖에 둔다 — 복원 코드로 다른 기기 id가 들어오지 않게)
 // 최상위 칸(모든 언어 공통): 상자(loot)·리그(league). 세대가 다른 기록을 합칠 때(cloudMerge)는 기존처럼 통째로 바꾼 쪽(높은 세대) 값을 쓴다
@@ -997,7 +998,9 @@ function mergeMission(x, y) {
 function cleanPuz(v) {
     if (!isObj(v) || !isDate(v.last)) return undefined;
     const dist = Array.isArray(v.dist) ? v.dist : [];
-    return { last: v.last, t: clampInt(v.t, 1, 7, 7), st: clampInt(v.st, 0, 100000, 0), bst: clampInt(v.bst, 0, 100000, 0), n: clampInt(v.n, 0, 100000, 0), dist: [0, 1, 2, 3, 4, 5, 6].map(i => clampInt(dist[i], 0, 100000, 0)), g: Array.isArray(v.g) ? v.g.filter(s => typeof s === 'string').slice(0, 6).map(s => clip(s, 40)) : [] };
+    const o = { last: v.last, t: clampInt(v.t, 1, 7, 7), st: clampInt(v.st, 0, 100000, 0), bst: clampInt(v.bst, 0, 100000, 0), n: clampInt(v.n, 0, 100000, 0), dist: [0, 1, 2, 3, 4, 5, 6].map(i => clampInt(dist[i], 0, 100000, 0)), g: Array.isArray(v.g) ? v.g.filter(s => typeof s === 'string').slice(0, 6).map(s => clip(s, 40)) : [] };
+    if (v.u != null) o.u = clampInt(v.u, 0, 99, 0);   // 마지막으로 푼 문제의 단계(자랑 글 — 그 뒤 단계가 올라도 같은 문제를 가리키게)
+    return o;
 }
 // 퍼즐: 마지막으로 푼 날이 늦은 쪽을 통째로(같은 날이면 적은 시도) · 최장 연속·푼 수는 큰 쪽 · 분포는 칸마다 큰 쪽
 function mergePuz(x, y) {
@@ -1029,27 +1032,57 @@ function devId() {
     if (!/^[a-z0-9]{6,16}$/.test(v)) { v = (Date.now().toString(36) + Math.random().toString(36).slice(2, 8)).slice(0, 16); try { localStorage.setItem(DEV_KEY, v); } catch (e) { } }
     return (devId.v = v);
 }
-function lootNum(f) { const c = (store.loot && store.loot[f]) || {}; return Object.keys(c).reduce((s, k) => s + c[k], 0); }
+function lootSum(c) { return Object.keys(c || {}).reduce((s, k) => s + c[k], 0); }
+function lootNum(f) { return lootSum(store.loot && store.loot[f]); }   // 기기별 숫자 칸의 합(조각 pcN)
 function lootAdd(f, n) {   // 이 기기 칸에 더한다(저장은 부르는 쪽이 결과와 함께)
     if (!store.loot) store.loot = cleanLoot({});
     const c = store.loot[f] = Object.assign({}, store.loot[f]), d = devId();
     c[d] = (c[d] || 0) + (n || 1);
 }
-function lootBoxes() { const l = store.loot; return l ? Math.max(0, Object.keys(l.g).length + Math.floor(lootNum('pcN') / 3) - lootNum('op')) : 0; }   // 남은 상자
-// 상자: 받은 상자(g)·잡학 카드(tv)는 합집합, 숫자는 기기별 칸마다 큰 쪽 → 합쳐도 상자가 늘거나 되살아나지 않고, 받은 조각도 사라지지 않는다
+// 받은 상자 id: 'q:'·'z:'(퀘스트·퍼즐)는 언어 자리를 둘 수 있다('q:zh:2026-10-05' — 언어마다 따로 받게), 리그는 'lg:날짜'
+function gidOk(k) { const m = /^(q|z|lg):(?:([a-z]{2}):)?[0-9]{4}-[0-9]{2}-[0-9]{2}$/.exec(k); return !!m && (!m[2] || (m[1] !== 'lg' && isLang(m[2]))); }
+function pidN(k) { const m = /^p:([1-9][0-9]{0,5})$/.exec(k); return m ? +m[1] : 0; }   // 조각 상자 'p:번호'(조각 3개마다 하나 — 모든 기기 조각을 합쳐 센다)
+function boxIdOk(k) { return gidOk(k) || pidN(k) > 0; }
+function boxDone(r) { return r === 'x' || r === 't' || r === 'b3' || r === 's1'; }   // 더 바뀔 것이 없는 결과
+// 같은 상자를 두 기기가 따로 열었으면 결과는 하나만 남긴다: 같은 종류면 더 진행된 쪽(쓴 부스트·바꾼 조각), 다르면 글자 순으로 앞 — 어느 쪽에서 합쳐도 같다
+function mergeBoxRes(a, b) { return a[0] === b[0] ? (a >= b ? a : b) : (a < b ? a : b); }
+function lootPMax(l) { return Math.min(999999, Math.floor(lootSum(l.pcN) / 3)); }   // 지금까지 생긴 조각 상자 수
+// 정리: 받은 상자 칸에서 잘린 id의 열기 기록은 버리고, 조각 상자는 앞에서부터 끝난 것을 pk(여기까지 다 열고 끝남)로 접는다 — 어느 기기에서 해도 같다
+function lootTidy(l) {
+    const o = {};
+    let pk = l.pk;
+    Object.keys(l.o).forEach(k => { const n = pidN(k); if (n ? n > pk : l.g[k] !== undefined) o[k] = l.o[k]; });
+    while (o['p:' + (pk + 1)] && boxDone(o['p:' + (pk + 1)])) { pk++; delete o['p:' + pk]; }
+    l.o = o; l.pk = pk;
+    return l;
+}
+// 다음에 열 상자 id(받은 날 순 → 조각 상자 번호 순) · 없으면 ''
+function lootNext(l) {
+    const g = Object.keys(l.g).filter(k => !l.o[k]).sort((a, b) => cmpStr(l.g[a], l.g[b]) || cmpStr(a, b))[0];
+    if (g) return g;
+    for (let n = l.pk + 1, max = lootPMax(l); n <= max; n++) if (!l.o['p:' + n]) return 'p:' + n;
+    return '';
+}
+// 남은 상자 = 열지 않은 받은 상자 + 열지 않은 조각 상자
+function lootLeft(l) {
+    if (!l) return 0;
+    const max = lootPMax(l), opened = Object.keys(l.o).filter(k => { const n = pidN(k); return n > l.pk && n <= max; }).length;
+    return Object.keys(l.g).filter(k => !l.o[k]).length + Math.max(0, max - l.pk - opened);
+}
+function lootBoxes() { return lootLeft(store.loot); }
+// 상자 칸 {g 받은 상자 {[id]: 받은 날}, o 연 상자 {[id]: 결과}, pk, pcN 조각(기기별 늘기만), tv 잡학 카드 {[id]: 날짜}} — g·o·tv는 합집합이라 합쳐도 늘거나 되살아나지 않는다
 function cleanLoot(v) {
     if (!isObj(v)) return undefined;
-    // 받은 상자 id: 'q:'·'z:'(퀘스트·퍼즐)는 언어 자리를 둘 수 있다('q:zh:2026-10-05' — 언어마다 따로 받게), 리그는 'lg:날짜'
-    const gid = k => { const m = /^(q|z|lg):(?:([a-z]{2}):)?[0-9]{4}-[0-9]{2}-[0-9]{2}$/.exec(k); return !!m && (!m[2] || (m[1] !== 'lg' && isLang(m[2]))); };
-    const o = { g: cleanDateMap(v.g, 2000, gid), tv: cleanDateMap(v.tv, 200, triviaOk) };
-    LOOT_NUM.forEach(f => { o[f] = cleanCount(v[f]); });
-    return o;
+    const o = { g: cleanDateMap(v.g, LOOT_G_MAX, gidOk, true), o: cleanMap(v.o, (r, k) => boxIdOk(k) && typeof r === 'string' && BOX_RES.test(r) ? r : undefined, 3 * LOOT_G_MAX), pk: clampInt(v.pk, 0, 999999, 0), pcN: cleanCount(v.pcN), tv: cleanDateMap(v.tv, 200, triviaOk) };
+    // 옛 형식(연 상자를 수 op로만 셈): 여는 순서대로 앞의 상자들을 연 것으로 옮긴다
+    let op = isObj(v.o) ? 0 : lootSum(cleanCount(v.op));
+    for (let k = lootNext(o); op > 0 && k; op--, k = lootNext(o)) o.o[k] = 'x';
+    return lootTidy(o);
 }
 function triviaOk(k) { const m = /^([a-z]{2})([0-9]{1,2})$/.exec(k); return !!m && isLang(m[1]) && +m[2] >= 1 && +m[2] <= TRIVIA_N; }   // 아는 잡학 카드 id만
+// 받은 상자는 늦은 날짜부터 상한까지(새로 받은 상자가 잘리지 않게) · 연 상자는 상자마다 결과 하나 · 조각은 기기별 칸마다 큰 쪽
 function mergeLoot(x, y) {
-    const o = { g: capMap(mergeEarlyDate(x.g, y.g), 2000, byDate), tv: mergeEarlyDate(x.tv, y.tv) };
-    LOOT_NUM.forEach(f => { o[f] = cleanCount(mergeMax(x[f], y[f])); });
-    return o;
+    return lootTidy({ g: capMap(mergeEarlyDate(x.g, y.g), LOOT_G_MAX, (a, b) => cmpStr(b.v, a.v)), o: mergeKeys(x.o, y.o, mergeBoxRes), pk: Math.max(x.pk || 0, y.pk || 0), pcN: cleanCount(mergeMax(x.pcN, y.pcN)), tv: mergeEarlyDate(x.tv, y.tv) });
 }
 function cleanLeague(v) {
     if (!isObj(v)) return undefined;
@@ -1074,6 +1107,17 @@ function leagueSs(a, b) {
 function mergeLeague(x, y) {
     const w = x.wk !== y.wk ? (x.wk > y.wk ? x : y) : null;
     return { tier: w ? w.tier : Math.max(x.tier, y.tier), wk: w ? w.wk : x.wk, base: w ? w.base : Math.min(x.base, y.base), seenWk: x.seenWk > y.seenWk ? x.seenWk : y.seenWk, hist: leagueHist(x.hist, y.hist), ss: leagueSs(x.ss, y.ss) };
+}
+function reviveDays(rv) { const o = []; if (isDate(rv.brk)) for (let d = dateAdd(rv.brk, 1); d < rv.at && o.length < 7; d = dateAdd(d, 1)) o.push(d); return o; }   // 부활이 메운 날(끊긴 날 다음 ~ 도전한 날 전날)
+function frozenDays(a) { return Array.isArray(a) ? Array.from(new Set(a.filter(isDate))).sort().slice(-60) : []; }   // 날짜 목록: 중복 없이 최근 60일
+// 방패 합치기: 상자에서 받은 방패(sb)가 한쪽 기록에만 있으면 그 기록을 고르지 않아도 사라지지 않게 더한다(최대 2).
+// 같은 날 기록이면 두 쪽 모두로 계산해 큰 쪽 — 어느 쪽에서 합쳐도 같고, 또 합쳐도 늘지 않는다(sb가 같아짐)
+function shieldsMerged(w, l, same) {
+    const plus = (a, b) => {
+        const ka = a.sb || {}, cut = Object.keys(ka).length >= SB_MAX ? Object.values(ka).sort()[0] : '';   // 상한으로 잘린 옛 기록은 다시 세지 않는다
+        return Math.min(2, a.shields + Object.keys(b.sb || {}).filter(k => ka[k] === undefined && b.sb[k] >= cut).length);
+    };
+    return same ? Math.max(plus(w, l), plus(l, w)) : plus(w, l);
 }
 // 연속 기록 부활 도전(store.streak.rv): {m:'YYYY-MM', prev, brk, at, ok}
 function cleanRv(v) {
@@ -1189,6 +1233,8 @@ function normalizeStreak(d) {
         const x = d.streak;
         const o = { last: isDate(x.last) ? x.last : '', count: clampInt(x.count, 0, 100000, 0), best: clampInt(x.best, 0, 100000, 0), shields: clampInt(x.shields, 0, 2, 0), frozen: Array.isArray(x.frozen) ? x.frozen.filter(isDate).slice(-60) : [] };
         const rv = cleanRv(x.rv); if (rv) o.rv = rv;   // 부활 도전
+        const sb = cleanDateMap(x.sb, SB_MAX, boxIdOk, true); if (Object.keys(sb).length) o.sb = sb;   // 상자에서 받은 방패(상자 id → 날짜)
+        const rf = frozenDays((Array.isArray(x.rf) ? x.rf : []).concat(rv && rv.ok ? reviveDays(rv) : [])); if (rf.length) o.rf = rf;   // 부활로 지킨 날(❄️ 설명) — rf가 없던 기록은 성공한 rv에서 채운다
         return o;
     }
     // 이전 버전: 언어별 streak을 하나로 합쳐 전역으로 옮긴다(어느 언어든 하루 1번이면 인정)
@@ -1279,7 +1325,10 @@ function mergeStores(other, mine, force, otherOld) {
     const so = other.streak, sm = mine.streak;
     m.streak = (so.last > sm.last) ? Object.assign({}, so, { best: Math.max(so.best, sm.best) }) : Object.assign({}, sm, { best: Math.max(so.best, sm.best), count: so.last === sm.last ? Math.max(so.count, sm.count) : sm.count });
     const rv = mergeRv(so.rv, sm.rv); if (rv) m.streak.rv = rv; else delete m.streak.rv;   // 부활 도전은 연속 기록과 따로 합친다
-    m.streak.frozen = Array.from(new Set((so.frozen || []).concat(sm.frozen || []))).sort().slice(-60);   // 지켜 준 날(❄️ 방패·🛟 부활)은 두 기록을 합친다(달력 표시만)
+    m.streak.frozen = frozenDays((so.frozen || []).concat(sm.frozen || []));   // 지켜 준 날(❄️ 방패·🛟 부활)은 두 기록을 합친다(달력 표시만)
+    const rf = frozenDays((so.rf || []).concat(sm.rf || [])); if (rf.length) m.streak.rf = rf; else delete m.streak.rf;
+    m.streak.shields = so.last > sm.last ? shieldsMerged(so, sm) : shieldsMerged(sm, so, so.last === sm.last);   // 상자 방패는 사라지지 않게
+    const sb = capMap(mergeEarlyDate(so.sb, sm.sb), SB_MAX, (a, b) => cmpStr(b.v, a.v)); if (Object.keys(sb).length) m.streak.sb = sb; else delete m.streak.sb;
     m.badges = Object.assign({}, other.badges, mine.badges);
     m.flags = Object.assign({}, other.flags, mine.flags);
     m.seen = Object.assign({}, other.seen, mine.seen);
@@ -1377,10 +1426,15 @@ function touchStreak() {
     } else { reviveOffer(st, gap); st.count = 1; }   // 끊긴 날 바로: 조건이 맞으면 오늘 하루 🛟 부활 도전
     st.last = t;
     if (st.count > st.best) st.best = st.count;
-    if (st.count % 7 === 0) track('streak_milestone', { days: st.count });
-    if (st.count % 7 === 0 && st.shields < 2) { st.shields++; setTimeout(() => showToast('🛡️ ' + st.count + '일 연속! 방패 1개를 받았어요 (빠진 날을 1번 지켜 줘요)', 'gold', 3400), 800); }
+    streakMilestone(st);
     save();
     setTimeout(checkBadges, 50);
+}
+// 7일마다: 계측 + 방패 1개(최대 2개) — 평소 연속(touchStreak)과 부활 성공(reviveCheck)이 같이 쓴다
+function streakMilestone(st) {
+    if (st.count % 7 !== 0) return;
+    track('streak_milestone', { days: st.count });
+    if (st.shields < 2) { st.shields++; setTimeout(() => showToast('🛡️ ' + st.count + '일 연속! 방패 1개를 받았어요 (빠진 날을 1번 지켜 줘요)', 'gold', 3400), 800); }
 }
 function curStreak() {
     const st = store.streak;
@@ -4800,9 +4854,9 @@ function renderQuiz(body, l) {
     const seed = hashStr(item.srcLesson || l.id) + (item.srcIdx !== undefined ? item.srcIdx : qIdx) * 97;
     const itemText = nativeText(item);
 
-    // 💥 피버 중이면 문제 카드 전체가 금빛(.fever)이고 진행 줄에 'FEVER ×2'
+    // 💥 피버 중이면 문제 카드 전체가 금빛(.fever)이고 진행 줄에 'FEVER 정답마다 +1'(실제 규칙: 피버 중 정답마다 보너스 1 XP)
     let h = '<div class="qwrap' + (q.fever > 0 ? ' fever' : '') + '"><div class="quiz-prog"><div class="qp-bar"><div style="width:' + (q.i / order.length * 100) + '%"></div></div>' +
-        '<div class="qp-txt">' + (q.fever > 0 ? '<span class="fever-tag">💥 FEVER ×2</span> · ' : q.combo >= 2 ? '🔥' + q.combo + ' · ' : '') + (q.i + 1) + ' / ' + order.length + '</div></div>';
+        '<div class="qp-txt">' + (q.fever > 0 ? '<span class="fever-tag">💥 FEVER 정답마다 +1</span> · ' : q.combo >= 2 ? '🔥' + q.combo + ' · ' : '') + (q.i + 1) + ' / ' + order.length + '</div></div>';
     if (item.srcTitle) h += '<div class="muted" style="margin:-6px 0 8px">📝 ' + esc(item.srcTitle) + '</div>';
     if (q.phase2) h += '<div class="phase2-banner">🔁 틀렸던 문제 한 번 더! 맞히면 점수에 반영돼요 (' + (q.i + 1) + '/' + order.length + ')</div>';
     h += '<div class="quiz-q">' + esc(item.q) + '</div>';
@@ -4958,7 +5012,7 @@ function renderQuiz(body, l) {
         if (item.type === 'arrange') setTimeout(() => speak(item.tokens.join(CUR.joiner), 0.95), 250);
         const fb = document.getElementById('qFeedback');
         fb.innerHTML = '<div class="explain-box ' + (ok ? 'good' : 'bad') + '">' +
-            '<div class="eb-head mascot-line"><span class="m-ico">' + CUR.flag + '</span><span>' + (ok ? (enter ? '💥 ' + q.combo + '연속! FEVER — 다음 ' + FEVER_N + '문제 보너스 ' : q.combo >= 3 ? '🔥 ' + q.combo + '연속 정답! ' : '⭕ ') + cheer(true) : '❌ ' + cheer(false)) + '</span></div>' +
+            '<div class="eb-head mascot-line"><span class="m-ico">' + CUR.flag + '</span><span>' + (ok ? (enter ? '💥 ' + q.combo + '연속! FEVER — 다음 ' + FEVER_N + '문제는 정답마다 +1 XP ' : q.combo >= 3 ? '🔥 ' + q.combo + '연속 정답! ' : '⭕ ') + cheer(true) : '❌ ' + cheer(false)) + '</span></div>' +
             (graduated ? '<div style="font-weight:700;color:#067a57;margin:4px 0">🎓 두 번 연속 맞혀서 오답 노트에서 졸업했어요!</div>' : '') + extraHtml +
             ((itemText && item.type !== 'arrange') ? '<div class="eb-answer"><span class="native">' + esc(itemText) + '</span>' +
                 (romanText(item) ? ' <span style="color:var(--primary);font-weight:600">' + esc(romanText(item)) + '</span>' : '') + '</div>' : '') +
@@ -6036,7 +6090,7 @@ function playIndex() {
         if (st.moral) add(st.moral, 'story', st.id, 'moral', st.unlockAfter, li);
     });
     SENT_INDEX = sent; ARR_TOKENS = arr;
-    Object.assign(PLAYIDX, { code: CUR.code, data: DATA, stories: STORIES, sent, arr, known: {}, words: {}, phr: {}, puz: {}, puzSent: null, puzPy: null });   // puz*: 퍼즐 후보·문장·병음(언어가 바뀌면 새로)
+    Object.assign(PLAYIDX, { code: CUR.code, data: DATA, stories: STORIES, sent, arr, known: {}, words: {}, phr: {}, puz: {}, puzSent: null, puzPy: null, puzProper: null });   // puz*: 퍼즐 후보·문장·병음(언어가 바뀌면 새로)
     return PLAYIDX;
 }
 // 비교용 키: 소문자, en·es·fr는 악센트를 떼고, 앞뒤 문장부호를 뗀다
@@ -6277,13 +6331,13 @@ function playEnd(o) {
     PLAY_END.forEach(f => { try { f(sum, o); } catch (e) { } });
     track('play_end', { mode: c.mode, sec: sum.sec, n: sum.n, ok: sum.ok, quit: o.quit ? 1 : 0 });
     PLAY.cur = null; PLAY.last = c.mode;
-    const html = playSummaryHtml(sum) + boxSlotHtml() + (o.quit ? '' : nextPlayHtml(c.mode));   // 🎁 상자가 있으면 열기 버튼
+    const html = playSummaryHtml(sum) + boxSlotHtml() + (o.quit ? '' : nextPlayHtml(c.mode, o.noAuto));   // 🎁 상자가 있으면 열기 버튼 · noAuto: 끝 화면에 읽을 것이 많아 자동 시작 없음(퍼즐)
     if (o.root) { o.root.insertAdjacentHTML('beforeend', html); bindPlayNext(o.root); }
     return html;
 }
 function playSummaryHtml(sum) {
-    const row = [];
-    if (sum.xp > 0) row.push('⭐ +' + sum.xp + ' XP');
+    const row = [], xp = sum.xp - (sum.fever || 0);   // 피버 보너스는 판 끝 전에 줘서 xp에 이미 들어 있다 — 따로 보이고 ⭐에서는 뺀다(합이 실제 XP)
+    if (xp > 0) row.push('⭐ +' + xp + ' XP');
     if (sum.fever) row.push('💥 피버 보너스 +' + sum.fever + ' XP');
     if (sum.boost) row.push('🚀 부스트 +' + sum.boost + ' XP');
     if (sum.ls >= 1) row.push('🎧 귀 시간 +' + fmtSec(sum.ls));
@@ -6329,11 +6383,11 @@ function nextPlay(after) {
 }
 function reducedMotion() { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } }
 // 끝 화면 '다음' 카드: 자동 시작은 설정이 켜져 있고, 움직임 줄이기가 아니고, 다음이 미션·라디오·말하기 대기가 아닐 때만(이어가기에는 XP 없음)
-function nextPlayHtml(mode) {
+function nextPlayHtml(mode, noAuto) {
     const n = nextPlay(mode);
     PLAY.next = null;
     if (!n) return '';
-    const auto = store.settings.autoNext !== false && !reducedMotion() && n.auto !== false;
+    const auto = !noAuto && store.settings.autoNext !== false && !reducedMotion() && n.auto !== false;
     PLAY.next = { n, from: mode, auto };
     // 카운트다운과 '취소'는 큰 버튼 아래 한 줄(버튼 안에서 줄바꿈되지 않게) · 버튼은 모두 44px 이상
     return '<div class="card play-next"><div class="pn-lbl">다음 놀이</div>' +
@@ -6744,7 +6798,7 @@ function rushDraw(r) {
     rushBindResume(r);
     if (kb && !r.paused) rushFocus();
 }
-function rushComboTxt(r) { return r.fever > 0 ? '💥 FEVER ×2 · ' + r.combo + '연속' : r.combo >= 3 ? '🔥 ' + r.combo + '연속' : ''; }
+function rushComboTxt(r) { return r.fever > 0 ? '💥 FEVER 정답마다 +1 · ' + r.combo + '연속' : r.combo >= 3 ? '🔥 ' + r.combo + '연속' : ''; }
 function rushFocus() { const f = $main.querySelector('[data-rc="0"]'); if (f) f.focus({ preventScroll: true }); }
 function rushRaceKey(r) { return r.score + ':' + (r.ghost.length ? rushGhostAt(r, rushNow(r)) : -1); }
 function rushLoop(r) { if (!r.raf) r.raf = requestAnimationFrame(() => rushTick(r)); }
@@ -6919,12 +6973,16 @@ function pieceAdd(st) {
     feverNote(st, lootBoxes() > b0 ? '🎁 상자 조각 3개로 상자 완성!' : '🧩 10콤보! 상자 조각 +1 (' + (lootNum('pcN') % 3) + '/3)');
     if (lootBoxes() > b0) boxSlotsRefresh();
 }
-// 🚀 부스트: 판 수로 센다. 판이 끝날 때 남은 부스트가 있으면 그 판에서 번 XP의 50%(최소 1)를 더 준다(번 XP가 없으면 쓰지 않음)
-function boostLeft() { return Math.max(0, lootNum('buN') - lootNum('buU')); }
+// 🚀 부스트: 판 수로 센다(부스트가 나온 상자마다 3판 — o의 'b0'~'b3'에 쓴 판 수). 판이 끝날 때 남은 부스트가 있으면
+// 그 판에서 번 XP의 50%(최소 1)를 더 준다(번 XP가 없으면 쓰지 않음). 상자 id에 적으니 두 기기가 같은 상자를 열어도 3판이 두 번 생기지 않는다
+function boostIds() { const o = (store.loot && store.loot.o) || {}; return Object.keys(o).filter(k => /^b[0-2]$/.test(o[k])).sort(cmpStr); }
+function boostLeft() { const o = (store.loot && store.loot.o) || {}; return boostIds().reduce((s, k) => s + 3 - Number(o[k][1]), 0); }
 function boostAfter(xp) {
-    if (!(xp > 0) || !boostLeft()) return 0;
-    const n = Math.max(1, Math.floor(xp / 2));
-    lootAdd('buU'); addXp(n, '🚀 부스트', true);
+    const k = xp > 0 && boostIds()[0];
+    if (!k) return 0;
+    const n = Math.max(1, Math.floor(xp / 2)), l = store.loot;
+    l.o = Object.assign({}, l.o, { [k]: 'b' + (Number(l.o[k][1]) + 1) }); lootTidy(l);
+    addXp(n, '🚀 부스트', true);
     return n;
 }
 PLAY_END.push(sum => { sum.boost = boostAfter(sum.xp); });   // 새 놀이(playBegin/playEnd)
@@ -6938,7 +6996,7 @@ function sessTail(st, xp) {
     return st.tail + boxSlotHtml();
 }
 
-// 🎁 선물 상자: 받은 상자 id(g)와 기기별로 늘기만 하는 숫자라 기기를 합쳐도 상자가 늘거나 되살아나지 않는다(남은 상자 = 받은 수 + 조각÷3 − 연 수)
+// 🎁 선물 상자: 받은 상자(g)와 연 상자(o)를 상자 id로 적어 기기를 합쳐도 상자가 늘거나 되살아나거나 사라지지 않는다(남은 상자 = 열지 않은 id)
 function lootGrant(id) {   // 'q:zh:날짜'(퀘스트 3개) · 'z:zh:날짜'(퍼즐 7일 연속) · 'lg:날짜'(리그)
     if (!store.loot) store.loot = cleanLoot({});
     if (store.loot.g[id]) return false;
@@ -6948,35 +7006,39 @@ function lootGrant(id) {   // 'q:zh:날짜'(퀘스트 3개) · 'z:zh:날짜'(퍼
 // 결과표(확률 공개 · 꽝 없음): 누적 확률 경계
 const BOX_TABLE = [{ k: 'xp10', p: 50, t: '⭐ +10 XP' }, { k: 'xp20', p: 20, t: '🌟 +20 XP' }, { k: 'boost', p: 15, t: '🚀 부스트 3판 (XP ×1.5)' }, { k: 'shield', p: 10, t: '🛡️ 방패 조각 (3개면 방패 1개)' }, { k: 'trivia', p: 5, t: '🃏 희귀 잡학 카드' }];
 function boxRoll(r) { let acc = 0; for (const x of BOX_TABLE) { acc += x.p / 100; if (r < acc - 1e-9) return x.k; } return BOX_TABLE[BOX_TABLE.length - 1].k; }
-// 상자 하나를 연다: 연 수(op)와 결과를 한 번에 저장한다 → {k, xp, shield, tv, all}
+// 상자 하나를 연다(받은 날 순 → 조각 상자 순): 연 상자 id와 결과를 한 번에 저장한다 → {k, id, xp, shield, tv, all}
 function boxOpen() {
-    if (!lootBoxes()) return null;
-    const res = { k: boxRoll(Math.random()), xp: 0 };
-    lootAdd('op');
+    const l = store.loot, id = l ? lootNext(l) : '';
+    if (!id) return null;
+    const res = { k: boxRoll(Math.random()), id, xp: 0 };
+    l.o = Object.assign({}, l.o, { [id]: { xp10: 'x', xp20: 'x', boost: 'b0', shield: 's0', trivia: 't' }[res.k] });
     if (res.k === 'xp10') res.xp = 10;
     else if (res.k === 'xp20') res.xp = 20;
-    else if (res.k === 'boost') lootAdd('buN', 3);
     else if (res.k === 'shield') res.xp = shieldPiece(res);
-    else { const id = triviaPick(); if (id) { store.loot.tv = Object.assign({}, store.loot.tv, { [id]: todayStr() }); res.tv = id; } else { res.all = true; res.xp = 30; } }
-    if (res.xp) addXp(res.xp, '🎁 선물 상자', true); else save();   // addXp도 저장한다(같은 순간이라 연 수와 결과가 함께 남음)
+    else if (res.k === 'trivia') { const tv = triviaPick(id); if (tv) { l.tv = Object.assign({}, l.tv, { [tv]: todayStr() }); res.tv = tv; } else { res.all = true; res.xp = 30; } }
+    lootTidy(l);
+    if (res.xp) addXp(res.xp, '🎁 선물 상자', true); else save();   // addXp도 저장한다(같은 순간이라 연 상자와 결과가 함께 남음)
     track('box_open', { k: res.k });
     updateHeader();
     return res;
 }
-// 방패 조각: 3개마다 방패 1개(최대 2개, 넘치면 +15 XP)
+// 방패 조각: 아직 안 바꾼 조각(s0) 3개마다 방패 1개(최대 2개, 넘치면 +15 XP). 받은 방패는 연속 기록 sb에 상자 id로 적는다 —
+// 다른 기기의 연속 기록이 골라져도(mergeStores) 그 방패가 사라지지 않게
 function shieldPiece(res) {
-    lootAdd('shN');
-    const d = Math.floor(lootNum('shN') / 3) - lootNum('shC');
-    if (d <= 0) return 0;
-    lootAdd('shC', d);
+    const l = store.loot, st = store.streak, ps = Object.keys(l.o).filter(k => l.o[k] === 's0').sort(cmpStr);
     let xp = 0;
-    for (let i = 0; i < d; i++) { if (store.streak.shields < 2) { store.streak.shields++; res.shield = (res.shield || 0) + 1; } else xp += 15; }
+    for (let i = 0; i + 3 <= ps.length; i += 3) {
+        const o = Object.assign({}, l.o); ps.slice(i, i + 3).forEach(k => { o[k] = 's1'; }); l.o = o;
+        if (st.shields < 2) { st.shields++; st.sb = capMap(Object.assign({}, st.sb, { [ps[i + 2]]: todayStr() }), SB_MAX, (a, b) => cmpStr(b.v, a.v)); res.shield = (res.shield || 0) + 1; }
+        else xp += 15;
+    }
     return xp;
 }
-// 아직 없는 이 언어 잡학 카드 하나(다 모았으면 '')
-function triviaPick() {
-    const tv = (store.loot && store.loot.tv) || {}, left = (LANG_TRIVIA[CUR.code] || []).map((x, i) => CUR.code + (i + 1)).filter(id => !tv[id]);
-    return left.length ? left[Math.floor(Math.random() * left.length)] : '';
+function shieldPieces() { const o = (store.loot && store.loot.o) || {}; return Object.keys(o).filter(k => o[k] === 's0').length % 3; }   // 방패까지 모은 조각
+// 아직 없는 이 언어 잡학 카드 하나(다 모았으면 '') — 상자 id로 고르니 두 기기가 같은 상자를 열면 같은 카드
+function triviaPick(id) {
+    const tv = (store.loot && store.loot.tv) || {}, left = (LANG_TRIVIA[CUR.code] || []).map((x, i) => CUR.code + (i + 1)).filter(k => !tv[k]);
+    return left.length ? left[Math.abs(hashStr('tv|' + id)) % left.length] : '';
 }
 function triviaOf(id) { const m = /^([a-z]{2})([0-9]+)$/.exec(id || ''); return m && LANG_TRIVIA[m[1]] ? LANG_TRIVIA[m[1]][+m[2] - 1] : null; }
 // 상자 열기 버튼 자리(판 끝 요약·결과 화면) — 상자가 나중에 도착해도 boxSlotsRefresh가 채운다
@@ -7004,7 +7066,7 @@ function boxOddsHtml() {
 }
 function boxResHtml(r) {
     if (!r) return '';
-    const shN = lootNum('shN') % 3;
+    const shN = shieldPieces();
     let h = '<div class="box-res" role="status">';
     if (r.k === 'xp10' || r.k === 'xp20') h += '<div class="br-big">' + (r.k === 'xp20' ? '🌟' : '⭐') + ' +' + r.xp + ' XP</div>';
     else if (r.k === 'boost') h += '<div class="br-big">🚀 부스트 3판</div><div>다음 3판은 번 XP의 절반을 더 받아요(×1.5)</div>';
@@ -7037,7 +7099,8 @@ function openBoxSheet() {
         if (g) g.addEventListener('click', () => {
             if (busy) return;
             busy = true;
-            const done = () => { last = boxOpen(); busy = false; if (!last || !sheet.isConnected) return; sfx('level'); if (last.k !== 'xp10') celebrate(); sheet.innerHTML = html(); bind(true); const f = sheet.querySelector('#boxGift') || sheet.querySelector('.btn.gray'); if (f) f.focus(); };
+            // 흔들리는 사이 시트를 닫았으면(✕·Esc·뒤로 가기) 상자를 열지 않는다 — 결과를 못 본 채 열리지 않게
+            const done = () => { busy = false; if (!sheet.isConnected) return; last = boxOpen(); if (!last) return; sfx('level'); if (last.k !== 'xp10') celebrate(); sheet.innerHTML = html(); bind(true); const f = sheet.querySelector('#boxGift') || sheet.querySelector('.btn.gray'); if (f) f.focus(); };
             if (reducedMotion()) { done(); return; }
             g.classList.add('shake'); sfx('tap');
             setTimeout(done, 800);
@@ -7062,8 +7125,9 @@ function reviveCheck() {
     if (!reviveOn() || reviveXp() < reviveNeed()) return;
     const st = store.streak, rv = st.rv;
     st.count = rv.prev + 1; if (st.count > st.best) st.best = st.count;
-    for (let d = dateAdd(rv.brk, 1); d < rv.at; d = dateAdd(d, 1)) if (!st.frozen.includes(d)) st.frozen.push(d);   // 빠진 날은 ❄️ '부활로 지킴'
-    st.frozen = st.frozen.sort().slice(-60);
+    const days = reviveDays(rv);   // 빠진 날은 ❄️ '부활로 지킴'(rf에 따로 적어 다음 부활 뒤에도 설명이 그대로)
+    st.frozen = frozenDays(st.frozen.concat(days)); st.rf = frozenDays((st.rf || []).concat(days));
+    streakMilestone(st);   // 부활로 7의 배수가 되면 평소처럼 방패
     rv.ok = 1; save();
     celebrate(); sfx('level'); showToast('🛟 부활 성공! ' + st.count + '일 연속', 'gold', 3600);
     track('streak_revive', { days: st.count });
@@ -7078,7 +7142,7 @@ function reviveBannerHtml() {
         '<span class="muted">못 채워도 잃는 건 없어요 — 내일은 2일째로 이어져요 · 모든 언어 XP를 합쳐요</span></div>';
 }
 // 기록 달력의 ❄️ 날: 부활 성공으로 채운 날인지, 방패가 지킨 날인지
-function frozenWhy(ds) { const rv = store.streak.rv; return rv && rv.ok && rv.brk && ds > rv.brk && ds < rv.at ? '🛟 부활로 지킴' : '🛡️ 방패가 지켜 준 날'; }
+function frozenWhy(ds) { const st = store.streak, rv = st.rv; return (st.rf || []).includes(ds) || (rv && rv.ok && rv.brk && ds > rv.brk && ds < rv.at) ? '🛟 부활로 지킴' : '🛡️ 방패가 지켜 준 날'; }
 
 // 🃏 희귀 잡학 카드(언어마다 12개 · 한국어 한 줄 + 원문 낱말). 사전·백과로 확인한 널리 알려진 사실만 — 고칠 때는 TRIVIA_N과 개수를 맞춘다
 const LANG_TRIVIA = {
@@ -7185,8 +7249,27 @@ function puzKnown(u) {
     let max = 1; set.forEach(w => { if (w.length > max) max = w.length; });
     return (ix.known[key] = { set, max: Math.min(max, 16) });
 }
-// 화면 글: 앞뒤 문장부호를 떼고, en·es·fr는 첫 글자 대문자가 힌트가 되지 않게 소문자로('I'만 늘 대문자)
-function puzShow(t) { const s = String(t).replace(EDGE_PUNCT, ''); return CHAR_LANGS[CUR.code] || /^I($|['’])/.test(s) ? s : s.toLowerCase(); }
+// en·es·fr 고유명사: 문장 가운데서 대문자로 시작하고 소문자로는 한 번도 안 나오는 낱말(사람·도시 이름, 요일 등) → normKey 모음.
+// 미끼로 쓰지 않고(이름 미끼는 어색함), 화면에서도 대문자를 그대로 둔다(늘 대문자라 첫 자리 힌트가 되지 않는다)
+function puzProper() {
+    const ix = playIndex(), code = CUR.code;
+    if (ix.puzProper) return ix.puzProper;
+    const cap = new Set(), low = new Set();
+    const end = w => /[!?…:]$/.test(w) || (/\.$/.test(w) && !/^(Mr|Mrs|Ms|Dr|Sr|Sra|Srta|Mme|Mlle|M)\.$/.test(w));   // 문장 끝(줄임말 Mr. 등은 아님)
+    const scan = text => String(text || '').split(/\s+/).filter(Boolean).forEach((w, i, a) => {
+        const s = w.replace(EDGE_PUNCT, ''), k = normKey(code, s);
+        if (!k || !/\p{L}/u.test(s[0])) return;
+        if (s[0] !== s[0].toUpperCase()) low.add(k);
+        else if (i > 0 && !end(a[i - 1]) && !/^I($|['’])/.test(s)) cap.add(k);
+    });
+    if (!CHAR_LANGS[code]) ALL.forEach(l => {
+        (l.quiz || []).forEach(q => { if (q.type === 'arrange' && Array.isArray(q.tokens)) scan(q.tokens.join(' ')); });
+        (l.keySentences || []).concat((l.dialogue && l.dialogue.turns) || []).forEach(x => scan(nativeText(x)));
+    });
+    return (ix.puzProper = new Set(Array.from(cap).filter(k => !low.has(k))));
+}
+// 화면 글: 앞뒤 문장부호를 떼고, en·es·fr는 첫 글자 대문자가 힌트가 되지 않게 소문자로('I'와 고유명사만 대문자)
+function puzShow(t) { const s = String(t).replace(EDGE_PUNCT, ''); return CHAR_LANGS[CUR.code] || /^I($|['’])/.test(s) || puzProper().has(normKey(CUR.code, s)) ? s : s.toLowerCase(); }
 // 미끼는 같은 문자 종류에서(일본어 한자·가타카나·히라가나, 숫자·글자)
 function puzKind(t) { return CUR.code === 'ja' ? (/[一-鿿]/.test(t) ? 'k' : /[゠-ヿ]/.test(t) ? 'K' : 'h') : /\d/.test(t) ? 'n' : 'w'; }
 // 단계 u의 후보(안정 id 순): ① 배열 문제(조각 그대로) ② en·es·fr 핵심 문장·대사(띄어쓰기, 이름 조각 없음)
@@ -7235,8 +7318,18 @@ function puzList(u) {
     const four = out.filter(x => x.toks.length >= 4);
     return (ix.puz[u] = u <= 1 || four.length < 15 ? out : four);
 }
-function puzSeed(u, day) { return hashStr('puz|' + CUR.code + '|' + day + '|' + u); }
-function puzPick(u, day) { const list = puzList(u); return list.length ? seededShuffle(list, puzSeed(u, day))[0] : null; }
+// 오늘 문제: 단계마다 후보를 시드로 한 번 섞은 순서(순열)를 n일 주기로 돈다 — 같은 단계는 같은 날 같은 문제, 주기 안에서는 반복 없음.
+// 주기가 바뀌는 날 첫 문제가 전날(지난 주기 마지막)과 같으면 둘째와 바꾼다(이틀 연속 같은 문제 없음)
+function puzCycle(list, u, cyc) { return seededShuffle(list, hashStr('puz|' + CUR.code + '|' + u + '|' + cyc)); }
+function puzPick(u, day) {
+    const list = puzList(u), n = list.length;
+    if (!n) return null;
+    const dn = dayDiff(PUZ_EPOCH, day);
+    if (n <= 2) return list[((dn % n) + n) % n];   // 후보가 둘이면 번갈아
+    const cyc = Math.floor(dn / n), i = dn - cyc * n, a = puzCycle(list, u, cyc);
+    if (a[0] === puzCycle(list, u, cyc - 1)[n - 1] && i <= 1) return a[1 - i];   // 둘째 칸 이후는 바꿔도 그대로라 지난 주기 마지막만 보면 된다
+    return a[i];
+}
 // Wordle 채점(중복 조각): 🟩을 먼저 세고, 남은 개수만큼만 🟨 → [2 맞음 · 1 자리 틀림 · 0 없음]
 function puzGrade(ans, guess) {
     const code = CUR ? CUR.code : 'en', a = ans.map(t => normKey(code, t)), g = guess.map(t => normKey(code, t)), res = g.map(() => 0), left = {};
@@ -7247,10 +7340,10 @@ function puzGrade(ans, guess) {
 // 미끼: 3조각 문제는 3개, 4~6조각은 2개 — 같은 단계 다른 후보의 조각 중 정답에 없고 문자 종류가 같은 것
 function puzDecoys(c, u, seed) {
     const code = CUR.code, want = c.toks.length <= 3 ? 3 : 2, ans = new Set(c.toks.map(t => normKey(code, t))), kinds = new Set(c.toks.map(puzKind));
-    const names = new Set((PERSON_NATIVE[code] || []).map(n => normKey(code, n))), seen = new Set(), pool = [];
+    const names = new Set((PERSON_NATIVE[code] || []).map(n => normKey(code, n))), proper = puzProper(), seen = new Set(), pool = [];
     puzList(u).forEach(x => x.toks.forEach((t, i) => {
         const k = normKey(code, t);
-        if (!k || ans.has(k) || seen.has(k) || names.has(k) || !kinds.has(puzKind(t))) return;
+        if (!k || ans.has(k) || seen.has(k) || names.has(k) || proper.has(k) || !kinds.has(puzKind(t))) return;
         seen.add(k); pool.push({ t, r: x.raw[i] });
     }));
     return seededShuffle(pool, seed ^ 0x5bd1).slice(0, want);
@@ -7258,7 +7351,7 @@ function puzDecoys(c, u, seed) {
 // 판 상태: 타일 = 정답 조각 + 미끼(섞음), g = 시도마다 놓은 타일 번호, m = 시도마다 색, best = 조각별 가장 좋은 색
 function puzState(c, u, mode, seed) {
     const code = CUR.code, tiles = c.toks.map((t, i) => ({ t: puzShow(t), r: c.raw[i] })).concat(puzDecoys(c, u, seed).map(x => ({ t: puzShow(x.t), r: x.r })));
-    return { c, u, mode, no: puzNo(), tiles: seededShuffle(tiles.map(x => Object.assign(x, { k: normKey(code, x.t) })), seed), g: [], m: [], cur: [], best: {}, over: false, won: false };
+    return { c, u, mode, day: todayStr(), no: puzNo(), tiles: seededShuffle(tiles.map(x => Object.assign(x, { k: normKey(code, x.t) })), seed), g: [], m: [], cur: [], best: {}, over: false, won: false };
 }
 // 문장 원본(복습 카드·스티커·발음 힌트): 배열 문제면 같은 조각의 핵심 문장·대사를 찾는다
 function puzSentOf(c) {
@@ -7351,10 +7444,13 @@ function puzFinish(st) {
     st.over = true;
     st.tries = st.won ? st.g.length : 7;
     st.rows = st.m.map(m => m.map(v => PUZ_EMO[v]).join(''));
-    if (st.mode === 'today' && !puzDone()) {   // 오늘 퍼즐은 하루 한 번만 기록·보상(다른 탭에서 먼저 끝냈으면 그대로)
-        const p = prog(), o = p.puz, t = todayStr(), run = o && o.last === todayStr(-1) ? o.st + 1 : 1, dist = o ? o.dist.slice() : [0, 0, 0, 0, 0, 0, 0];
+    const p = prog(), o = p.puz, t = st.day;
+    // 오늘 퍼즐은 하루 한 번만 기록·보상(다른 탭에서 먼저 끝냈으면 그대로). 자정을 넘겨 끝내면 시작한 날 문제로 적는다 — 새 날 문제는 그대로 남게
+    if (st.mode === 'today' && !(o && o.last >= t)) {
+        const run = o && o.last === dateAdd(t, -1) ? o.st + 1 : 1, dist = o ? o.dist.slice() : [0, 0, 0, 0, 0, 0, 0];
         dist[st.tries - 1]++;
-        p.puz = { last: t, t: st.tries, st: run, bst: Math.max(run, o ? o.bst : 0), n: (o ? o.n : 0) + 1, dist, g: st.rows.slice(0, PUZ_TRIES) };
+        p.puz = { last: t, t: st.tries, st: run, bst: Math.max(run, o ? o.bst : 0), n: (o ? o.n : 0) + 1, dist, g: st.rows.slice(0, PUZ_TRIES), u: st.u };
+        st.late = t !== todayStr();
         if (run % 7 === 0 && lootGrant('z:' + CUR.code + ':' + t)) playNote('🎁 퍼즐 ' + run + '일 연속! 선물 상자가 왔어요');
         save();
         if (st.won) addXp(5 + (st.tries <= 3 ? 3 : 0), '🟩 오늘의 퍼즐', true);   // 성공 +5, 3번 안이면 +3
@@ -7386,6 +7482,7 @@ function puzEndScreen(st) {
         '<div class="result-hero"><div class="r-emoji">' + (st.won ? (st.tries <= 2 ? '🏆' : '🎉') : '💪') + '</div><div class="r-score" style="color:var(--primary)">' + (st.won ? st.tries : 'X') + ' / ' + PUZ_TRIES + '</div>' +
         '<div class="r-msg">' + (st.won ? (st.tries === 1 ? '한 번에 맞혔어요! 귀가 정말 좋아요' : st.tries + '번 만에 맞혔어요!') : '아쉬워요! 정답을 듣고 다시 익혀 봐요 — 벌점은 없어요') + '</div>' +
         '<div class="puz-grid" aria-label="결과 격자">' + st.rows.map(r => '<div>' + r + '</div>').join('') + '</div></div>' +
+        (st.late ? '<div class="card puz-late" role="status">📅 자정이 지나서 시작한 날 문제(#' + st.no + ')로 기록했어요. 오늘 문제 #' + puzNo() + '도 풀 수 있어요<button class="btn block tap" id="puzToday" style="margin-top:8px">🟩 오늘 문제 풀기</button></div>' : '') +
         '<div class="card puz-ans"><div class="native puz-ans-n">' + nesc(s ? nativeText(s) : c.text) + '</div>' + (c.roman || (s && romanText(s)) ? '<div class="pinyin">' + esc(c.roman || romanText(s)) + '</div>' : '') +
         (pron ? '<div class="muted">[' + esc(pron) + ']</div>' : '') + '<div class="ko" style="margin-top:4px">' + esc(c.ko || (s && s.ko) || '') + '</div>' +
         '<button class="btn small ghost tap" id="puzAgainHear" style="margin-top:8px">▶ 다시 듣기</button><div class="muted" style="margin-top:6px">📥 이 문장을 복습함에 담았어요</div></div>' +
@@ -7399,15 +7496,18 @@ function puzEndScreen(st) {
     if (sh) sh.addEventListener('click', () => { stopAutoNext(); puzShare(st.no, st.u, st.tries, st.rows); });
     document.getElementById('puzPractice').addEventListener('click', () => puzStart('practice'));
     document.getElementById('puzExit').addEventListener('click', () => { resetPlayState(); go('play'); });
+    const td = document.getElementById('puzToday');
+    if (td) td.addEventListener('click', () => { resetPlayState(); go('puzzle'); });
     const root = document.getElementById('puzEnd');
-    if (st.tail == null) st.tail = playEnd({ n: st.g.length, ok: st.won ? 1 : 0, root });   // 요약 + 다음 놀이(한 번만)
+    // 요약 + 다음 놀이(한 번만) — 정답·뜻·자랑·기록을 읽는 화면이라 다음 놀이로 저절로 넘어가지 않는다(카드가 화면 아래라 카운트다운도 안 보임)
+    if (st.tail == null) st.tail = playEnd({ n: st.g.length, ok: st.won ? 1 : 0, root, noAuto: true });
     else { root.innerHTML = st.tail; bindPlayNext(root); }
     if (!st.endHeard) { st.endHeard = true; setTimeout(() => { if (S.puz === st && S.view === 'puzzle') speak(c.text, 1, c.sp); }, 450); }   // 정답 문장 1번
     $main.scrollTop = 0;
 }
 // 오늘 이미 끝냄: 결과 격자·자랑·연습판·내일 예고·기록만
 function puzDoneScreen() {
-    const z = prog().puz, u = puzUnit();
+    const z = prog().puz, u = z.u != null ? z.u : puzUnit();   // 자랑 글은 그 문제를 푼 단계로(그 뒤 레슨을 통과해 단계가 올라도)
     $main.innerHTML = puzTop('#' + puzNo() + ' · 오늘 문제는 끝났어요') +
         '<div class="result-hero"><div class="r-emoji">' + (z.t <= PUZ_TRIES ? '✅' : '💪') + '</div><div class="r-score" style="color:var(--primary)">' + (z.t <= PUZ_TRIES ? z.t : 'X') + ' / ' + PUZ_TRIES + '</div>' +
         '<div class="r-msg">오늘의 퍼즐 #' + puzNo() + ' · 🔥 ' + puzStreak() + '일 연속</div><div class="puz-grid" aria-label="결과 격자">' + z.g.map(r => '<div>' + esc(r) + '</div>').join('') + '</div></div>' +
@@ -7419,6 +7519,9 @@ function puzDoneScreen() {
 }
 registerPlayTile({
     id: 'puzzle', ico: '🟩', name: '오늘의 퍼즐', view: 'puzzle', xpKind: 'puz',
+    // 1단계 이상 레슨을 통과해야 문제가 생긴다 — 자유 이동이어도(그래야 퀘스트·홈 추천에 풀 수 없는 퍼즐이 오지 않는다)
+    need: () => puzUnit() >= 1 && puzList(puzUnit()).length > 0,
+    lock: () => puzUnit() < 1 ? '1단계 레슨을 통과하면 열려요' : '레슨을 하나 더 통과하면 열려요',
     status: () => { const z = prog().puz; return puzDone() ? (z.t <= PUZ_TRIES ? '✅ ' + z.t + '/' + PUZ_TRIES : '💪 X/' + PUZ_TRIES) + ' · 🔥' + puzStreak() + '일' : '🆕 #' + puzNo() + ' 오늘 문제'; },
     open: () => { S.puz = null; go('puzzle'); },
 });
