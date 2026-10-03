@@ -478,3 +478,32 @@ def test_fetch_ndx100_all_sources_fail(monkeypatch):
     monkeypatch.setattr(D, "_http_get", lambda url, **kw: J() if url == D.NASDAQ_NDX100_API else Resp("<table><tr><th>a</th></tr><tr><td>1</td></tr></table>"))
     with pytest.raises(ValueError, match="Nasdaq-100 constituents not found"):
         D.fetch_ndx100()
+
+
+def test_fresh_download_matches_a_later_cache_hit_exactly(tmp_path, monkeypatch):
+    """Yahoo prices carry float32 noise (1051.18994140625); the cache keeps 10 significant
+    digits. A fresh run and a cache hit must see identical numbers, or a rerun with unchanged
+    signals rewrites the ledger in its last decimals (R11, observed 2026-10-02 23:46 UTC)."""
+    rng = np.random.default_rng(3)
+
+    def noisy(**kw):
+        t = kw["tickers"]
+        tickers = [t] if isinstance(t, str) else list(t)
+        dates = pd.bdate_range(kw["start"], pd.Timestamp(kw["end"]) - pd.Timedelta(days=1))
+        df = _yf_frame(tickers, dates)
+        n = len(dates)
+        for x in tickers:
+            c = (1000 + np.cumsum(rng.normal(0, 5, n))).astype(np.float32).astype(float)
+            df[(x, "Open")], df[(x, "Close")] = c, c * np.float32(1.0003)
+            df[(x, "High")], df[(x, "Low")] = c * 1.01, c * 0.99
+            df[(x, "Volume")] = rng.integers(10**6, 6 * 10**10, n).astype(float)   # crypto-size volumes
+        return df
+
+    monkeypatch.setattr(D, "_yf_download", noisy)
+    now = datetime(2024, 3, 1, tzinfo=timezone.utc)
+    fresh = D.download_yahoo(["AAA"], "2024-01-02", "2024-02-28", cache_dir=tmp_path, now=now)[0]["AAA"]
+    monkeypatch.setattr(D, "_yf_download", lambda **kw: pytest.fail("should be a cache hit"))
+    cached = D.download_yahoo(["AAA"], "2024-01-02", "2024-02-28", cache_dir=tmp_path, now=now)[0]["AAA"]
+    pd.testing.assert_frame_equal(fresh, cached, check_exact=True)
+    assert (fresh["close"].to_numpy() == D.as_cached(fresh)["close"].to_numpy()).all()   # idempotent
+    assert len(D.as_cached(fresh.iloc[:0])) == 0
