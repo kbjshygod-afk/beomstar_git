@@ -1009,6 +1009,10 @@
         .chal-vs .cv-x { font-size: 16px; font-weight: 800; color: var(--text-light); }
         .chal-msg { font-weight: 800; color: var(--text); }
         .chal-tag { display: inline-block; margin-top: 8px; padding: 3px 10px; border-radius: 999px; background: #ecfdf5; color: #067a57; font-size: 12px; font-weight: 800; }
+        .chal-tag.ref { background: #eef2ff; color: #3730a3; }
+        .chal-sig { margin-top: 8px; font-size: 12.5px; }
+        .chal-modes { margin: 4px 0 8px; }
+        .rush-mode:disabled { opacity: .55; cursor: default; }
         .chal-btns { display: grid; gap: 8px; margin-bottom: 12px; }
         .chal-send .btn { min-height: 44px; }
         .chal-nick { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; font-size: 13px; font-weight: 700; }
@@ -1020,13 +1024,14 @@
         .lg-line { color: #065f46; }
         .lg-note { margin-bottom: 10px; padding: 8px 12px; border-radius: 12px; background: #f1f5f9; color: #475569; font-size: 12.5px; line-height: 1.5; }
         .lg-study-row { display: flex; flex-wrap: wrap; gap: 6px 12px; margin-top: 6px; font-size: 13px; font-weight: 700; }
-        .lg-board { margin-bottom: 8px; border: 1px solid var(--border); border-radius: 16px; background: var(--card); overflow: hidden; }
+        .lg-board { position: relative; max-height: min(440px, 52vh); margin-bottom: 8px; border: 1px solid var(--border); border-radius: 16px; background: var(--card); overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; }   /* 순위표 안에서만 굴린다(내 줄을 가운데로 — 위의 안내·학습 줄이 밀려나지 않게) */
         .lg-row { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 4px 12px; border-top: 1px solid #f1f5f9; }
         .lg-row:first-child { border-top: none; }
         .lg-row.up { box-shadow: inset 4px 0 0 var(--success); background: #f0fdf7; }
         .lg-row.me { background: var(--gold-light); }
         .lg-row.me .lg-name b { font-weight: 900; }
-        .lg-row.ghost { opacity: .62; background: #f8fafc; border-bottom: 1px dashed var(--border); }
+        .lg-row.ghost { position: sticky; top: 0; z-index: 1; background: #f8fafc; border-bottom: 1px dashed var(--border); }   /* 👻 지난주의 나: 순위표 맨 위에 고정 */
+        .lg-row.ghost > * { opacity: .62; }   /* 반투명은 글자만(굴리는 줄이 비치지 않게 바탕은 불투명) */
         .lg-rank { width: 24px; flex-shrink: 0; text-align: center; font-weight: 900; font-size: 14px; }
         .lg-ava { width: 28px; flex-shrink: 0; text-align: center; font-size: 22px; line-height: 1; }
         .lg-name { display: flex; flex-direction: column; flex: 1; min-width: 0; }
@@ -3830,6 +3835,7 @@ function addSentCard(item, dueOff) {
     const p = prog();
     const native = nativeText(item);
     if (!native) return;
+    if (!(p.dexV >= 1)) dexMigrate(true);   // 📒 옮겨 담기를 아직 안 한 언어: 이 카드보다 먼저(말하기에 막힌 문장 카드가 스티커로 옮겨 담기지 않게)
     const k = srsKeyOf(native, romanText(item));
     const c = p.srs[k];
     if (c) { if (dueOff === 0 && !c.mastered) { c.box = Math.max(1, c.box - 1); c.due = todayStr(); } }
@@ -5088,7 +5094,7 @@ function renderStep() {
             } else { revealScript(); at.remove(); showToast('👀 이제 대본을 보며 맞게 들었는지 확인해 보세요!', '', 3000); }
         }
         document.getElementById('playAll').addEventListener('click', () => speakSeq(turns.map(asItem), () => { body.querySelectorAll('[data-sec-toggle]').forEach(tg => markHeard(parseInt(tg.dataset.secToggle, 10))); }, (x, i) => hilite(i)));
-        document.getElementById('stopAll').addEventListener('click', () => { seqPlaying = false; if (S.rpActive && S.rpActive === rolePlayToken) { rolePlayToken++; showToast('🎭 역할극을 멈췄어요'); } S.rpActive = null; stopSpeak(); });   // 지금 진행 중인 역할극일 때만 알린다(지난 미션의 남은 표시는 조용히 지움)
+        document.getElementById('stopAll').addEventListener('click', () => { seqPlaying = false; if (S.rpActive && S.rpActive === rolePlayToken) { rolePlayToken++; showToast('🎭 역할극을 멈췄어요' + dexHoldEnd()); } S.rpActive = null; stopSpeak(); });   // 지금 진행 중인 역할극일 때만 알린다(지난 미션의 남은 표시는 조용히 지움)
         document.getElementById('blindBtn').addEventListener('click', e => {
             const w = document.getElementById('dlgWrap'), on = !w.classList.contains('blind');
             w.classList.toggle('blind', on);
@@ -5120,12 +5126,13 @@ function renderStep() {
             const total = turns.filter(t => t.speaker === 'A').length;
             const tok = ++rolePlayToken;
             S.rpActive = tok;
+            dexHold(() => S.rpActive === tok);   // 📒 새 스티커는 끝 토스트 하나로 묶는다(대사마다 따로 뜨지 않게)
             const step = () => {
                 if (tok !== rolePlayToken || S.view !== 'lesson' || S.step !== 2) return;
                 const spoke = spokeSet.size;
                 if (i > lastA || i >= turns.length) {
                     S.rpActive = null;
-                    showToast('🎭 역할극 완료! ' + total + '개 대사 중 ' + spoke + '개 통과', 'gold', 2600);
+                    showToast('🎭 역할극 완료! ' + total + '개 대사 중 ' + spoke + '개 통과' + dexHoldEnd(), 'gold', 2600);
                     const p = prog(); if (!p.roleplay) p.roleplay = {};
                     if (!p.roleplay[l.id] && spoke >= Math.ceil(total / 2)) { p.roleplay[l.id] = todayStr(); save(); addXp(5, '역할극'); celebrate(); }
                     return;
@@ -5136,7 +5143,7 @@ function renderStep() {
                     speakAndDex({ item: turns[idx], mode: challenge ? 'boss' : 'repeat', title: (challenge ? '🎭 도전! 내 차례 (' : '🎭 내 차례 (') + mine + '/' + total + ')', onPass: () => { spokeSet.add(idx); },
                         onClose: (passed, reason) => {
                             if (reason === 'done') { setTimeout(step, 250); return; }
-                            rolePlayToken++; S.rpActive = null; clearPlaying(); showToast('🎭 역할극을 멈췄어요');
+                            rolePlayToken++; S.rpActive = null; clearPlaying(); showToast('🎭 역할극을 멈췄어요' + dexHoldEnd());
                         } });
                     return;
                 }
@@ -9150,12 +9157,13 @@ registerPlayTile({
 
 /* ═══════════════════ 🏁 친구 도전장 ═══════════════════ */
 // 러시·퍼즐 결과를 링크로 보내면 친구가 같은 문제로 내 👻 유령과 겨룬다(서버·로그인 없음 · 저장 없음 — 닉네임만 이 기기에).
-// 링크: shareUrl(언어, 'challenge') + '#ch=v1.언어.모드(r|p).단계.seed.점수.유령[.닉네임]'
-//   러시(r): 문제는 보낸 사람 SRS가 아니라 '단계 u까지의 레슨 낱말 가운데 녹음 있는 것'(원문 순 → seed로 섞어 30개) · 보기도 같은 seed로 고정
-//            유령 = 맞힌 시각의 차이(100ms 단위, 36진, '-'로 이음, 120개까지)
+// 링크: shareUrl(언어, 'challenge') + '#ch=v2.언어.모드(r 소리 러시|t 글자 러시|p 퍼즐).단계.seed.점수.유령.지문[.닉네임]' (옛 v1은 지문 칸이 없고 r = 소리 러시)
+//   러시(r·t): 문제는 보낸 사람 SRS가 아니라 '단계 u까지의 레슨 낱말 가운데 녹음 있는 것'(원문 순 → seed로 섞어 30개) · 보기도 같은 seed로 고정
+//            유령 = 맞힌 시각의 차이(100ms 단위, 36진, '-'로 이음, 120개까지) · 모드가 같은 판끼리만 승패를 가린다(소리 도전을 글자로 하면 '참고 기록(글자)')
+//            지문 = 문제 재료(낱말·녹음 목록)의 해시 — 녹음이 더해졌거나 옛 목록을 쓰는 기기면 문제가 조금 달라지므로 비교해 알린다
 //   퍼즐(p): seed 자리에 날짜 YYYYMMDD, 점수 자리에 시도 수(실패 7), 유령 자리에 그 단계에서 통과한 레슨 수(36진 — 같은 문제를 가리키게, 단계 전체면 비움)
 const CHAL_N = 30, CHAL_GHOST_MAX = 120, NICK_KEY = 'lang_starter_nick';
-const CHAL = { inc: null };   // 받은 도전장(시작할 때 주소에서 읽음 · 메모리에만) — {raw, code, m, u, seed, score, ghost: [ms], day?, ln, nick, done?}
+const CHAL = { inc: null };   // 받은 도전장(시작할 때 주소에서 읽음 · 메모리에만) — {raw, code, m: 'r'|'p', rm: 'S'|'T'(러시 모드), u, seed, score, ghost: [ms], sig, day?, ln, nick, done?}
 function nickClean(v) { return Array.from(String(v || '').replace(/[\u0000-\u001f<>&"'.#%]/g, '').replace(/\s+/g, ' ').trim()).slice(0, 10).join(''); }
 function nickGet() { try { return nickClean(localStorage.getItem(NICK_KEY) || ''); } catch (e) { return ''; } }   // 기기별 편의(기록 밖)
 function nickSet(v) { try { if (v) localStorage.setItem(NICK_KEY, v); else localStorage.removeItem(NICK_KEY); } catch (e) { } }
@@ -9172,12 +9180,12 @@ function lnEnc(ln) { return ln != null ? Number(ln).toString(36) : ''; }
 // 받은 해시 검사: 600자 이하 · 칸마다 정규식 — 하나라도 어긋나면 null(평소처럼 연다)
 function chalParse(raw) {
     if (typeof raw !== 'string' || !raw || raw.length > 600) return null;
-    const f = raw.split('.');
-    if (f.length !== 7 && f.length !== 8) return null;
-    const [v, code, m, u, seed, score, ghost, nick] = f;
-    if (v !== 'v1' || !isLang(code) || !/^[rp]$/.test(m) || !/^[0-8]$/.test(u) || !/^[0-9a-z]{1,8}$/.test(seed) || !/^(0|[1-9][0-9]{0,2})$/.test(score) || !/^[0-9a-z-]{0,600}$/.test(ghost)) return null;
-    const o = { raw, code, m, u: +u, seed, score: +score, ghost: [], ln: null, nick: '' };
-    if (m === 'r') {
+    const f = raw.split('.'), v2 = f[0] === 'v2', n = v2 ? 8 : 7;   // v2: 지문 칸이 하나 더(그 뒤 닉네임은 선택)
+    if (f.length !== n && f.length !== n + 1) return null;
+    const [v, code, m, u, seed, score, ghost] = f, sig = v2 ? f[7] : '', nick = f[n];
+    if ((v !== 'v1' && !v2) || !isLang(code) || !(v2 ? /^[rtp]$/ : /^[rp]$/).test(m) || !/^[0-8]$/.test(u) || !/^[0-9a-z]{1,8}$/.test(seed) || !/^(0|[1-9][0-9]{0,2})$/.test(score) || !/^[0-9a-z-]{0,600}$/.test(ghost) || !/^[0-9a-z]{0,8}$/.test(sig)) return null;
+    const o = { raw, code, m: m === 'p' ? 'p' : 'r', rm: m === 't' ? 'T' : m === 'r' ? 'S' : '', u: +u, seed, score: +score, ghost: [], sig: m === 'p' ? '' : sig, ln: null, nick: '' };
+    if (o.m === 'r') {
         o.ghost = ghostDecode(ghost);
         if (!o.ghost || o.ghost.length > o.score) return null;
     } else {
@@ -9188,7 +9196,7 @@ function chalParse(raw) {
     if (nick && /^[0-9A-Za-z%_~!*()-]{1,90}$/.test(nick)) { try { o.nick = nickClean(decodeURIComponent(nick)); } catch (e) { } }   // 닉네임이 깨졌으면 이름만 뺀다
     return o;
 }
-function chalHash(o) { return '#ch=' + ['v1', o.code, o.m, o.u, o.seed, o.score, o.ghost || ''].concat(o.nick ? [encodeURIComponent(nickClean(o.nick))] : []).join('.'); }
+function chalHash(o) { return '#ch=' + ['v2', o.code, o.m === 'p' ? 'p' : o.rm === 'T' ? 't' : 'r', o.u, o.seed, o.score, o.ghost || '', (o.m !== 'p' && o.sig) || ''].concat(o.nick ? [encodeURIComponent(nickClean(o.nick))] : []).join('.'); }
 function chalPend() { const c = CHAL.inc; return c && !c.done ? c.raw : ''; }   // 아직 하지 않은 받은 도전장(앱 안 브라우저 → 기본 브라우저로 실어 보낸다)
 // 앱 안 브라우저: 받은 도전장이 남아 있는 동안 주소 끝에 '#ch=…'를 둔다(아이폰 'Safari로 열기'·주소 복사에도 실리게) — 끝나면 뗀다
 function chalAddr() {
@@ -9197,10 +9205,11 @@ function chalAddr() {
 }
 function chalDone(ch) { if (CHAL.inc === ch) { ch.done = true; chalAddr(); } }
 function chalWho(ch) { return ch.nick ? ch.nick + '님' : '친구'; }
-function chalWhat(o) { return o.m === 'r' ? '⏱️ 소리 러시 ' + o.score + '점' : '🟩 오늘의 소리 퍼즐 ' + (o.score <= PUZ_TRIES ? o.score : 'X') + '/' + PUZ_TRIES; }
+function chalWhat(o) { return o.m === 'r' ? (o.rm === 'T' ? '🔤 글자 러시 ' : '⏱️ 소리 러시 ') + o.score + '점' : '🟩 오늘의 소리 퍼즐 ' + (o.score <= PUZ_TRIES ? o.score : 'X') + '/' + PUZ_TRIES; }
 // 보내기: '🏁 민수님이 소리 러시 27점 도전장을 보냈어요! 이겨 볼래요?' + 링크(#ch=…)
 function chalShare(o) {
     const nick = nickGet(), x = Object.assign({ code: CUR.code, nick }, o);
+    if (x.m === 'r' && x.sig == null) x.sig = chalSig(x.u);
     track('challenge_send', { mode: x.m });
     shareApp('challenge', '🏁 ' + (nick ? nick + '님이' : '친구가') + ' ' + chalWhat(x).replace(/^\S+ /, '') + ' 도전장을 보냈어요! 이겨 볼래요?', chalHash(x));
 }
@@ -9218,6 +9227,10 @@ function chalPool(u) {
     return Array.from(m.values()).sort((a, b) => cmpStr(a.native, b.native));
 }
 function chalQueue(u, seed) { return seededShuffle(chalPool(u), hashStr('ch|' + seed)).slice(0, CHAL_N); }
+// 문제 재료 지문(36진 6자 이하): 낱말 하나만 더해지거나 빠져도 같은 seed의 30문제가 거의 다 바뀐다 — 보낸 기기와 다르면 알린다(녹음 목록을 다 받은 뒤에만)
+function chalSig(u) { return (hashStr(chalPool(u).map(c => c.native).join('|')) >>> 0).toString(36).slice(0, 6); }
+function chalSigDiff(ch) { return !!(ch && ch.m === 'r' && !ch.mk && ch.sig && chalClipsWait() === '' && ch.sig !== chalSig(ch.u)); }
+const CHAL_SIG_NOTE = '📼 앱·녹음 버전이 보낸 기기와 달라 문제가 조금 달라요 — 점수는 참고로 봐 주세요';
 function chalChoices(c, all, seed) { return rushChoices(c, all, 'ch|' + seed, []); }   // 보기도 seed로(모자라도 다른 곳에서 채우지 않는다 — 두 기기가 같게)
 function chalUnlearned(u) { return doneCount() === 0 || puzUnit() < u; }   // 아직 그 단계까지 배우지 않음(처음 온 사람 포함)
 function chalClipsWait() {   // 러시 도전은 녹음 목록이 있어야 같은 문제 목록이 된다: '' 준비됨 · 'wait' 받는 중 · 'none' 받지 못함
@@ -9225,12 +9238,14 @@ function chalClipsWait() {   // 러시 도전은 녹음 목록이 있어야 같�
     const c = CLIPS[CUR.code];
     return c === 'loading' ? 'wait' : c && c.ids ? '' : 'none';
 }
-// 러시 도전(받은 도전장·도전장 만들기): 같은 30문제를 미리 받아 두고(받지 못한 문장은 기기 음성) 러시 엔진으로
+// 러시 도전(받은 도전장·도전장 만들기): 같은 30문제를 미리 받아 두고(받지 못한 문장은 기기 음성) 러시 엔진으로.
+// 모드는 도전장을 따른다(글자 도전은 글자로) — 소리 도전인데 이 기기가 소리로 할 수 없으면 글자로 하되 '참고 기록(글자)'(ref · 승패 없음)
 function chalRushStart(ch, slow) {
     stopSpeak();
-    const m = !rushSoundOk() ? 'T' : slow ? 'E' : 'S', all = chalPool(ch.u), q = seededShuffle(all, hashStr('ch|' + ch.seed)).slice(0, CHAL_N);
+    const m = ch.rm === 'T' || !rushSoundOk() ? 'T' : slow ? 'E' : 'S', all = chalPool(ch.u), q = seededShuffle(all, hashStr('ch|' + ch.seed)).slice(0, CHAL_N);
     if (q.length < RUSH_MIN) { showToast('문제를 만들 낱말이 모자라요', '', 2600); return; }
-    const r = { m, mode: RUSH_MODES[m], st: 'prep', chal: ch, slow: !!slow, all, got: 0, total: q.length, kb: $main.contains(document.activeElement) };
+    if (ch.mk) ch.rm = m === 'T' ? 'T' : 'S';   // 만들기: 실제로 한 모드로 보낸다
+    const r = { m, mode: RUSH_MODES[m], st: 'prep', chal: ch, slow: !!slow, ref: !ch.mk && ch.rm !== 'T' && m === 'T', all, got: 0, total: q.length, kb: $main.contains(document.activeElement) };
     S.rush = r; S.chal = null;
     go('rush');
     if (!r.mode.sound) { rushBegin(r, q); return; }
@@ -9246,10 +9261,10 @@ function chalRushEnd(r) {
     const ch = r.chal, me = r.score, op = ch.score;
     if (r.res == null) {
         const myT = Math.round((r.hits[r.hits.length - 1] || 0) / 100), opT = ch.ghost.length === op && op ? Math.round(ch.ghost[op - 1] / 100) : 0;
-        r.res = ch.mk ? '' : me > op ? 'win' : me < op ? 'lose' : me && myT && opT && myT !== opT ? (myT < opT ? 'win' : 'lose') : 'tie';   // 같은 점수면 마지막으로 맞힌 시각이 빠른 쪽
-        r.gap = ch.mk || me !== op || !myT || !opT ? 0 : Math.abs(myT - opT) * 100;
+        r.res = ch.mk ? '' : r.ref ? 'ref' : me > op ? 'win' : me < op ? 'lose' : me && myT && opT && myT !== opT ? (myT < opT ? 'win' : 'lose') : 'tie';   // 같은 점수면 마지막으로 맞힌 시각이 빠른 쪽 · 다른 모드(ref)는 승패 없음
+        r.gap = ch.mk || r.ref || me !== op || !myT || !opT ? 0 : Math.abs(myT - opT) * 100;
         if (!ch.mk) {
-            track('challenge_result', { mode: 'r', win: r.res === 'win' ? 1 : 0 });
+            track('challenge_result', Object.assign({ mode: 'r', win: r.res === 'win' ? 1 : 0 }, r.ref ? { ref: 1 } : {}));
             chalDone(ch);
             if (r.res === 'win') { celebrate(); sfx('level'); }
         }
@@ -9263,11 +9278,13 @@ function chalRushEnd(r) {
             '<button class="btn block tap" id="chalSend">📤 도전장 보내기</button><button class="btn block ghost tap" id="chalRetry" style="margin-top:8px">🔁 새 문제로 다시 하기</button>' +
             '<button class="btn block gray tap" id="chalExit" style="margin-top:8px">놀이 탭으로</button></div>';
     } else {
-        const msg = r.res === 'win' ? me + ' vs ' + op + ' 이겼어요! 🎉' + (r.gap ? ' (' + rushSec(r.gap) + ' 더 빨랐어요)' : '') : r.res === 'lose' ? '아깝게 졌어요 — 다시?' + (r.gap ? ' (' + rushSec(r.gap) + ' 차이)' : '') : '비겼어요! 🤝';
-        h += '<div class="result-hero chal-hero"><div class="r-emoji">' + (r.res === 'win' ? '🏆' : r.res === 'lose' ? '💪' : '🤝') + '</div>' +
-            '<div class="chal-vs" aria-label="' + esc('나 ' + me + '점, ' + chalWho(ch) + ' ' + op + '점') + '"><span class="cv me"><small>나</small><b>' + me + '</b></span><span class="cv-x">vs</span><span class="cv"><small>' + esc(chalWho(ch)) + '</small><b>' + op + '</b></span></div>' +
-            '<div class="r-msg chal-msg" role="status">' + esc(msg) + '</div>' + (r.slow ? '<span class="chal-tag">🐢 느긋 모드</span>' : '') + '</div>' +
-            '<div class="chal-btns"><button class="btn block tap" id="chalReply">↩️ 답장 도전장</button><button class="btn block ghost tap" id="chalAgain">🔁 다시 도전</button>' +
+        const msg = r.res === 'ref' ? '소리 러시 도전과 조건이 달라 승패는 가리지 않아요' : r.res === 'win' ? me + ' vs ' + op + ' 이겼어요! 🎉' + (r.gap ? ' (' + rushSec(r.gap) + ' 더 빨랐어요)' : '') : r.res === 'lose' ? '아깝게 졌어요 — 다시?' + (r.gap ? ' (' + rushSec(r.gap) + ' 차이)' : '') : '비겼어요! 🤝';
+        const voice = r.ref && store.settings.voiceMode === 'device';   // 자연 음성만 켜면 같은 조건으로 다시 할 수 있다
+        h += '<div class="result-hero chal-hero"><div class="r-emoji">' + (r.res === 'ref' ? '📝' : r.res === 'win' ? '🏆' : r.res === 'lose' ? '💪' : '🤝') + '</div>' +
+            '<div class="chal-vs" aria-label="' + esc('나 ' + me + '점' + (r.ref ? '(글자, 참고 기록)' : '') + ', ' + chalWho(ch) + ' ' + op + '점') + '"><span class="cv me"><small>' + (r.ref ? '나(글자)' : '나') + '</small><b>' + me + '</b></span><span class="cv-x">vs</span><span class="cv"><small>' + esc(chalWho(ch)) + '</small><b>' + op + '</b></span></div>' +
+            '<div class="r-msg chal-msg" role="status">' + esc(msg) + '</div>' + (r.ref ? '<span class="chal-tag ref">🔤 참고 기록(글자)</span>' : '') + (r.slow ? '<span class="chal-tag">🐢 느긋 모드</span>' : '') +
+            (chalSigDiff(ch) ? '<div class="muted chal-sig">' + esc(CHAL_SIG_NOTE) + '</div>' : '') + '</div>' +
+            '<div class="chal-btns">' + (voice ? '<button class="btn block tap" id="chalVoice">🎙️ 자연 음성 켜고 다시 도전</button>' : '') + '<button class="btn block tap' + (voice ? ' ghost' : '') + '" id="chalReply">↩️ 답장 도전장</button><button class="btn block ghost tap" id="chalAgain">🔁 다시 도전</button>' +
             (doneCount() === 0 ? '<button class="btn block ghost tap" id="chalLearn">📖 이 언어 1단계부터 배우기</button>' : '') + '<button class="btn block gray tap" id="chalExit">놀이 탭으로</button></div>';
     }
     h += '<div id="rushEnd"></div>';
@@ -9276,13 +9293,16 @@ function chalRushEnd(r) {
     const nk = document.getElementById('chalNick');
     if (nk) nk.addEventListener('change', () => { const v = nickClean(nk.value); nk.value = v; nickSet(v); });
     const sd = document.getElementById('chalSend');
-    if (sd) sd.addEventListener('click', () => { stopAutoNext(); if (nk) nickSet(nickClean(nk.value)); chalShare({ m: 'r', u: ch.u, seed: ch.seed, score: me, ghost: ghostEncode(r.hits) }); });
+    const rm = r.m === 'T' ? 'T' : 'S';   // 보내는 도전장의 모드 = 내가 실제로 한 모드(글자로 했으면 글자 러시 도전장)
+    if (sd) sd.addEventListener('click', () => { stopAutoNext(); if (nk) nickSet(nickClean(nk.value)); chalShare({ m: 'r', rm, u: ch.u, seed: ch.seed, score: me, ghost: ghostEncode(r.hits) }); });
     const rt = document.getElementById('chalRetry');
-    if (rt) rt.addEventListener('click', () => chalRushStart(chalMake(), false));
+    if (rt) rt.addEventListener('click', () => chalRushStart(chalMake(rm), false));
     const rp = document.getElementById('chalReply');
-    if (rp) rp.addEventListener('click', () => { stopAutoNext(); chalShare({ m: 'r', u: ch.u, seed: ch.seed, score: me, ghost: ghostEncode(r.hits) }); });   // 같은 seed · 내 점수·유령
+    if (rp) rp.addEventListener('click', () => { stopAutoNext(); chalShare({ m: 'r', rm, u: ch.u, seed: ch.seed, score: me, ghost: ghostEncode(r.hits) }); });   // 같은 seed · 내 점수·유령
     const ag = document.getElementById('chalAgain');
     if (ag) ag.addEventListener('click', () => chalRushStart(ch, r.slow));
+    const vo = document.getElementById('chalVoice');
+    if (vo) vo.addEventListener('click', () => { chalVoiceOn(); chalRushStart(ch, r.slow); });
     chalBindLearn();
     document.getElementById('chalExit').addEventListener('click', () => { resetPlayState(); go('play'); });
     const root = document.getElementById('rushEnd');
@@ -9291,8 +9311,10 @@ function chalRushEnd(r) {
     $main.scrollTop = 0;
 }
 function chalBindLearn() { const b = document.getElementById('chalLearn'); if (b) b.addEventListener('click', () => { resetPlayState(); const rt = resumeTarget(); if (rt) openLesson(rt.idx, rt.step); else go('home'); }); }
-// 새 도전장(만들기): 지금 단계 · 새 무작위 seed
-function chalMake() { return { code: CUR.code, m: 'r', u: puzUnit(), seed: Math.floor(Math.random() * 2176782336).toString(36), score: 0, ghost: [], mk: true }; }
+// 새 도전장(만들기): 지금 단계 · 새 무작위 seed · 모드(rm: 'S' 소리 · 'T' 글자 — 없으면 일반 러시처럼 조용 모드·소리 못 씀이면 글자)
+function chalMake(rm) { return { code: CUR.code, m: 'r', rm: rm || chalMkMode(), u: puzUnit(), seed: Math.floor(Math.random() * 2176782336).toString(36), score: 0, ghost: [], mk: true }; }
+function chalMkMode() { return quietNow() || !rushSoundOk() ? 'T' : 'S'; }
+function chalVoiceOn() { store.settings.voiceMode = 'natural'; save(); track('voice_mode', { mode: 'natural', from: 'challenge' }); }   // 🎙️ 자연 음성 켜기(설정과 같은 칸)
 // 퍼즐 도전: 같은 날짜·단계 퍼즐(날짜·u·ln으로 정해짐). 그 퍼즐이 내 오늘 문제와 같으면 오늘 문제로 기록된다(두 번 풀지 않게)
 function chalPuzMine(ch) { const z = prog().puz; return z && z.last === ch.day && z.u === ch.u && (z.ln != null ? z.ln : null) === ch.ln ? z.t : 0; }   // 이미 푼 그 퍼즐의 시도 수(없으면 0)
 function chalPuzStart(ch) {
@@ -9328,15 +9350,23 @@ function renderChallenge() {
         document.getElementById('chalLang').addEventListener('click', () => { const c = ch; activateLanguage(c.code).then(() => { if (CUR && CUR.code === c.code) { S.chal = { ch: c }; S.view = 'challenge'; render(); } }); });
         return;
     }
-    const rush = s.mk || ch.m === 'r', wait = rush ? chalClipsWait() : '';
+    const rush = s.mk || ch.m === 'r', wait = rush ? chalClipsWait() : '', snd = rushSoundOk();
+    const rm = s.mk ? (s.rm === 'S' && !snd ? 'T' : s.rm || chalMkMode()) : ch.rm;   // 이 판의 모드(만들기는 고른 것 · 받은 것은 도전장 모드)
+    const ref = rush && !s.mk && rm !== 'T' && !snd, loud = rush && rm !== 'T' && !ref && quietNow();   // ref: 소리 도전인데 이 기기는 소리로 못 함 · loud: 조용 모드·이동 중인데 소리가 나는 판
+    const conf = loud && !s.ok;   // 소리가 나는 판은 시작을 한 번 더 확인한다
+    const quietNote = loud ? '<div class="chal-warn" role="note">🎧 소리가 나와요 — 이어폰을 끼거나 나중에 해요' + (s.ok ? '' : ' · 시작을 한 번 더 눌러 확인해요') + '</div>' : '';
     let h;
     if (s.mk) {
-        h = chalTop('같은 문제로 친구와 겨뤄요') + '<div class="card chal-card"><div class="chal-who">🏁 도전장 만들기</div><div class="chal-what">⏱️ 소리 러시 · ' + puzUnit() + '단계까지 낱말 ' + CHAL_N + '문제</div>' +
-            '<ol class="chal-rules"><li>먼저 내가 한 판 해요 — 그 점수와 👻 유령이 도전장이 돼요</li><li>친구는 같은 문제·같은 보기로 풀고, 내 유령이 옆에서 같이 달려요</li><li>서버도 로그인도 필요 없어요 · 링크만 보내면 돼요</li></ol>';
+        h = chalTop('같은 문제로 친구와 겨뤄요') + '<div class="card chal-card"><div class="chal-who">🏁 도전장 만들기</div><div class="chal-what">' + (rm === 'T' ? '🔤 글자 러시' : '⏱️ 소리 러시') + ' · ' + puzUnit() + '단계까지 낱말 ' + CHAL_N + '문제</div>' +
+            '<div class="rush-modes chal-modes" role="group" aria-label="도전장 모드 고르기">' + ['S', 'T'].map(k => '<button class="rush-mode" data-cm="' + k + '" aria-pressed="' + (k === rm) + '"' + (k === 'S' && !snd ? ' disabled aria-disabled="true"' : '') + '><span class="rm-t">' + RUSH_MODES[k].ico + ' ' + RUSH_MODES[k].name + '</span><span class="rm-d">' +
+                esc(k === 'T' ? '글자를 보고 뜻 고르기 · 친구도 글자로 풀어요' : snd ? '소리만 듣고 뜻 고르기 · 친구도 소리로 풀어요' : '설정에서 「자연 음성」을 켜면 고를 수 있어요') + '</span></button>').join('') + '</div>' + quietNote +
+            '<ol class="chal-rules"><li>먼저 내가 한 판 해요 — 그 점수와 👻 유령이 도전장이 돼요</li><li>친구는 같은 문제·같은 보기·같은 모드로 풀고, 내 유령이 옆에서 같이 달려요</li><li>서버도 로그인도 필요 없어요 · 링크만 보내면 돼요</li></ol>';
     } else if (ch.m === 'r') {
         h = chalTop((ch.nick ? ch.nick + '님이' : '친구가') + ' 보낸 도전') + '<div class="card chal-card"><div class="chal-who">🏁 ' + esc(chalWho(ch)) + '의 도전!</div><div class="chal-what">' + esc(chalWhat(ch)) + '</div>' +
-            '<div class="muted">같은 ' + CHAL_N + '문제(' + ch.u + '단계까지 낱말)를 같은 보기로 풀어요 · 👻 ' + esc(chalWho(ch)) + '의 유령이 옆에서 같이 달려요</div>' +
-            (chalUnlearned(ch.u) ? '<div class="chal-warn" role="note">📚 아직 안 배운 말이 섞여 있어요 — 🐢 느긋하게 하면 체력이 절반 속도로 줄어요</div>' : '');
+            '<div class="muted">같은 ' + CHAL_N + '문제(' + ch.u + '단계까지 낱말)를 같은 보기로 풀어요 · ' + (rm === 'T' ? '🔤 소리 없이 글자를 보고 골라요 · ' : '') + '👻 ' + esc(chalWho(ch)) + '의 유령이 옆에서 같이 달려요</div>' +
+            (ref ? '<div class="chal-warn" role="note">' + (store.settings.voiceMode === 'device' ? '🔇 자연 음성이 꺼져 있어요 — 🎙️ 자연 음성을 켜야 같은 조건(소리)이에요' : '🔇 이 기기에서는 소리로 할 수 없어요') + '<br>글자로 하면 승패 없이 참고 기록(글자)으로만 보여요</div>' : '') + quietNote +
+            (wait === '' && chalSigDiff(ch) ? '<div class="chal-warn" role="note">' + esc(CHAL_SIG_NOTE) + '</div>' : '') +
+            (chalUnlearned(ch.u) ? '<div class="chal-warn" role="note">📚 아직 안 배운 말이 섞여 있어요' + (rm === 'T' || ref ? ' — 천천히 읽어 보세요' : ' — 🐢 느긋하게 하면 체력이 절반 속도로 줄어요') + '</div>' : '');
     } else {
         const mine = chalPuzMine(ch);
         if (mine) {   // 오늘 이미 그 퍼즐을 풀었으면 결과 비교만
@@ -9356,14 +9386,21 @@ function renderChallenge() {
     }
     if (wait === 'wait') h += '<button class="btn block tap" disabled aria-disabled="true">⏳ 녹음 목록을 받는 중…</button>';
     else if (wait === 'none') h += '<div class="chal-warn" role="alert">📶 녹음 목록을 받지 못했어요 — 인터넷에 연결한 뒤 다시 시도해 주세요</div><button class="btn block tap" id="chalRetryClips">🔁 다시 시도</button>';
-    else h += '<button class="btn block tap" id="chalGo">▶ ' + (s.mk ? '도전장 만들기' : '도전 시작') + '</button>' + (!s.mk && rush && chalUnlearned(ch.u) ? '<button class="btn block ghost tap" id="chalSlow" style="margin-top:8px">🐢 느긋하게 도전</button>' : '');
+    else h += (ref && store.settings.voiceMode === 'device' ? '<button class="btn block tap" id="chalVoice">🎙️ 자연 음성 켜고 도전</button>' : '') +
+        '<button class="btn block tap' + (ref ? ' ghost' : '') + '" id="chalGo">' + (ref ? '🔤 글자로 해 보기(참고 기록)' : s.ok && loud ? '🔊 소리 나와도 괜찮아요 — 시작' : '▶ ' + (s.mk ? '도전장 만들기' : '도전 시작')) + '</button>' +
+        (!s.mk && rush && rm !== 'T' && !ref && chalUnlearned(ch.u) ? '<button class="btn block ghost tap" id="chalSlow" style="margin-top:8px">🐢 느긋하게 도전</button>' : '');
     h += '</div>' + (s.mk ? '' : inAppNoteHtml());
     $main.innerHTML = h;
     document.getElementById('chalBack').addEventListener('click', chalBack);
+    // 조용 모드·이동 중에 소리가 나는 판: 첫 누름은 확인(버튼 글이 바뀜) · 다음 누름에 시작
+    const confirmFirst = () => { if (!conf) return false; s.ok = true; renderChallenge(); const b = document.getElementById('chalGo'); if (b) b.focus(); announce('소리가 나와요 — 한 번 더 누르면 시작해요'); return true; };
     const go1 = document.getElementById('chalGo');
-    if (go1) go1.addEventListener('click', () => { if (s.mk) chalRushStart(chalMake(), false); else if (ch.m === 'r') chalRushStart(ch, false); else chalPuzStart(ch); });
+    if (go1) go1.addEventListener('click', () => { if (confirmFirst()) return; if (s.mk) chalRushStart(chalMake(rm), false); else if (ch.m === 'r') chalRushStart(ch, false); else chalPuzStart(ch); });
     const sl = document.getElementById('chalSlow');
-    if (sl) sl.addEventListener('click', () => chalRushStart(ch, true));
+    if (sl) sl.addEventListener('click', () => { if (!confirmFirst()) chalRushStart(ch, true); });
+    const vo = document.getElementById('chalVoice');
+    if (vo) vo.addEventListener('click', () => { chalVoiceOn(); s.ok = false; renderChallenge(); const b = document.getElementById('chalGo'); if (b) b.focus(); });
+    $main.querySelectorAll('[data-cm]').forEach(b => b.addEventListener('click', () => { s.rm = b.dataset.cm; s.ok = false; renderChallenge(); const f = $main.querySelector('[data-cm="' + s.rm + '"]'); if (f) f.focus(); }));
     const rc = document.getElementById('chalRetryClips');
     if (rc) rc.addEventListener('click', () => { if (CLIPS[CUR.code] === undefined) loadClips(CUR.code); renderChallenge(); });
     if (!s.mk) bindInAppNote();
@@ -9480,18 +9517,18 @@ function leagueResultShow() {
     lg.seenWk = unseen[unseen.length - 1].wk; save();
     const season = ss ? '<div class="lg-res-season">🏆 ' + esc(lgSeasonName(ss.s)) + '이 끝났어요 · ' + esc(lgTier(ss.t)) + ' 리그까지 올랐어요!<br>새 시즌은 🌱 새싹 리그부터 다시 시작해요</div>' : '';
     if (h.res === 'rest') { showToast('🏆 지난주 리그는 쉬었어요 — 단계는 그대로예요' + (ss ? ' · 새 시즌 시작!' : ''), '', 3200); return; }
-    const up = h.res === 'up', to = Math.min(10, h.tier + 1);
+    const up = h.res === 'up', top = h.tier >= 10, to = Math.min(10, h.tier + 1);   // top: 가장 높은 🌌 은하 — 더 오를 단계가 없어 1~5위는 상자만
     openModal('<div class="sheet-head s6-head"><b>🏆 지난주 리그 결과</b><button class="sheet-close" data-close-overlay aria-label="닫기">✕</button></div>' +
         '<div class="lg-res' + (up ? ' up' : '') + '"><div class="lg-res-ico" aria-hidden="true">' + (up ? '🎉' : '💪') + '</div>' +
-        '<div class="lg-res-t">' + (up ? esc(lgTier(to)) + ' 리그로 승급!' : esc(lgTier(h.tier)) + ' 리그 ' + h.rank + '위') + '</div>' +
-        '<div class="muted">' + (up ? h.rank + '위 · ' + h.xp + ' XP' + (h.tier >= 10 ? ' · 가장 높은 리그를 지켰어요' : '') + '<br>🎁 선물 상자가 왔어요!' : h.xp + ' XP · 다음 주에 다시 도전해요 (5위 안이면 승급)') + '</div>' + season +
+        '<div class="lg-res-t">' + (up && top ? esc(lgTier(10)) + ' 리그 ' + h.rank + '위 — 🎁 상자!' : up ? esc(lgTier(to)) + ' 리그로 승급!' : esc(lgTier(h.tier)) + ' 리그 ' + h.rank + '위') + '</div>' +
+        '<div class="muted">' + (up ? h.rank + '위 · ' + h.xp + ' XP' + (top ? ' · 가장 높은 리그를 지켰어요' : '') + '<br>🎁 선물 상자가 왔어요!' : h.xp + ' XP · 다음 주에 다시 도전해요 (5위 안이면 ' + (top ? '🎁 상자' : '승급') + ')') + '</div>' + season +
         '<button class="btn block tap" data-close-overlay="done" style="margin-top:14px">' + (up ? '좋아요!' : '이번 주도 화이팅') + '</button></div>');
     if (up) { celebrate(); sfx('level'); }
 }
 function leagueLineHtml() {
     const n = lgNow();
     if (!n) return '';
-    const txt = lgTier(n.lg.tier) + ' 리그 ' + n.rank + '위 · ' + (n.toUp ? '승급선까지 ' + n.toUp + ' XP' : '승급권이에요!') + ' · ' + lgLeft(n.wk);
+    const top = n.lg.tier >= 10, txt = lgTier(n.lg.tier) + ' 리그 ' + n.rank + '위 · ' + (n.toUp ? (top ? '상자선' : '승급선') + '까지 ' + n.toUp + ' XP' : top ? '상자권이에요!' : '승급권이에요!') + ' · ' + lgLeft(n.wk);   // 🌌 은하는 더 오를 단계가 없어 1~5위 = 🎁 상자
     return '<button class="ear-line lg-line" id="lgLine" aria-label="' + esc('주간 리그: ' + txt + ' — 리그 자세히 보기') + '"><span class="el-txt">' + esc(txt) + '</span></button>';
 }
 function lgOpen(from) { S.lgFrom = from || 'play'; playSeen('league'); go('league'); }
@@ -9510,7 +9547,7 @@ function renderLeague() {
         '<div class="card lg-study"><b>이번 주 학습</b><div class="lg-study-row"><span>🎤 말한 문장 ' + sum('speak') + '</span><span>🎧 귀 시간 ' + Math.round(sum('ls') / 60) + '분</span><span>🃏 복습 ' + sum('reviews') + '장</span></div>' +
         '<div class="muted" style="margin-top:4px">XP는 공부한 만큼 쌓여요 · 이번 주 ' + n.xp + ' XP</div></div>';
     const d0 = n.xp - n.past;
-    h += '<div class="lg-board" role="list" aria-label="이번 주 순위">' +
+    h += '<div class="lg-board" role="list" aria-label="이번 주 순위" tabindex="0">' +
         '<div class="lg-row ghost" role="listitem" aria-label="' + esc('지난주의 나 ' + n.past + ' XP — 순위에는 들지 않아요') + '"><span class="lg-rank" aria-hidden="true">👻</span><span class="lg-ava" aria-hidden="true">🙂</span><span class="lg-name"><b>지난주의 나</b><span class="lg-vs">' + (d0 > 0 ? '지난주의 나보다 +' + d0 : d0 < 0 ? '지난주의 나까지 ' + (-d0) + ' XP' : '지난주의 나와 나란히') + '</span></span><span class="lg-xp">' + n.past + ' XP</span></div>';
     n.rows.forEach((r, k) => {
         const rank = k + 1, cls = 'lg-row' + (rank <= LG_UP ? ' up' : '') + (r.me ? ' me' : '');
@@ -9520,11 +9557,11 @@ function renderLeague() {
     });
     h += '</div><div class="muted lg-left">⏱ 이번 주 ' + lgLeft(n.wk) + ' · 일요일 밤 12시에 결산해요</div>';
     const hist = (n.lg.hist || []).slice().reverse();
-    if (hist.length) h += '<div class="card"><b style="font-size:14px">📅 최근 기록</b><div class="lg-hist">' + hist.map(x => '<div class="lg-h"><span>' + esc(x.wk.slice(5).replace('-', '/')) + ' 주</span><span>' + esc(lgTier(x.tier)) + '</span><span>' + (x.res === 'rest' ? '쉼' : x.rank + '위 · ' + x.xp + ' XP') + '</span><b>' + (x.res === 'up' ? '⬆ 승급' : x.res === 'stay' ? '유지' : '—') + '</b></div>').join('') + '</div></div>';
+    if (hist.length) h += '<div class="card"><b style="font-size:14px">📅 최근 기록</b><div class="lg-hist">' + hist.map(x => '<div class="lg-h"><span>' + esc(x.wk.slice(5).replace('-', '/')) + ' 주</span><span>' + esc(lgTier(x.tier)) + '</span><span>' + (x.res === 'rest' ? '쉼' : x.rank + '위 · ' + x.xp + ' XP') + '</span><b>' + (x.res === 'up' ? (x.tier >= 10 ? '🎁 상자' : '⬆ 승급') : x.res === 'stay' ? '유지' : '—') + '</b></div>').join('') + '</div></div>';
     h += lgSeasonHtml(n.lg);
     $main.innerHTML = h;
     document.getElementById('lgBack').addEventListener('click', lgBack);
-    setTimeout(() => { const me = $main.querySelector('.lg-row.me'); if (me && S.view === 'league') me.scrollIntoView({ block: 'center', behavior: 'auto' }); }, 30);   // 내 줄이 가운데 오게
+    setTimeout(() => { const b = $main.querySelector('.lg-board'), me = b && b.querySelector('.lg-row.me'); if (me && S.view === 'league') b.scrollTop = Math.max(0, me.offsetTop - (b.clientHeight - me.offsetHeight) / 2); }, 30);   // 내 줄이 가운데 오게 — 순위표 안에서만 굴려 위의 안내·이번 주 학습·← 뒤로는 그대로 보인다
 }
 function lgSeasonHtml(lg) {
     const cur = lgSeason(lg.wk || lgWeek());
@@ -9544,16 +9581,22 @@ registerPlayTile({
 // 앨범 완성은 등급과 상관없이 '얻었는가'만 본다(처음 완성 +10 XP · 단계 전체 +30 XP · 도장 dexA)
 const DEX_TIERS = [{ c: 'bronze', ico: '🥉', t: '동' }, { c: 'silver', ico: '🥈', t: '은' }, { c: 'gold', ico: '🥇', t: '금' }, { c: 'rainbow', ico: '🌈', t: '무지개' }];
 const DEX_UP_DAY = 20, DEX_ALBUM_XP = 10, DEX_UNIT_XP = 30;
-const DEX_HOW = { key: '핵심 문장 🎤', turn: '미션 🗺️', story: '이야기 문장 🎤', moral: '이야기 퀴즈 📖', boss: '보스 👑' };
-const DEX = { pend: 0, tm: 0 };
+const DEX_HOW = { key: '핵심 문장 🎤', turn: '미션 🗺️', rp: '역할극 🎭', story: '이야기 문장 🎤', moral: '이야기 퀴즈 📖', boss: '보스 👑' };
+const DEX = { pend: 0, tm: 0, hold: null };
 function dexOpen() { const t = playTile('dex'); return !!t && tileOpen(t); }
 // 판 밖에서 새 스티커: 토스트 1번(같은 순간 여러 장이면 하나로) — 판 도중에는 끝 요약 '📒 새 스티커 N장'으로
+// 🎭 역할극처럼 한 화면에서 이어지는 묶음(dexHold ~ dexHoldEnd)은 끝 토스트에 '· 📒 새 스티커 N장'으로 붙인다
 function dexNotify() {
     if (PLAY.cur || !dexOpen()) return;
+    const h = DEX.hold;
+    if (h && h.live()) { h.n++; return; }
+    if (h) { DEX.hold = null; DEX.pend += h.n; }   // 끝 토스트 없이 끝난 묶음(다른 화면으로 나감)에 남은 수는 이번 토스트에
     DEX.pend++;
     clearTimeout(DEX.tm);
     DEX.tm = setTimeout(() => { const n = DEX.pend; DEX.pend = 0; if (n) showToast('📒 새 문장 스티커 ' + n + '장!', 'gold', 2600); }, 400);
 }
+function dexHold(live) { DEX.hold = { n: 0, live }; }   // live(): 묶음이 아직 이어지는가
+function dexHoldEnd() { const h = DEX.hold; DEX.hold = null; return h && h.n ? ' · 📒 새 스티커 ' + h.n + '장' : ''; }
 // 말하기 통과 → 문장 스티커(openSpeak 바깥 래퍼 — openSpeak 내부는 그대로). cfg.dexOk(score, info)가 false면 주지 않는다(보스: 문장을 보고 말함) · cfg.dexBoss: 보스 도전(✨ 보스 스티커를 줄 수 있는 유일한 길)
 function speakAndDex(cfg) {
     const f = cfg.onPass, ok = cfg.dexOk;
@@ -9571,18 +9614,32 @@ function dexTierNotes(r) {
     r.notes = (r.notes || []).concat([3, 2, 1].filter(k => r.tierUp[k]).map(k => DEX_TIERS[k].ico + ' ' + ['', '은색이', '금색이', '무지개가'][k] + ' 된 스티커 ' + r.tierUp[k] + '장'));
     return '';
 }
+// 레슨 대사를 지금 말할 수 있는 길 {턴 번호: how}: 미션이 있는 레슨은 미션의 내 역할(A·B 역할 = 첫 상대 화자) 대사(미션 🗺️),
+// 미션이 없는 0단계 레슨은 🎭 역할극의 A 대사. 셋째 화자(C) 등은 말할 길이 없다
+function dexTurnWays(l) {
+    const ms = missionsOf(l), turns = (l.dialogue && l.dialogue.turns) || [], w = {};
+    if (ms.length) ms.forEach(m => (m.me.A || []).concat(m.me.B || []).forEach(i => { w[i] = 'turn'; }));
+    else turns.forEach((t, i) => { if (t.speaker === 'A') w[i] = 'rp'; });
+    return w;
+}
 // 앨범 목록(언어 데이터·녹음 목록마다 한 번): [{id, kind, unitId, title, li, keys: [스티커 키], at: {키: {item, how, rare, lid?, sec?}}}] — 녹음 있는 문장만(교훈은 기기 음성이어도)
+// 대사는 얻을 길이 있는 것만 넣는다(그 레슨의 미션·역할극, 또는 같은 문장을 다른 레슨·이야기에서 말하기) — 얻을 수 없는 칸이 있으면 앨범이 영영 완성되지 않으니까.
+// 셋째 화자 대사 등은 빼 두었다가 🗣 따라 하기처럼 말할 길이 생기면 다시 넣는다
 function dexAlbums() {
     const ix = playIndex(), c = CLIPS[CUR.code], ids = c && c.ids ? c.ids : null, ck = ids ? 'y' : 'n';
     if (ix.dex && ix.dexCk === ck) return ix.dex;
     const has = (t, sp) => !ids || ids.has(clipId(clipSlot(sp), t)) || ids.has(clipId('a', t)), out = [];
+    const via = new Map(), mark = (x, how) => { const n = nativeText(x); if (n && !via.has(clipId('a', n))) via.set(clipId('a', n), how); };   // 문장 → 얻을 길(어느 레슨에서 얻어도 스티커는 하나)
+    ALL.forEach(l => (l.keySentences || []).forEach(x => mark(x, 'key')));
+    ALL.forEach(l => { const w = dexTurnWays(l), turns = (l.dialogue && l.dialogue.turns) || []; Object.keys(w).forEach(i => mark(turns[i], w[i])); if (bossOf(l)) mark(bossOf(l), 'boss'); });
+    STORIES.forEach(st => { (st.sentences || []).forEach(x => mark(x, 'story')); if (st.moral) mark(st.moral, 'moral'); });
     const mk = (id, kind, unitId, title, li) => { const a = { id, kind, unitId, title, li, keys: [], at: {} }; out.push(a); return a; };
     const put = (a, x, how, rare, ex) => { const n = nativeText(x); if (!n || !(how === 'moral' || has(n, x.speaker))) return; const k = clipId('a', n); if (a.at[k] || !ix.sent.has(k)) return; const bk = dexBossKeys().has(k); a.at[k] = Object.assign({ item: x, how: bk ? 'boss' : how, rare: !!rare || bk }, ex || {}); a.keys.push(k); };   // ✨ 보스 문장은 '보스 👑'(보스 클리어로만 얻음)
     ALL.forEach((l, li) => {
-        const ms = missionsOf(l), turns = (l.dialogue && l.dialogue.turns) || [], secOf = {};
+        const ms = missionsOf(l), turns = (l.dialogue && l.dialogue.turns) || [], secOf = {}, ways = dexTurnWays(l);
         let sk = -1; turns.forEach((t, i) => { if (!i || t.part) sk++; secOf[i] = sk; });   // 대화 파트 번호(👂 들어 봄 — p.heard)
         const keyS = a => (l.keySentences || []).forEach(x => put(a, x, 'key', false));   // 보스 문장(✨)은 put이 dexBossKeys로 가린다
-        const turnS = (a, list) => list.forEach(i => { const t = turns[i]; if (t && t.speaker !== 'N') put(a, t, 'turn', false, { lid: l.id, sec: secOf[i] }); });
+        const turnS = (a, list) => list.forEach(i => { const t = turns[i], how = t && t.speaker !== 'N' && (ways[i] || via.get(clipId('a', nativeText(t)))); if (how) put(a, t, how, false, { lid: l.id, sec: secOf[i] }); });   // 이 레슨에서 말할 수 없는 대사는 다른 곳에서 얻을 수 있을 때만
         if (ms.length > 1) ms.forEach((m, k) => { const a = mk(m.id, 'lesson', l.unitId, l.title + ' (' + m.no + '/' + m.n + ')', li); if (!k) keyS(a); turnS(a, m.secs.flat()); });   // 긴 대본: 미션 묶음대로
         else { const a = mk(l.id, 'lesson', l.unitId, l.title, li); keyS(a); turnS(a, turns.map((t, i) => i)); }
     });
@@ -9591,6 +9648,12 @@ function dexAlbums() {
     return ix.dex;
 }
 function dexHave(a) { const d = prog().dex || {}; return a.keys.filter(k => d[k]).length; }
+// 앨범 '권' 수 {n: 완성, N: 전체}: 영어 6~8단계처럼 한 레슨을 미션 묶음으로 나눈 앨범은 레슨 하나를 한 권으로 센다(묶음을 다 채우면 1권 — '0/34권' 같은 먼 숫자가 나오지 않게)
+function dexBooks(albums) {
+    const by = new Map();
+    albums.forEach(a => { const id = a.id.split('#')[0]; by.set(id, by.get(id) !== false && dexHave(a) === a.keys.length); });
+    return { n: Array.from(by.values()).filter(Boolean).length, N: by.size };
+}
 function dexUnits() {
     const by = new Map();
     dexAlbums().forEach(a => { if (!by.has(a.unitId)) by.set(a.unitId, []); by.get(a.unitId).push(a); });
@@ -9603,8 +9666,10 @@ function dexHeard(a, k) {
     if (x.sid) return !!(p.storiesRead && p.storiesRead[x.sid]);
     return x.lid != null && (((p.heard || {})[x.lid]) || []).includes(x.sec);
 }
-// 처음 옮겨 담기(dexV 1회): 기존 사용자가 빈 스티커북으로 시작하지 않게 — 말한 핵심 문장 · 보스 · 문장 복습 카드 · 즉답 ○ · 마지막 퍼즐 정답
-function dexMigrate() {
+// 처음 옮겨 담기(dexV 1회): 기존 사용자가 빈 스티커북으로 시작하지 않게 — 말한 핵심 문장 · 보스 · 문장 복습 카드 · 즉답 ○ · 마지막 퍼즐 정답.
+// 진도가 없는 언어(통과 레슨도 옮길 기록도 없음)는 표시를 찍지 않는다 — 합치기는 큰 쪽을 고르므로, 찍어 두면 나중에 클라우드로 들어온 옛 기기 기록이 영영 옮겨 담기지 않는다.
+// must: 문장 카드를 처음 넣기 직전(addSentCard) — 그 뒤 카드는 이 버전이 만든 것이라 옮겨 담지 않게 지금 찍는다
+function dexMigrate(must) {
     const p = prog();
     if ((p.dexV || 0) >= 1 || !DATA) return;
     const ix = playIndex(), t = todayStr(), add = {};
@@ -9615,6 +9680,7 @@ function dexMigrate() {
     Object.keys(p.feed || {}).forEach(k => { if (p.feed[k].b >= 1 && ix.sent.has(k)) put(ix.sent.get(k).item); });
     const z = p.puz;
     if (z && z.t <= PUZ_TRIES && z.u != null) { const c = puzPick(z.u, z.last, z.ln != null ? z.ln : null), s = c && puzSentOf(c); if (s) put(s, z.last); }
+    if (!must && !Object.keys(add).length && !Object.keys(p.completed || {}).length) return;
     if (Object.keys(add).length) p.dex = LANG_EXT.dex.merge(p.dex || {}, add);
     p.dexV = 1;
     save();
@@ -9656,16 +9722,17 @@ function renderDex() {
     if (g) { dexAlbumList(g); return; }
     S.dexUi = {};
     const all = dexAlbums(), tot = new Set(all.flatMap(a => a.keys)).size, d = prog().dex || {}, got = Array.from(new Set(all.flatMap(a => a.keys))).filter(k => d[k]).length;
-    const cl = dexCurLesson(), cu = units.find(x => x.u === cl.unitId) || units[0], ca = all.find(a => a.kind === 'lesson' && a.li === LESSON_BY_ID[cl.id]);
+    const cl = dexCurLesson(), cu = units.find(x => x.u === cl.unitId) || units[0], cas = all.filter(a => a.kind === 'lesson' && a.li === LESSON_BY_ID[cl.id]), ca = cas.find(a => dexHave(a) < a.keys.length) || cas[0];   // 지금 앨범: 그 레슨의 덜 채운 첫 묶음
+    const cb = cu && dexBooks(cu.albums);
     let h = dexTop('말하고 맞힌 원어민 문장이 스티커로 모여요') +
-        '<div class="card dex-sum"><div class="dex-big">이번 단계 앨범 ' + (cu ? cu.albums.filter(a => dexHave(a) === a.keys.length).length + '/' + cu.albums.length + '권' : '—') + (ca ? ' · 지금 앨범 ' + dexHave(ca) + '/' + ca.keys.length + '장' : '') + '</div>' +
+        '<div class="card dex-sum"><div class="dex-big">이번 단계 앨범 ' + (cb ? cb.n + '/' + cb.N + '권' : '—') + (ca ? ' · 지금 앨범 ' + dexHave(ca) + '/' + ca.keys.length + '장' : '') + '</div>' +
         '<div class="muted">전체 ' + got.toLocaleString() + '/' + tot.toLocaleString() + '장 · 복습할수록 테두리가 🥉→🥈→🥇→🌈로 빛나요</div>' +
         (ca ? '<button class="btn small ghost tap" id="dexCur" style="margin-top:8px">「' + esc(ca.title) + '」 앨범 열기</button>' : '') + '</div>';
     h += '<div class="dex-units">' + units.map(x => {
-        const keys = Array.from(new Set(x.albums.flatMap(a => a.keys))), have = keys.filter(k => d[k]).length, gold = keys.filter(k => d[k] && dexTierOf(dexItemOf(x.albums, k)).k >= 2).length, pct = keys.length ? Math.round(have / keys.length * 100) : 0;
+        const keys = Array.from(new Set(x.albums.flatMap(a => a.keys))), have = keys.filter(k => d[k]).length, gold = keys.filter(k => d[k] && dexTierOf(dexItemOf(x.albums, k)).k >= 2).length, pct = keys.length ? Math.round(have / keys.length * 100) : 0, bk = dexBooks(x.albums);
         const name = x.unit ? unitLabel(x.unit) + ' · ' + x.unit.title : x.u + '단계';
         return '<button class="dex-unit" data-du="' + x.u + '" aria-label="' + esc(name + ' — ' + have + '/' + keys.length + '장, 금 이상 ' + gold + '장') + '"><span class="du-ico" aria-hidden="true">' + esc((x.unit && x.unit.icon) || '📒') + '</span>' +
-            '<span class="du-main"><b>' + esc(name) + '</b><span class="du-bar" aria-hidden="true"><span style="width:' + pct + '%"></span></span><span class="du-sub">' + have + '/' + keys.length + '장 · 앨범 ' + x.albums.filter(a => dexHave(a) === a.keys.length).length + '/' + x.albums.length + '권 · 🥇 이상 ' + gold + '장</span></span></button>';
+            '<span class="du-main"><b>' + esc(name) + '</b><span class="du-bar" aria-hidden="true"><span style="width:' + pct + '%"></span></span><span class="du-sub">' + have + '/' + keys.length + '장 · 앨범 ' + bk.n + '/' + bk.N + '권 · 🥇 이상 ' + gold + '장</span></span></button>';
     }).join('') + '</div>';
     $main.innerHTML = h;
     document.getElementById('dexBack').addEventListener('click', dexBack);
