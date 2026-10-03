@@ -805,15 +805,16 @@
         .ear-res span { display: block; margin-top: 2px; font-size: 12.5px; color: var(--primary); }
         .ear-open-line { margin: -2px 0 10px; font-size: 13.5px; }
         .next-ep { margin: 0 0 8px; font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .season-end { text-align: center; border: 2px solid var(--gold); background: var(--gold-light); }
+        .season-end { flex: 1 1 100%; min-width: 0; margin: 0; text-align: center; border: 2px solid var(--gold); background: var(--gold-light); }   /* .result-actions(가로 flex) 안이라 폭을 줄 전체로 — 아니면 줄바꿈 안 하는 예고 줄 길이만큼 넓어져 화면 밖으로 */
         .season-end b { display: block; font-size: 15px; margin-bottom: 6px; }
         .season-end .next-ep { margin: 0; }
-        .last-ep { margin: -4px 0 12px; padding: 2px 6px 2px 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--card); }
+        .last-ep { margin: -4px 0 12px; padding: 2px 6px 8px 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--card); }
         .last-ep .le-row { display: flex; align-items: center; gap: 6px; }
-        .last-ep .le-txt { flex: 1; min-width: 0; font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .last-ep .le-lbl { flex: 1; min-width: 0; font-size: 12.5px; font-weight: 800; color: var(--text-light); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .last-ep .le-txt { margin: -2px 6px 2px 0; font-size: 14px; }   /* 명대사는 라벨과 다른 줄에 전부(줄바꿈) */
         .last-ep .le-btn { flex-shrink: 0; min-width: 44px; height: 44px; padding: 0 8px; border: 1px solid var(--border); border-radius: 10px; background: var(--card); color: var(--primary); font: inherit; font-size: 12.5px; font-weight: 800; cursor: pointer; }
-        .last-ep .le-roman { margin: -4px 0 4px; font-size: 11.5px; color: var(--text-light); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .last-ep .le-mean { margin: 0 0 6px; font-size: 13px; }
+        .last-ep .le-roman { margin: 0 6px 2px 0; font-size: 11.5px; color: var(--text-light); overflow-wrap: anywhere; }
+        .last-ep .le-mean { margin: 2px 6px 0 0; font-size: 13px; }
         /* 💬 이럴 때 뭐라고? 즉답 피드 */
         body.feed-on { overscroll-behavior-y: contain; }
         .feed { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
@@ -877,6 +878,9 @@
         .feed-opt .sheet-close { width: 44px; height: 44px; }
         .feed-more { display: block; width: 100%; min-height: 44px; font: inherit; font-size: 13px; text-align: left; }
         @media (prefers-reduced-motion: reduce) { .feed-card.in-up, .feed-card.in-down { animation: none; } .feed-card.out-up, .feed-card.out-down { transition: none; transform: none; } }
+        /* 낮은 화면(작은 휴대폰·가로 모드): 여백을 줄여 한국어 문장이 카드 첫 화면에 보이게 — 가로 모드에서는 상황 줄도 접는다(채점 버튼은 그대로 52px) */
+        @media (max-height: 520px) { .feed { gap: 6px; } .feed-card { padding: 10px 12px; gap: 6px; } .fc-ko { font-size: 20px; margin-top: 0; } .fc-tap { min-height: 44px; } }
+        @media (max-height: 420px) { .fc-sit { display: none; } }
         /* ☁️ 계정 카드 */
         .cloud-card .cloud-ava { width: 38px; height: 38px; border-radius: 50%; background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 17px; flex-shrink: 0; }
         .gbtn { display: inline-flex; align-items: center; gap: 8px; background: #fff; color: #1f2937; border: 1.5px solid #d1d5db; font-weight: 700; }
@@ -2245,24 +2249,25 @@ function playLine(x, o) {
         else tts();
     });
 }
-// runLines(items, {rate, gap: ms | 'x1.2'(직전 줄 길이 × 1.2), repeat: 줄마다 몇 번, pauseEach: 줄마다 멈춤, onStep(i), onDone()})
-// → {pause, resume, next, prev, again, stop, idx()} · stopSpeak()·go()가 부르면 함께 멈춘다(seqToken)
+// runLines(items, {rate, gap: ms | 'x1.2'(직전 줄 길이 × 1.2), repeat: 줄마다 몇 번, pauseEach: 줄마다 멈춤, onStep(i), onDone(), onStop(i)})
+// → {pause, resume, next, prev, again, stop, idx()} · stopSpeak()·go()가 부르면 함께 멈춘다(seqToken) — 그때 onStop(끊긴 줄 번호)을 한 번 부른다(stop()으로 멈추면 안 부름)
 function runLines(items, o) {
     o = o || {};
     stopSpeak();
     const my = seqToken, list = (items || []).filter(x => lineText(x)), times = Math.max(1, o.repeat || 1);
     let i = 0, rep = 0, step = 0, paused = false, waiting = false, over = false, timer = 0, lastSec = 0;
     const alive = () => !over && my === seqToken;
+    const gone = () => { if (over || my === seqToken) return; over = true; clearTimeout(timer); if (o.onStop) o.onStop(i); };   // 남의 소리로 끊겼으면 알린다
     const gapMs = () => typeof o.gap === 'number' ? o.gap : (typeof o.gap === 'string' && /^x[0-9.]+$/.test(o.gap)) ? Math.round(lastSec * 1000 * parseFloat(o.gap.slice(1))) : 420;
     const cut = () => { step++; clearTimeout(timer); lineCut(); };
     const play = () => {
-        if (!alive() || paused) return;
+        if (!alive() || paused) { gone(); return; }
         if (i >= list.length) { over = true; if (o.onDone) o.onDone(); return; }
         const s = ++step;
         if (!rep && o.onStep) o.onStep(i);
-        if (!alive() || s !== step) return;   // onStep에서 멈췄으면 이 줄은 읽지 않는다
+        if (!alive() || s !== step) { gone(); return; }   // onStep에서 멈췄으면 이 줄은 읽지 않는다
         playLine(list[i], { rate: o.rate }).then(r => {
-            if (s !== step || !alive()) return;
+            if (s !== step || !alive()) { gone(); return; }
             lastSec = r.sec;
             if (++rep < times) { timer = setTimeout(play, gapMs()); return; }
             rep = 0;
@@ -5391,12 +5396,20 @@ function bindEarAfter(l) {
         box.innerHTML = '<div class="ear-q">지금은 얼마나 들렸어요?</div>' + ear3Html('지금은 얼마나 들렸어요?');
         box.querySelectorAll('[data-ear3]').forEach(b => b.addEventListener('click', () => earAfterDone(l, Number(b.dataset.ear3), box)));
     };
-    const start = () => {
-        box.innerHTML = '<div class="ear-playing" role="status"><span id="earNow">🔊 듣는 중… 1/' + lines.length + '</span><button class="btn small gray tap" id="earStop">⏹ 멈춤</button></div>';
-        document.getElementById('earStop').addEventListener('click', () => { if (run) run.stop(); box.innerHTML = '<button class="btn block tap" id="earPlay">▶ 다시 듣기</button>'; document.getElementById('earPlay').addEventListener('click', start); });
-        run = runLines(lines, { rate: 0.92, onStep: i => { const n = document.getElementById('earNow'); if (n) n.textContent = '🔊 듣는 중… ' + (i + 1) + '/' + lines.length; }, onDone: () => { if (box.isConnected) ask(); } });
+    // 재생 버튼: k = 0이면 처음부터 '다시 듣기', 다른 소리에 끊겼으면 그 줄부터 '이어 듣기'
+    const idle = k => {
+        box.innerHTML = '<button class="btn block tap" id="earPlay">' + (k ? '▶ 이어 듣기 (' + (k + 1) + '/' + lines.length + ')' : '▶ 다시 듣기') + '</button>';
+        document.getElementById('earPlay').addEventListener('click', () => start(k));
     };
-    pb.addEventListener('click', start);
+    const start = k => {
+        box.innerHTML = '<div class="ear-playing" role="status"><span id="earNow">🔊 듣는 중… ' + (k + 1) + '/' + lines.length + '</span><button class="btn small gray tap" id="earStop">⏹ 멈춤</button></div>';
+        document.getElementById('earStop').addEventListener('click', () => { if (run) run.stop(); idle(0); });
+        run = runLines(lines.slice(k), {
+            rate: 0.92, onStep: i => { const n = document.getElementById('earNow'); if (n) n.textContent = '🔊 듣는 중… ' + (k + i + 1) + '/' + lines.length; },
+            onDone: () => { if (box.isConnected) ask(); }, onStop: i => { if (box.isConnected) idle(k + i); },
+        });
+    };
+    pb.addEventListener('click', () => start(0));
 }
 function earAfterDone(l, a, box) {
     const p = prog(), x = (p.ba || {})[l.id];
@@ -5426,19 +5439,20 @@ function nextEpHtml(l, nx) {
     if (nx.unitId === l.unitId) return nextEpLine(nx, '🎬 다음 화:');
     return '<div class="card season-end"><b>🏁 시즌 ' + l.unitId + ' 「' + esc(l.unitTitle) + '」 완결!</b>' + nextEpLine(nx, '🎬 새 시즌 첫 화:') + '</div>';
 }
-// 지난 화 = 통과한 날이 가장 늦은 레슨(같으면 과정에서 뒤의 것) → 그 레슨의 보스 문장
+// 지난 화 = 통과한 날이 가장 늦은 레슨(같으면 과정에서 뒤의 것) → 그 레슨의 보스 문장. 건너뛰기 시험(placed)·가져온 기록(imported)은 배운 레슨이 아니라서 뺀다
 function lastEpLesson() {
     const comp = prog().completed;
     let best = null;
-    ALL.forEach(l => { const c = comp[l.id]; if (c && c.date && (!best || c.date >= comp[best.id].date)) best = l; });
+    ALL.forEach(l => { const c = comp[l.id]; if (c && c.date && !c.placed && !c.imported && (!best || c.date >= comp[best.id].date)) best = l; });
     return best;
 }
 function lastEpHtml() {
     const l = lastEpLesson(), b = l && bossOf(l);
     if (!b || !nativeText(b)) return '';
     const r = CHAR_LANGS[CUR.code] ? romanText(b) : '';
-    return '<div class="last-ep" id="lastEp"><div class="le-row"><span class="le-txt">🎬 지난 화 명대사 「<span class="native">' + nesc(nativeText(b)) + '</span>」</span>' +
-        '<button class="le-btn" id="lastEpPlay" aria-label="명대사 듣기">▶</button><button class="le-btn le-ko" id="lastEpKo" aria-expanded="false">뜻 보기</button></div>' +
+    return '<div class="last-ep" id="lastEp"><div class="le-row"><span class="le-lbl">🎬 지난 화 명대사</span>' +
+        '<button class="le-btn" id="lastEpPlay" aria-label="명대사 듣기">▶</button><button class="le-btn le-ko" id="lastEpKo" aria-expanded="false" aria-controls="lastEpMean">뜻 보기</button></div>' +
+        '<div class="le-txt">「<span class="native">' + nesc(nativeText(b)) + '</span>」</div>' +
         (r ? '<div class="le-roman">' + esc(r) + '</div>' : '') + '<div class="le-mean" id="lastEpMean" hidden>' + esc(shortKo(b.ko)) + '</div></div>';
 }
 function bindLastEp() {
@@ -5446,7 +5460,7 @@ function bindLastEp() {
     if (!pb) return;
     const b = bossOf(lastEpLesson());
     pb.addEventListener('click', () => speak(nativeText(b), 0.95));
-    kb.addEventListener('click', () => { const m = document.getElementById('lastEpMean'), on = m.hidden; m.hidden = !on; kb.setAttribute('aria-expanded', String(on)); kb.textContent = on ? '뜻 숨기기' : '뜻 보기'; });
+    kb.addEventListener('click', () => { const m = document.getElementById('lastEpMean'), on = m.hidden; m.hidden = !on; kb.setAttribute('aria-expanded', String(on)); kb.textContent = on ? '뜻 접기' : '뜻 보기'; });   // 글자 수가 같아 버튼 폭이 그대로
 }
 
 /* ═══════════════════ SRS 복습 ═══════════════════ */
@@ -7802,7 +7816,7 @@ registerPlayTile({
 //  · 없는 문장 → prog().feed[클립 id] = {b, d}로 가볍게(새 문장이거나 복습일이 된 것만 b를 올림). ✕·△면 복습함(문장 카드)으로 옮긴다
 //  · 복습일이 아닌 문장(♥ 세트·채우기)은 연습으로만 센다(XP·하루 장 수만)
 // 세트(최대 10장): 복습할 문장 → 피드 복습 → 새 문장(2개, 복습이 없으면 3개 — 세트 안 i·i+2·i+6번째에 3번) → 모자라면 오래 안 본 문장
-const FEED_MIN = 6, FEED_GAP = [1, 2, 4, 7, 15, 30], FEED_PAT = [[0, 2, 6], [0, 2, 4], [0, 4], [0, 2], [0]];   // 새 문장 자리(들어가지 않으면 다음 모양)
+const FEED_MIN = 6, FEED_GAP = [1, 2, 4, 7, 15, 30], FEED_PAT = [[0, 2, 6], [0, 3, 7], [0, 2, 4], [0, 4], [0, 2], [0]];   // 새 문장 자리 모양(앞일수록 좋음 — feedSlots)
 const FEED_G = { ok: '😎 말했어요', hard: '🤏 비슷', fail: '🙈 못했어요' };
 const FEED_UI = { no: 0, mic: false, good: 0, askFast: false };   // 세트 번호 · 🎤 채점 모드(이 세션만) · ○ 70% 이상으로 끝낸 세트 수 · 스피드 모드 제안함
 function feedNorm(ko) { return String(ko || '').replace(/[\s\p{P}\p{S}]/gu, ''); }
@@ -7851,6 +7865,22 @@ function feedSrs(c) { return prog().srs[c.sk] || null; }
 // 상황 설명을 이미 본 레슨(통과·회화 단계 마침·상황 퀴즈 풂) — 아직이면 카드에 상황 줄을 숨긴다(회화 첫 방문 '무슨 상황이었을까요?'의 답이라서)
 function feedSitSeen(l) { const p = prog(); return isDone(l.id) || !!((p.steps || {})[l.id] || {})[2] || !!(p.lf || {})[l.id]; }
 function feedDue(c, t) { const s = feedSrs(c), f = (prog().feed || {})[c.key]; return s ? !s.mastered && s.due <= t : !!f && f.d <= t; }
+// 새 문장 n개의 자리(세트 size칸): 문장마다 모양(FEED_PAT)을 골라 그 모양이 들어가는 첫 칸에 — 고른 모양을 다 해 보고 들어간 횟수가 가장 많은 배치(같으면 앞 모양).
+// 한 문장씩 첫 모양부터 채우면 셋째 문장이 2번만 들어가서(0·2·6 / 1·3·7 → 4·8) — 셋이면 0·2·6 / 1·4·8 / 3·5·9(남는 7번은 복습·오래 안 본 문장, 없으면 당김). 문장 3개·모양 6개라 많아야 216가지
+function feedSlots(n, size) {
+    let best = null;
+    const go = (k, used, out, sc) => {
+        if (k === n) { if (!best || sc > best.sc) best = { sc, out }; return; }
+        FEED_PAT.forEach((pat, pi) => {
+            for (let s = 0; s < size; s++) {
+                const at = pat.map(d => s + d);
+                if (at.every(x => x < size && !used.has(x))) { go(k + 1, new Set([...used, ...at]), out.concat([at]), sc + at.length * 10 - pi); return; }
+            }
+        });
+    };
+    go(0, new Set(), [], 0);
+    return best ? best.out : [];
+}
 // 세트 만들기 → [{c, rep: 세트 안에서 몇 번째로 나온 새 문장인지}]
 function feedBuild(st) {
     const t = todayStr(), p = prog(), fm = p.feed || {}, rnd = hashStr(t + CUR.code + st.no);
@@ -7861,13 +7891,8 @@ function feedBuild(st) {
     const srsDue = pool.filter(c => { const s = feedSrs(c); return s && !s.mastered && s.due <= t; }).sort((a, b) => feedSrs(a).box - feedSrs(b).box);
     const fdDue = pool.filter(c => !feedSrs(c) && fm[c.key] && fm[c.key].d <= t).sort((a, b) => fm[a.key].b - fm[b.key].b);
     const ord = c => !c.cur ? 1 : feedSitSeen(c.l) ? 0 : 2, fresh = pool.filter(c => !feedSrs(c) && !fm[c.key]).sort((a, b) => ord(a) - ord(b));   // 지금 레슨 먼저 — 회화를 아직 안 들었으면 맨 뒤로(같으면 과정 순서)
-    const rev = srsDue.concat(fdDue);
-    fresh.slice(0, rev.length ? 2 : 3).forEach(c => {
-        for (const pat of FEED_PAT) for (let s = 0; s < size; s++) {
-            const at = pat.map(k => s + k);
-            if (at.every(k => k < size && !slots[k])) { at.forEach((k, j) => { slots[k] = { c, rep: j }; }); return; }
-        }
-    });
+    const rev = srsDue.concat(fdDue), news = fresh.slice(0, rev.length ? 2 : 3);
+    feedSlots(news.length, size).forEach((at, i) => at.forEach((k, j) => { slots[k] = { c: news[i], rep: j }; }));
     const free = slots.filter(x => !x).length, used = new Set(slots.filter(Boolean).map(x => x.c.key));
     const fill = seededShuffle(rev.slice(0, free), rnd);
     fill.forEach(c => used.add(c.key));
@@ -7900,13 +7925,17 @@ function feedStart(mode) {
     if (mode !== 'taste' && st.set.length) playBegin('feed');
     feedDraw(st);
 }
-function feedH() { return Math.max(380, $main.clientHeight - 32); }   // .app 높이가 고정이고 #main이 스크롤 칸이라 100dvh가 아니라 #main 높이로
-window.addEventListener('resize', () => { const b = document.getElementById('feedBox'); if (b && S.view === 'feed') { b.style.height = feedH() + 'px'; feedFit(); } });
+// 피드 상자 높이 = #main 높이 − 32(.app 높이가 고정이고 #main이 스크롤 칸이라 100dvh가 아니라). 휴대폰 가로 모드처럼 #main이 아주 낮으면
+// 상자는 FEED_HMIN으로 두고 #main 스크롤을 풀어(feedOv) 정답 보기·채점 버튼까지 내려 볼 수 있게 — 그 위 높이에서는 버튼이 늘 보이고 카드 안이 스크롤(feedFit)
+const FEED_HMIN = 180;
+function feedH() { return Math.max(FEED_HMIN, $main.clientHeight - 32); }
+function feedOv() { const fit = $main.clientHeight - 32 >= FEED_HMIN; $main.style.overflow = fit ? 'hidden' : ''; if (fit) $main.scrollTop = 0; }   // 가로 → 세로로 돌리면 내려 둔 스크롤도 되돌림
+window.addEventListener('resize', () => { const b = document.getElementById('feedBox'); if (b && S.view === 'feed') { b.style.height = feedH() + 'px'; feedOv(); feedFit(); } });
 // 작은 화면·글씨 크게로 카드 내용이 넘치면 카드 안에서 스크롤(그때는 위로 넘기기 대신 아래 버튼으로 채점)
 function feedFit() { const c = document.getElementById('feedCard'); if (c && !c.classList.contains('feed-sum')) c.classList.toggle('scroll', c.scrollHeight > c.clientHeight + 1); }
 function feedDraw(st, anim) {
     if (S.feed !== st || S.view !== 'feed') return;
-    $main.style.overflow = 'hidden'; document.body.classList.add('feed-on');   // 위로 넘기기가 스크롤·당겨서 새로고침과 부딪히지 않게(go()가 되돌림)
+    feedOv(); document.body.classList.add('feed-on');   // 위로 넘기기가 스크롤·당겨서 새로고침과 부딪히지 않게(go()가 되돌림)
     clearTimeout(st.timer); st.tok++;
     const quiet = quietNow(), n = st.set.length;
     if (quiet) st.mic = false;
