@@ -938,6 +938,7 @@
         .mis-bub .ms-hint { display: block; margin-top: 4px; font-size: 11.5px; font-weight: 800; color: #475569; }
         .mis-bub.me { background: var(--primary); color: #fff; border-bottom-right-radius: 4px; }
         .mis-bub.me .b-name, .mis-bub.me .ko, .mis-bub.me .pinyin { color: rgba(255,255,255,.88); }
+        .mis-bub.me .ko.only { margin-top: 0; font-size: 15px; font-weight: 700; color: #fff; }
         .mis-react { max-width: 80%; padding: 8px 12px; border-radius: 16px; border-bottom-left-radius: 4px; background: #fff7ed; font-size: 13.5px; font-weight: 700; }
         .mis-narr, .mis-scene { max-width: 92%; margin: 2px auto 10px; text-align: center; font-size: 12.5px; color: var(--text-light); }
         .mis-scene { padding: 6px 10px; border-radius: 10px; background: #f1f5f9; }
@@ -973,6 +974,25 @@
         .mis-script .ms-line b { font-size: 11.5px; }
         .mis-script .ko { font-size: 12.5px; color: #475569; }
         @media (prefers-reduced-motion: reduce) { .mis-piece.nope { animation: none; } .mis-aff .bar > div { transition: none; } }
+        /* 낮은 화면(iPhone SE·큰 글씨·가로 화면): 위는 한 줄로(제목 · 호감도), 보기는 조금 작게, 아래 영역은 화면 절반까지만(넘치면 그 안에서 밀기) — 대화 칸이 늘 보이게 */
+        @media (max-height: 600px) {
+            .mis-top { display: flex; align-items: center; gap: 8px; padding: 4px 16px; margin-bottom: 6px; }
+            .mis-top .mis-tl { flex: 1; min-width: 0; margin-bottom: 0; }
+            .mis-top .mis-aff { flex: 0 1 34%; min-width: 96px; }
+            .mis-top .mis-aff > span { font-size: 11.5px; }
+            .mis-bot { max-height: 46vh; overflow-y: auto; overscroll-behavior: contain; padding: 6px 16px 8px; }
+            .mis-ask { margin-bottom: 4px; font-size: 13px; }
+            .mis-opt { min-height: 44px; margin-bottom: 4px; padding-top: 6px; padding-bottom: 6px; font-size: 14px; }
+            .mis-say { width: 44px; min-height: 44px; margin-bottom: 4px; }
+            .mis-wait { min-height: 40px; }
+            .mis-slots { min-height: 48px; margin-bottom: 6px; padding: 4px; }
+            .mis-piece { min-height: 44px; min-width: 44px; padding: 2px 10px; font-size: 15px; }
+        }
+        /* 가로 화면: 보기를 한 줄에 나란히 */
+        @media (max-height: 600px) and (min-width: 600px) {
+            .mis-opts { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 6px; }
+            .mis-opts .mis-opt, .mis-opts .mis-say { margin-bottom: 0; }
+        }
         /* ☁️ 계정 카드 */
         .cloud-card .cloud-ava { width: 38px; height: 38px; border-radius: 50%; background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 17px; flex-shrink: 0; }
         .gbtn { display: inline-flex; align-items: center; gap: 8px; background: #fff; color: #1f2937; border: 1.5px solid #d1d5db; font-weight: 700; }
@@ -1169,13 +1189,16 @@ function cleanMission(x) {
     const r = String(x.r || ''), o = { s: clampInt(x.s, 0, 3, 0), r: r.includes('A') && r.includes('B') ? 'AB' : r.includes('B') ? 'B' : 'A', d: isDate(x.d) ? x.d : x.l, l: isDate(x.l) ? x.l : x.d };
     if (x.q) o.q = 1;
     if (x.sf) o.sf = 1;
+    if (x.n) o.n = 1;
     return o;
 }
 // 미션: 별은 높은 쪽, 역할은 합침, 처음 날짜는 이른 쪽, 마지막 날짜는 늦은 쪽, q·sf는 별이 높은 쪽 값(같으면 둘 다 1일 때만)
+// n(첫 완료 +5를 아직 받지 않음)은 둘 다 n일 때만 — 한쪽이라도 받았으면 다시 주지 않는다
 function mergeMission(x, y) {
     const r = x.r + y.r, hi = x.s !== y.s ? (x.s > y.s ? x : y) : null;
     const o = { s: Math.max(x.s, y.s), r: r.includes('A') && r.includes('B') ? 'AB' : r.includes('B') ? 'B' : 'A', d: x.d < y.d ? x.d : y.d, l: x.l > y.l ? x.l : y.l };
     ['q', 'sf'].forEach(f => { if (hi ? hi[f] : (x[f] && y[f])) o[f] = 1; });
+    if (x.n && y.n) o.n = 1;
     return o;
 }
 function cleanPuz(v) {
@@ -4830,7 +4853,7 @@ function renderStep() {
         let h = '';
         if (d.situation) h += '<div class="dlg-situation' + (firstVisit ? ' sit-hidden' : '') + '" id="dlgSit">🎬 ' + (firstVisit ? '상황 설명은 먼저 듣기가 끝나면 보여 드려요 👂' : esc(d.situation)) + '</div>';
         h += '<div class="dlg-ctrl" style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">' +
-            (mis.length ? '<button class="btn small dlg-mis" id="missionGo" aria-label="' + esc('미션: ' + (d.title || l.title)) + '">🗺️ 미션: ' + esc(d.title || l.title) + (mis.length > 1 ? ' (' + mis.length + '개)' : '') + '</button>' : '') +   // 버튼 수는 그대로(역할극 자리) — 첫 줄 전체, 나머지 셋은 둘째 줄
+            (mis.length ? '<button class="btn small dlg-mis" id="missionGo" aria-label="' + esc('미션: ' + misDlgTitle(l)) + '">🗺️ 미션: ' + esc(misDlgTitle(l)) + (mis.length > 1 ? ' (' + mis.length + '개)' : '') + '</button>' : '') +   // 버튼 수는 그대로(역할극 자리) — 첫 줄 전체, 나머지 셋은 둘째 줄
             '<button class="btn small ghost" id="playAll">🔊 전체 대화 듣기</button>' +
             (hasMe && !mis.length ? '<button class="btn small ghost" id="rolePlay">🎭 역할극' + (function () { const nm = (turns.find(t => t.speaker === 'A') || {}).name; return nm && nm !== '나' ? ' (내가 ' + esc(nm) + ')' : ' (내 대사 말하기)'; })() + '</button>' : '') +
             '<button class="btn small gray" id="blindBtn" aria-pressed="' + firstVisit + '">' + (firstVisit ? '👀 대본 보기' : '🙈 가리고 듣기') + '</button>' +
@@ -8400,7 +8423,7 @@ registerPlayTile({
 // 레슨 대화를 미션으로: 상대 말을 귀로 듣고(원문은 흐리게 — 👀 자막) → 알맞은 대답을 고르고 → 직접 말해야(openSpeak 콜백만) 다음 차례로.
 // 호감도는 내 차례를 통과할 때마다 오른다. 별: 끝까지 ★1 · 실수 1번 이하·통과 80% 이상 ★2 · 실수·자막 0에 모든 차례를 자동 채점으로 통과 ★3.
 // 긴 대본(영어 6~8단계 part)은 앞에서부터 파트를 이어 붙여 내 대사(A)가 3개 이상이면 미션 하나('u6l2#1'), 남은 꼬리는 앞 미션에 붙인다.
-// A가 3개 미만인 레슨은 B 역할만. 0단계(발음) 레슨은 미션이 아니다(예전 역할극 그대로). 저장: prog().mission[id] = {s, r, q?, sf?, d, l}(등록표 LANG_EXT.mission)
+// A가 3개 미만인 레슨은 B 역할만. 0단계(발음) 레슨은 미션이 아니다(예전 역할극 그대로). 저장: prog().mission[id] = {s, r, q?, sf?, n?, d, l}(등록표 LANG_EXT.mission · n = 첫 완료 +5 아직)
 const MISSION_A_MIN = 3;
 // 상대 맞장구 — 녹음(상대 목소리 칸)이 있으면 소리로, 없으면 글자만(tools/tts에서 이 문장들을 녹음하면 저절로 소리가 난다)
 const MISSION_REACT = {
@@ -8446,7 +8469,9 @@ function missionBuild(l) {
     }).filter(m => m.me.A || m.me.B);
 }
 function missionUnit(u) { return ALL.filter(l => l.unitId === u).flatMap(missionsOf); }
-function missionTitle(m) { return ((m.l.dialogue && m.l.dialogue.title) || m.l.title) + (m.n > 1 ? ' (' + m.no + '/' + m.n + ')' : ''); }
+// 대화 제목: 한글이 없는 제목(영어 30일 회화 'Buying Coffee' 등)은 레슨 제목(한국어)으로 — 화면 글은 한국어로
+function misDlgTitle(l) { const t = l.dialogue && l.dialogue.title; return t && /[가-힣]/.test(t) ? t : l.title; }
+function missionTitle(m) { return misDlgTitle(m.l) + (m.n > 1 ? ' (' + m.no + '/' + m.n + ')' : ''); }
 function missionOpenM(m) { return isDone(m.l.id) || !!store.settings.freeNav || !!misRec(m.id); }   // 통과한 레슨의 미션(자유 이동이면 모두)
 function missionBOpen(m) { const r = misRec(m.id); return !!m.me.B && (!m.me.A || !!(r && r.r.includes('A') && r.s >= 2)); }   // A로 ★2를 받으면 B 역할이 열린다
 function missionAllOpen() { return UNITS.filter(u => u.unitId > 0).flatMap(u => missionUnit(u.unitId)).filter(missionOpenM); }
@@ -8471,8 +8496,14 @@ function missionOpen(id, from) {
 }
 function missionState(m, role, from) {
     role = role && m.me[role] && (role === 'A' || missionBOpen(m)) ? role : m.me.A ? 'A' : 'B';
-    return { m, role, from: from || null, stage: 'start', noPick: false, turns: m.l.dialogue.turns };
+    return { m, role, from: from || null, stage: 'start', noPick: false, quiet: missionQuietDefault(from), turns: m.l.dialogue.turns };
 }
+// 같은 판 다시·다음 미션·역할 바꿈: 시작 카드에서 고른 🎤/🤫(그리고 keep이면 보기 없이 하기)를 이어 간다
+function missionAgain(st, m, role, keep) { const n = missionState(m, role, st.from); n.quiet = st.quiet; if (keep) n.noPick = st.noPick; return n; }
+// 🤫 기본값: 레슨에서 연 미션은 설정(조용 모드)이나 놀이 탭에서 직접 고른 🚇 이동 중일 때만 — 시각으로 정한 상황은 쓰지 않는다(레슨 흐름에서 말하기 연습이 빠지지 않게)
+function missionQuietDefault(from) { return from ? !!store.settings.quiet || (playCtx() === 'move' && !!S.ctx) : quietNow(); }
+// 🌏 현지 모드(★1 이상)·대본 가림(★2 이상)은 그 역할로 해 본 기록이 있을 때만 — 처음 해 보는 B 역할이 가장 어려운 모드로 시작하지 않게
+function missionLv(m, role) { const r = misRec(m.id), did = !!(r && r.r.includes(role)); return { local: did && r.s >= 1, boss: did && r.s >= 2 }; }
 function missionOppName(st, t) { return st.role === 'B' && t.speaker === 'A' && t.name === '나' ? '주인공' : (t.name || t.speaker); }   // B 역할에서 상대가 된 '나'는 헷갈리지 않게
 function missionFirstOpp(st) {
     const me = st.role === 'A' ? 'A' : st.m.bSp;
@@ -8537,7 +8568,7 @@ function missionCardHtml(m) {
 // 시작 카드: 상황 · 상대(이름 첫 글자 동그라미) · 호감도 0 · 역할 · 보기 없이 하기(예전 역할극)
 function missionStartCard(st) {
     const m = st.m, r = misRec(m.id), opp = missionFirstOpp(st), sibs = missionsOf(m.l), meT = st.turns[(m.me[st.role] || [])[0]] || {};
-    const s0 = (r && r.s) || 0, quiet = quietNow(), first = !store.seen.in_missions;
+    const s0 = (r && r.s) || 0, lv = missionLv(m, st.role), first = !store.seen.in_missions;
     let h = misTop('🗺️ ' + missionTitle(m), m.l.title);
     h += '<div class="card mis-start">';
     if (sibs.length > 1) h += '<div class="mis-parts" role="group" aria-label="미션 고르기">' + sibs.map(x => '<button data-mpart="' + esc(x.id) + '" aria-pressed="' + (x === m) + '">' + x.no + ' <span aria-hidden="true">' + misStars((misRec(x.id) || {}).s) + '</span></button>').join('') + '</div>';
@@ -8548,15 +8579,17 @@ function missionStartCard(st) {
     if (m.me.A && m.me.B) h += missionBOpen(m) ? '<div class="seg mis-role" role="group" aria-label="역할"><button data-mrole="A" aria-pressed="' + (st.role === 'A') + '">A 역할</button><button data-mrole="B" aria-pressed="' + (st.role === 'B') + '">🔄 역할 바꿔 도전(B로)</button></div>'
         : '<div class="muted" style="margin-top:4px">A 역할로 ★2를 받으면 🔄 역할 바꿔 도전(B로)이 열려요</div>';
     else if (!m.me.A) h += '<div class="muted" style="margin-top:6px">이 대화는 내 대사가 짧아서 상대(B) 역할로 해요</div>';
-    if (s0 >= 1) h += '<div class="mis-note">🌏 현지 모드: 보기가 ' + esc(CUR.name) + '로 나와요' + (s0 >= 2 ? ' · 말하기는 뜻만 보고(대본 가림)' : '') + '</div>';
-    if (quiet) h += '<div class="mis-note">🤫 조용 모드: 말하는 대신 조각을 순서대로 눌러요(★2까지) · 그 문장은 「말하기 대기」에 모아 둬요</div>';
+    if (lv.local) h += '<div class="mis-note">🌏 현지 모드: 보기가 ' + esc(CUR.name) + '로 나와요' + (lv.boss ? ' · 말하기는 뜻만 보고(대본 가림)' : '') + '</div>';
+    h += '<div class="seg mis-role mis-mode" role="group" aria-label="말하기 방법"><button data-mquiet="0" aria-pressed="' + !st.quiet + '">🎤 말하기로 하기</button><button data-mquiet="1" aria-pressed="' + st.quiet + '">🤫 조용히</button></div>';
+    if (st.quiet) h += '<div class="mis-note">🤫 조용 모드: 말하는 대신 조각을 순서대로 눌러요(★2까지) · 그 문장은 「말하기 대기」에 모아 둬요</div>';
     if (first) h += '<ol class="mis-rules"><li>상대 말은 흐리게 나와요 — 귀로 먼저 듣고, 모르면 👀 자막(별에만 반영)</li><li>뭐라고 대답할지 고른 뒤 직접 말해요</li><li>잘 통하면 💗 호감도가 올라요 — 실수 없이 모두 통과하면 ★3</li></ol>';
     h += '<button class="mis-toggle" id="misNoPick" aria-pressed="' + st.noPick + '">' + (st.noPick ? '☑' : '☐') + ' 보기 없이 하기(예전 역할극) <span class="muted">· ★2까지</span></button>' +
         '<button class="btn block tap" id="misStart">▶ 미션 시작</button></div>';
     $main.innerHTML = h;
     document.getElementById('misBack').addEventListener('click', () => missionLeave(st));
-    $main.querySelectorAll('[data-mpart]').forEach(b => b.addEventListener('click', () => { const x = sibs.find(y => y.id === b.dataset.mpart); if (x) { S.mission = missionState(x, st.role, st.from); S.mission.noPick = st.noPick; renderMissions(); } }));
+    $main.querySelectorAll('[data-mpart]').forEach(b => b.addEventListener('click', () => { const x = sibs.find(y => y.id === b.dataset.mpart); if (x) { S.mission = missionAgain(st, x, st.role, true); renderMissions(); } }));
     $main.querySelectorAll('[data-mrole]').forEach(b => b.addEventListener('click', () => { st.role = b.dataset.mrole; missionStartCard(st); const f = $main.querySelector('[data-mrole="' + st.role + '"]'); if (f) f.focus(); }));
+    $main.querySelectorAll('[data-mquiet]').forEach(b => b.addEventListener('click', () => { st.quiet = b.dataset.mquiet === '1'; missionStartCard(st); const f = $main.querySelector('[data-mquiet="' + b.dataset.mquiet + '"]'); if (f) f.focus(); }));
     document.getElementById('misNoPick').addEventListener('click', () => { st.noPick = !st.noPick; missionStartCard(st); const t = document.getElementById('misNoPick'); if (t) t.focus(); });
     document.getElementById('misStart').addEventListener('click', () => missionStart(st));
 }
@@ -8573,8 +8606,8 @@ function missionStart(st) {
     stopSpeak();
     const r = misRec(st.m.id);
     if (!store.seen.in_missions) { store.seen.in_missions = todayStr(); save(); }
-    Object.assign(st, {
-        stage: 'play', me: st.role === 'A' ? 'A' : st.m.bSp, quiet: quietNow(), local: !!(r && r.s >= 1), boss: !!(r && r.s >= 2), rec0: r ? Object.assign({}, r) : null,
+    Object.assign(st, missionLv(st.m, st.role), {
+        stage: 'play', me: st.role === 'A' ? 'A' : st.m.bSp, quiet: !!st.quiet, rec0: r ? Object.assign({}, r) : null,
         cur: 0, log: [], aff: 0, miss: 0, sub: 0, res: {}, fails: {}, rev: {}, wrong: {}, picked: null, phase: 'opp', playAt: null, lastOpp: [],
     });
     st.mine = st.m.me[st.role].slice();
@@ -8619,12 +8652,13 @@ function missionMine(st) {
 // 보기(결정적): 정답 = 그 대사의 뜻 · 오답 1개는 같은 레슨의 다른 내 대사(대화 순서를 알아들어야 피하는 함정) · 1개는 같은 단계 다른 레슨의 내 대사.
 // 공통 거르기: 뜻이 정답과 다르고, 길이가 정답의 0.5~1.8배, 어디에나 맞는 짧은 말이 아니고, 정답과 2글자 이상 같은 낱말이 2개 미만 · 모자라면 같은 단계 전체에서
 function missionChoices(st, idx) {
-    const l = st.m.l, t = st.turns[idx], key = misNorm(t.ko), len = Math.max(1, Array.from(key).length), ws = new Set(misWords(t.ko)), me = st.me, used = new Set([key]);
+    const l = st.m.l, t = st.turns[idx], key = misNorm(t.ko), len = Math.max(1, Array.from(key).length), ws = new Set(misWords(t.ko)), me = st.me, used = new Set([key]), usedN = new Set([nativeText(t)]);
     let loose = false;   // 아주 짧은 정답('네.' 등)은 길이 비율에 맞는 말이 없어 마지막에만 길이 조건을 푼다
-    const fine = x => { const k = misNorm(x.ko), r = Array.from(k).length / len; return !!k && !!nativeText(x) && !used.has(k) && !MISSION_GENERIC.has(k) && (loose || (r >= 0.5 && r <= 1.8)) && misWords(x.ko).filter(w => ws.has(w)).length < 2; };
+    // 원문까지 같으면(뜻만 다른 같은 문장 'はい、どうぞ。') 말할 문장이 같으니 거른다
+    const fine = x => { const k = misNorm(x.ko), r = Array.from(k).length / len; return !!k && !!nativeText(x) && !used.has(k) && !usedN.has(nativeText(x)) && !MISSION_GENERIC.has(k) && (loose || (r >= 0.5 && r <= 1.8)) && misWords(x.ko).filter(w => ws.has(w)).length < 2; };
     const mineOf = ls => ls.flatMap(x => ((x.dialogue && x.dialogue.turns) || []).filter(y => y.speaker === me && y !== t));
     const unit = ALL.filter(x => x.unitId === l.unitId), seed = hashStr(st.m.id + idx);
-    const take = list => { const x = seededShuffle(list.filter(fine), seed)[0]; if (x) used.add(misNorm(x.ko)); return x || null; };
+    const take = list => { const x = seededShuffle(list.filter(fine), seed)[0]; if (x) { used.add(misNorm(x.ko)); usedN.add(nativeText(x)); } return x || null; };
     const ds = [take(mineOf([l])), take(mineOf(unit.filter(x => x !== l)))].filter(Boolean);
     const want = MISSION_GENERIC.has(key) ? 1 : 2;
     while (ds.length < want) { const x = take(mineOf(unit)); if (!x) { if (loose) break; loose = true; continue; } ds.push(x); }
@@ -8662,28 +8696,40 @@ function missionSay(st, idx) {
         },
         onClose: (passed, reason) => {
             if (!missionAlive(st)) return;
+            if (st.res[idx] && st.res[idx].ok) { missionAfterMine(st, idx); return; }   // 통과했으면 ✕로 닫아도 다음으로
             if (reason === 'cancel') { st.phase = 'pause'; missionBottom(st); return; }   // ✕·바깥 누름·Esc: 잠깐 멈춤(실수는 늘지 않음)
-            if (st.res[idx] && st.res[idx].ok) { missionAfterMine(st, idx); return; }
             st.fails[idx] = (st.fails[idx] || 0) + 1;
             missionPush(st, { k: 'react', t: '🙂 (천천히 다시 말해 줘요)' });
             st.phase = st.fails[idx] >= 2 ? 'retry2' : 'retry1'; missionBottom(st);
         },
     });
 }
-// 🤫 조용 모드: 고른 문장의 조각(3~5개, 많으면 이웃끼리 합침)을 순서대로 누르면 통과
+// 🤫 조용 모드: 고른 문장의 조각(3~5개, 많으면 이웃끼리 합침)을 순서대로 누르면 통과.
+// 조각이 3개 미만이면 글자(중·일)나 음절(영·서·불)로 더 나눈다. 그래도 1개뿐이면(好。·Yes.) 듣고 확인만
+const MIS_VOW = 'aeiouyàâäáéèêëíìîïóòôöúùûüœæ';
+const MIS_SYL = new RegExp('[^' + MIS_VOW + ']*[' + MIS_VOW + ']+(?:[^' + MIS_VOW + '](?![hH])(?=[^' + MIS_VOW + ']+[' + MIS_VOW + '])|[^' + MIS_VOW + ']+$)?', 'giu');   // 자음+모음(+겹자음 앞 하나·끝 자음): Bon|jour · Hel|lo · ch·th 등은 떼지 않음
+const MIS_MUTE = new RegExp('^[^' + MIS_VOW + ']+es?$', 'iu');   // 영·불 끝의 소리 안 나는 e(fine·madame)는 앞 음절에 붙인다
+function misSplit(w) {
+    if (CHAR_LANGS[CUR.code]) return Array.from(w).filter(c => !CJK_PUNCT.test(c));   // 중·일: 한 글자씩
+    const sy = w.match(MIS_SYL) || [w];
+    if (sy.length > 1 && (CUR.code === 'en' || CUR.code === 'fr') && MIS_MUTE.test(sy[sy.length - 1])) sy.splice(-2, 2, sy[sy.length - 2] + sy[sy.length - 1]);
+    return sy;
+}
 function missionPieces(st, idx) {
     const t = st.turns[idx], j = CUR.joiner;
-    let toks = tokensOf(CUR.code, nativeText(t), LESSON_BY_ID[st.m.l.id]).filter(Boolean);
-    while (toks.length > 5) {
+    let ps = tokensOf(CUR.code, nativeText(t), LESSON_BY_ID[st.m.l.id]).filter(Boolean).map((x, i) => ({ x, g: i ? j : '', b: 1 }));   // g: 앞 조각과 이을 때 사이 글자 · b: 원래 낱말의 첫 조각
+    if (ps.length && ps.length < 3) ps = ps.flatMap(p => misSplit(p.x).filter(Boolean).map((x, i) => ({ x, g: i ? '' : p.g, b: i ? 0 : 1 })));
+    const cost = i => ps[i].x.length + ps[i + 1].x.length + (ps[i + 1].b ? 100 : 0);   // 합칠 때는 같은 낱말 안에서 먼저
+    while (ps.length > 5) {
         let best = 0;
-        for (let i = 1; i < toks.length - 1; i++) if (toks[i].length + toks[i + 1].length < toks[best].length + toks[best + 1].length) best = i;
-        toks.splice(best, 2, toks[best] + j + toks[best + 1]);
+        for (let i = 1; i < ps.length - 1; i++) if (cost(i) < cost(best)) best = i;
+        ps.splice(best, 2, { x: ps[best].x + ps[best + 1].g + ps[best + 1].x, g: ps[best].g, b: ps[best].b });
     }
-    return toks.length ? toks : [nativeText(t)];
+    return ps.length ? ps.map(p => p.x) : [nativeText(t)];
 }
 function missionTiles(st, idx) {
     const toks = missionPieces(st, idx);
-    st.tiles = { idx, toks, order: seededShuffle(toks.map((x, i) => i), hashStr(st.m.id + idx + 'q')), got: 0, used: {} };
+    st.tiles = { idx, toks, order: seededShuffle(toks.map((x, i) => i), hashStr(st.m.id + idx + 'q')), got: 0, used: {}, heard: 0 };
     st.phase = 'tiles'; missionBottom(st);
 }
 function missionTile(st, k) {
@@ -8692,7 +8738,13 @@ function missionTile(st, k) {
     if (q.toks[k] !== q.toks[q.got]) { sfx('bad'); const b = document.querySelector('[data-mtile="' + k + '"]'); if (b) { b.classList.remove('nope'); void b.offsetWidth; b.classList.add('nope'); } return; }   // 조각 순서 실수는 별에 넣지 않는다
     q.used[k] = 1; q.got++;
     if (q.got < q.toks.length) { missionBottom(st); return; }
-    const idx = q.idx, t = st.turns[idx];
+    missionQuietPass(st);
+}
+// 조각 1개뿐인 짧은 말: ▶ 들어 보고(원문이 보임) ✓ 들었어요
+function missionListen(st) { const q = st.tiles; if (!q || st.phase !== 'tiles') return; const t = st.turns[q.idx]; q.heard = 1; missionBottom(st); playLine({ text: nativeText(t), speaker: t.speaker }); }
+function missionHeard(st) { const q = st.tiles; if (q && st.phase === 'tiles' && q.heard) missionQuietPass(st); }
+function missionQuietPass(st) {
+    const idx = st.tiles.idx, t = st.turns[idx];
     st.res[idx] = { ok: 1, self: 1, noSR: 1, quiet: 1 };
     st.aff = Math.min(100, st.aff + Math.round(100 / st.mine.length)); missionAff(st);
     sayLaterAdd(t);   // 🏠 집에 가서 소리 내어 말하기
@@ -8705,7 +8757,7 @@ function missionAfterMine(st, idx) {
     missionMark(st, idx);
     st.cur++; st.picked = null; st.tiles = null;
     st.phase = 'react'; missionBottom(st);   // 아래 영역의 보기·조각을 치운다
-    if (/[?？か]\s*$/.test(nativeText(t))) { setTimeout(() => missionNext(st), 300); return; }
+    if (/[?？]\s*$|か[。．！!]?\s*$/.test(nativeText(t))) { setTimeout(() => missionNext(st), 300); return; }   // 질문(일본어 'か。' 포함) 뒤에는 상대가 바로 대답
     const opp = missionFirstOpp(st), sp = opp ? opp.speaker : 'B', h = Math.abs(hashStr(st.m.id + idx)), c = CLIPS[CUR.code];
     const said = (MISSION_REACT[CUR.code] || []).filter(x => c && c.ids && c.ids.has(clipId(clipSlot(sp), x)) && clipsReady());   // 상대 목소리 칸 녹음이 있는 맞장구만
     const x = said.length ? said[h % said.length] : '';
@@ -8741,9 +8793,11 @@ function missionOppBub(st, i) {
         '<div class="b-name">' + esc(missionOppName(st, t)) + '</div><div class="native"' + (on ? '' : ' aria-hidden="true"') + '>' + nesc(nativeText(t)) + '</div>' +
         (on ? romanLine(t) + '<div class="ko">' + esc(t.ko || '') + '</div>' : '<span class="ms-hint">👀 자막</span>') + '</div>';
 }
+// 대본 가림(★2 이상 재도전)·조용 모드에서는 통과하기 전까지 뜻만 — 원문·발음은 통과한 뒤 missionMark가 채운다(위 말풍선을 보고 말하거나 베껴 누르지 않게)
 function missionMeBub(st, i) {
-    const t = st.turns[i], r = st.res[i];
-    return '<div class="mis-bub me" data-mme="' + i + '"><div class="b-name">' + esc(t.name || '나') + (r ? (r.ok ? ' · ✓ 통과' : ' · ✗ 다음에') : ' · 🎤') + '</div><div class="native">' + nesc(nativeText(t)) + '</div>' + romanLine(t) + '<div class="ko">' + esc(t.ko || '') + '</div></div>';
+    const t = st.turns[i], r = st.res[i], hid = !r && (st.boss || st.quiet);
+    return '<div class="mis-bub me" data-mme="' + i + '"><div class="b-name">' + esc(t.name || '나') + (r ? (r.ok ? ' · ✓ 통과' : ' · ✗ 다음에') : st.quiet ? ' · 🤫' : ' · 🎤') + '</div>' +
+        (hid ? '<div class="ko only">' + esc(t.ko || '') + '</div>' : '<div class="native">' + nesc(nativeText(t)) + '</div>' + romanLine(t) + '<div class="ko">' + esc(t.ko || '') + '</div>') + '</div>';
 }
 function missionEntryHtml(st, e) {
     if (e.k === 'scene') return '<div class="mis-scene">🎞 지난 장면 · ' + esc(e.t) + '</div>';
@@ -8794,7 +8848,7 @@ function missionClick(st, e) {
     if (el.dataset.msay != null) { const o = st.opts[+el.dataset.msay]; if (o) playLine({ text: nativeText(o.t) }); return; }
     if (el.dataset.mtile != null) { missionTile(st, +el.dataset.mtile); return; }
     const act = {
-        misAgainSay: () => missionSay(st, st.steps[st.cur].i), misSkip: () => missionSkip(st), misResume: () => missionResume(st),
+        misAgainSay: () => missionSay(st, st.steps[st.cur].i), misSkip: () => missionSkip(st), misResume: () => missionResume(st), misListen: () => missionListen(st), misHeard: () => missionHeard(st),
         misQuit: () => { playEnd({ quit: true }); missionLeave(st); }, misRe: () => missionReplay(st, 1), misSlow: () => missionReplay(st, 0.7),
         misWrongOk: () => { const o = st.lastWrong; if (o) openFeedback('', 'mission', '[미션 ' + st.m.id + ' · ' + (st.steps[st.cur].i + 1) + '번째 줄] 이 보기도 맞는 것 같아요: ' + (st.local ? nativeText(o.t) : o.t.ko)); },
     }[el.id];
@@ -8809,17 +8863,22 @@ function missionBottom(st) {
     if (ph === 'opp' || ph === 'react') h = '<div class="mis-wait">👂 ' + (ph === 'opp' ? '상대가 말하고 있어요 — 귀 기울여 들어 봐요' : '상대가 대답해요') + '</div>';
     else if (ph === 'pick') {
         const first = !st.log.some(e => e.k === 'opp');
-        h = '<div class="mis-ask"><b>' + (first ? '뭐라고 말을 걸까요?' : '뭐라고 대답할까요?') + '</b><span class="mis-tools">' + tools + '</span></div>' +
+        h = '<div class="mis-ask"><b>' + (first ? '뭐라고 말을 걸까요?' : '뭐라고 대답할까요?') + '</b><span class="mis-tools">' + tools + '</span></div><div class="mis-opts">' +
             st.opts.map((o, k) => {
                 const cls = 'choice-btn mis-opt' + (st.wrong[k] ? ' wrong' : ''), dis = st.wrong[k] ? ' disabled' : '';
                 return st.local ? '<div class="mis-optrow"><button class="' + cls + '" data-mopt="' + k + '"' + dis + '><span class="native">' + nesc(nativeText(o.t)) + '</span></button><button class="mis-say" data-msay="' + k + '" aria-label="이 보기 듣기">▶</button></div>'
                     : '<button class="' + cls + '" data-mopt="' + k + '"' + dis + '>' + esc(o.t.ko || '') + '</button>';
-            }).join('') +
+            }).join('') + '</div>' +
             (st.lastWrong && feedbackOn() ? '<button class="mis-link" id="misWrongOk">🙋 이 보기도 맞는 것 같아요</button>' : '');
     } else if (ph === 'speak') h = '<div class="mis-wait">🎤 말하기 창에서 직접 말해 보세요</div>';
     else if (ph === 'retry1') h = '<div class="mis-ask"><b>🙂 천천히 다시 말해 줘요</b><span class="mis-tools">' + tools + '</span></div><button class="btn block tap" id="misAgainSay">🎤 한 번 더 말하기</button>';
     else if (ph === 'retry2') h = '<div class="mis-ask"><b>괜찮아요, 이 문장은 복습 카드로 다시 만나요</b></div><div class="mis-btns"><button class="btn block ghost tap" id="misAgainSay">🎤 다시 말하기</button><button class="btn block tap" id="misSkip">그래도 계속 ▶</button></div>';
-    else if (ph === 'tiles') {
+    else if (ph === 'tiles' && st.tiles.toks.length < 2) {   // 조각 1개뿐인 짧은 말: 듣고 확인
+        const q = st.tiles;
+        h = '<div class="mis-ask"><b>🤫 짧은 말이에요 — 들어 보고 마음속으로 따라 해요</b><span class="mis-tools">' + tools + '</span></div>' +
+            (q.heard ? '<div class="mis-slots"><span class="mis-piece on">' + nesc(q.toks[0]) + '</span></div>' : '') +
+            '<div class="mis-btns"><button class="btn block ghost tap" id="misListen">▶ 내 말 듣기</button><button class="btn block tap" id="misHeard"' + (q.heard ? '' : ' disabled aria-disabled="true"') + '>✓ 들었어요</button></div>';
+    } else if (ph === 'tiles') {
         const q = st.tiles;
         h = '<div class="mis-ask"><b>🤫 조각을 순서대로 눌러요</b><span class="mis-tools">' + tools + '</span></div>' +
             '<div class="mis-slots" aria-label="고른 조각">' + q.toks.slice(0, q.got).map(x => '<span class="mis-piece on">' + esc(x) + '</span>').join('') + (q.got < q.toks.length ? '<span class="mis-piece hole" aria-hidden="true">?</span>' : '') + '</div>' +
@@ -8841,16 +8900,20 @@ function missionFinish(st) {
     if (st.miss === 0 && st.sub === 0 && pass === N && rs.every(r => !r.self || r.noSR)) s = 3;
     if (st.quiet || st.noPick) s = Math.min(s, 2);
     const sf = s === 3 && rs.some(r => r.self), p = prog(), old = misRec(st.m.id), t = todayStr(), l = st.m.l;
-    const rec = Object.assign({ s, r: st.role, d: t, l: t }, st.quiet ? { q: 1 } : {}, sf ? { sf: 1 } : {});
+    // 보상(첫 완료 +5·재도전 XP·퀘스트)은 내 차례를 절반 이상 통과했을 때만(조용 모드 조각 통과도 통과) — 그보다 적으면 기록만.
+    // n: 첫 완료 +5를 아직 받지 않은 기록(합칠 때 둘 다 n일 때만 남는다 — 어느 기기에서든 받았으면 다시 주지 않게)
+    const good = pass >= Math.ceil(N / 2), first = !old || !!old.n;
+    const rec = Object.assign({ s, r: st.role, d: t, l: t }, st.quiet ? { q: 1 } : {}, sf ? { sf: 1 } : {}, first && !good ? { n: 1 } : {});
     p.mission = LANG_EXT.mission.merge(p.mission || {}, { [st.m.id]: rec });
-    if (!old) {   // 첫 완료 +5 — 예전 역할극 기록도 함께 남겨 그 +5와 겹치지 않게
+    if (good && first) {   // 첫 완료 +5 — 예전 역할극 기록도 함께 남겨 그 +5와 겹치지 않게
         if (!(p.roleplay || {})[l.id]) p.roleplay = Object.assign({}, p.roleplay, { [l.id]: t });
         addXp(5, '🗺️ 미션 완료', true);
-    } else softXp('mission', 2, '🗺️ 미션');
+    } else if (good) softXp('mission', 2, '🗺️ 미션');
     st.three = s === 3 && !(old && old.s >= 3);
     if (st.three) { addXp(10, '🗺️ 첫 ★3', true); celebrate(); sfx('level'); }
-    logActivity('mission');   // 하루 기록 dl.mission +1 · 저장 · 퀘스트
-    Object.assign(st, { stage: 'end', stars: s, sf, pass, phase: 'end' });
+    if (good) logActivity('mission');   // 하루 기록 dl.mission +1 · 저장 · 퀘스트
+    else save();
+    Object.assign(st, { stage: 'end', stars: s, sf, pass, good, phase: 'end' });
     S.rpActive = null;
     st.tail = playEnd({ n: N, ok: pass, noAuto: true });
     missionEndScreen(st);
@@ -8864,6 +8927,7 @@ function missionEndScreen(st) {
         (st.sf ? '<div class="mis-note">🙋 자기 확인 — 이 기기는 자동 채점이 안 돼서 스스로 확인했어요</div>' : '') +
         (st.quiet ? '<div class="mis-note">🤫 조용 모드라 ★2까지예요 · 🏠 집에서 소리 내어 다시 해 보세요(말하기 대기에 담았어요)</div>' : '') +
         (st.noPick ? '<div class="mis-note">보기 없이 한 미션은 ★2까지예요</div>' : '') +
+        (st.good ? '' : '<div class="mis-note">내 차례를 절반 이상 통과하면 🗺️ 미션 완료 XP와 오늘의 퀘스트에 들어가요</div>') +
         (st.three ? '<div class="mis-note gold">⭐ 처음 ★3 · +10 XP</div>' : '') + '</div>';
     if (fail.length) h += '<div class="card"><b>다시 들어 볼 내 대사</b>' + fail.map(i => '<div class="mis-fail"><div style="flex:1;min-width:0"><div class="native">' + nesc(nativeText(st.turns[i])) + '</div><div class="ko">' + esc(st.turns[i].ko || '') + '</div></div><button class="play-btn" data-say="' + esc(nativeText(st.turns[i])) + '" aria-label="듣기">▶</button></div>').join('') + '<div class="muted">내일 복습 카드로도 나와요</div></div>';
     h += '<details class="card mis-script"><summary>📜 대본 펼쳐 보기</summary>' + m.secs.flat().map(i => { const t = st.turns[i]; return t.speaker === 'N' ? '<div class="mis-narr">🎬 ' + esc(t.ko || '') + '</div>' : '<div class="ms-line' + (t.speaker === st.me ? ' me' : '') + '"><b>' + esc(t.speaker === st.me ? (t.name || '나') : missionOppName(st, t)) + '</b><div class="native">' + nesc(nativeText(t)) + '</div>' + romanLine(t) + '<div class="ko">' + esc(t.ko || '') + '</div></div>'; }).join('') + '</details>';
@@ -8875,9 +8939,9 @@ function missionEndScreen(st) {
     bindPlayBtns($main);
     const on = (id, fn) => { const b = document.getElementById(id); if (b) b.addEventListener('click', fn); };
     on('misBack', () => missionLeave(st)); on('misDoneBack', () => missionLeave(st));
-    on('misRetry', () => { S.mission = missionState(m, st.role, st.from); S.mission.noPick = st.noPick; renderMissions(); });
-    on('misSwap', () => { S.mission = missionState(m, 'B', st.from); renderMissions(); });
-    on('misNext', () => { S.mission = missionState(nx, null, st.from); renderMissions(); });
+    on('misRetry', () => { S.mission = missionAgain(st, m, st.role, true); renderMissions(); });
+    on('misSwap', () => { S.mission = missionAgain(st, m, 'B'); renderMissions(); });
+    on('misNext', () => { S.mission = missionAgain(st, nx, null); renderMissions(); });
     const tail = document.getElementById('misTail');
     if (tail && st.tail) { tail.innerHTML = st.tail; bindPlayNext(tail); }
     $main.scrollTop = 0;
@@ -9381,7 +9445,7 @@ function renderSettings() {
     const swOn = 'serviceWorker' in navigator && !!navigator.serviceWorker.controller;
     const playSet =
         // 놀이 설정 두 줄은 놀이가 하나라도 생긴 뒤에만(그 전에는 켜도 바뀌는 것이 없음)
-        (PLAY_TILES.length ? setRow('🤫 조용 모드', '놀이에서 소리 내어 말하는 단계 건너뛰기 · 놀이 탭에서 🚇 이동 중을 고르면 저절로 켜져요', '<label class="switch"><input type="checkbox" id="setQuiet" aria-label="조용 모드"' + (store.settings.quiet ? ' checked' : '') + '><span class="slider"></span></label>') +
+        (PLAY_TILES.length ? setRow('🤫 조용 모드', '놀이에서 소리 내어 말하는 단계 건너뛰기 · 놀이 탭 상황이 🚇 이동 중이면(출퇴근 시간엔 저절로) 함께 켜져요 · 미션은 시작 카드에서 바꿀 수 있어요', '<label class="switch"><input type="checkbox" id="setQuiet" aria-label="조용 모드"' + (store.settings.quiet ? ' checked' : '') + '><span class="slider"></span></label>') +
             setRow('⏭️ 다음 놀이 자동 시작', '놀이가 끝나면 5초 뒤 다음 놀이로 이어 가요 · 움직임 줄이기를 켠 기기는 버튼만', '<label class="switch"><input type="checkbox" id="setAutoNext" aria-label="다음 놀이 자동 시작"' + (store.settings.autoNext !== false ? ' checked' : '') + '><span class="slider"></span></label>') : '') +
         (hasClips && swOn ? setRow('📥 오프라인용 녹음 받기', esc(CUR.name) + ' 녹음 전체(약 ' + (CLIP_MB[CUR.code] || 15) + 'MB)를 미리 받아 두면 인터넷이 없어도 들려요', '<button class="btn small ghost tap" id="clipAllBtn"' + (clipDlOn() ? ' disabled' : '') + '>' + clipDlText() + '</button>') : '');
     if (playSet) h += '<div class="card">' + playSet + '</div>';
