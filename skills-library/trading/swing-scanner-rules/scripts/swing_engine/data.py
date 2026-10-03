@@ -176,13 +176,16 @@ def clean_bars(df: pd.DataFrame, require_ohlc: bool = True, label: str = "bars")
     return d
 
 
+CSV_FLOAT_FORMAT = "%.10g"     # precision of the bar cache and snapshot CSVs
+
+
 def write_bars_csv(df: pd.DataFrame, path) -> None:
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     d = df.copy()
     d.index = pd.DatetimeIndex(d.index).strftime("%Y-%m-%d")
     d.index.name = "date"
-    d.to_csv(path, float_format="%.10g")
+    d.to_csv(path, float_format=CSV_FLOAT_FORMAT)
 
 
 def _offline_candidates(ticker: str) -> list[str]:
@@ -374,6 +377,23 @@ def _read_cache_csv(path) -> pd.DataFrame:
     return normalize_bars(raw)
 
 
+def as_cached(df: pd.DataFrame) -> pd.DataFrame:
+    """`df` exactly as a cache round trip (write_bars_csv -> _read_cache_csv) returns it.
+
+    Yahoo sends float32-derived prices (1051.18994140625); the cache keeps 10 significant
+    digits (1051.189941). Passing fresh downloads through the same round trip makes a fresh
+    run and a later cache hit compute identical ledgers, so a rerun with unchanged signals
+    commits nothing (docs/swing-improvement-policy.md R11).
+    """
+    if len(df) == 0:
+        return df
+    d = df.copy()
+    d.index = pd.DatetimeIndex(d.index).strftime("%Y-%m-%d")
+    d.index.name = "date"
+    buf = io.StringIO(d.to_csv(float_format=CSV_FLOAT_FORMAT))
+    return _read_cache_csv(buf)
+
+
 def _write_cache(cache_dir, ticker, df, start: date, end: date, now: datetime):
     csv_p, meta_p = _cache_paths(cache_dir, ticker)
     write_bars_csv(df, csv_p)
@@ -477,6 +497,7 @@ def download_yahoo(tickers, start, end, cache_dir=None, chunk_size: int = 40, re
                 df = df.loc[(df.index >= pd.Timestamp(start)) & (df.index <= pd.Timestamp(end))]
                 if len(df) == 0:
                     continue
+                df = as_cached(df)              # same numbers as a later cache hit (R11)
                 frames[t] = df
                 if cache_dir:
                     final = confirmed_bars(df, sess[t], now, grace_minutes)
