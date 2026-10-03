@@ -615,6 +615,7 @@
         .ctx-chips { display: flex; gap: 6px; flex: 1 1 240px; min-width: 0; }
         .ctx-chips button { flex: 1 1 0; min-width: 0; min-height: 44px; padding: 0 6px; border: 1.5px solid var(--border); border-radius: 999px; background: var(--card); font: inherit; font-size: 12.5px; font-weight: 700; color: var(--text-light); white-space: nowrap; cursor: pointer; }
         .ctx-chips button[aria-pressed="true"] { background: var(--primary); border-color: var(--primary); color: #fff; }
+        .ctx-tip { flex: 1 1 100%; font-size: 12px; }
         .quiet-pill { font-size: 11.5px; font-weight: 800; color: #475569; background: #eef2f7; border-radius: 999px; padding: 4px 10px; white-space: nowrap; }
         .play-hero { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 72px; margin-bottom: 12px; padding: 14px 16px; border: none; border-radius: 16px; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #fff; font: inherit; text-align: left; cursor: pointer; }
         .play-hero .ph-ico { width: 44px; height: 44px; border-radius: 12px; background: rgba(255,255,255,.18); display: flex; align-items: center; justify-content: center; font-size: 26px; flex-shrink: 0; }
@@ -717,6 +718,7 @@
         .rush-cheer { animation: pop .25s ease-out; }
         .rush-pause b { font-size: 18px; }
         .rush-rec { margin-top: 8px; font-size: 16px; font-weight: 900; color: #6d28d9; }
+        .rush-redo summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; }
         .rush-redo .rr-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--border); }
         .rush-redo .rr-row:last-of-type { border-bottom: none; }
         .rush-redo .play-btn { width: 44px; height: 44px; flex-shrink: 0; font-size: 16px; }
@@ -1090,6 +1092,7 @@ function cleanPuz(v) {
     const dist = Array.isArray(v.dist) ? v.dist : [];
     const o = { last: v.last, t: clampInt(v.t, 1, 7, 7), st: clampInt(v.st, 0, 100000, 0), bst: clampInt(v.bst, 0, 100000, 0), n: clampInt(v.n, 0, 100000, 0), dist: [0, 1, 2, 3, 4, 5, 6].map(i => clampInt(dist[i], 0, 100000, 0)), g: Array.isArray(v.g) ? v.g.filter(s => typeof s === 'string').slice(0, 6).map(s => clip(s, 40)) : [] };
     if (v.u != null) o.u = clampInt(v.u, 0, 99, 0);   // 마지막으로 푼 문제의 단계(자랑 글 — 그 뒤 단계가 올라도 같은 문제를 가리키게)
+    if (v.ln != null) o.ln = clampInt(v.ln, 0, 999, 0);   // 그 단계에서 통과한 레슨 수(단계를 다 통과했으면 없음)
     return o;
 }
 // 퍼즐: 마지막으로 푼 날이 늦은 쪽을 통째로(같은 날이면 적은 시도) · 최장 연속·푼 수는 큰 쪽 · 분포는 칸마다 큰 쪽
@@ -1101,7 +1104,9 @@ function mergePuz(x, y) {
 function cleanPuzNow(v) {
     if (!isObj(v) || !isDate(v.d) || typeof v.id !== 'string' || !v.id) return undefined;
     const g = (Array.isArray(v.g) ? v.g : []).filter(Array.isArray).slice(0, 6).map(r => r.filter(k => typeof k === 'string').slice(0, 6).map(k => clip(k, 60)));   // 기회 6번 · 조각 6개까지
-    return { d: v.d, u: clampInt(v.u, 0, 99, 0), id: clip(v.id, 80), g };
+    const o = { d: v.d, u: clampInt(v.u, 0, 99, 0), id: clip(v.id, 80), g };
+    if (v.ln != null) o.ln = clampInt(v.ln, 0, 999, 0);   // 문제를 고른 수준(그 단계에서 통과한 레슨 수 · 없으면 단계 전체)
+    return o;
 }
 // 늦은 날 → 시도가 많은 쪽 → 글자 순(어느 쪽에서 합쳐도 같다)
 function mergePuzNow(x, y) { return x.d !== y.d ? (x.d > y.d ? x : y) : x.g.length !== y.g.length ? (x.g.length > y.g.length ? x : y) : (JSON.stringify(x) >= JSON.stringify(y) ? x : y); }
@@ -4507,7 +4512,7 @@ function todayQuests() {
         { id: 'ear', t: '귀 시간 ' + eg + '분', n: eg * 60, v: dl.ls || 0, fmt: 'min', need: eg > 0 },   // 하루 듣기 목표(귀 시간 시트)
         { id: 'rush', t: '소리 러시 1판', n: 1, v: dl.rush || 0, need: !!playTile('rush') && tileOpen(playTile('rush')) },
         { id: 'puz', t: '오늘의 퍼즐', n: 1, v: puzDone() ? 1 : 0, need: !!playTile('puzzle') && tileOpen(playTile('puzzle')) },
-        { id: 'feed', t: '즉답 10장', n: 10, v: dl.feed || 0, need: feedOpenOk() },
+        { id: 'feed', t: '이럴 때 뭐라고? 10장', n: 10, v: dl.feed || 0, need: feedOpenOk() },
     ];
     const first = allDone ? { id: 'review', t: '복습 1세션', n: 1, v: dl.reviews ? 1 : 0 } : { id: 'lesson', t: '레슨 1개 통과', n: 1, v: Math.min(1, dl.lessons || 0) };
     // 늘 같은 전체 목록을 오늘 날짜로 섞은 뒤 조건으로 거른다 — 듣기 목표를 켜고 끄거나 조건 하나가 바뀌어도 많아야 한 칸만 바뀌게
@@ -5261,7 +5266,7 @@ function renderQuizResult(body, l) {
         const b3 = [boss].concat((l.keySentences || []).filter(x => x !== boss).sort((a, c) => nativeText(a).length - nativeText(c).length).slice(0, 2)).filter(Boolean);
         if (b3.length) h += '<div class="card"><b>🧠 오늘 배운 문장 떠올리기</b><div class="muted">뜻을 보고 먼저 말해 본 뒤 눌러서 확인하세요</div>' +
             b3.map((x, i) => '<div class="recall-sent" data-recall="' + i + '" role="button" tabindex="0">' + esc(shortKo(x.ko)) + '<div class="native">' + nesc(nativeText(x)) + '</div></div>').join('') + '</div>';
-        if (feedOpenOk()) h += '<button class="btn block ghost tap" id="toFeed" style="margin:-4px 0 12px">💬 즉답 피드로 계속</button>';   // 떠올리기를 그대로 이어서(배운 문장 + 지난 문장)
+        if (feedOpenOk() && feedSents(l).length) h += '<button class="btn block ghost tap" id="toFeed" style="margin:-4px 0 12px">💬 이럴 때 뭐라고?로 계속</button>';   // 떠올리기를 그대로 이어서(방금 배운 문장이 피드에 있을 때만 — 0단계 발음 레슨 뒤에는 없음)
     }
     if (pass && !partial) {
         const acts = (l.nextActions && l.nextActions.length) ? l.nextActions : (boss ? ['오늘 「' + nativeText(boss) + '」(' + boss.ko + ')를 혼잣말로 3번 말해 보세요.'] : []);
@@ -6333,7 +6338,7 @@ function playIndex() {
         if (st.moral) add(st.moral, 'story', st.id, 'moral', st.unlockAfter, li);
     });
     SENT_INDEX = sent; ARR_TOKENS = arr;
-    Object.assign(PLAYIDX, { code: CUR.code, data: DATA, stories: STORIES, sent, arr, known: {}, words: {}, phr: {}, puz: {}, puzSent: null, puzPy: null, puzProper: null });   // puz*: 퍼즐 후보·문장·병음(언어가 바뀌면 새로)
+    Object.assign(PLAYIDX, { code: CUR.code, data: DATA, stories: STORIES, sent, arr, known: {}, words: {}, phr: {}, puz: {}, puzSent: null, puzPy: null, puzProper: null, feedGrp: null });   // puz*: 퍼즐 후보·문장·병음 · feedGrp: 피드 같은 뜻 묶음(언어가 바뀌면 새로)
     return PLAYIDX;
 }
 // 비교용 키: 소문자, en·es·fr는 악센트를 떼고, 앞뒤 문장부호를 뗀다
@@ -6574,7 +6579,7 @@ function playEnd(o) {
     PLAY_END.forEach(f => { try { f(sum, o); } catch (e) { } });
     track('play_end', { mode: c.mode, sec: sum.sec, n: sum.n, ok: sum.ok, quit: o.quit ? 1 : 0 });
     PLAY.cur = null; PLAY.last = c.mode;
-    const html = playSummaryHtml(sum) + boxSlotHtml() + (o.quit ? '' : nextPlayHtml(c.mode, o.noAuto));   // 🎁 상자가 있으면 열기 버튼 · noAuto: 끝 화면에 읽을 것이 많아 자동 시작 없음(퍼즐)
+    const html = playSummaryHtml(sum) + boxSlotHtml() + (o.quit ? '' : nextPlayHtml(c.mode, o.noAuto, o.skip));   // 🎁 상자가 있으면 열기 버튼 · noAuto: 끝 화면에 읽을 것이 많아 자동 시작 없음(퍼즐·러시) · skip: 끝 화면에 같은 버튼이 이미 있는 다음 놀이(피드의 📖 다음 레슨)
     if (o.root) { o.root.insertAdjacentHTML('beforeend', html); bindPlayNext(o.root); }
     return html;
 }
@@ -6584,7 +6589,7 @@ function playSummaryHtml(sum) {
     if (sum.fever) row.push('💥 피버 보너스 +' + sum.fever + ' XP');
     if (sum.boost) row.push('🚀 부스트 +' + sum.boost + ' XP');
     if (sum.ls >= 1) row.push('🎧 귀 시간 +' + fmtSec(sum.ls));
-    if (sum.dex > 0) row.push('📒 새 문장 스티커 ' + sum.dex + '장');
+    if (sum.dex > 0 && playTile('dex')) row.push('📒 새 문장 스티커 ' + sum.dex + '장');   // 스티커북 화면이 생기기 전에는 칩 없이 기록(dexAdd)만
     if (!row.length && !sum.notes.length) return '';
     return '<div class="card play-sum"><b>이번 판</b><div class="ps-chips">' + row.map(t => '<span class="quest-chip done">' + esc(t) + '</span>').join('') + '</div>' +
         sum.notes.map(t => '<div class="ps-note">' + esc(t) + '</div>').join('') + '</div>';
@@ -6594,7 +6599,7 @@ const NEXT_RULES = [
     { id: 'puzzle', when: () => !(prog().puz && prog().puz.last === todayStr()), why: '오늘의 퍼즐을 아직 안 풀었어요' },
     { id: 'missions', when: () => missionFresh(PLAY.lastLesson), why: '방금 배운 회화로 미션에 도전해요', auto: false },
     { id: 'review', when: () => dueCards().length >= 8, why: () => '잊어버릴 때쯤인 카드가 ' + Math.min(dueCards().length, sessionCap()) + '장 모였어요' },
-    { id: 'feed', when: () => (dayLog().feed || 0) < 10, why: '오늘 즉답 10장을 채워 봐요' },
+    { id: 'feed', when: () => (dayLog().feed || 0) < 10, why: '오늘 「이럴 때 뭐라고?」 10장을 채워 봐요' },
     { id: 'radio', when: () => (store.settings.earGoal || 0) * 60 > (dayLog().ls || 0), why: '오늘 귀 시간 목표가 남았어요', auto: false },
 ];
 // 방금 통과한 레슨에 아직 도전하지 않은 미션이 있나: 0단계(발음) 레슨은 미션이 없고, 긴 대본 미션은 'u6l2#1'처럼 나뉜다(하나라도 별이 있으면 도전한 것)
@@ -6612,22 +6617,33 @@ function playTarget(id) {
     // 미션: 방금 통과한 레슨의 미션을 바로 열 수 있으면(openFor) 그것으로
     return { id, ico: t.ico, name: t.name, go: id === 'missions' && t.openFor && PLAY.lastLesson ? () => t.openFor(PLAY.lastLesson) : t.open, auto: t.auto };
 }
-function nextPlay(after) {
+function nextPlay(after, skip) {
     for (const r of NEXT_RULES) {
-        if (r.id === after || (after === 'home' && r.id === 'review')) continue;   // 홈에는 복습 배너가 이미 있다(같은 권유를 두 번 하지 않게)
+        if (r.id === after || (after === 'home' && r.id === 'review') || (skip && skip.includes(r.id))) continue;   // 홈에는 복습 배너가 이미 있다(같은 권유를 두 번 하지 않게)
         const t = playTarget(r.id);
         if (!t || !r.when()) continue;
         return Object.assign(t, { why: typeof r.why === 'function' ? r.why() : r.why }, r.auto === false ? { auto: false } : {});
     }
-    // 홈에는 '이어서 학습하기'가 이미 있으니 레슨 대신 언어 훈련을 권한다
-    if (after === 'home') return Object.assign(playTarget('trainer'), { why: dayLog().trainer ? '한 판 더 하면 더 익숙해져요' : '오늘 아직 안 했어요 · 2분이면 끝나요' });
-    const l = after === 'lesson' ? null : playTarget('lesson');
+    // 홈에는 '이어서 학습하기'가 이미 있으니 레슨 대신: 열렸지만 아직 안 해 본 놀이(방금 열린 놀이를 토스트만 보고 지나치지 않게) → 언어 훈련
+    if (after === 'home') {
+        const nw = PLAY_TILES.find(t => tileOpen(t) && !playTried(t) && !(quietNow() && t.mic)), tn = nw && playTarget(nw.id);
+        if (tn) return Object.assign(tn, { why: '🆕 새로 열린 놀이예요 · 한 번 해 봐요' });
+        if (!trainerReady() && !dayLog().trainer) return null;
+        return Object.assign(playTarget('trainer'), { why: dayLog().trainer ? '한 판 더 하면 더 익숙해져요' : '오늘 아직 안 했어요 · 2분이면 끝나요' });
+    }
+    const l = after === 'lesson' || (skip && skip.includes('lesson')) ? null : playTarget('lesson');
     return l ? Object.assign(l, { why: '배운 걸 바로 다음 레슨으로 이어 가요' }) : null;
+}
+// 언어 훈련을 홈에서 먼저 권해도 되나: es 동사 훈련은 동사 원형(VERB_BANK)이 나온 레슨을 통과한 뒤부터 — 발음만 배운 첫날 변화표로 보내지 않게
+function trainerReady() {
+    if (CUR.trainerTab !== 'verb') return true;
+    const inf = new Set(VERB_BANK.map(v => v.inf));
+    return ALL.some(l => isDone(l.id) && (l.words || []).some(w => wordForms(nativeText(w)).some(f => inf.has(f.toLowerCase()))));
 }
 function reducedMotion() { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } }
 // 끝 화면 '다음' 카드: 자동 시작은 설정이 켜져 있고, 움직임 줄이기가 아니고, 다음이 미션·라디오·말하기 대기가 아닐 때만(이어가기에는 XP 없음)
-function nextPlayHtml(mode, noAuto) {
-    const n = nextPlay(mode);
+function nextPlayHtml(mode, noAuto, skip) {
+    const n = nextPlay(mode, skip);
     PLAY.next = null;
     if (!n) return '';
     const auto = !noAuto && store.settings.autoNext !== false && !reducedMotion() && n.auto !== false;
@@ -6676,9 +6692,9 @@ function playIntro(id, title, rules, start) {
 }
 
 /* ═══════════════════ 🎮 놀이 탭 ═══════════════════ */
-// 하나씩 열림(통과 레슨 수). 아직 만들지 않은 놀이는 '곧 열려요'로 보인다 — 기능이 registerPlayTile로 자기 타일을 등록하면 진짜 타일이 된다
+// 하나씩 열림(통과 레슨 수). 아직 만들지 않은 놀이는 '다음 업데이트에 나와요' 한 줄로 보인다(레슨으로 열린다고 약속하지 않게) — 기능이 registerPlayTile로 자기 타일을 등록하면 진짜 타일이 된다
 const PLAY_SOON = [
-    { id: 'feed', ico: '💬', name: '즉답 피드', at: 1 },
+    { id: 'feed', ico: '💬', name: '이럴 때 뭐라고?', at: 1 },
     { id: 'puzzle', ico: '🟩', name: '오늘의 퍼즐', at: 1, unit1: true },
     { id: 'rush', ico: '⏱️', name: '소리 러시', at: 2 },
     { id: 'missions', ico: '🗺️', name: '생존 미션', at: 3 },
@@ -6689,7 +6705,10 @@ const PLAY_SOON = [
 ];
 const PLAY_TILES = [];
 const PLAY_CTX = [['move', '🚇 이동 중'], ['short', '⏱ 잠깐'], ['home', '🏠 집에서']];
-// 타일 등록: {id, ico, name, view, need: () => 열림, lock: () => need가 막을 때 잠금 글(lockAll이면 레슨 수가 모자랄 때도), status: () => 상태 한 줄, mic, ctx: ['move','short','home'], open, xpKind, auto}
+// 상황을 고르면 무엇이 바뀌는지(칩 아래 한 줄)
+const PLAY_CTX_TIP = { move: '소리 없이 할 수 있는 놀이를 위로 · 마이크는 쉬어요', short: '2분 안에 끝나는 놀이를 위로', home: '소리 내어 말하는 놀이를 위로' };
+// 타일 등록: {id, ico, name, view, need: () => 열림, lock: () => need가 막을 때 잠금 글(lockAll이면 레슨 수가 모자랄 때도), status: () => 상태 한 줄, mic,
+//   ctx: 맞는 상황(첫째가 가장 잘 맞는 상황 — 그 상황이면 맨 위), open, xpKind, auto}
 function registerPlayTile(t) {
     const tile = Object.assign({ ctx: ['move', 'short', 'home'], mic: false, need: () => playUnlocked(t.id), status: () => '', open: () => go(t.view || t.id) }, t);
     const i = PLAY_TILES.findIndex(x => x.id === t.id);
@@ -6729,12 +6748,14 @@ document.addEventListener('visibilitychange', () => {
     if (!document.hidden && CUR && DATA && S.view === 'play' && S.ctxShown && S.ctxShown !== playCtx() && !(root && root.innerHTML)) renderPlay();
 });
 function quietNow() { return !!store.settings.quiet || playCtx() === 'move'; }
-// NEW 점은 하루 1개 타일에만(처음 보인 날을 seen['pn_'+id]에)
+// 이미 해 본 놀이: 첫 진입 안내를 지났거나(seen['in_'+id]) 이 언어 하루 기록에 그 놀이 칸(dl.rush·dl.puz·dl.feed …)이 있다
+function playTried(t) { return !!store.seen['in_' + t.id] || (!!t.xpKind && Object.values(prog().daily || {}).some(d => d && d[t.xpKind])); }
+// NEW 점은 하루 1개 타일에만(처음 보인 날을 seen['pn_'+id]에) — 이미 해 본 놀이는 NEW로 고르지 않는다
 function playNewId() {
     const t = todayStr(), open = PLAY_TILES.filter(tileOpen);
     const today = open.find(x => store.seen['pn_' + x.id] === t);
     if (today) return today.id;
-    const fresh = open.find(x => !store.seen['pn_' + x.id]);
+    const fresh = open.find(x => !store.seen['pn_' + x.id] && !playTried(x));
     if (!fresh) return null;
     store.seen['pn_' + fresh.id] = t; save();
     return fresh.id;
@@ -6747,9 +6768,10 @@ function playAfterLesson(l, open0) {
     setTimeout(() => warmClips(urls), 2000);
     const fresh = PLAY_TILES.filter(t => !open0.includes(t.id) && tileOpen(t));
     if (!fresh.length) return;
-    // 방금 열린 놀이를 오늘의 NEW로(아침에 붙은 다른 타일은 '아직 안 봄'(false)으로 되돌려 다음에 다시 NEW가 된다) — 토스트를 보고 들어와 바로 찾게
+    // 방금 열린 놀이를 오늘의 NEW로 — 토스트를 보고 들어와 바로 찾게. 아침에 붙은 다른 타일은 아직 안 해 봤으면 '아직 안 봄'(false)으로 되돌려
+    // 다음에 다시 NEW가 되고, 이미 해 봤으면 '봄'(true) — 여러 번 한 놀이가 다음 날 새 놀이처럼 보이지 않게
     const day = todayStr();
-    PLAY_TILES.forEach(t => { if (store.seen['pn_' + t.id] === day) store.seen['pn_' + t.id] = false; });
+    PLAY_TILES.forEach(t => { if (store.seen['pn_' + t.id] === day) store.seen['pn_' + t.id] = playTried(t); });
     store.seen['pn_' + fresh[0].id] = day; save();
     setTimeout(() => showToast('🆕 새 놀이 열림: ' + fresh.map(t => t.ico + ' ' + t.name).join(' · '), 'gold', 3400), 1200);
 }
@@ -6765,23 +6787,26 @@ function playTileHtml(t, quiet, newId, dl) {
 function renderPlay() {
     const ctx = playCtx(), quiet = quietNow(), dl = dayLog(), say = sayLaterItems();
     S.ctxShown = ctx;
-    // 상황 칩·조용 모드는 바뀌는 것이 있을 때만(등록된 놀이 타일이나 말하기 대기가 있을 때) — 눌러도 아무것도 바뀌지 않는 칩은 두지 않는다
-    let h = !PLAY_TILES.length && !say.length ? '' : '<div class="ctx-row"><div class="ctx-chips" role="group" aria-label="지금 상황">' +
+    // 상황 칩·조용 모드는 바뀌는 것이 있을 때만(열린 놀이 타일이나 말하기 대기가 있을 때) — 눌러도 아무것도 바뀌지 않는 칩은 두지 않는다.
+    // 고르면 그 상황에 맞는 타일이 위로 오고(rank), 무엇이 바뀌었는지 칩 아래 한 줄로 알려 준다
+    const tiles = PLAY_SOON.map(u => playTile(u.id)).filter(Boolean).concat(PLAY_TILES.filter(t => !PLAY_SOON.some(u => u.id === t.id)));
+    const openN = tiles.filter(tileOpen).length;
+    let h = !openN && !say.length ? '' : '<div class="ctx-row"><div class="ctx-chips" role="group" aria-label="지금 상황">' +
         PLAY_CTX.map(([id, t]) => '<button data-ctx="' + id + '" aria-pressed="' + (id === ctx) + '">' + t + '</button>').join('') + '</div>' +
-        (quiet ? '<span class="quiet-pill" id="quietPill">🤫 조용 모드</span>' : '') + '</div>';
+        (quiet ? '<span class="quiet-pill" id="quietPill">🤫 조용 모드</span>' : '') +
+        (openN >= 2 || ctx === 'move' ? '<div class="muted ctx-tip" role="status">' + esc(openN >= 2 ? PLAY_CTX_TIP[ctx] : '마이크 놀이는 쉬고 소리 없이 해요') + '</div>' : '') + '</div>';
     h = reviveBannerHtml() + h;
     if (!store.seen.playTrainerHint) h += '<div class="guide-banner" role="note">👇 ' + esc(CUR.trainerLabel) + ' 훈련은 여기 맨 위에 있어요</div>';
     h += '<button class="play-hero" id="playTrainer"><span class="ph-ico" aria-hidden="true">' + CUR.trainerIco + '</span><span class="ph-txt"><b>' + esc(CUR.trainerLabel) + ' 훈련</b>' +
         '<span>' + (dl.trainer ? '오늘 ' + dl.trainer + '판 했어요 · 한 판 더?' : '10문제 · 2분이면 끝나요') + '</span></span><span class="ph-go" aria-hidden="true">▶</span></button>';
     if (say.length && ctx === 'home') h += '<button class="play-hero say" id="playSay"><span class="ph-ico" aria-hidden="true">🗣</span><span class="ph-txt"><b>말하기 대기 ' + say.length + '문장</b><span>밖에서 미뤄 둔 문장을 소리 내어 말해요</span></span><span class="ph-go" aria-hidden="true">▶</span></button>';
-    // 타일은 기능이 등록한 것만(표 순서): 지금 상황에 맞는 열린 타일 → 다른 열린 타일 → 잠긴 타일. 아직 없는 놀이는 아래 한 줄로만
-    const tiles = PLAY_SOON.map(u => playTile(u.id)).filter(Boolean).concat(PLAY_TILES.filter(t => !PLAY_SOON.some(u => u.id === t.id)));
-    const rank = t => !tileOpen(t) ? 2 : t.ctx.includes(ctx) ? 0 : 1;
+    // 타일은 기능이 등록한 것만(표 순서): 지금 상황이 첫째인 열린 타일 → 지금 상황에도 맞는 타일 → 다른 열린 타일 → 잠긴 타일. 아직 없는 놀이는 아래 한 줄로만
+    const rank = t => !tileOpen(t) ? 3 : t.ctx[0] === ctx ? 0 : t.ctx.includes(ctx) ? 1 : 2;
     const sorted = tiles.map((t, i) => ({ t, i, r: rank(t) })).sort((a, b) => a.r - b.r || a.i - b.i).map(o => o.t);
     const newId = playNewId(), soon = PLAY_SOON.filter(u => !playTile(u.id));
     if (sorted.length) h += '<div class="section-title">놀이 — 레슨을 통과할수록 하나씩 열려요</div>' +
         '<div class="play-grid">' + sorted.map(t => playTileHtml(t, quiet, newId, dl)).join('') + '</div>';
-    if (soon.length) h += '<div class="muted play-soon">🔜 곧 열려요: ' + soon.map(u => u.ico + ' ' + esc(u.name)).join(' · ') +
+    if (soon.length) h += '<div class="muted play-soon">🛠 다음 업데이트에 나와요: ' + soon.map(u => u.ico + ' ' + esc(u.name)).join(' · ') +
         (sorted.length ? '' : '<br>그동안 ' + esc(CUR.trainerLabel) + ' 훈련으로 감을 깨워 보세요!') + '</div>';
     $main.innerHTML = h;
     if (!store.seen.playTrainerHint) { store.seen.playTrainerHint = todayStr(); save(); }
@@ -6809,7 +6834,7 @@ function playPickHtml() {
 }
 // 기록 화면: 놀이별 하루 기록(daily 칸) → 줄
 const PLAY_HIST = [
-    { k: 'feed', ico: '💬', t: n => '즉답 ' + n + '장' },
+    { k: 'feed', ico: '💬', t: n => '이럴 때 뭐라고? ' + n + '장' },
     { k: 'puz', ico: '🟩', t: () => '오늘의 퍼즐' },
     { k: 'rush', ico: '⏱️', t: n => '소리 러시 ' + n + '판' },
     { k: 'mission', ico: '🗺️', t: n => '생존 미션 ' + n + '개' },
@@ -7170,22 +7195,25 @@ function rushEndScreen(r) {
     let h = '<div class="result-hero"><div class="r-emoji">' + ((r.isNew && r.score) || r.cut ? '🏆' : '⏱️') + '</div><div class="r-score" style="color:var(--primary)">' + r.score + '</div>' +
         '<div class="r-msg">' + x.ico + ' ' + x.name + ' · ' + r.n + '문제 중 ' + r.score + '개 맞힘' + (r.i >= r.q.length ? ' · 끝까지 완주! 💪' : '') + '</div>' +
         (rec ? '<div class="rush-rec">' + esc(rec) + '</div>' : '') + (avg ? '<div class="muted" style="margin-top:4px">평균 반응 ' + avg + '초</div>' : '') + '</div>';
-    if (r.redo.length) h += '<div class="card rush-redo"><b style="font-size:14px">🔁 다시 들어 보기</b>' + r.redo.map((c, i) =>
+    // '한 판 더!'는 점수 바로 아래(첫 화면 안) · 다시 들어 보기는 그 아래에 — 4개 이상이면 접어 둔다(목록이 버튼을 밀어내지 않게)
+    h += '<div class="rush-btns"><button class="btn block" id="rushAgain">한 판 더!</button><button class="btn block ghost" id="rushExit">놀이 탭으로</button></div>';
+    if (r.redo.length) h += '<details class="card rush-redo"' + (r.redo.length <= 3 ? ' open' : '') + '><summary><b style="font-size:14px">🔁 다시 들어 보기 ' + r.redo.length + '개</b></summary>' + r.redo.map((c, i) =>
         '<div class="rr-row"><button class="play-btn" data-rr="' + i + '" aria-label="' + esc('듣기: ' + shortKo(c.ko)) + '">▶</button><div class="rr-txt"><span class="native">' + esc(c.native) + '</span><span class="muted">' + esc(shortKo(c.ko)) + '</span></div></div>').join('') +
-        (r.redo.some(c => r.wrong[c.key] >= 2) ? '<div class="muted" style="margin-top:6px">두 번 틀린 말은 오늘 복습 카드로 당겨 뒀어요</div>' : '') + '</div>';
-    h += '<div class="rush-btns"><button class="btn block" id="rushAgain">한 판 더!</button><button class="btn block ghost" id="rushExit">놀이 탭으로</button></div><div id="rushEnd"></div>';
+        (r.redo.some(c => r.wrong[c.key] >= 2) ? '<div class="muted" style="margin-top:6px">두 번 틀린 말은 오늘 복습 카드로 당겨 뒀어요</div>' : '') + '</details>';
+    h += '<div id="rushEnd"></div>';
     $main.innerHTML = h;
     $main.querySelectorAll('[data-rr]').forEach(b => b.addEventListener('click', () => { stopAutoNext(); const c = r.redo[Number(b.dataset.rr)]; if (c) speak(c.tts || c.native, 0.95); }));   // 다시 듣는 동안 다음 놀이로 넘어가지 않게
     document.getElementById('rushAgain').addEventListener('click', () => rushStart(r.m));
     document.getElementById('rushExit').addEventListener('click', () => { resetPlayState(); go('play'); });
     const root = document.getElementById('rushEnd');
-    if (r.tail == null) r.tail = playEnd({ n: r.n, ok: r.score, fever: r.feverGive, root });   // 요약 + 다음 놀이(한 번만)
+    // 요약 + 다음 놀이(한 번만) — 다시 들어 보기·기록을 읽는 화면이고 다음 놀이 카드가 화면 아래라 카운트다운이 안 보이니 저절로 넘어가지 않는다(퍼즐과 같음)
+    if (r.tail == null) r.tail = playEnd({ n: r.n, ok: r.score, fever: r.feverGive, root, noAuto: true });
     else { root.innerHTML = r.tail; bindPlayNext(root); }
     $main.scrollTop = 0;   // 점수·기록 줄부터 보이게(판 도중 내려가 있었어도)
     setTimeout(() => { const b = document.getElementById('rushAgain'); if (b && S.rush === r) b.focus({ preventScroll: true }); }, 30);   // 기본 포커스는 '한 판 더!' — 다시 들어 보기가 길어도 화면은 내리지 않는다
 }
 registerPlayTile({
-    id: 'rush', ico: '⏱️', name: '소리 러시', view: 'rush', xpKind: 'rush', need: rushReady,
+    id: 'rush', ico: '⏱️', name: '소리 러시', view: 'rush', xpKind: 'rush', need: rushReady, ctx: ['move', 'short'],   // 이동 중엔 🔤 글자 러시로
     lock: () => '복습 카드 ' + RUSH_MIN + '장이 모이면 열려요(지금 ' + Object.keys(prog().srs).length + '장)',
     status: () => { const b = rushBestLine(); return b ? '최고 ' + b : '👻 첫 기록에 도전!'; },
     open: () => { S.rush = null; go('rush'); },
@@ -7201,7 +7229,7 @@ function feverTick(st, ok) {   // → 이번 정답으로 피버에 들어갔나
     st.combo = (st.combo || 0) + 1;
     const enter = st.combo % 5 === 0 && !(st.fever > 0);
     if (st.combo % 5 === 0) st.fever = FEVER_N;
-    if (st.combo % 10 === 0) pieceAdd(st);
+    if (st.combo % 10 === 0 && !st.noPiece) pieceAdd(st);   // noPiece: 스스로 채점한 놀이(피드)는 조각 없이 피버 XP만
     return enter;
 }
 function feverFx() { sfx('fever'); try { if (navigator.vibrate) navigator.vibrate([20, 30, 20]); } catch (e) { } }   // 레벨 업 소리와 다른 높은 삼각파
@@ -7472,12 +7500,17 @@ function triviaShelfHtml() {
 
 /* ═══════════════════ 🟩 오늘의 소리 퍼즐 ═══════════════════ */
 // 하루 한 문제: 원어민 문장을 듣고 조각을 순서대로 맞히는 Wordle(기회 6번 · 🟩 자리 맞음 🟨 문장에 있지만 자리 틀림 ⬜ 없음).
-// 같은 언어·같은 단계(통과한 레슨의 가장 높은 단계 u)면 같은 날 같은 문제 — 후보를 안정 id로 정렬한 뒤 날짜·단계 시드로 섞어 고른다.
+// 후보는 배운 문장만: 이전 단계 전체 + 지금 단계(통과한 레슨의 가장 높은 단계 u)에서 통과한 레슨 수(ln)만큼 앞 레슨.
+// 같은 언어·같은 수준(u, ln)이면 같은 날 같은 문제 — 후보를 안정 id로 정렬한 뒤 날짜·수준 시드로 섞어 고른다.
 // 진행 중인 판은 S.puz에 두고, 오늘 문제는 확인할 때마다 시도를 prog().puzNow에도 적는다 — 나갔다 오거나 새로고침해도 같은 문제·남은 기회·힌트로 이어서(오늘 끝냈으면 결과만).
 // 규칙만 참고해 새로 만들었다(Wordle·汉兜 handle 등)
 const PUZ_EPOCH = '2026-10-01', PUZ_TRIES = 6, PUZ_EMO = ['⬜', '🟨', '🟩'], PUZ_WORD = ['없음', '자리 틀림', '자리 맞음'];
 function puzNo(d) { return dayDiff(PUZ_EPOCH, d || todayStr()) + 1; }   // #N
 function puzUnit() { return ALL.reduce((u, l) => (isDone(l.id) && l.unitId > u ? l.unitId : u), 0); }   // 통과한 레슨의 가장 높은 단계(기기·날짜와 무관)
+function puzUnitLessons(u) { const x = UNITS.find(v => v.unitId === u); return x ? x.lessons : []; }   // 단계의 레슨(과정 순서)
+// 지금 수준 {u, ln}: ln = 단계 u에서 통과한 레슨 수 — 단계를 다 통과했으면 null(단계 전체). 후보는 단계 u의 앞 ln개 레슨까지(순서를 건너뛰어도 같은 수면 같은 문제)
+function puzLv() { const u = puzUnit(), ls = puzUnitLessons(u), n = ls.filter(l => isDone(l.id)).length; return { u, ln: n >= ls.length ? null : n }; }
+function puzLvKey(ln) { return ln != null ? '.' + ln : ''; }   // 시드·캐시 꼬리(단계 전체면 없음 — 예전과 같은 문제)
 function puzDone() { const z = CUR && prog().puz; return !!z && z.last === todayStr(); }
 function puzStreak() { const z = prog().puz; return z && (z.last === todayStr() || z.last === todayStr(-1)) ? z.st : 0; }   // 지금 이어지는 연속
 // 단계 u까지 배운 말(낱말 + 배열 조각 + 기능어 + 이름) — 레슨 순서가 아니라 단계로 정해 데이터 순서가 바뀌어도 같다
@@ -7519,18 +7552,22 @@ function puzShow(t) { const s = String(t).replace(EDGE_PUNCT, ''); return CHAR_L
 function puzKind(t) { return CUR.code === 'ja' ? (/[一-鿿]/.test(t) ? 'k' : /[゠-ヿ]/.test(t) ? 'K' : 'h') : /\d/.test(t) ? 'n' : 'w'; }
 // 단계 u의 후보(안정 id 순): ① 배열 문제(조각 그대로) ② en·es·fr 핵심 문장·대사(띄어쓰기, 이름 조각 없음)
 // ③ ja 모르는 조각이 없고 '、' 없는 한 문장 ④ zh 모르는 글자 1개 이하, '，' 없는 한 문장. 기본 4~6조각, 1단계이거나 모자라면(15개 미만) 3조각도
-function puzList(u) {
-    const ix = playIndex();
+// ln: 단계 u에서 앞 ln개 레슨까지(없으면 단계 전체) — 아직 안 배운 레슨 문장은 내지 않는다
+function puzList(u, ln) {
+    const ix = playIndex(), ck = u + puzLvKey(ln);
     if (!ix.puz) ix.puz = {};
-    if (ix.puz[u]) return ix.puz[u];
+    if (ix.puz[ck]) return ix.puz[ck];
     const code = CUR.code, latin = !CHAR_LANGS[code], known = puzKnown(u), names = new Set((PERSON_NATIVE[code] || []).map(n => normKey(code, n)));
-    const ls = ALL.filter(l => l.unitId <= u).sort((a, b) => cmpStr(a.id, b.id)), out = [], seen = new Set();
+    const first = new Set(ln != null ? puzUnitLessons(u).slice(0, ln).map(l => l.id) : []);
+    const ls = ALL.filter(l => l.unitId < u || (l.unitId === u && (ln == null || first.has(l.id)))).sort((a, b) => cmpStr(a.id, b.id)), out = [], seen = new Set();
+    // 띄어쓰기·문장부호를 빼고 가타카나를 히라가나로 맞춘 글자열 — 'わたしはスジンです'·'わたしはすじんです'가 이틀 연속 나오지 않게
+    const flat = t => normKey(code, t).replace(/[\s\p{P}\p{S}]/gu, '').replace(/[\u30a1-\u30f6]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0x60));
     const add = x => {
         const raw = x.raw.filter(t => String(t).replace(EDGE_PUNCT, ''));
         x.raw = raw; x.toks = raw.map(t => String(t).replace(EDGE_PUNCT, ''));
-        const key = x.toks.map(t => normKey(code, t)).join('|');
-        if (x.toks.length < 3 || x.toks.length > 6 || seen.has(key)) return;
-        seen.add(key); out.push(x);
+        const key = x.toks.map(t => normKey(code, t)).join('|'), fk = '~' + flat(x.toks.join(''));
+        if (x.toks.length < 3 || x.toks.length > 6 || seen.has(key) || seen.has(fk)) return;
+        seen.add(key); seen.add(fk); out.push(x);
     };
     ls.forEach(l => (l.quiz || []).forEach((q, qi) => {
         if (q.type !== 'arrange' || !Array.isArray(q.tokens)) return;
@@ -7561,18 +7598,18 @@ function puzList(u) {
     });
     out.sort((a, b) => cmpStr(a.id, b.id));
     const four = out.filter(x => x.toks.length >= 4);
-    return (ix.puz[u] = u <= 1 || four.length < 15 ? out : four);
+    return (ix.puz[ck] = u <= 1 || four.length < 15 ? out : four);
 }
 // 오늘 문제: 단계마다 후보를 시드로 한 번 섞은 순서(순열)를 n일 주기로 돈다 — 같은 단계는 같은 날 같은 문제, 주기 안에서는 반복 없음.
 // 주기가 바뀌는 날 첫 문제가 전날(지난 주기 마지막)과 같으면 둘째와 바꾼다(이틀 연속 같은 문제 없음)
-function puzCycle(list, u, cyc) { return seededShuffle(list, hashStr('puz|' + CUR.code + '|' + u + '|' + cyc)); }
-function puzPick(u, day) {
-    const list = puzList(u), n = list.length;
+function puzCycle(list, u, cyc, ln) { return seededShuffle(list, hashStr('puz|' + CUR.code + '|' + u + puzLvKey(ln) + '|' + cyc)); }
+function puzPick(u, day, ln) {
+    const list = puzList(u, ln), n = list.length;
     if (!n) return null;
     const dn = dayDiff(PUZ_EPOCH, day);
     if (n <= 2) return list[((dn % n) + n) % n];   // 후보가 둘이면 번갈아
-    const cyc = Math.floor(dn / n), i = dn - cyc * n, a = puzCycle(list, u, cyc);
-    if (a[0] === puzCycle(list, u, cyc - 1)[n - 1] && i <= 1) return a[1 - i];   // 둘째 칸 이후는 바꿔도 그대로라 지난 주기 마지막만 보면 된다
+    const cyc = Math.floor(dn / n), i = dn - cyc * n, a = puzCycle(list, u, cyc, ln);
+    if (a[0] === puzCycle(list, u, cyc - 1, ln)[n - 1] && i <= 1) return a[1 - i];   // 둘째 칸 이후는 바꿔도 그대로라 지난 주기 마지막만 보면 된다
     return a[i];
 }
 // Wordle 채점(중복 조각): 🟩을 먼저 세고, 남은 개수만큼만 🟨 → [2 맞음 · 1 자리 틀림 · 0 없음]
@@ -7582,21 +7619,25 @@ function puzGrade(ans, guess) {
     g.forEach((k, i) => { if (res[i] !== 2 && left[k] > 0) { res[i] = 1; left[k]--; } });
     return res;
 }
-// 미끼: 3조각 문제는 3개, 4~6조각은 2개 — 같은 단계 다른 후보의 조각 중 정답에 없고 문자 종류가 같은 것
-function puzDecoys(c, u, seed) {
+// 미끼: 3조각 문제는 3개, 4~6조각은 2개 — 같은 수준 다른 후보의 조각 중 정답에 없고 문자 종류가 같은 것.
+// 문장 안에 들어 있는 말도 미끼로 쓰지 않는다(놓으면 ⬜ '문장에 없어요'가 틀린 말이 되니까): zh·ja는 정답 글자열 안의 조각('わたし|は|…'의 'わたしは'),
+// en·es·fr는 정답 낱말이 이어진 것('my|name'의 'my name')
+function puzDecoys(c, u, seed, ln) {
     const code = CUR.code, want = c.toks.length <= 3 ? 3 : 2, ans = new Set(c.toks.map(t => normKey(code, t))), kinds = new Set(c.toks.map(puzKind));
     const names = new Set((PERSON_NATIVE[code] || []).map(n => normKey(code, n))), proper = puzProper(), seen = new Set(), pool = [];
-    puzList(u).forEach(x => x.toks.forEach((t, i) => {
+    const words = t => String(t).split(/\s+/).map(w => normKey(code, w)).filter(Boolean), aFlat = c.toks.map(t => normKey(code, t)).join(''), aw = words(c.toks.join(' '));
+    const inAns = (t, k) => CHAR_LANGS[code] ? aFlat.includes(k) : (w => aw.some((_, i) => w.every((x, j) => aw[i + j] === x)))(words(t));
+    puzList(u, ln).forEach(x => x.toks.forEach((t, i) => {
         const k = normKey(code, t);
-        if (!k || ans.has(k) || seen.has(k) || names.has(k) || proper.has(k) || !kinds.has(puzKind(t))) return;
+        if (!k || ans.has(k) || seen.has(k) || names.has(k) || proper.has(k) || !kinds.has(puzKind(t)) || inAns(t, k)) return;
         seen.add(k); pool.push({ t, r: x.raw[i] });
     }));
     return seededShuffle(pool, seed ^ 0x5bd1).slice(0, want);
 }
 // 판 상태: 타일 = 정답 조각 + 미끼(섞음), g = 시도마다 놓은 타일 번호, m = 시도마다 색, best = 조각별 가장 좋은 색
-function puzState(c, u, mode, seed) {
-    const code = CUR.code, tiles = c.toks.map((t, i) => ({ t: puzShow(t), r: c.raw[i] })).concat(puzDecoys(c, u, seed).map(x => ({ t: puzShow(x.t), r: x.r })));
-    return { c, u, mode, day: todayStr(), no: puzNo(), tiles: seededShuffle(tiles.map(x => Object.assign(x, { k: normKey(code, x.t) })), seed), g: [], m: [], cur: [], best: {}, over: false, won: false };
+function puzState(c, u, mode, seed, ln) {
+    const code = CUR.code, tiles = c.toks.map((t, i) => ({ t: puzShow(t), r: c.raw[i] })).concat(puzDecoys(c, u, seed, ln).map(x => ({ t: puzShow(x.t), r: x.r })));
+    return { c, u, ln: ln == null ? null : ln, mode, day: todayStr(), no: puzNo(), tiles: seededShuffle(tiles.map(x => Object.assign(x, { k: normKey(code, x.t) })), seed), g: [], m: [], cur: [], best: {}, over: false, won: false };
 }
 // 문장 원본(복습 카드·스티커·발음 힌트): 배열 문제면 같은 조각의 핵심 문장·대사를 찾는다
 function puzSentOf(c) {
@@ -7614,27 +7655,26 @@ function puzPinyin(u) {
     return ix.puzPy;
 }
 function puzTop(sub) { return '<div class="lesson-top"><button class="back-btn tap44" id="puzBack" aria-label="놀이 탭으로">←</button><div><div class="lt-title">🟩 오늘의 소리 퍼즐</div><div class="lt-sub">' + esc(sub) + '</div></div></div>'; }
-function puzBindBack(st) {
-    const b = document.getElementById('puzBack');
-    if (b) b.addEventListener('click', () => {
-        const keep = st && !st.over && st.mode === 'today';   // 오늘 문제는 시도가 저장돼 있어 묻지 않는다(다시 열면 이어서)
-        if (st && !st.over && PLAY.cur && !keep && !confirm('그만할까요? 지금 판 기록은 남지 않아요')) return;
-        if (keep && st.g.length) showToast('🟩 하던 퍼즐은 남아 있어요 — 다시 열면 이어서 풀어요');
-        resetPlayState(); go('play');
-    });
+// 퍼즐에서 나가기(← 버튼·브라우저 뒤로 가기 같은 동작): 오늘 문제는 시도가 저장돼 있어 묻지 않는다(다시 열면 이어서) · 연습판은 묻는다
+function puzLeave(st) {
+    const keep = st && !st.over && st.mode === 'today';
+    if (st && !st.over && PLAY.cur && !keep && !confirm('그만할까요? 지금 판 기록은 남지 않아요')) return;
+    if (keep && st.g.length) showToast('🟩 하던 퍼즐은 남아 있어요 — 다시 열면 이어서 풀어요');
+    resetPlayState(); go('play');
 }
+function puzBindBack(st) { const b = document.getElementById('puzBack'); if (b) b.addEventListener('click', () => puzLeave(st)); }
 function renderPuzzle() {
     const t = playTile('puzzle'), st = S.puz;
     if (!t || !tileOpen(t)) { $main.innerHTML = puzTop('하루 한 문제') + '<div class="empty-state" style="padding:30px 20px"><div class="es-emoji">🔒</div>' + esc(playLockText('puzzle') || '아직 열리지 않았어요') + '</div>'; puzBindBack(null); return; }
     if (st) { if (st.over) puzEndScreen(st); else puzDraw(st); return; }
     if (puzDone()) { puzDoneScreen(); return; }
-    playIntro('puzzle', '🟩 오늘의 소리 퍼즐', ['원어민 문장을 듣고 조각을 순서대로 놓아요 — 다시 듣기는 몇 번이든', '🟩 자리 맞음 · 🟨 문장에 있지만 자리가 달라요 · ⬜ 문장에 없어요(미끼)', '하루 한 문제 · 기회 6번 · 같은 단계면 친구와 같은 문제예요'], () => puzStart('today'));
+    playIntro('puzzle', '🟩 오늘의 소리 퍼즐', ['원어민 문장을 듣고 조각을 순서대로 놓아요 — 다시 듣기는 몇 번이든', '🟩 자리 맞음 · 🟨 문장에 있지만 자리가 달라요 · ⬜ 문장에 없어요(미끼)', '하루 한 문제 · 기회 6번 · 같은 레슨까지 배운 친구와 같은 문제예요'], () => puzStart('today'));
 }
 function puzStart(mode) {
     stopSpeak();
-    const sv = mode === 'today' ? puzSaved() : null, u = sv ? sv.u : puzUnit(), list = puzList(u), c = sv ? sv.c : mode === 'today' ? puzPick(u, todayStr()) : list[Math.floor(Math.random() * list.length)];
+    const sv = mode === 'today' ? puzSaved() : null, lv = sv || puzLv(), u = lv.u, ln = lv.ln, list = puzList(u, ln), c = sv ? sv.c : mode === 'today' ? puzPick(u, todayStr(), ln) : list[Math.floor(Math.random() * list.length)];
     if (!c) { $main.innerHTML = puzTop('하루 한 문제') + '<div class="empty-state" style="padding:30px 20px"><div class="es-emoji">🧩</div>문제를 만들 문장이 아직 모자라요.<br>레슨을 하나 더 통과해 보세요!</div>'; puzBindBack(null); return; }
-    const st = S.puz = puzState(c, u, mode, mode === 'today' ? hashStr('puzt|' + CUR.code + '|' + todayStr() + '|' + u) : Math.floor(Math.random() * 2147483647));
+    const st = S.puz = puzState(c, u, mode, mode === 'today' ? hashStr('puzt|' + CUR.code + '|' + todayStr() + '|' + u + puzLvKey(ln)) : Math.floor(Math.random() * 2147483647), ln);
     playBegin('puzzle');
     if (sv) {
         puzRestore(st, sv.g);
@@ -7693,13 +7733,13 @@ function puzApply(st) {
 // 오늘 문제의 시도를 조각 키로 저장(타일 번호가 아니라 키라 타일 순서가 달라져도 같은 시도)
 function puzKeep(st) {
     if (st.mode !== 'today') return;
-    prog().puzNow = { d: st.day, u: st.u, id: st.c.id, g: st.g.map(r => r.map(i => st.tiles[i].k)) };
+    prog().puzNow = Object.assign({ d: st.day, u: st.u, id: st.c.id, g: st.g.map(r => r.map(i => st.tiles[i].k)) }, st.ln != null ? { ln: st.ln } : {});
     save();
 }
-// 오늘 하던 판(오늘 날짜 · 같은 문장일 때만) → {u, c, g} · 없으면 null. 그사이 단계가 올라도 하던 문제로(새 문제로 기회를 다시 받지 않게)
+// 오늘 하던 판(오늘 날짜 · 같은 문장일 때만) → {u, ln, c, g} · 없으면 null. 그사이 레슨을 통과해 수준이 올라도 하던 문제로(새 문제로 기회를 다시 받지 않게)
 function puzSaved() {
-    const v = prog().puzNow, c = v && v.d === todayStr() && v.g.length ? puzPick(v.u, v.d) : null;
-    return c && c.id === v.id ? { u: v.u, c, g: v.g } : null;
+    const v = prog().puzNow, ln = v && v.ln != null ? v.ln : null, c = v && v.d === todayStr() && v.g.length ? puzPick(v.u, v.d, ln) : null;
+    return c && c.id === v.id ? { u: v.u, ln, c, g: v.g } : null;
 }
 // 저장한 시도를 다시 채점해 판을 되살린다(뜻·발음 힌트·조각 색도 그대로) — 조각을 못 찾으면(자료가 바뀜) 거기까지만
 function puzRestore(st, rows) {
@@ -7732,7 +7772,7 @@ function puzFinish(st) {
     if (st.mode === 'today' && !(o && o.last >= t)) {
         const run = o && o.last === dateAdd(t, -1) ? o.st + 1 : 1, dist = o ? o.dist.slice() : [0, 0, 0, 0, 0, 0, 0];
         dist[st.tries - 1]++;
-        p.puz = { last: t, t: st.tries, st: run, bst: Math.max(run, o ? o.bst : 0), n: (o ? o.n : 0) + 1, dist, g: st.rows.slice(0, PUZ_TRIES), u: st.u };
+        p.puz = Object.assign({ last: t, t: st.tries, st: run, bst: Math.max(run, o ? o.bst : 0), n: (o ? o.n : 0) + 1, dist, g: st.rows.slice(0, PUZ_TRIES), u: st.u }, st.ln != null ? { ln: st.ln } : {});
         st.late = t !== todayStr();
         if (run % 7 === 0 && lootGrant('z:' + CUR.code + ':' + t)) playNote('🎁 퍼즐 ' + run + '일 연속! 선물 상자가 왔어요');
         save();
@@ -7748,7 +7788,7 @@ function puzFinish(st) {
     puzEndScreen(st);
 }
 // 내일 문제 예고(같은 단계, 내일 날짜로 같은 계산)
-function puzTomorrowHtml() { const u = puzUnit(), x = puzPick(u, todayStr(1)); return x ? '<div class="muted puz-next">🔮 내일 문제: ' + u + '단계 · ' + x.toks.length + '조각</div>' : ''; }
+function puzTomorrowHtml() { const lv = puzLv(), x = puzPick(lv.u, todayStr(1), lv.ln); return x ? '<div class="muted puz-next">🔮 내일 문제: ' + lv.u + '단계 · ' + x.toks.length + '조각</div>' : ''; }
 function puzStatsHtml() {
     const z = prog().puz;
     if (!z) return '';
@@ -7756,8 +7796,8 @@ function puzStatsHtml() {
     return '<div class="card puz-stats"><b style="font-size:14px">📊 내 퍼즐 기록</b><div class="muted" style="margin:4px 0 8px">푼 수 ' + z.n + ' · 연속 ' + puzStreak() + '일 · 최장 ' + z.bst + '일</div>' +
         '<div class="puz-dist" role="list" aria-label="시도 분포">' + z.dist.map((v, i) => '<div class="pd-row' + (z.last === todayStr() && z.t === i + 1 ? ' now' : '') + '" role="listitem" aria-label="' + (i < 6 ? i + 1 + '번 만에' : '실패') + ' ' + v + '번"><span>' + (i < 6 ? i + 1 : 'X') + '</span><div class="pd-bar"><div style="width:' + Math.max(8, Math.round(v / max * 100)) + '%">' + v + '</div></div></div>').join('') + '</div></div>';
 }
-function puzShare(no, u, tries, rows) {   // 원문은 넣지 않는다(정답을 숨긴 격자만)
-    shareApp('brag_puzzle', '🟩 랭귀지 스타터 소리 퍼즐 ' + CUR.flag + ' #' + no + ' · ' + u + '단계 ' + (tries <= PUZ_TRIES ? tries : 'X') + '/' + PUZ_TRIES + '\n' + rows.join('\n') + '\n같은 단계면 같은 문제예요!');
+function puzShare(no, u, tries, rows, ln) {   // 원문은 넣지 않는다(정답을 숨긴 격자만) · 단계를 다 배우기 전이면 '2단계 3과까지'
+    shareApp('brag_puzzle', '🟩 랭귀지 스타터 소리 퍼즐 ' + CUR.flag + ' #' + no + ' · ' + u + '단계' + (ln != null ? ' ' + ln + '과까지' : '') + ' ' + (tries <= PUZ_TRIES ? tries : 'X') + '/' + PUZ_TRIES + '\n' + rows.join('\n') + '\n같은 레슨까지 배웠다면 같은 문제예요!');
 }
 function puzEndScreen(st) {
     const c = st.c, s = puzSentOf(c), pron = puzPron(c), today = st.mode === 'today';
@@ -7776,7 +7816,7 @@ function puzEndScreen(st) {
     const hear = () => { stopAutoNext(); speak(c.text, 1, c.sp); };   // 다시 듣는 동안 다음 놀이로 넘어가지 않게
     document.getElementById('puzAgainHear').addEventListener('click', hear);
     const sh = document.getElementById('puzShare');
-    if (sh) sh.addEventListener('click', () => { stopAutoNext(); puzShare(st.no, st.u, st.tries, st.rows); });
+    if (sh) sh.addEventListener('click', () => { stopAutoNext(); puzShare(st.no, st.u, st.tries, st.rows, st.ln); });
     document.getElementById('puzPractice').addEventListener('click', () => puzStart('practice'));
     document.getElementById('puzExit').addEventListener('click', () => { resetPlayState(); go('play'); });
     const td = document.getElementById('puzToday');
@@ -7797,13 +7837,13 @@ function puzDoneScreen() {
         '<div class="puz-btns"><button class="btn block tap" id="puzShare">📤 결과 자랑</button><button class="btn block ghost tap" id="puzPractice">🔁 연습판</button></div>' +
         '<div class="muted" style="text-align:center;margin:6px 0 10px">연습판은 몇 번이든 · 자랑과 연속 기록은 오늘 문제만 세요</div>' + puzTomorrowHtml() + puzStatsHtml();
     puzBindBack(null);
-    document.getElementById('puzShare').addEventListener('click', () => puzShare(puzNo(), u, z.t, z.g));
+    document.getElementById('puzShare').addEventListener('click', () => puzShare(puzNo(), u, z.t, z.g, z.u != null ? z.ln : puzLv().ln));
     document.getElementById('puzPractice').addEventListener('click', () => puzStart('practice'));
 }
 registerPlayTile({
-    id: 'puzzle', ico: '🟩', name: '오늘의 퍼즐', view: 'puzzle', xpKind: 'puz',
+    id: 'puzzle', ico: '🟩', name: '오늘의 퍼즐', view: 'puzzle', xpKind: 'puz', ctx: ['short', 'home'],   // 하루 한 문제 · 소리를 들어야 함
     // 1단계 이상 레슨을 통과해야 문제가 생긴다 — 자유 이동이어도(그래야 퀘스트·홈 추천에 풀 수 없는 퍼즐이 오지 않는다)
-    need: () => puzUnit() >= 1 && puzList(puzUnit()).length > 0,
+    need: () => { const lv = puzLv(); return lv.u >= 1 && puzList(lv.u, lv.ln).length > 0; },
     lock: () => puzUnit() < 1 ? '1단계 레슨을 통과하면 열려요' : '레슨을 하나 더 통과하면 열려요',
     status: () => { const z = prog().puz, sv = !puzDone() && puzSaved(); return puzDone() ? (z.t <= PUZ_TRIES ? '✅ ' + z.t + '/' + PUZ_TRIES : '💪 X/' + PUZ_TRIES) + ' · 🔥' + puzStreak() + '일' : sv ? '▶ #' + puzNo() + ' 이어 풀기 · 기회 ' + (PUZ_TRIES - sv.g.length) + '번' : '🆕 #' + puzNo() + ' 오늘 문제'; },
     open: () => { S.puz = null; go('puzzle'); },
@@ -7834,15 +7874,22 @@ function feedGroups() {
 function feedCut(t, n) { const a = Array.from(String(t || '')); return a.length > n ? a.slice(0, n).join('') + '…' : a.join(''); }
 // 카드: 묶음 문장은 공개 전 힌트(메모 앞 20자, 없으면 레슨 제목)
 function feedCard(x, l, cur) {
-    const n = nativeText(x), group = (feedGroups().get(feedNorm(x.ko)) || []).filter(y => y !== n);
-    return { item: x, key: clipId('a', n), sk: srsKeyOf(n, romanText(x)), l, cur, group, hint: group.length ? (x.note ? feedCut(x.note, 20) : l.title) : '' };
+    const n = nativeText(x), gk = feedNorm(x.ko), group = (feedGroups().get(gk) || []).filter(y => y !== n);
+    return { item: x, key: clipId('a', n), sk: srsKeyOf(n, romanText(x)), l, cur, gk, group, hint: group.length ? (x.note ? feedCut(x.note, 20) : l.title) : '' };
+}
+// 같은 뜻 묶음(gk)에서는 1문장만: list 앞에서부터 n개(gs = 이미 쓴 묶음, 고른 것의 묶음을 더한다) — 'こんにちは'를 공개하면 같은 세트의 'こんばんは' 답이 보이지 않게
+function feedTake(list, n, gs) {
+    const out = [];
+    for (const c of list) { if (out.length >= n) break; if (gs.has(c.gk)) continue; gs.add(c.gk); out.push(c); }
+    return out;
 }
 function feedSents(l) { return l && l.unitId >= 1 ? (l.keySentences || []).filter(x => feedOkSent(x) && feedHasClip(nativeText(x))) : []; }
-// 쓸 수 있는 문장: 통과한 레슨 + 지금 레슨(과정 순서, 같은 원문은 한 번). 퀘스트·타일이 자주 부르니 통과 레슨·지금 레슨·녹음 목록이 같으면 그대로 쓴다
+// 쓸 수 있는 문장: 통과한 레슨 + 회화 단계까지 본 지금 레슨(과정 순서, 같은 원문은 한 번) — 아직 배우지 않은 문장은 '새 문장'으로 내지 않는다.
+// 퀘스트·타일이 자주 부르니 통과 레슨·지금 레슨(본 단계)·녹음 목록이 같으면 그대로 쓴다
 const FEED_POOL = { k: '', data: null, v: [] };
 function feedPool() {
-    const rt = resumeTarget(), cur = rt ? ALL[rt.idx] : null, cl = CLIPS[CUR.code];
-    const k = CUR.code + '|' + (rt ? rt.idx : -1) + '|' + !!(cl && cl.ids) + '|' + Object.keys(prog().completed).join(',');
+    const rt = resumeTarget(), cur0 = rt ? ALL[rt.idx] : null, cur = cur0 && feedSitSeen(cur0) ? cur0 : null, cl = CLIPS[CUR.code];
+    const k = CUR.code + '|' + (rt ? rt.idx : -1) + '|' + !!cur + '|' + !!(cl && cl.ids) + '|' + Object.keys(prog().completed).join(',');
     if (FEED_POOL.k === k && FEED_POOL.data === DATA) return FEED_POOL.v;
     const out = [], seen = new Set();
     ALL.forEach(l => { if (isDone(l.id) || l === cur) feedSents(l).forEach(x => { const c = feedCard(x, l, l === cur); if (!seen.has(c.key)) { seen.add(c.key); out.push(c); } }); });
@@ -7850,13 +7897,14 @@ function feedPool() {
     return out;
 }
 function feedOpenOk() { const t = playTile('feed'); return !!t && tileOpen(t); }
-// 열리기까지 더 통과할 레슨 수 — 과정 순서로 하나씩 통과한다고 치고, 통과한 레슨 + 그다음(지금) 레슨의 문장이 FEED_MIN개가 되는 때를 센다(0단계 발음 레슨에는 문장이 없다)
+// 열리기까지 더 통과할 레슨 수 — 과정 순서로 하나씩 통과한다고 치고, 통과한 레슨의 문장이 FEED_MIN개가 되는 때를 센다(0단계 발음 레슨에는 문장이 없다).
+// 지금 레슨의 회화 단계를 보면 그 문장도 쓰므로 약속보다 조금 일찍 열릴 수는 있어도 늦게 열리지는 않는다
 function feedLeft() {
-    const have = new Set(), todo = ALL.filter(l => !isDone(l.id)), d0 = doneCount(), keys = l => feedSents(l).map(x => clipId('a', nativeText(x)));
+    const have = new Set(), todo = ALL.filter(l => !isDone(l.id)), keys = l => feedSents(l).map(x => clipId('a', nativeText(x)));
     ALL.forEach(l => { if (isDone(l.id)) keys(l).forEach(k => have.add(k)); });
     for (let n = 0; n < todo.length; n++) {
-        if (d0 + n >= 1 && new Set(Array.from(have).concat(keys(todo[n]))).size >= FEED_MIN) return Math.max(1, n);
         keys(todo[n]).forEach(k => have.add(k));
+        if (have.size >= FEED_MIN) return n + 1;
     }
     return Math.max(1, todo.length);
 }
@@ -7882,27 +7930,29 @@ function feedSlots(n, size) {
     return best ? best.out : [];
 }
 // 세트 만들기 → [{c, rep: 세트 안에서 몇 번째로 나온 새 문장인지}]
+// 같은 뜻 묶음(ja 'こんにちは'·'こんばんは' …)은 세트에 1문장만 — 복습할 문장이 먼저 자리를 잡고, 새 문장·오래 안 본 문장은 남은 묶음에서
 function feedBuild(st) {
-    const t = todayStr(), p = prog(), fm = p.feed || {}, rnd = hashStr(t + CUR.code + st.no);
+    const t = todayStr(), p = prog(), fm = p.feed || {}, rnd = hashStr(t + CUR.code + st.no), gs = new Set();
     let pool = feedPool();
     if (st.mic) pool = pool.filter(c => !c.group.length);   // 채점 모드: 같은 뜻 묶음은 자기 채점에서만
-    if (st.mode === 'fav') return seededShuffle(pool.filter(c => favOn(c.key)), rnd).slice(0, 10).map(c => ({ c }));
+    if (st.mode === 'fav') return feedTake(seededShuffle(pool.filter(c => favOn(c.key)), rnd), 10, gs).map(c => ({ c }));
     const size = Math.min(10, pool.length * 2), slots = new Array(size).fill(null);
     const srsDue = pool.filter(c => { const s = feedSrs(c); return s && !s.mastered && s.due <= t; }).sort((a, b) => feedSrs(a).box - feedSrs(b).box);
     const fdDue = pool.filter(c => !feedSrs(c) && fm[c.key] && fm[c.key].d <= t).sort((a, b) => fm[a.key].b - fm[b.key].b);
-    const ord = c => !c.cur ? 1 : feedSitSeen(c.l) ? 0 : 2, fresh = pool.filter(c => !feedSrs(c) && !fm[c.key]).sort((a, b) => ord(a) - ord(b));   // 지금 레슨 먼저 — 회화를 아직 안 들었으면 맨 뒤로(같으면 과정 순서)
-    const rev = srsDue.concat(fdDue), news = fresh.slice(0, rev.length ? 2 : 3);
+    const ord = c => !c.cur ? 1 : feedSitSeen(c.l) ? 0 : 2, fresh = pool.filter(c => !feedSrs(c) && !fm[c.key]).sort((a, b) => ord(a) - ord(b));   // 지금 레슨 먼저(같으면 과정 순서)
+    const rev = srsDue.concat(fdDue), want = rev.length ? 2 : 3;
+    const fill0 = feedTake(rev, size - feedSlots(want, size).flat().length, gs), news = feedTake(fresh, want, gs);
     feedSlots(news.length, size).forEach((at, i) => at.forEach((k, j) => { slots[k] = { c: news[i], rep: j }; }));
     const free = slots.filter(x => !x).length, used = new Set(slots.filter(Boolean).map(x => x.c.key));
-    const fill = seededShuffle(rev.slice(0, free), rnd);
+    const fill = seededShuffle(fill0.concat(feedTake(rev, free - fill0.length, gs)), rnd);   // 새 문장이 모자라 빈 칸이 늘었으면 복습할 문장을 더
     fill.forEach(c => used.add(c.key));
-    const old = pool.filter(c => !used.has(c.key) && !feedSrs(c) && fm[c.key]).sort((a, b) => cmpStr(fm[a.key].d, fm[b.key].d));   // 오래 안 본 문장
+    const old = feedTake(pool.filter(c => !used.has(c.key) && !feedSrs(c) && fm[c.key]).sort((a, b) => cmpStr(fm[a.key].d, fm[b.key].d)), free - fill.length, gs);   // 오래 안 본 문장
     const more = fill.concat(old);
     let k = 0;
     return slots.map(x => x || (more[k] ? { c: more[k++] } : null)).filter(Boolean);   // 그래도 비면 세트를 짧게
 }
 // 맛보기: 통과 레슨이 0개면 1단계 첫 레슨으로 3장(XP·기록 없음)
-function feedTaste() { const l = ALL.find(x => x.unitId >= 1); return feedSents(l).slice(0, 3).map(x => ({ c: feedCard(x, l, true) })); }
+function feedTaste() { const l = ALL.find(x => x.unitId >= 1); return feedTake(feedSents(l).map(x => feedCard(x, l, true)), 3, new Set()).map(c => ({ c })); }
 function feedNew(mode) {
     const st = { mode, no: ++FEED_UI.no, i: 0, vi: 0, rev: false, grades: [], ok: 0, n: 0, rv: 0, done: new Set(), combo: 0, fever: 0, feverXp: 0, sum: false, tok: 0, xRun: 0, slowAsk: false, xp0: prog().xp || 0 };
     st.mic = mode !== 'taste' && FEED_UI.mic && !quietNow();
@@ -7942,7 +7992,7 @@ function feedDraw(st, anim) {
     const sub = st.sum ? (st.mode === 'taste' ? '맛보기 끝' : '세트 끝') : !n ? '' : (st.mode === 'taste' ? '👀 맛보기 ' : st.mode === 'fav' ? '♥ 내 표현장 ' : '') + (st.vi + 1) + '/' + n + (st.ok ? ' · 😎 ' + st.ok : '');
     let h = '<div class="feed" id="feedBox" style="height:' + feedH() + 'px"><div class="feed-top"><button class="back-btn tap44" id="feedBack" aria-label="' + (st.sum || !st.n ? '놀이 탭으로' : '세트 끝내기') + '">←</button>' +
         '<div class="ft-t"><b>💬 이럴 때 뭐라고?</b><span>' + esc(sub) + '</span></div>' +
-        (st.mode === 'taste' ? '' : '<button class="feed-tg" id="feedMic" aria-pressed="' + !!st.mic + '" aria-label="🎤 채점 모드' + (quiet ? ' — 조용 모드에서는 쓸 수 없어요' : '') + '"' + (quiet ? ' disabled' : '') + '>🎤</button><button class="feed-tg" id="feedOpt" aria-label="피드 설정">⚙</button>') + '</div>';
+        (st.mode === 'taste' ? '' : '<button class="feed-tg" id="feedMic" aria-pressed="' + !!st.mic + '" aria-label="🎤 채점 모드' + (quiet ? ' — 조용 모드에서는 쓸 수 없어요' : '') + '"' + (quiet ? ' disabled' : '') + '>🎤</button><button class="feed-tg" id="feedOpt" aria-label="이럴 때 뭐라고? 설정">⚙</button>') + '</div>';
     const kb = $main.contains(document.activeElement);   // 키보드·스크린리더로 하던 중이면 다시 그린 뒤 주 버튼으로 포커스
     h += st.sum ? feedSumHtml(st) : !n ? '<div class="feed-stage"><div class="feed-card feed-empty">' + (st.mode === 'fav' ? '♥ 내 표현장이 비어 있어요' : '지금은 낼 문장이 없어요') + '<button class="btn block tap" id="feedAll" style="margin-top:12px">💬 처음부터</button></div></div>' : feedCardHtml(st, anim);
     $main.innerHTML = h + '</div>';
@@ -7965,11 +8015,11 @@ function feedCardHtml(st, anim) {
                     : '<div class="fc-tap" id="feedTap">👆 준비되면 탭</div>');
         if (st.slowAsk) h += '<div class="feed-ask" role="note">🐢 한 단계 천천히?<button class="btn small gray tap" id="feedSlowYes">천천히</button><button class="btn small ghost tap" id="feedSlowNo">괜찮아요</button></div>';
     } else {
-        const note = x.note || (l.tips && l.tips[0]) || l.goal;
+        const note = x.note || (l.tips && l.tips[0]) || l.goal, inSet = new Set(st.set.map(e => nativeText(e.c.item))), also = c.group.filter(n => !inSet.has(n));   // 같은 세트에 나올 문장은 답을 미리 알려 주지 않게 뺀다
         h += '<div class="fc-ans"><div class="fc-ans-row"><div class="native fc-native' + (nativeText(x).length > 60 ? ' long' : '') + '">' + nesc(nativeText(x)) + '</div><button class="play-btn fc-play" id="feedPlay" aria-label="다시 듣기">🔊</button></div>' +
             romanLine(x) + pronLine(x.koPron, l.unitId, x) + '</div>' +
             (note ? '<div class="fc-note">💬 ' + esc(note) + '</div>' : '') +
-            (c.group.length ? '<div class="fc-also">이렇게도 말해요: <span class="native">' + c.group.slice(0, 2).map(nesc).join(' · ') + '</span></div>' : '') +
+            (also.length ? '<div class="fc-also">이렇게도 말해요: <span class="native">' + also.slice(0, 2).map(nesc).join(' · ') + '</span></div>' : '') +
             (past ? '<div class="fc-graded">' + FEED_G[st.grades[k]] + '</div>' : '');
     }
     h += '</div></div><div class="feed-btns">';
@@ -8119,10 +8169,11 @@ function feedApply(st, k, g) {
                 if (p.feed && p.feed[c.key]) { p.feed = Object.assign({}, p.feed); delete p.feed[c.key]; }
             }
         }
-        if (ok) { const dl = dayLog(); dl.feedOk = (dl.feedOk || 0) + 1; dexAdd(c.item); softXp('feed', 1, '💬 즉답'); }
+        if (ok) { const dl = dayLog(); dl.feedOk = (dl.feedOk || 0) + 1; dexAdd(c.item); softXp('feed', 1, '💬 이럴 때 뭐라고?'); }
         logActivity('feed');   // dl.feed +1 · 저장 · 연속 기록 · 퀘스트
         if (store.settings.feedLv && !(st.mic && !c.group.length)) { st.xRun = g === 'fail' ? st.xRun + 1 : 0; if (st.xRun >= 3) { st.slowAsk = true; st.xRun = 0; } }   // 스피드 모드에서 ✕ 3장 연속 → 천천히 제안
     }
+    st.noPiece = !(st.mic && !c.group.length);   // 🧩 상자 조각은 🎤 채점으로 맞힌 콤보에서만 — 스스로 채점한 ○는 피버 XP만(넘기기만으로 상자가 생기지 않게)
     return feverTick(st, ok);
 }
 function feedFinish(st, quit) {
@@ -8131,10 +8182,11 @@ function feedFinish(st, quit) {
     clearTimeout(st.timer); stopSpeak();
     if (st.mode !== 'taste') {
         const full = !quit && st.i >= st.set.length && st.n > 0;
-        if (full) { if (st.n >= FEED_MIN) softXp('feed', 3, '💬 세트 완주'); celebrate(); sfx('level'); if (st.n >= 5 && st.ok / st.n >= 0.7) FEED_UI.good++; }   // 완주 보너스는 6장 이상 세트만(1장짜리 ♥ 세트를 되풀이해 모으지 않게)
+        st.low = full && st.ok / st.n < 0.5;   // ○가 절반이 안 되면 축하 대신 격려(완주 XP는 그대로)
+        if (full) { if (st.n >= FEED_MIN) softXp('feed', 3, '💬 세트 완주'); if (!st.low) { celebrate(); sfx('level'); } if (st.n >= 5 && st.ok / st.n >= 0.7) FEED_UI.good++; }   // 완주 보너스는 6장 이상 세트만(1장짜리 ♥ 세트를 되풀이해 모으지 않게)
         st.feverGive = feverPay(st);
         st.xpGot = (prog().xp || 0) - st.xp0;
-        st.tail = playEnd({ n: st.n, ok: st.ok, quit, fever: st.feverGive, noAuto: true });   // 계속 넘기면 다음 세트라 다음 놀이는 자동 시작 없이 버튼만
+        st.tail = playEnd({ n: st.n, ok: st.ok, quit, fever: st.feverGive, noAuto: true, skip: ['lesson'] });   // 계속 넘기면 다음 세트라 자동 시작 없이 버튼만 · 다음 레슨은 요약의 📖 버튼이 맡는다
     }
     feedDraw(st);
 }
@@ -8153,7 +8205,7 @@ function feedNextN(rt) {
 // 100일 표현 챌린지: 즉답 10장을 한 날 수(따로 저장하지 않고 하루 기록에서 센다)
 function feedStampHtml() {
     const k = Math.min(100, Object.values(prog().daily || {}).filter(d => d && (d.feed || 0) >= 10).length);
-    return '<div class="feed-stamp"><b>📅 100일 표현 챌린지 ' + k + '/100</b><span class="muted">즉답 10장을 한 날마다 도장 1개</span>' +
+    return '<div class="feed-stamp"><b>📅 100일 표현 챌린지 ' + k + '/100</b><span class="muted">하루 10장을 한 날마다 도장 1개</span>' +
         '<div class="fst-grid" aria-hidden="true">' + Array.from({ length: 100 }, (_, i) => '<i' + (i < k ? ' class="on"' : '') + '></i>').join('') + '</div></div>';
 }
 function feedSumHtml(st) {
@@ -8162,13 +8214,14 @@ function feedSumHtml(st) {
     if (st.mode === 'taste') return h + '<div class="fs-hero">👀 맛보기 끝!</div><div class="muted" style="margin-bottom:12px">레슨 ' + feedLeft() + '개를 통과하면 「이럴 때 뭐라고?」가 열려요 — 배운 문장이 여기로 모여요</div>' +
         (rt ? '<button class="btn block tap" id="feedLesson">📖 레슨 시작하기</button>' : '') + '</div></div>';
     const favN = feedPool().filter(c => favOn(c.key)).length, nx = feedNextN(rt), lv = store.settings.feedLv || 0;
-    h += '<div class="fs-hero">' + (st.quit ? '여기까지!' : '🎉 세트 끝!') + ' 😎 ' + st.ok + '/' + st.n + (st.xpGot > 0 ? ' · ⭐ +' + st.xpGot + ' XP' : '') + '</div>' +
+    h += '<div class="fs-hero">' + (st.quit ? '여기까지!' : st.low ? '세트 끝!' : '🎉 세트 끝!') + ' 😎 ' + st.ok + '/' + st.n + (st.xpGot > 0 ? ' · ⭐ +' + st.xpGot + ' XP' : '') + '</div>' +
+        (st.low ? '<div class="muted">괜찮아요, 못한 문장은 복습 카드로 다시 만나요</div>' : '') +
         (st.rv ? '<div class="muted">🃏 복습 카드 ' + st.rv + '장도 함께 했어요(오늘 복습 탭에는 다시 안 나와요)</div>' : '') +
         (!lv && FEED_UI.good >= 2 && !FEED_UI.askFast ? '<div class="feed-ask" role="note">⚡ 스피드 모드 켜 볼까요?<button class="btn small tap" id="feedFastYes">켜기</button><button class="btn small ghost tap" id="feedFastNo">괜찮아요</button></div>' : '') +
         '<button class="btn block fb-main" id="feedMore">▶ 다음 세트 ↑</button>' +
         (rt ? '<button class="btn block ghost tap" id="feedLesson">' + (nx ? '📖 다음 레슨을 하면 새 문장 ' + nx + '개 추가' : '📖 다음 레슨 이어 하기') + '</button>' : '') +
         (favN && st.mode !== 'fav' ? '<button class="btn block ghost tap" id="feedFavSet">♥ 내 표현장 ' + favN + '</button>' : '') +
-        feedStampHtml() + '<div id="feedTail"></div>';
+        '<div id="feedTail"></div>' + feedStampHtml();   // 도장판(10×10)은 맨 아래 — 이번 판 요약·🎁 상자 열기가 먼저 보이게
     return h + '</div></div>';
 }
 function feedBindSum(st) {
@@ -8194,7 +8247,7 @@ function feedFavToggle(st) {
 function feedOptions(st) {
     const html = () => {
         const lv = store.settings.feedLv || 0, ko = !!store.settings.feedKo;
-        return '<div class="feed-opt"><div class="sheet-head"><b>⚙ 즉답 피드 설정</b><button class="sheet-close" data-close-overlay aria-label="닫기">✕</button></div>' +
+        return '<div class="feed-opt"><div class="sheet-head"><b>⚙ 이럴 때 뭐라고? 설정</b><button class="sheet-close" data-close-overlay aria-label="닫기">✕</button></div>' +
             '<div class="section-title">⚡ 스피드 모드</div><div class="muted">끄면 준비될 때 탭해서 정답을 봐요. 켜면 정해진 시간 뒤 저절로 열려요(2단계가 더 빨라요)</div>' +
             '<div class="seg" role="group" aria-label="스피드 모드">' + ['끔', '1단계', '2단계'].map((t, i) => '<button data-flv="' + i + '" aria-pressed="' + (lv === i) + '">' + t + '</button>').join('') + '</div>' +
             '<div class="section-title">🔊 한국어도 읽어 주기</div><div class="muted">상황 문장을 한국어로 먼저 들려줘요(기기에 한국어 목소리가 없으면 건너뛰어요)</div>' +
@@ -8214,7 +8267,7 @@ function feedOptions(st) {
 function feedMoreHtml() { return feedOpenOk() || (!doneCount() && feedTaste().length) ? '<button class="guide-banner feed-more" data-feed-more>💬 한 장 더? 이럴 때 뭐라고? →</button>' : ''; }
 document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-feed-more]'); if (b && CUR && DATA) { resetTransient(); feedOpen(); } });
 registerPlayTile({
-    id: 'feed', ico: '💬', name: '이럴 때 뭐라고?', view: 'feed', xpKind: 'feed',
+    id: 'feed', ico: '💬', name: '이럴 때 뭐라고?', view: 'feed', xpKind: 'feed', ctx: ['home', 'move', 'short'],   // 집에서는 🎤 채점 모드로 소리 내어 · 밖에서는 속으로
     need: () => feedPool().length >= FEED_MIN,
     lock: () => '레슨 ' + feedLeft() + '개 ' + (doneCount() ? '더 ' : '') + '통과하면 열려요', lockAll: true,   // 레슨 수 조건도 이 글이 맡는다(0단계 발음 레슨에는 문장이 없어 '1개'로 약속하지 않게)
     status: () => { const t = todayStr(), n = feedPool().filter(c => feedDue(c, t)).length; return '오늘 ' + (dayLog().feed || 0) + '장' + (n ? ' · 복습 ' + n : ''); },
@@ -8453,7 +8506,7 @@ function weekPlayLine(days, all) {
     let stars = 0;
     (all ? Object.values(store.byLang) : [prog()]).forEach(p => Object.values((p && p.mission) || {}).forEach(m => { if (m.l >= from) stars += m.s || 0; }));
     if (!feed && !stars) return '';
-    return '<div class="muted" style="margin-top:2px">💬 즉답 ' + feed + '장 · 🗺️ 미션 ★' + stars + '</div>';
+    return '<div class="muted" style="margin-top:2px">💬 이럴 때 뭐라고? ' + feed + '장 · 🗺️ 미션 ★' + stars + '</div>';
 }
 function histLongestStreak(dates) {
     if (!dates.size) return 0;
@@ -9719,7 +9772,8 @@ function handleBack() {
     if (S.view === 'skipTest') { S.skip = null; S.quiz = null; go('home'); return true; }
     if (S.view === 'review' && (S.redo || S.match || S.review)) { S.redo = null; S.match = null; S.review = null; S.quiz = null; go('review'); return true; }
     if (S.view === 'trainer' && S.trainer) { S.trainer = null; go('trainer'); return true; }
-    if (DATA && S.view === 'feed') { feedBack(); return true; }   // 💬 즉답 피드: 세트 도중이면 요약 카드로, 요약에서는 놀이 탭으로
+    if (DATA && S.view === 'feed') { feedBack(); return true; }   // 💬 이럴 때 뭐라고?: 세트 도중이면 요약 카드로, 요약에서는 놀이 탭으로
+    if (DATA && S.view === 'puzzle') { puzLeave(S.puz); return true; }   // 🟩 퍼즐: ← 버튼과 같은 안내(오늘 문제는 묻지 않음)
     // 놀이 화면: 판 도중이면 물어본 뒤 놀이 탭으로
     if (DATA && S.view !== 'play' && PLAY_VIEWS.includes(S.view)) {
         if (PLAY.cur && !confirm('그만할까요? 지금 판 기록은 남지 않아요')) return true;
