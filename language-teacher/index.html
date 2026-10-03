@@ -7811,10 +7811,15 @@ function feedCard(x, l, cur) {
     return { item: x, key: clipId('a', n), sk: srsKeyOf(n, romanText(x)), l, cur, group, hint: group.length ? (x.note ? feedCut(x.note, 20) : l.title) : '' };
 }
 function feedSents(l) { return l && l.unitId >= 1 ? (l.keySentences || []).filter(x => feedOkSent(x) && feedHasClip(nativeText(x))) : []; }
-// 쓸 수 있는 문장: 통과한 레슨 + 지금 레슨(과정 순서, 같은 원문은 한 번)
+// 쓸 수 있는 문장: 통과한 레슨 + 지금 레슨(과정 순서, 같은 원문은 한 번). 퀘스트·타일이 자주 부르니 통과 레슨·지금 레슨·녹음 목록이 같으면 그대로 쓴다
+const FEED_POOL = { k: '', data: null, v: [] };
 function feedPool() {
-    const rt = resumeTarget(), cur = rt ? ALL[rt.idx] : null, out = [], seen = new Set();
+    const rt = resumeTarget(), cur = rt ? ALL[rt.idx] : null, cl = CLIPS[CUR.code];
+    const k = CUR.code + '|' + (rt ? rt.idx : -1) + '|' + !!(cl && cl.ids) + '|' + Object.keys(prog().completed).join(',');
+    if (FEED_POOL.k === k && FEED_POOL.data === DATA) return FEED_POOL.v;
+    const out = [], seen = new Set();
     ALL.forEach(l => { if (isDone(l.id) || l === cur) feedSents(l).forEach(x => { const c = feedCard(x, l, l === cur); if (!seen.has(c.key)) { seen.add(c.key); out.push(c); } }); });
+    Object.assign(FEED_POOL, { k, data: DATA, v: out });
     return out;
 }
 function feedOpenOk() { const t = playTile('feed'); return !!t && tileOpen(t); }
@@ -7882,9 +7887,12 @@ function feedDraw(st, anim) {
     let h = '<div class="feed" id="feedBox" style="height:' + feedH() + 'px"><div class="feed-top"><button class="back-btn tap44" id="feedBack" aria-label="' + (st.sum || !n ? '놀이 탭으로' : '세트 끝내기') + '">←</button>' +
         '<div class="ft-t"><b>💬 이럴 때 뭐라고?</b><span>' + esc(sub) + '</span></div>' +
         (st.mode === 'taste' ? '' : '<button class="feed-tg" id="feedMic" aria-pressed="' + !!st.mic + '" aria-label="🎤 채점 모드' + (quiet ? ' — 조용 모드에서는 쓸 수 없어요' : '') + '"' + (quiet ? ' disabled' : '') + '>🎤</button><button class="feed-tg" id="feedOpt" aria-label="피드 설정">⚙</button>') + '</div>';
+    const kb = $main.contains(document.activeElement);   // 키보드·스크린리더로 하던 중이면 다시 그린 뒤 주 버튼으로 포커스
     h += st.sum ? feedSumHtml(st) : !n ? '<div class="feed-stage"><div class="feed-card feed-empty">' + (st.mode === 'fav' ? '♥ 내 표현장이 비어 있어요' : '지금은 낼 문장이 없어요') + '<button class="btn block tap" id="feedAll" style="margin-top:12px">💬 처음부터</button></div></div>' : feedCardHtml(st, anim);
     $main.innerHTML = h + '</div>';
     feedBind(st);
+    const f = kb && $main.querySelector('#feedReveal, #feedSay, #feedFwd, [data-fg="ok"], #feedMore, #feedLesson, #feedAll');
+    if (f) f.focus({ preventScroll: true });
 }
 function feedCardHtml(st, anim) {
     const k = st.vi, c = st.set[k].c, x = c.item, l = c.l, past = k < st.i, rev = past || st.rev, mic = !past && st.mic && !c.group.length;
@@ -7960,7 +7968,7 @@ function feedArm(st) {
         const r = document.getElementById('feedRing'), t = document.getElementById('feedCd');
         if (r) { r.style.animationDuration = ms + 'ms'; r.classList.add('run'); }
         if (t) t.textContent = '⚡ ' + (ms / 1000).toFixed(1) + '초 뒤 공개 — 탭해도 돼요';
-        st.timer = setTimeout(() => { if (S.feed === st && st.tok === tok && S.view === 'feed' && !document.getElementById('modalRoot').innerHTML) feedReveal(st); }, ms);
+        st.timer = setTimeout(() => { if (S.feed === st && st.tok === tok && S.view === 'feed' && !document.hidden && !document.getElementById('modalRoot').innerHTML) feedReveal(st); }, ms);   // 화면을 숨겼으면 열지 않는다(돌아와서 탭)
     };
     if (store.settings.feedKo) speakKo(ko, cd); else cd();
     feedPre(st, st.i);
@@ -8074,7 +8082,7 @@ function feedFinish(st, quit) {
 }
 function feedBack() {
     const st = S.feed;
-    if (st && !st.sum && st.set.length) { feedFinish(st, true); return; }   // 세트 도중 → 요약 카드
+    if (st && !st.sum && st.set && st.set.length) { feedFinish(st, true); return; }   // 세트 도중 → 요약 카드
     resetPlayState(); go('play');
 }
 // 다음 레슨을 하면 피드에 더해질 새 문장 수(지금 레슨 문장은 이미 피드에 있으니 그 뒤 레슨부터)
