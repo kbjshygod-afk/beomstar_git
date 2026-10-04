@@ -7354,7 +7354,7 @@ const PLAY_HIST = [
     { k: 'mission', ico: '🗺️', t: n => '생존 미션 ' + n + '개' },
     { k: 'blankSong', ico: '✏️', t: n => '빈칸 듣기 ' + n + '판' },
     { k: 'shadow', ico: '🗣', t: n => '따라 하기 ' + n + '문장' },
-    { k: 'radio', ico: '📻', t: n => '라디오 ' + n + '회차' },
+    { k: 'radio', ico: '📻', t: n => '라디오 ' + n + '편' },   // 개수는 '편'('N회차'는 제목의 순서)
     { k: 'ls', ico: '🎧', t: n => '귀 시간 ' + Math.round(n / 60) + '분', min: 60 },
 ];
 
@@ -10768,8 +10768,8 @@ var RADIO = { el: null, url: '', ep: null, code: '', ch: '', on: false, last: 0,
 const RADIO_SR = 16000, RADIO_LENS = [5, 10, 15], RADIO_SLEEPS = [10, 20, 30], RADIO_LAST_KEY = 'lang_starter_radio';
 const RADIO_AUTO_MAX = 2, RADIO_GIVEUP = 5000;   // 화면을 켠 채 손대지 않으면 2회차까지만 이어 튼다(잠들기를 켰으면 그 시각까지) · 라디오 녹음 받기 시한(멈춘 망에서 일꾼을 오래 막지 않게)
 const RADIO_CH = {
-    rep: { ico: '🔁', name: '문장 반복', sub: '화면 꺼도 OK', desc: '배운 문장을 두 번씩 들려줘요(외국어만) · 들리는 대로 속으로 따라 해요' },
-    book: { ico: '📖', name: '이야기', sub: '화면 꺼도 OK', desc: '읽은 이야기를 통째로 → 한 문장씩 두 번 → 다시 통째로 들려줘요' },
+    rep: { ico: '🔁', name: '문장 반복', sub: '화면 꺼도 돼요', desc: '배운 문장을 두 번씩 들려줘요(외국어만) · 들리는 대로 속으로 따라 해요' },
+    book: { ico: '📖', name: '이야기', sub: '화면 꺼도 돼요', desc: '읽은 이야기를 통째로 → 한 문장씩 두 번 → 다시 통째로 들려줘요' },
     say: { ico: '📱', name: '먼저 말해 보기', sub: '📱 화면 켜고', desc: '📱 화면 켜고 · 한국어 뜻을 듣고 삐 소리 뒤에 먼저 말해 본 다음 원어민 소리로 확인해요', live: true },
 };
 const RADIO_PER_CHAR = { zh: 0.19, ja: 0.095 };   // 녹음 길이 어림(초/글자, 실제 녹음으로 잼) — 나머지 언어 0.055
@@ -10777,6 +10777,7 @@ function radioLen() { return RADIO_LENS.includes(store.settings.radioLen) ? stor
 function radioEst(text) { return Math.max(0.8, Array.from(String(text || '')).length * (RADIO_PER_CHAR[CUR.code] || 0.055)) + 0.25; }
 function radioRec() { const p = prog(); if (!isObj(p.radio)) p.radio = { st: {}, ep: {} }; if (!isObj(p.radio.st)) p.radio.st = {}; if (!isObj(p.radio.ep)) p.radio.ep = {}; return p.radio; }
 function radioCanFile() { return clipsReady() && !!(window.OfflineAudioContext || window.webkitOfflineAudioContext); }
+function radioChSub(c) { return c.live || !radioCanFile() ? '📱 화면 켜고' : c.sub; }   // 자연 음성을 끄면(기기 음성) 회차 파일을 못 만들어 화면을 켜 둬야 한다
 // 마지막에 들은 채널(기기마다 · 홈 '🎧 이어 듣기'용)
 function radioLastGet() { if (RADIO.ch && RADIO.code === CUR.code) return RADIO.ch; try { const m = JSON.parse(localStorage.getItem(RADIO_LAST_KEY) || '{}'); return RADIO_CH[m[CUR.code]] ? m[CUR.code] : ''; } catch (e) { return ''; } }
 function radioLastSet(ch) { try { const m = JSON.parse(localStorage.getItem(RADIO_LAST_KEY) || '{}'); m[CUR.code] = ch; localStorage.setItem(RADIO_LAST_KEY, JSON.stringify(m)); } catch (e) { } }
@@ -10785,12 +10786,13 @@ function radioItemOf(c) { const x = { ko: c.ko || '', koPron: c.koPron || '' }; 
 /* ── 재료 고르기 ── */
 // 오늘의 문장 → [{item, nw}] · 새 문장 6(지금 레슨 근처 핵심 문장 중 복습함에 없는 것) + 복습 24(문장 카드를 복습일 가까운 순 → 모자라면 최근 통과 레슨 핵심 문장)
 // 새 문장은 5문장마다 하나씩 섞는다. 파일로 만들 때는 녹음이 있는 문장만
-function radioSents() {
+// learned: 📱 먼저 말해 보기 — 한국어 뜻만 듣고 먼저 말하니 새 문장도 통과한 레슨에서만(배운 적 없는 문장은 맞힐 수 없다)
+function radioSents(learned) {
     const p = prog(), ix = playIndex(), seen = new Set(), file = clipsReady();
     const ok = x => { const n = nativeText(x); return !!n && feedOkSent(x) && !seen.has(n) && (!file || !!clipFor(n)); };
     const fresh = [], rev = [];
     const rt = resumeTarget(), cur = rt ? rt.idx : ALL.length - 1;
-    [0, -1, 1, -2, -3].forEach(d => { const l = ALL[cur + d]; (l && l.keySentences || []).forEach(x => { if (fresh.length < 6 && ok(x) && !p.srs[srsKeyOf(nativeText(x), romanText(x))]) { seen.add(nativeText(x)); fresh.push({ item: x, nw: true }); } }); });
+    [0, -1, 1, -2, -3].forEach(d => { const l = ALL[cur + d]; if (l && learned && !isDone(l.id)) return; (l && l.keySentences || []).forEach(x => { if (fresh.length < 6 && ok(x) && !p.srs[srsKeyOf(nativeText(x), romanText(x))]) { seen.add(nativeText(x)); fresh.push({ item: x, nw: true }); } }); });
     Object.values(p.srs).filter(c => c.kind === 'sent' && !c.mastered && c.native).sort((a, b) => cmpStr(a.due, b.due) || a.box - b.box).forEach(c => {
         if (rev.length >= 24) return;
         const e = ix.sent.get(clipId('a', c.native)), x = e ? e.item : radioItemOf(c);
@@ -10813,6 +10815,8 @@ function radioSegsRep(x) { const n = nativeText(x); return [{ t: 'clip', text: n
 function radioSegsSay(x) { const n = nativeText(x); return [{ t: 'ko', text: shortKo(x.ko || '') }, { t: 'beep' }, { t: 'gap', ms: Math.max(2500, Math.round(radioEst(n) * 1500)) }, { t: 'clip', text: n, rate: 1 }, { t: 'gap', ms: 600 }, { t: 'clip', text: n, rate: 0.9 }]; }
 // 회차 번호: 오늘 이 채널에서 끝까지 들은 회차 수 + 1
 function radioEpNo(ch) { const ep = radioRec().ep, d = todayStr().replace(/-/g, ''); let n = 1; while (ep[ch + ':' + d + '#' + n] && n < 99) n++; return n; }
+// 🔁·📱 회차 제목: 'N회차'는 순서(번호)에만 — 아래 '오늘 반복 N회'·이어 들은 'N편'과 헷갈리지 않게
+function radioSentTitle(ch, no, cnt) { return RADIO_CH[ch].ico + ' ' + RADIO_CH[ch].name + ' ' + no + '회차 · 문장 ' + cnt + '개'; }
 // 📖 회차 제목: 첫 이야기 이름(+ 외 N편)
 function radioBookTitle(ids) { const ss = ids.map(id => STORIES.find(s => s.id === id)).filter(Boolean); return ss.length ? '📖 ' + (ss[0].emoji ? ss[0].emoji + ' ' : '') + ss[0].title + (ss.length > 1 ? ' 외 ' + (ss.length - 1) + '편' : '') : '📖 ' + RADIO_CH.book.name; }
 // 회차 계획 → {id, ch, title, segs, units, len, sids, gEst} | null(재료 없음). 길이는 녹음 길이 어림으로 len분까지 채운다
@@ -10840,7 +10844,7 @@ function radioPlan(ch, len) {
         }
         return { id: ch + ':' + todayStr().replace(/-/g, '') + '#' + n, ch, title: radioBookTitle(sids), segs, units, len, sids, gEst };
     } else {
-        const list = radioSents();
+        const list = radioSents(ch === 'say');
         if (!list.length) return null;
         const say = ch === 'say', start = ((n - 1) * 7) % list.length;   // 같은 날 다음 회차는 조금 뒤 문장부터
         for (let k = 0; est < target && k < list.length * (say ? 2 : 6); k++) {   // 문장이 적으면 회차가 짧아진다(한 문장을 너무 많이 되풀이하지 않게)
@@ -10848,9 +10852,9 @@ function radioPlan(ch, len) {
             put(say ? radioSegsSay(x.item).concat({ t: 'gap', ms: 1200 }) : radioSegsRep(x.item), { item: x.item, nw: x.nw });
             est += say ? radioEst(nt) * 3.4 + Array.from(shortKo(x.item.ko || '')).length * 0.18 + 5 : radioEst(nt) * 2 + 3.5;
         }
-        title = RADIO_CH[ch].ico + ' ' + RADIO_CH[ch].name + ' ' + n + '회차 · 문장 ' + Math.min(list.length, units.length) + '개';   // '회차'(회차 번호) — 아래 '오늘 반복 N회'와 헷갈리지 않게
+        title = radioSentTitle(ch, n, Math.min(list.length, units.length));
     }
-    return { id: ch + ':' + todayStr().replace(/-/g, '') + '#' + n, ch, title, segs, units, len };
+    return { id: ch + ':' + todayStr().replace(/-/g, '') + '#' + n, ch, title, segs, units, len, no: n };
 }
 
 /* ── 회차 만들기(WAV 한 파일) ── */
@@ -11001,8 +11005,8 @@ async function radioStart(ch, auto) {
     RADIO.prog = null;
     if (!r) { radioGoLive(plan, why); return; }
     const ep = Object.assign(plan, { mode: 'file', dur: r.dur, marks: r.marks, segs: r.segs, miss: r.miss, url: URL.createObjectURL(r.blob) });
-    if (ch === 'book') ep.title = radioBookTitle(Array.from(new Set(r.segs.map(x => x.g))));   // 잘려 나간 이야기는 제목에서도 뺀다
     ep.ulist = radioUnits(ep);
+    ep.title = ch === 'book' ? radioBookTitle(Array.from(new Set(r.segs.map(x => x.g)))) : radioSentTitle(ch, ep.no, new Set(ep.ulist.map(x => nativeText(x.item))).size);   // 잘려 나간 이야기·못 받은 문장은 제목(잠금 화면 제목도)에서 뺀다
     RADIO.ep = ep; RADIO.url = ep.url;
     if (r.miss) { RADIO.msg = '📶 받지 못한 문장은 빼고 받은 것만으로 ' + Math.max(1, Math.round(r.dur / 60)) + '분'; RADIO.warn = true; }
     const a = radioEl();
@@ -11038,6 +11042,7 @@ function radioResume() {
     if (!radioMine()) return;
     if (!RADIO.ms) radioMedia(ep);   // 잠금 화면 단추는 라디오를 트는 동안만(다른 화면으로 가면 radioAway가 거둔다)
     try { a.volume = 1; } catch (e) { }
+    a.defaultPlaybackRate = a.playbackRate = curRate();   // 멈춘 사이 설정에서 바꾼 말하기 속도도 따른다
     RADIO.on = true; RADIO.last = a.currentTime;
     const p = a.play();
     if (p && p.catch) p.catch(() => { RADIO.on = false; RADIO.msg = '▶를 눌러 시작해요'; radioDraw(); });   // 자동 재생이 막힌 기기
@@ -11075,24 +11080,26 @@ function radioPlayTap() { RADIO.slept = false; RADIO.autoN = 0; if (RADIO.ep && 
 function radioUnitAt(t) { const L = (RADIO.ep && RADIO.ep.ulist) || []; for (let j = L.length - 1; j >= 0; j--) if (L[j].t0 <= t + 0.02) return L[j]; return L[0] || null; }   // 0.02: 읽어 온 currentTime이 구간 시작보다 조금 작게 나오는 기기
 function radioUnitOf(pos) { const L = (RADIO.ep && RADIO.ep.ulist) || []; return L.find(x => pos <= x.s1) || L[L.length - 1] || null; }
 // ⏭ 다음 구간 · ⏮ 지금 구간 처음(시작한 지 1.5초 안이면 앞 구간) — ⏮로 다시 들은 문장만 복습함에(내일)
+// 끝난 회차: ⏭는 할 일이 없고, ⏮는 그 회차를 다시 열어 마지막 문장부터 들려준다(보상·기록은 ep.paid로 처음 끝났을 때 한 번만)
 function radioSkip(dir) {
     const ep = RADIO.ep;
-    if (!ep) return;
+    if (!ep || (ep.over && dir > 0)) return;
     const L = ep.ulist, live = ep.mode === 'live';
     if (!live && !radioMine()) return;
     RADIO.autoN = 0;   // 손댄 것 — 자동 이어 틀기 수를 되돌린다
     const a = RADIO.el, t = live ? 0 : a.currentTime;
-    let j = L.indexOf(live ? radioUnitOf(RADIO.pos) : radioUnitAt(t));
+    let j = ep.over ? L.length - 1 : L.indexOf(live ? radioUnitOf(RADIO.pos) : radioUnitAt(t));
     if (j < 0) return;
-    const since = live ? (Date.now() - RADIO.uAt) / 1000 : t - L[j].t0;
+    const since = ep.over ? 99 : live ? (Date.now() - RADIO.uAt) / 1000 : t - L[j].t0;
     if (dir > 0) j++;
     else { if (j > 0 && since < 1.5) j--; radioAgain(L[j]); }
+    if (ep.over) { ep.over = false; if (live) RADIO.pos = L[j].s0; else RADIO.last = a.currentTime = L[j].t0; radioResume(); return; }
     if (live) { if (j >= L.length) { radioLiveStop(); radioLiveEnd(ep); return; } radioLiveRun(ep, L[j].s0); return; }
     const to = j < L.length ? L[j].t0 : ep.dur;
     RADIO.last = to; a.currentTime = to;
     radioDrawPos();
 }
-function radioSeek(d) { if (!radioMine()) return; const a = RADIO.el, to = Math.max(0, Math.min(RADIO.ep.dur, a.currentTime + d)); RADIO.last = to; a.currentTime = to; radioDrawPos(); }
+function radioSeek(d) { if (!radioMine() || RADIO.ep.over) return; const a = RADIO.el, to = Math.max(0, Math.min(RADIO.ep.dur, a.currentTime + d)); RADIO.last = to; a.currentTime = to; radioDrawPos(); }
 function radioAgain(x) {
     if (!x || !x.item || x.again) return;
     x.again = true;
@@ -11136,17 +11143,19 @@ function radioEpDone(ep) {
     if (ep.over) return;
     ep.over = true;
     const n = ep.ulist.length, ok = ep.ulist.filter(x => x.done).length;
-    if (ok * 2 >= n && n) {
+    if (ep.paid) { if (PLAY.cur) playEnd({ n, ok, quit: true }); }   // ⏮로 다시 연 회차 — 보상·기록·요약은 처음 끝났을 때 것 그대로
+    else if (ok * 2 >= n && n) {
         radioRec().ep[ep.id] = todayStr();
         softXp('radio', 3, '📻 라디오');
         logActivity('radio');
         RADIO.sum = playEnd({ n, ok, noAuto: true });
     } else { RADIO.sum = ''; if (PLAY.cur) playEnd({ n, ok, quit: true }); RADIO.msg = '⏭ 넘긴 문장이 많아 이번 회차는 기록하지 않았어요'; RADIO.warn = true; }
+    ep.paid = true;
     const more = !document.hidden && S.view === 'radio' && !RADIO.slept;
     // 화면을 켠 채 손대지 않으면 RADIO_AUTO_MAX회차까지만 이어 튼다(충전 거치대에서 끝없이 XP가 쌓이지 않게) — 😴 잠들기를 켰으면 그 시각까지
-    if (more && RADIO.autoN >= RADIO_AUTO_MAX && !RADIO.sleepAt) { RADIO.msg = '🎧 ' + (RADIO.autoN + 1) + '회차를 이어 들었어요 · 더 들으려면 ▶를 눌러요'; RADIO.warn = false; }
+    if (more && RADIO.autoN >= RADIO_AUTO_MAX && !RADIO.sleepAt) { RADIO.msg = '🎧 ' + (RADIO.autoN + 1) + '편을 이어 들었어요 · 더 들으려면 ▶를 눌러요'; RADIO.warn = false; }
     radioDraw();
-    if (more && (RADIO.autoN < RADIO_AUTO_MAX || RADIO.sleepAt)) setTimeout(() => { if (RADIO.ep === ep && !document.hidden && S.view === 'radio' && !RADIO.slept) { RADIO.autoN++; radioStart(ep.ch, true); } }, 1500);
+    if (more && (RADIO.autoN < RADIO_AUTO_MAX || RADIO.sleepAt)) setTimeout(() => { if (RADIO.ep === ep && ep.over && !document.hidden && S.view === 'radio' && !RADIO.slept) { RADIO.autoN++; radioStart(ep.ch, true); } }, 1500);
 }
 
 /* ── 화면 켜고 듣기(줄 재생 엔진) ── */
@@ -11159,6 +11168,7 @@ function radioLiveRun(ep, from) {
     RADIO.live = h; RADIO.on = true;
     radioWake(true);
     let i = Math.max(0, from || 0), lastU = -1;
+    RADIO.pos = i;   // 아래 radioDraw가 옛 자리를 보고 ⏮ 안내(radioAgain)를 지우지 않게
     const alive = () => !h.over && my === seqToken && RADIO.live === h;
     const halt = () => { if (h.over) return; h.over = true; clearTimeout(h.timer); if (RADIO.live === h) { RADIO.live = null; RADIO.on = false; radioWake(false); radioDraw(); } };
     const next = () => {
@@ -11240,23 +11250,24 @@ function radioSleepNote(left) {
 function renderRadio() {
     if (RADIO.code && RADIO.code !== CUR.code) { radioStopAll(); clearTimeout(RADIO.sleepT); Object.assign(RADIO, { sum: '', code: '', ch: '', sleepAt: 0, slept: false }); }   // 언어가 바뀌었으면 옛 회차·잠들기를 버린다
     if (!store.seen.in_radio) {
-        playIntro('radio', '📻 듣기 라디오', ['배운 문장과 읽은 이야기를 5~15분 회차 하나로 들려줘요 — 화면을 꺼도 주머니에서 끝까지 이어져요', '들리는 대로 속으로 따라 해요 · ⏮를 누른 문장은 복습 카드로 들어가요', '🚗 운전 중엔 화면을 보지 마세요 — 시작하면 조작 없이 끝까지 진행돼요']
+        playIntro('radio', '📻 듣기 라디오', ['배운 문장과 읽은 이야기를 5~15분 회차 하나로 들려줘요 — ' + (radioCanFile() ? '화면을 꺼도 주머니에서 끝까지 이어져요' : '📱 화면을 켜 두면 끝까지 이어져요'), '들리는 대로 속으로 따라 해요 · ⏮를 누른 문장은 복습 카드로 들어가요', '🚗 운전 중엔 화면을 보지 마세요 — 시작하면 조작 없이 끝까지 진행돼요']
             .concat(IOS_UA ? ['🔕 아이폰은 옆면 무음 스위치를 꺼 두세요(무음이면 소리가 안 나요)'] : []), () => { renderRadio(); });
         return;
     }
     const ep = RADIO.ep, ch = ep ? ep.ch : radioPick(), C = RADIO_CH[ch], dl = dayLog(), len = radioLen(), v = subsNow(), on = RADIO.on;
-    let h = '<div class="lesson-top"><button class="back-btn tap44" id="radioBack" aria-label="' + (RADIO.from === 'home' ? '홈으로' : '놀이 탭으로') + '">←</button><div><div class="lt-title">📻 듣기 라디오</div><div class="lt-sub">화면을 꺼도 주머니에서 끝까지 들려요</div></div></div>';
+    const pocket = ep ? ep.mode === 'file' : !C.live && radioCanFile();   // 화면을 꺼도 되는지(회차 파일) — 아니면 화면 켜고 듣기
+    let h = '<div class="lesson-top"><button class="back-btn tap44" id="radioBack" aria-label="' + (RADIO.from === 'home' ? '홈으로' : '놀이 탭으로') + '">←</button><div><div class="lt-title">📻 듣기 라디오</div><div class="lt-sub">' + (pocket ? '화면을 꺼도 주머니에서 끝까지 들려요' : '📱 화면을 켜 두고 들어요') + '</div></div></div>';
     h += '<div class="radio-chs" role="group" aria-label="채널">' + Object.keys(RADIO_CH).map(k => {
-        const c = RADIO_CH[k], okc = radioChOk(k);
-        return '<button class="radio-ch" data-rch="' + k + '" aria-pressed="' + (k === ch) + '"' + (okc ? '' : ' aria-disabled="true"') + ' aria-label="' + esc(c.name + ' — ' + (okc ? c.sub : '이야기를 1편 읽으면 열려요')) + '"><span class="rc-ico" aria-hidden="true">' + c.ico + '</span><span class="rc-name">' + esc(c.name) + '</span><span class="rc-sub">' + esc(okc ? c.sub : '이야기 읽으면') + '</span></button>';
+        const c = RADIO_CH[k], okc = radioChOk(k), sub = radioChSub(c);
+        return '<button class="radio-ch" data-rch="' + k + '" aria-pressed="' + (k === ch) + '"' + (okc ? '' : ' aria-disabled="true"') + ' aria-label="' + esc(c.name + ' — ' + (okc ? sub : '이야기를 1편 읽으면 열려요')) + '"><span class="rc-ico" aria-hidden="true">' + c.ico + '</span><span class="rc-name">' + esc(c.name) + '</span><span class="rc-sub">' + esc(okc ? sub : '이야기 읽으면') + '</span></button>';
     }).join('') + '</div><div class="muted radio-desc">' + esc(C.desc) + '</div>';
     h += '<div class="card radio-card" id="radioCard"><div class="radio-title" id="radioTitle">' + esc(ep ? ep.title : C.ico + ' ' + C.name) + '</div>' +
         '<div class="radio-msg' + (RADIO.warn ? ' warn' : '') + '" id="radioMsg" role="status">' + esc(radioMsgHtml()) + '</div>' +
         '<div class="radio-now' + subsCls(v) + (ch === 'say' ? ' rn-say' : '') + '" id="radioNow" aria-live="off">' + radioNowHtml() + '</div>' +
         '<div class="radio-bar" role="progressbar" aria-label="회차 진행" aria-valuemin="0" aria-valuemax="100" id="radioBar"><div id="radioFill" style="width:0%"></div></div><div class="radio-time" id="radioTime"></div>' +
-        '<div class="radio-ctl"><button id="radioPrev" aria-label="이 문장 다시(처음이면 앞 문장)"' + (ep ? '' : ' disabled') + '>⏮</button>' +
+        '<div class="radio-ctl"><button id="radioPrev" aria-label="' + (ep && ep.over ? '마지막 문장 다시' : '이 문장 다시(처음이면 앞 문장)') + '"' + (ep ? '' : ' disabled') + '>⏮</button>' +
         '<button id="radioPlay" aria-label="' + (on ? '일시정지' : '재생') + '"' + (RADIO.prog ? ' disabled' : '') + '>' + (on ? '⏸' : '▶') + '</button>' +
-        '<button id="radioNext" aria-label="다음 문장"' + (ep ? '' : ' disabled') + '>⏭</button></div>' +
+        '<button id="radioNext" aria-label="다음 문장"' + (ep && !ep.over ? '' : ' disabled') + '>⏭</button></div>' +
         (ch === 'rep' ? '<div class="radio-reps" id="radioReps">🔁 오늘 반복 ' + (dl.reps || 0) + '회</div>' : '') + '</div>';
     h += '<div class="radio-opt"><div class="ro-lbl">회차 길이' + (ep && !ep.over && ep.len !== len ? ' · 다음 회차부터' : '') + '</div><div class="bl-seg" role="group" aria-label="회차 길이">' +
         RADIO_LENS.map(m => '<button data-rlen="' + m + '" aria-pressed="' + (m === len) + '">' + m + '분</button>').join('') + '</div>' +
@@ -11329,7 +11340,7 @@ function radioResumeNow() {
 registerPlayTile({
     id: 'radio', ico: '📻', name: '듣기 라디오', view: 'radio', xpKind: 'radio', ctx: ['move', 'home', 'short'],   // 이동 중·설거지 — 화면을 꺼도 들린다
     need: () => ALL.some(l => isDone(l.id) && (l.keySentences || []).some(feedOkSent)), lock: () => '핵심 문장이 있는 레슨을 통과하면 열려요',
-    status: () => { const dl = dayLog(); return dl.radio ? '오늘 ' + dl.radio + '회차' + (dl.reps ? ' · 반복 ' + dl.reps + '회' : '') : '🎧 화면을 꺼도 들려요 · ' + radioLen() + '분'; },
+    status: () => { const dl = dayLog(); return dl.radio ? '오늘 ' + dl.radio + '편' + (dl.reps ? ' · 반복 ' + dl.reps + '회' : '') : (radioCanFile() ? '🎧 화면을 꺼도 들려요 · ' : '📱 화면 켜고 들어요 · ') + radioLen() + '분'; },
     open: () => radioOpen('play'),
 });
 
