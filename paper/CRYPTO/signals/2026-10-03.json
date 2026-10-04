@@ -1,0 +1,30 @@
+{
+ "market": "CRYPTO",
+ "as_of": "2026-10-03",
+ "regime": {
+  "benchmark": "BTC-USD",
+  "mode": "MA200",
+  "close": 84763.5781,
+  "ma200": 71425.4424,
+  "ma20": 82441.8621,
+  "on": true
+ },
+ "entries_next_open": [],
+ "exits_next_open": [],
+ "positions": [
+  "NEAR-USD"
+ ],
+ "watchlist": [],
+ "coverage": {
+  "requested": 30,
+  "loaded": 25,
+  "failed": [
+   "BTW-USD",
+   "CC-USD",
+   "FIGR_HELOC-USD",
+   "HYPE-USD",
+   "RAIN-USD"
+  ]
+ },
+ "generated_at": "2026-10-04T07:37:45Z"
+}
