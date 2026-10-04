@@ -10975,20 +10975,21 @@ async function radioStart(ch, auto) {
     RADIO.code = code; RADIO.ch = ch; RADIO.sum = auto ? RADIO.sum : ''; radioLastSet(ch);
     let len = radioLen(), plan = radioPlan(ch, len);
     if (!plan) { RADIO.msg = ch === 'book' ? '📖 이야기를 1편 읽으면 들을 수 있어요' : '레슨을 하나 더 통과하면 들을 수 있어요'; RADIO.warn = true; radioDraw(); return; }
-    if (RADIO_CH[ch].live || !radioCanFile()) { radioGoLive(plan, !RADIO_CH[ch].live); return; }
+    if (RADIO_CH[ch].live || !radioCanFile()) { radioGoLive(plan, RADIO_CH[ch].live ? '' : clipsReady() ? 'nofile' : 'voice'); return; }
     RADIO.prog = [0, 0]; radioDraw();
-    let r = null;
+    let r = null, why = 'nofile';
     for (; ;) {
         try { r = await renderEpisode(plan.segs, (a, b) => { if (tok === RADIO.build) { RADIO.prog = [a, b]; radioDrawProg(); } }, ch === 'book' ? 0 : len * 60); break; }
         catch (e) {
             if (tok !== RADIO.build) return;
-            if (!(e && e.message === 'no-clip') && len > 5) { len = 5; plan = radioPlan(ch, 5); continue; }   // 저사양: 5분으로 줄여 한 번 더
+            if (e && e.message === 'no-clip') { why = 'noclip'; break; }   // 녹음을 하나도 못 받음(오프라인에서 처음 듣는 문장들)
+            if (len > 5) { len = 5; plan = radioPlan(ch, 5); continue; }   // 저사양(메모리·디코드 오류): 5분으로 줄여 한 번 더
             break;
         }
     }
     if (tok !== RADIO.build || !CUR || CUR.code !== code) return;   // 그사이 다른 회차·언어
     RADIO.prog = null;
-    if (!r) { radioGoLive(plan, true); return; }
+    if (!r) { radioGoLive(plan, why); return; }
     const ep = Object.assign(plan, { mode: 'file', dur: r.dur, marks: r.marks, segs: r.segs, miss: r.miss, url: URL.createObjectURL(r.blob) });
     ep.ulist = radioUnits(ep);
     RADIO.ep = ep; RADIO.url = ep.url;
@@ -11001,11 +11002,13 @@ async function radioStart(ch, auto) {
     if (S.view === 'radio') radioResume(); else radioDraw();   // 만드는 동안 다른 화면으로 갔으면 틀지 않고 기다린다
 }
 // 화면 켜고 듣기(📱 채널 · 파일을 만들 수 없을 때): 줄 재생 엔진 + 화면 꺼짐 막기
-function radioGoLive(plan, fallback) {
+// why: '' 📱 채널 · nofile 이 기기에서 파일을 못 만듦 · voice 녹음 대신 기기 음성(자연 음성 끔·녹음 목록 아직 없음) · noclip 녹음을 못 받음
+const RADIO_LIVE_WHY = { nofile: '📱 화면을 켜 두세요 — 이 기기에서는 회차 파일을 못 만들어 화면이 꺼지면 멈춰요', voice: '📱 화면을 켜 두세요 — 녹음 대신 기기 음성으로 읽어서 화면이 꺼지면 멈춰요', noclip: '📶 녹음을 받지 못해 기기 음성으로 읽어요 · 📱 화면을 켜 두세요' };
+function radioGoLive(plan, why) {
     const ep = Object.assign(plan, { mode: 'live' });
     ep.ulist = radioUnits(ep);
     RADIO.ep = ep; RADIO.pos = 0;
-    if (fallback) { RADIO.msg = '📱 화면을 켜 두세요 — 이 기기에서는 회차 파일을 못 만들어 화면이 꺼지면 멈춰요'; RADIO.warn = true; }
+    if (why) { RADIO.msg = RADIO_LIVE_WHY[why]; RADIO.warn = true; }
     else if (!radioKoVoice()) { RADIO.msg = '🔈 기기에 한국어 목소리가 없어 뜻은 글자로만 보여요'; RADIO.warn = true; }
     if (S.view === 'radio') radioResume(); else radioDraw();
 }
@@ -11025,24 +11028,24 @@ function radioResume() {
     try { if (navigator.mediaSession) navigator.mediaSession.playbackState = 'playing'; } catch (e) { }
     radioDraw();
 }
-function radioPause() {
+function radioPause(quiet) {
     RADIO.on = false;
     if (RADIO.el && radioMine()) { try { RADIO.el.pause(); } catch (e) { } }
     radioLiveStop();
-    radioDraw();
+    if (!quiet) radioDraw();
 }
 // 다른 화면으로 가면(go) 일시정지 — 배경 재생은 화면 꺼짐·앱 숨김일 때만
-function radioAway(view) { if (view !== 'radio' && RADIO && (RADIO.on || RADIO.live)) radioPause(); }
+function radioAway(view) { if (view !== 'radio' && RADIO && (RADIO.on || RADIO.live)) radioPause(true); }
 // 잠금 화면·이어폰 단추
 function radioMedia(ep) {
     const ms = navigator.mediaSession;
     if (!ms) return;
     try { ms.metadata = new MediaMetadata({ title: ep.title, artist: '랭귀지 스타터 · ' + CUR.name, album: '📻 듣기 라디오', artwork: [{ src: 'icons/icon-192.png?v=2', sizes: '192x192', type: 'image/png' }, { src: 'icons/icon-512.png?v=2', sizes: '512x512', type: 'image/png' }] }); } catch (e) { }
-    const H = { play: radioResume, pause: radioPause, nexttrack: () => radioSkip(1), previoustrack: () => radioSkip(-1), seekbackward: d => radioSeek(-((d && d.seekOffset) || 5)) };
+    const H = { play: () => radioResume(), pause: () => radioPause(), nexttrack: () => radioSkip(1), previoustrack: () => radioSkip(-1), seekbackward: d => radioSeek(-((d && d.seekOffset) || 5)) };
     RADIO.ms = H;
     Object.keys(H).forEach(k => { try { ms.setActionHandler(k, H[k]); } catch (e) { } });
 }
-function radioUnitAt(t) { const L = (RADIO.ep && RADIO.ep.ulist) || []; return L.find(x => t < x.t1) || L[L.length - 1] || null; }
+function radioUnitAt(t) { const L = (RADIO.ep && RADIO.ep.ulist) || []; for (let j = L.length - 1; j >= 0; j--) if (L[j].t0 <= t + 0.02) return L[j]; return L[0] || null; }   // 0.02: 읽어 온 currentTime이 구간 시작보다 조금 작게 나오는 기기
 function radioUnitOf(pos) { const L = (RADIO.ep && RADIO.ep.ulist) || []; return L.find(x => pos <= x.s1) || L[L.length - 1] || null; }
 // ⏭ 다음 구간 · ⏮ 지금 구간 처음(시작한 지 1.5초 안이면 앞 구간) — ⏮로 다시 들은 문장만 복습함에(내일)
 function radioSkip(dir) {
@@ -11195,7 +11198,7 @@ function radioMsgHtml() {
     return RADIO.msg || '';
 }
 function renderRadio() {
-    if (RADIO.code && RADIO.code !== CUR.code) { radioStopAll(); RADIO.sum = ''; RADIO.code = ''; RADIO.ch = ''; radioSleep(0); }   // 언어가 바뀌었으면 옛 회차를 버린다
+    if (RADIO.code && RADIO.code !== CUR.code) { radioStopAll(); clearTimeout(RADIO.sleepT); Object.assign(RADIO, { sum: '', code: '', ch: '', sleepAt: 0, slept: false }); }   // 언어가 바뀌었으면 옛 회차·잠들기를 버린다
     if (!store.seen.in_radio) {
         playIntro('radio', '📻 듣기 라디오', ['배운 문장과 읽은 이야기를 5~15분 회차 하나로 들려줘요 — 화면을 꺼도 주머니에서 끝까지 이어져요', '들리는 대로 속으로 따라 해요 · ⏮를 누른 문장은 복습 카드로 들어가요', '🚗 운전 중엔 화면을 보지 마세요 — 시작하면 조작 없이 끝까지 진행돼요']
             .concat(IOS_UA ? ['🔕 아이폰은 옆면 무음 스위치를 꺼 두세요(무음이면 소리가 안 나요)'] : []), () => { renderRadio(); });
@@ -11265,6 +11268,7 @@ function radioDrawPos() {
     if (nw && nw._h !== html) { nw.innerHTML = html; nw._h = html; }
     const rp = document.getElementById('radioReps');
     if (rp) rp.textContent = '🔁 오늘 반복 ' + (dayLog().reps || 0) + '회';
+    if (RADIO.sleepAt) radioDrawProg();   // 😴 남은 분
 }
 function radioBack() { const f = RADIO.from; RADIO.from = 'play'; resetPlayState(); go(f === 'home' ? 'home' : 'play'); }
 function radioOpen(from) { RADIO.from = from || 'play'; go('radio'); }
