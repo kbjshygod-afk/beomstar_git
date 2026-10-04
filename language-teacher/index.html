@@ -7255,15 +7255,16 @@ function playIntro(id, title, rules, start) {
 
 /* ═══════════════════ 🎮 놀이 탭 ═══════════════════ */
 // 하나씩 열림(통과 레슨 수) — 기능마다 registerPlayTile로 자기 타일을 등록한다(📻 라디오까지 모두 나와 '다음 업데이트에 나와요' 줄은 없앴다)
-// 0단계(발음) 레슨이 4개라 1단계 첫 레슨(5번째)부터 한 레슨에 하나씩 열리게 간격을 둔다(한꺼번에 몰려 열리지 않게)
+// at: 통과 레슨 수 · u1: 그중 1단계 이상 레슨 수 — 0단계(발음) 레슨이 4개라 1단계 레슨마다 하나씩 열린다(실제 순서로 퍼즐 5 · 피드 6 · 미션 7 · 라디오 8 · 스티커북 9).
+// 1단계 첫 레슨에 한꺼번에 몰려 열리지 않게
 const PLAY_SOON = [
-    { id: 'feed', ico: '💬', name: '이럴 때 뭐라고?', at: 6 },
-    { id: 'puzzle', ico: '🟩', name: '오늘의 퍼즐', at: 5, unit1: true },
+    { id: 'feed', ico: '💬', name: '이럴 때 뭐라고?', at: 1, u1: 2 },
+    { id: 'puzzle', ico: '🟩', name: '오늘의 퍼즐', at: 1, u1: 1 },
     { id: 'rush', ico: '⏱️', name: '소리 러시', at: 2 },
-    { id: 'missions', ico: '🗺️', name: '생존 미션', at: 7, unit1: true },   // 0단계(발음) 레슨은 미션이 없다
+    { id: 'missions', ico: '🗺️', name: '생존 미션', at: 1, u1: 3 },   // 0단계(발음) 레슨은 미션이 없다
     { id: 'player', ico: '📺', name: '듣기 플레이어', at: 4 },
-    { id: 'radio', ico: '📻', name: '라디오', at: 8 },
-    { id: 'dex', ico: '📒', name: '스티커북', at: 9 },
+    { id: 'radio', ico: '📻', name: '라디오', at: 1, u1: 4 },
+    { id: 'dex', ico: '📒', name: '스티커북', at: 1, u1: 5 },
     { id: 'league', ico: '🏆', name: '주간 리그', week: true },
 ];
 const PLAY_TILES = [];
@@ -7283,18 +7284,19 @@ function playUnlocked(id) {
     if (!u) return true;
     if (u.week) return !!(store.league && (isDate(store.league.wk) || (store.league.hist && store.league.hist.length)));   // 참가한 주부터(홈·나 탭의 리그 줄과 같게)
     if (store.settings.freeNav) return true;
-    return doneCount() >= u.at && (!u.unit1 || ALL.some(l => l.unitId >= 1 && isDone(l.id)));
+    return doneCount() >= u.at && (!u.u1 || doneU1() >= u.u1);
 }
+function doneU1() { return ALL.filter(l => l.unitId >= 1 && isDone(l.id)).length; }   // 통과한 1단계 이상 레슨 수
 function tileOpen(t) { return playUnlocked(t.id) && t.need(); }   // 하나씩 열림 표 + 기능의 자체 조건
-// 열리는 데 필요한 통과 레슨 수 — 1단계 레슨이 조건이면 처음부터 그 수(0단계 레슨 수 + 1)로 약속한다
-function playNeed(u) { return u.unit1 ? Math.max(u.at, ALL.findIndex(l => l.unitId >= 1) + 1) : u.at; }
+// 열리는 데 필요한 통과 레슨 수 — 1단계 레슨이 조건이면 처음부터 과정 순서로 그 수(0단계 레슨 수 + u1)로 약속한다
+function playNeed(u) { if (!u.u1) return u.at; const k = ALL.map((l, i) => l.unitId >= 1 ? i : -1).filter(i => i >= 0)[u.u1 - 1]; return Math.max(u.at, k == null ? ALL.length : k + 1); }
 function playLockText(id) {
     const u = PLAY_SOON.find(x => x.id === id), t = playTile(id);
     if (t && t.lock && (playUnlocked(id) || t.lockAll) && !tileOpen(t)) return t.lock();   // 레슨 수는 채웠고 기능 자체 조건이 남음(러시: 카드 8장) · lockAll: 레슨 수까지 기능이 셈(피드)
     if (!u) return '';
     if (u.week) return '레슨 1개를 끝내면 그 주부터 참가해요';
     const n = playNeed(u);
-    return doneCount() >= n && u.unit1 ? '1단계 레슨을 통과하면 열려요' : '레슨 ' + n + '개 통과하면 열려요';
+    return doneCount() >= n && u.u1 ? '1단계 레슨을 ' + (u.u1 > 1 ? Math.max(1, u.u1 - doneU1()) + '개 더 ' : '') + '통과하면 열려요' : '레슨 ' + n + '개 통과하면 열려요';
 }
 // 상황: 따로 고르지 않았으면 볼 때마다 시각으로 정한다. 고른 값(S.ctx = {v, at})은 메모리에만 두고 3시간 뒤 풀린다 —
 // 홈 화면 앱은 몇 시간씩 살아 있어서, 아침에 고른 '이동 중'이 밤까지 남지 않게
@@ -7328,7 +7330,7 @@ function playOpenIds() { return PLAY_TILES.filter(tileOpen).map(t => t.id); }
 // 통과 직전에 '이미 열려 있던' 놀이: 레슨을 열 때도 열려 있던 것만(그 사이 열린 놀이는 새로 열린 것으로 알린다)
 function playOpen0(l) { const now = playOpenIds(), o = PLAY.open0; return o && o.id === CUR.code + ':' + l.id ? now.filter(x => o.ids.includes(x)) : now; }
 // 하나씩 열림 표의 레슨 수까지 남은 레슨(자유 이동이면 0)
-function playLeft(id) { const u = PLAY_SOON.find(x => x.id === id); return !u || u.week || store.settings.freeNav ? 0 : Math.max(0, playNeed(u) - doneCount()); }
+function playLeft(id) { const u = PLAY_SOON.find(x => x.id === id); return !u || u.week || store.settings.freeNav ? 0 : Math.max(0, playNeed(u) - doneCount(), (u.u1 || 0) - doneU1()); }
 // 레슨 통과 뒤: 미션 추천용 기록, 그 레슨 녹음 미리 받기(2초 뒤), 새로 열린 놀이 알림(1개)
 function playAfterLesson(l, open0) {
     PLAY.lastLesson = l.id; PLAY.open0 = null;
@@ -7358,7 +7360,7 @@ function renderPlay() {
     // 상황 칩·조용 모드는 바뀌는 것이 있을 때만(열린 놀이 타일이나 말하기 대기가 있을 때) — 눌러도 아무것도 바뀌지 않는 칩은 두지 않는다.
     // 고르면 그 상황에 맞는 타일이 위로 오고(rank), 무엇이 바뀌었는지 칩 아래 한 줄로 알려 준다
     const tiles = PLAY_SOON.map(u => playTile(u.id)).filter(Boolean).concat(PLAY_TILES.filter(t => !PLAY_SOON.some(u => u.id === t.id)));
-    const openN = tiles.filter(tileOpen).length;
+    const openN = tiles.filter(t => tileOpen(t) && !t.noPick).length;   // 순위 화면(리그)만 열렸으면 칩을 눌러도 바뀌는 것이 없다
     let h = !openN && !say.length ? '' : '<div class="ctx-row"><div class="ctx-chips" role="group" aria-label="지금 상황">' +
         PLAY_CTX.map(([id, t]) => '<button data-ctx="' + id + '" aria-pressed="' + (id === ctx) + '">' + t + '</button>').join('') + '</div>' +
         (quiet ? '<span class="quiet-pill" id="quietPill">🤫 조용 모드</span>' : '') +
@@ -8498,9 +8500,9 @@ function feedLeft() {
     ALL.forEach(l => { if (isDone(l.id)) keys(l).forEach(k => have.add(k)); });
     for (let n = 0; n < todo.length; n++) {
         keys(todo[n]).forEach(k => have.add(k));
-        if (have.size >= FEED_MIN) return n + 1;
+        if (have.size >= FEED_MIN) return Math.max(n + 1, playLeft('feed'));
     }
-    return Math.max(1, todo.length);
+    return Math.max(1, todo.length, playLeft('feed'));
 }
 function feedOpen() { S.feed = null; go('feed'); }
 function feedSrs(c) { return prog().srs[c.sk] || null; }
@@ -8863,7 +8865,7 @@ document.addEventListener('click', e => { const b = e.target.closest && e.target
 registerPlayTile({
     id: 'feed', ico: '💬', name: '이럴 때 뭐라고?', view: 'feed', xpKind: 'feed', ctx: ['home', 'move', 'short'],   // 집에서는 🎤 채점 모드로 소리 내어 · 밖에서는 속으로
     need: () => feedPool().length >= FEED_MIN,
-    lock: () => '레슨 ' + Math.max(feedLeft(), playLeft('feed')) + '개 ' + (doneCount() ? '더 ' : '') + '통과하면 열려요', lockAll: true,   // 레슨 수 조건도 이 글이 맡는다(0단계 발음 레슨에는 문장이 없어 '1개'로 약속하지 않게)
+    lock: () => '레슨 ' + feedLeft() + '개 ' + (doneCount() ? '더 ' : '') + '통과하면 열려요', lockAll: true,   // 레슨 수 조건도 이 글이 맡는다(0단계 발음 레슨에는 문장이 없어 '1개'로 약속하지 않게)
     status: () => { const t = todayStr(), n = feedPool().filter(c => feedDue(c, t)).length; return '오늘 ' + (dayLog().feed || 0) + '장' + (n ? ' · 복습 ' + n : ''); },
     open: feedOpen,
 });
