@@ -197,14 +197,14 @@
    }
   },
   "NDX100": {
-   "as_of": "2026-10-02",
+   "as_of": "2026-10-05",
    "start_date": "2026-09-25",
    "regime": {
     "benchmark": "^NDX",
     "mode": "MA200",
-    "close": 30807.9297,
-    "ma200": 27478.5122,
-    "ma20": 29907.636,
+    "close": 31076.4414,
+    "ma200": 27508.2297,
+    "ma20": 29984.2506,
     "on": true
    },
    "entries_next_open": [],
@@ -218,10 +218,10 @@
      "entry_price": 1053.26001,
      "qty": 10245.25752756148,
      "stop_price": 979.5318092999998,
-     "last_close": 1085.420044,
-     "exit_ma": 879.025502922,
-     "unrealized_pnl": 285665.17458055355,
-     "price_pnl_pct": 3.053380332934119,
+     "last_close": 1091.670044,
+     "exit_ma": 885.5991039979999,
+     "unrealized_pnl": 349569.9684087187,
+     "price_pnl_pct": 3.6467760700418017,
      "exit_pending": false
     }
    ],
@@ -229,57 +229,81 @@
    "watchlist": [
     {
      "symbol": "AMD",
-     "label": "1순위 · 임박 (피벗 1% 이내)",
-     "close": 633.91,
-     "pivot": 639.0,
-     "to_pivot_pct": 0.8,
+     "label": "2순위 · 근접 (피벗 3% 이내)",
+     "close": 631.75,
+     "pivot": 645.46,
+     "to_pivot_pct": 2.17,
      "rs": 96.97
+    },
+    {
+     "symbol": "CRWD",
+     "label": "1순위 · 임박 (피벗 1% 이내)",
+     "close": 272.67,
+     "pivot": 273.535,
+     "to_pivot_pct": 0.32,
+     "rs": 92.93
+    },
+    {
+     "symbol": "TER",
+     "label": "2순위 · 근접 (피벗 3% 이내)",
+     "close": 444.53,
+     "pivot": 451.86,
+     "to_pivot_pct": 1.65,
+     "rs": 91.92
     },
     {
      "symbol": "PANW",
      "label": "1순위 · 임박 (피벗 1% 이내)",
-     "close": 403.24,
-     "pivot": 404.69,
-     "to_pivot_pct": 0.36,
-     "rs": 89.9
-    },
-    {
-     "symbol": "FTNT",
-     "label": "1순위 · 임박 (피벗 1% 이내)",
-     "close": 180.95,
-     "pivot": 181.37,
-     "to_pivot_pct": 0.23,
-     "rs": 87.88
+     "close": 406.76,
+     "pivot": 409.5,
+     "to_pivot_pct": 0.67,
+     "rs": 90.91
     },
     {
      "symbol": "DDOG",
      "label": "2순위 · 근접 (피벗 3% 이내)",
-     "close": 277.22,
-     "pivot": 280.7,
-     "to_pivot_pct": 1.26,
+     "close": 276.415,
+     "pivot": 282.0,
+     "to_pivot_pct": 2.02,
      "rs": 84.85
     },
     {
-     "symbol": "CSCO",
+     "symbol": "AMAT",
      "label": "1순위 · 임박 (피벗 1% 이내)",
-     "close": 112.2,
-     "pivot": 112.22,
-     "to_pivot_pct": 0.02,
-     "rs": 76.77
+     "close": 542.28,
+     "pivot": 547.25,
+     "to_pivot_pct": 0.92,
+     "rs": 83.84
     },
     {
-     "symbol": "NVDA",
+     "symbol": "LRCX",
+     "label": "2순위 · 근접 (피벗 3% 이내)",
+     "close": 345.8,
+     "pivot": 352.56,
+     "to_pivot_pct": 1.95,
+     "rs": 82.83
+    },
+    {
+     "symbol": "ASML",
      "label": "1순위 · 임박 (피벗 1% 이내)",
-     "close": 233.95,
-     "pivot": 234.76,
-     "to_pivot_pct": 0.35,
-     "rs": 74.75
+     "close": 1859.86,
+     "pivot": 1873.5,
+     "to_pivot_pct": 0.73,
+     "rs": 81.82
+    },
+    {
+     "symbol": "TXN",
+     "label": "1순위 · 임박 (피벗 1% 이내)",
+     "close": 294.9,
+     "pivot": 297.06,
+     "to_pivot_pct": 0.73,
+     "rs": 80.81
     }
    ],
    "performance": {
-    "equity": 100307906.0,
-    "return_pct": 0.31,
-    "bench_return_pct": 0.65,
+    "equity": 100371939.0,
+    "return_pct": 0.37,
+    "bench_return_pct": 1.53,
     "mdd_pct": 0.0,
     "closed_trades": 0,
     "win_rate_pct": null,
@@ -289,8 +313,8 @@
    },
    "status_csv": "NDX100/status.csv",
    "audit": {
-    "days": 6,
-    "signal_files": 6,
+    "days": 7,
+    "signal_files": 7,
     "missing_days": [],
     "late": [],
     "uncommitted": [],
@@ -583,7 +607,7 @@
    }
   }
  },
- "updated_at": "2026-10-05T22:09:05Z",
+ "updated_at": "2026-10-05T22:10:07Z",
  "disclaimer": "기계적 룰 출력이며 투자 자문이 아닙니다. 매수·매도 결정은 소유자 본인이 합니다.",
  "unconfirmed": "미확인 추정값(스캐너 원본 코드 미확인): 피벗=직전 20봉 최고가(당일 제외) · 거래량 평균=직전 50일(당일 제외) · RS=지수 대비 가중 1년 수익률 ≥ 0%p(스캐너는 유니버스 백분위 ≥ 70) · 52주 고저=종가 기준 · 200일선 상승=22봉 전 대비 · 수축비=10/40일 평균 TR · 비용=편도 0.2%"
 }
