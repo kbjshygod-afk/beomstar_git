@@ -1,0 +1,63 @@
+{
+ "market": "KOSDAQ_V2",
+ "as_of": "2026-10-06",
+ "regime": {
+  "benchmark": "^KQ11",
+  "mode": "BREADTH50",
+  "close": 919.92,
+  "ma200": 984.2577,
+  "ma20": 839.745,
+  "on": true,
+  "breadth_pct": 51.7
+ },
+ "entries_next_open": [
+  {
+   "symbol": "036930.KQ",
+   "signal_close": 278500.0,
+   "rs": 99.31,
+   "desired_qty": 26.0,
+   "est_stop_from_close": 250650.0
+  },
+  {
+   "symbol": "083450.KQ",
+   "signal_close": 56000.0,
+   "rs": 82.76,
+   "desired_qty": 133.0,
+   "est_stop_from_close": 50400.0
+  }
+ ],
+ "exits_next_open": [],
+ "positions": [],
+ "watchlist": [
+  {
+   "symbol": "131290.KQ",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 313500.0,
+   "pivot": 318500.0,
+   "to_pivot_pct": 1.59,
+   "rs": 97.24
+  },
+  {
+   "symbol": "059090.KQ",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 24000.0,
+   "pivot": 24700.0,
+   "to_pivot_pct": 2.92,
+   "rs": 74.48
+  },
+  {
+   "symbol": "122640.KQ",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 33800.0,
+   "pivot": 34800.0,
+   "to_pivot_pct": 2.96,
+   "rs": 70.34
+  }
+ ],
+ "coverage": {
+  "requested": 150,
+  "loaded": 150,
+  "failed": []
+ },
+ "generated_at": "2026-10-06T09:40:40Z"
+}
