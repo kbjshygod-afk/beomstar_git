@@ -1,0 +1,72 @@
+{
+ "market": "NDX100",
+ "as_of": "2026-10-06",
+ "regime": {
+  "benchmark": "^NDX",
+  "mode": "MA200",
+  "close": 31224.6855,
+  "ma200": 27541.115,
+  "ma20": 30070.0998,
+  "on": true
+ },
+ "entries_next_open": [
+  {
+   "symbol": "MRVL",
+   "signal_close": 287.01,
+   "rs": 95.92,
+   "desired_qty": 37629.152966,
+   "est_stop_from_close": 266.9193
+  },
+  {
+   "symbol": "ALAB",
+   "signal_close": 389.8,
+   "rs": 91.84,
+   "desired_qty": 27706.372241,
+   "est_stop_from_close": 362.514
+  }
+ ],
+ "exits_next_open": [],
+ "positions": [
+  "LITE"
+ ],
+ "watchlist": [
+  {
+   "symbol": "NBIS",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 249.87,
+   "pivot": 254.74,
+   "to_pivot_pct": 1.95,
+   "rs": 88.78
+  },
+  {
+   "symbol": "DDOG",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 278.24,
+   "pivot": 282.0,
+   "to_pivot_pct": 1.35,
+   "rs": 85.71
+  },
+  {
+   "symbol": "ASML",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 1834.1,
+   "pivot": 1873.5,
+   "to_pivot_pct": 2.15,
+   "rs": 79.59
+  },
+  {
+   "symbol": "NVDA",
+   "label": "1순위 · 임박 (피벗 1% 이내)",
+   "close": 239.24,
+   "pivot": 240.1,
+   "to_pivot_pct": 0.36,
+   "rs": 72.45
+  }
+ ],
+ "coverage": {
+  "requested": 101,
+  "loaded": 101,
+  "failed": []
+ },
+ "generated_at": "2026-10-06T22:56:35Z"
+}
