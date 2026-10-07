@@ -1,0 +1,69 @@
+{
+ "market": "NDX100",
+ "as_of": "2026-10-07",
+ "regime": {
+  "benchmark": "^NDX",
+  "mode": "MA200",
+  "close": 31160.0762,
+  "ma200": 27571.8175,
+  "ma20": 30157.0153,
+  "on": true
+ },
+ "entries_next_open": [],
+ "exits_next_open": [],
+ "positions": [
+  "ALAB",
+  "LITE",
+  "MRVL"
+ ],
+ "watchlist": [
+  {
+   "symbol": "MU",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 1088.0,
+   "pivot": 1108.72,
+   "to_pivot_pct": 1.9,
+   "rs": 97.96
+  },
+  {
+   "symbol": "AMD",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 645.86,
+   "pivot": 658.52,
+   "to_pivot_pct": 1.96,
+   "rs": 96.94
+  },
+  {
+   "symbol": "FTNT",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 189.28,
+   "pivot": 192.41,
+   "to_pivot_pct": 1.65,
+   "rs": 91.84
+  },
+  {
+   "symbol": "CSCO",
+   "label": "1순위 · 임박 (피벗 1% 이내)",
+   "close": 117.39,
+   "pivot": 118.4,
+   "to_pivot_pct": 0.86,
+   "rs": 81.63
+  },
+  {
+   "symbol": "NVDA",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 237.47,
+   "pivot": 243.37,
+   "to_pivot_pct": 2.48,
+   "rs": 75.51
+  }
+ ],
+ "coverage": {
+  "requested": 101,
+  "loaded": 100,
+  "failed": [
+   "WBD"
+  ]
+ },
+ "generated_at": "2026-10-07T21:57:19Z"
+}
