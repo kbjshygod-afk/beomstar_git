@@ -7,10 +7,24 @@
   "entry_price": 31400.0,
   "qty": 340.0,
   "stop_price": 29201.999999999996,
-  "last_close": 31200.0,
-  "exit_ma": 27842.0,
-  "unrealized_pnl": -110568.0,
-  "price_pnl_pct": -0.6369426751592355,
+  "last_close": 30850.0,
+  "exit_ma": 28174.0,
+  "unrealized_pnl": -229330.0,
+  "price_pnl_pct": -1.7515923566879033,
+  "exit_pending": false
+ },
+ {
+  "symbol": "192820.KS",
+  "signal_date": "2026-10-06",
+  "exit_signal_date": null,
+  "entry_date": "2026-10-07",
+  "entry_price": 311000.0,
+  "qty": 35.0,
+  "stop_price": 289230.0,
+  "last_close": 308500.0,
+  "exit_ma": 253050.0,
+  "unrealized_pnl": -130865.0,
+  "price_pnl_pct": -0.8038585209003246,
   "exit_pending": false
  }
 ]
