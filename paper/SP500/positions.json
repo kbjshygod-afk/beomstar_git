@@ -1,1 +1,44 @@
-[]
+[
+ {
+  "symbol": "LITE",
+  "signal_date": "2026-10-01",
+  "exit_signal_date": null,
+  "entry_date": "2026-10-02",
+  "entry_price": 1053.26001,
+  "qty": 7171.680269293038,
+  "stop_price": 947.934009,
+  "last_close": 1133.400024,
+  "exit_ma": 894.027904038,
+  "unrealized_pnl": 543374.5039416896,
+  "price_pnl_pct": 7.608758828696072,
+  "exit_pending": false
+ },
+ {
+  "symbol": "NTAP",
+  "signal_date": "2026-10-02",
+  "exit_signal_date": null,
+  "entry_date": "2026-10-05",
+  "entry_price": 225.4700012,
+  "qty": 33217.68206857499,
+  "stop_price": 202.92300108,
+  "last_close": 228.4499969,
+  "exit_ma": 194.62280060400005,
+  "unrealized_pnl": 68832.2093654126,
+  "price_pnl_pct": 1.3216816801081332,
+  "exit_pending": false
+ },
+ {
+  "symbol": "ILMN",
+  "signal_date": "2026-10-05",
+  "exit_signal_date": null,
+  "entry_date": "2026-10-06",
+  "entry_price": 301.5799866,
+  "qty": 25585.37247727475,
+  "stop_price": 271.42198794,
+  "last_close": 273.5400085,
+  "exit_ma": 222.56420013,
+  "unrealized_pnl": -746842.6025306499,
+  "price_pnl_pct": -9.297691937758046,
+  "exit_pending": false
+ }
+]
