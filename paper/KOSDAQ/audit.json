@@ -1,10 +1,13 @@
 {
  "market": "KOSDAQ",
  "start_date": "2026-09-23",
- "as_of": "2026-10-01",
- "days": 5,
- "signal_files": 5,
- "missing_days": [],
+ "as_of": "2026-10-07",
+ "days": 8,
+ "signal_files": 6,
+ "missing_days": [
+  "2026-10-02",
+  "2026-10-06"
+ ],
  "late": [
   "2026-09-23",
   "2026-09-28",
@@ -13,10 +16,12 @@
  "uncommitted": [],
  "mismatched": [],
  "revised": [],
+ "revised_after_open": [],
  "rows": [
   {
    "date": "2026-09-23",
    "committed_at": "2026-09-25T20:50:27Z",
+   "revisions_after_open": [],
    "deadline": "2026-09-24T00:00:00Z",
    "on_time": false,
    "entries_match": true,
@@ -30,6 +35,7 @@
   {
    "date": "2026-09-28",
    "committed_at": "2026-09-29T01:29:09Z",
+   "revisions_after_open": [],
    "deadline": "2026-09-29T00:00:00Z",
    "on_time": false,
    "entries_match": true,
@@ -43,6 +49,7 @@
   {
    "date": "2026-09-29",
    "committed_at": "2026-09-29T10:55:25Z",
+   "revisions_after_open": [],
    "deadline": "2026-09-30T00:00:00Z",
    "on_time": true,
    "entries_match": true,
@@ -56,6 +63,7 @@
   {
    "date": "2026-09-30",
    "committed_at": "2026-09-30T08:57:49Z",
+   "revisions_after_open": [],
    "deadline": "2026-10-01T00:00:00Z",
    "on_time": true,
    "entries_match": true,
@@ -69,8 +77,23 @@
   {
    "date": "2026-10-01",
    "committed_at": "2026-10-02T15:32:30Z",
+   "revisions_after_open": [],
    "deadline": "2026-10-02T00:00:00Z",
    "on_time": false,
+   "entries_match": true,
+   "exits_match": true,
+   "entries_only_committed": [],
+   "entries_only_recomputed": [],
+   "exits_only_committed": [],
+   "exits_only_recomputed": [],
+   "revisions": []
+  },
+  {
+   "date": "2026-10-07",
+   "committed_at": "2026-10-07T10:33:04Z",
+   "revisions_after_open": [],
+   "deadline": "2026-10-08T00:00:00Z",
+   "on_time": true,
    "entries_match": true,
    "exits_match": true,
    "entries_only_committed": [],
