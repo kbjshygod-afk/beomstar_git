@@ -1,1 +1,2 @@
-symbol
+symbol,signal_date,signal_close,rs_at_signal,entry_date,entry_price,qty,desired_qty,partial,stop_price,entry_cost,cost_basis,exit_date,exit_price,exit_type,exit_cost,net_pnl,pnl_pct,price_pnl_pct,bars_held,days_held
+036930.KQ,2026-10-06,278500.0,99.3103448275862,2026-10-07,276500.0,26.0,26.0,False,248850.0,14378.0,7203378.0,2026-10-07,248850.0,STOP,12940.2,-746218.2000000002,-10.359281437125752,-9.999999999999998,1,0
