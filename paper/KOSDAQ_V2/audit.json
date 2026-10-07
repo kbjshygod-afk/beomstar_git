@@ -7,8 +7,12 @@
  "missing_days": [],
  "late": [],
  "uncommitted": [],
- "mismatched": [],
- "revised": [],
+ "mismatched": [
+  "2026-10-06"
+ ],
+ "revised": [
+  "2026-10-06"
+ ],
  "rows": [
   {
    "date": "2026-10-02",
@@ -28,13 +32,17 @@
    "committed_at": "2026-10-06T09:40:43Z",
    "deadline": "2026-10-07T00:00:00Z",
    "on_time": true,
-   "entries_match": true,
+   "entries_match": false,
    "exits_match": true,
    "entries_only_committed": [],
-   "entries_only_recomputed": [],
+   "entries_only_recomputed": [
+    "327260.KQ"
+   ],
    "exits_only_committed": [],
    "exits_only_recomputed": [],
-   "revisions": []
+   "revisions": [
+    "2026-10-06.rev1.json"
+   ]
   }
  ]
 }
