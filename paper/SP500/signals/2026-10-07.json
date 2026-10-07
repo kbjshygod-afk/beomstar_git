@@ -1,0 +1,149 @@
+{
+ "market": "SP500",
+ "as_of": "2026-10-07",
+ "regime": {
+  "benchmark": "^GSPC",
+  "mode": "MA200",
+  "close": 7801.77,
+  "ma200": 7241.3094,
+  "ma20": 7688.363,
+  "on": true
+ },
+ "entries_next_open": [],
+ "exits_next_open": [],
+ "positions": [
+  "LITE",
+  "MRVL",
+  "NTAP"
+ ],
+ "watchlist": [
+  {
+   "symbol": "DELL",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 578.96,
+   "pivot": 595.51,
+   "to_pivot_pct": 2.86,
+   "rs": 99.6
+  },
+  {
+   "symbol": "MU",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 1088.0,
+   "pivot": 1108.72,
+   "to_pivot_pct": 1.9,
+   "rs": 99.2
+  },
+  {
+   "symbol": "AMD",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 645.86,
+   "pivot": 658.52,
+   "to_pivot_pct": 1.96,
+   "rs": 98.8
+  },
+  {
+   "symbol": "FTNT",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 189.28,
+   "pivot": 192.41,
+   "to_pivot_pct": 1.65,
+   "rs": 96.59
+  },
+  {
+   "symbol": "PSX",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 271.62,
+   "pivot": 277.12,
+   "to_pivot_pct": 2.02,
+   "rs": 96.18
+  },
+  {
+   "symbol": "KEYS",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 381.42,
+   "pivot": 389.93,
+   "to_pivot_pct": 2.23,
+   "rs": 95.18
+  },
+  {
+   "symbol": "ZBRA",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 386.05,
+   "pivot": 390.8,
+   "to_pivot_pct": 1.23,
+   "rs": 94.18
+  },
+  {
+   "symbol": "ANET",
+   "label": "1순위 · 임박 (피벗 1% 이내)",
+   "close": 215.83,
+   "pivot": 216.07,
+   "to_pivot_pct": 0.11,
+   "rs": 92.97
+  },
+  {
+   "symbol": "FFIV",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 466.65,
+   "pivot": 472.0,
+   "to_pivot_pct": 1.15,
+   "rs": 92.37
+  },
+  {
+   "symbol": "CSCO",
+   "label": "1순위 · 임박 (피벗 1% 이내)",
+   "close": 117.39,
+   "pivot": 118.4,
+   "to_pivot_pct": 0.86,
+   "rs": 91.37
+  },
+  {
+   "symbol": "EXPD",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 190.85,
+   "pivot": 195.32,
+   "to_pivot_pct": 2.34,
+   "rs": 88.35
+  },
+  {
+   "symbol": "NVDA",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 237.47,
+   "pivot": 243.37,
+   "to_pivot_pct": 2.48,
+   "rs": 87.55
+  },
+  {
+   "symbol": "JCI",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 155.93,
+   "pivot": 160.41,
+   "to_pivot_pct": 2.87,
+   "rs": 86.95
+  },
+  {
+   "symbol": "APH",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 87.55,
+   "pivot": 89.93,
+   "to_pivot_pct": 2.72,
+   "rs": 86.35
+  },
+  {
+   "symbol": "AAPL",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 336.67,
+   "pivot": 345.34,
+   "to_pivot_pct": 2.58,
+   "rs": 84.34
+  }
+ ],
+ "coverage": {
+  "requested": 503,
+  "loaded": 502,
+  "failed": [
+   "WBD"
+  ]
+ },
+ "generated_at": "2026-10-07T21:56:20Z"
+}
