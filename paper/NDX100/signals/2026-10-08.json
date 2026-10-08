@@ -1,0 +1,44 @@
+{
+ "market": "NDX100",
+ "as_of": "2026-10-08",
+ "regime": {
+  "benchmark": "^NDX",
+  "mode": "MA200",
+  "close": 30725.8086,
+  "ma200": 27598.7157,
+  "ma20": 30238.1305,
+  "on": true
+ },
+ "entries_next_open": [],
+ "exits_next_open": [],
+ "positions": [
+  "LITE",
+  "MRVL"
+ ],
+ "watchlist": [
+  {
+   "symbol": "FTNT",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 189.1,
+   "pivot": 192.41,
+   "to_pivot_pct": 1.75,
+   "rs": 93.88
+  },
+  {
+   "symbol": "AAPL",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 340.42,
+   "pivot": 345.34,
+   "to_pivot_pct": 1.45,
+   "rs": 74.49
+  }
+ ],
+ "coverage": {
+  "requested": 101,
+  "loaded": 100,
+  "failed": [
+   "WBD"
+  ]
+ },
+ "generated_at": "2026-10-08T22:58:05Z"
+}
