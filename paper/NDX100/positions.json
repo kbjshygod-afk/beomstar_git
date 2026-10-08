@@ -7,10 +7,10 @@
   "entry_price": 1053.26001,
   "qty": 10245.25752756148,
   "stop_price": 979.5318092999998,
-  "last_close": 1111.069946,
-  "exit_ma": 903.2107031040001,
-  "unrealized_pnl": 547929.4464241769,
-  "price_pnl_pct": 5.488667133578917,
+  "last_close": 1048.599976,
+  "exit_ma": 912.1357031120001,
+  "unrealized_pnl": -90811.44210408628,
+  "price_pnl_pct": -0.4424390896602959,
   "exit_pending": false
  },
  {
@@ -21,24 +21,10 @@
   "entry_price": 281.2999878,
   "qty": 37629.15296621845,
   "stop_price": 261.608988654,
-  "last_close": 284.6799927,
-  "exit_ma": 232.42819916200003,
-  "unrealized_pnl": 84592.02688456513,
-  "price_pnl_pct": 1.201565960394979,
-  "exit_pending": false
- },
- {
-  "symbol": "ALAB",
-  "signal_date": "2026-10-06",
-  "exit_signal_date": null,
-  "entry_date": "2026-10-07",
-  "entry_price": 376.0,
-  "qty": 27706.372241194964,
-  "stop_price": 349.67999999999995,
-  "last_close": 382.25,
-  "exit_ma": 314.66099914399996,
-  "unrealized_pnl": 131148.11300369538,
-  "price_pnl_pct": 1.66223404255319,
+  "last_close": 274.6600037,
+  "exit_ma": 234.653399358,
+  "unrealized_pnl": -291697.58451865986,
+  "price_pnl_pct": -2.360463699956117,
   "exit_pending": false
  }
 ]

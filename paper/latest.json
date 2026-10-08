@@ -196,14 +196,14 @@
    }
   },
   "NDX100": {
-   "as_of": "2026-10-07",
+   "as_of": "2026-10-08",
    "start_date": "2026-09-25",
    "regime": {
     "benchmark": "^NDX",
     "mode": "MA200",
-    "close": 31160.0801,
-    "ma200": 27571.8175,
-    "ma20": 30157.0155,
+    "close": 30725.8086,
+    "ma200": 27598.7157,
+    "ma20": 30238.1305,
     "on": true
    },
    "entries_next_open": [],
@@ -217,10 +217,10 @@
      "entry_price": 1053.26001,
      "qty": 10245.25752756148,
      "stop_price": 979.5318092999998,
-     "last_close": 1111.069946,
-     "exit_ma": 903.2107031040001,
-     "unrealized_pnl": 547929.4464241769,
-     "price_pnl_pct": 5.488667133578917,
+     "last_close": 1048.599976,
+     "exit_ma": 912.1357031120001,
+     "unrealized_pnl": -90811.44210408628,
+     "price_pnl_pct": -0.4424390896602959,
      "exit_pending": false
     },
     {
@@ -231,85 +231,47 @@
      "entry_price": 281.2999878,
      "qty": 37629.15296621845,
      "stop_price": 261.608988654,
-     "last_close": 284.6799927,
-     "exit_ma": 232.42819916200003,
-     "unrealized_pnl": 84592.02688456513,
-     "price_pnl_pct": 1.201565960394979,
-     "exit_pending": false
-    },
-    {
-     "symbol": "ALAB",
-     "signal_date": "2026-10-06",
-     "exit_signal_date": null,
-     "entry_date": "2026-10-07",
-     "entry_price": 376.0,
-     "qty": 27706.372241194964,
-     "stop_price": 349.67999999999995,
-     "last_close": 382.25,
-     "exit_ma": 314.66099914399996,
-     "unrealized_pnl": 131148.11300369538,
-     "price_pnl_pct": 1.66223404255319,
+     "last_close": 274.6600037,
+     "exit_ma": 234.653399358,
+     "unrealized_pnl": -291697.58451865986,
+     "price_pnl_pct": -2.360463699956117,
      "exit_pending": false
     }
    ],
    "stale_positions": [],
    "watchlist": [
     {
-     "symbol": "MU",
-     "label": "2순위 · 근접 (피벗 3% 이내)",
-     "close": 1088.0,
-     "pivot": 1108.72,
-     "to_pivot_pct": 1.9,
-     "rs": 97.96
-    },
-    {
-     "symbol": "AMD",
-     "label": "2순위 · 근접 (피벗 3% 이내)",
-     "close": 645.86,
-     "pivot": 658.52,
-     "to_pivot_pct": 1.96,
-     "rs": 96.94
-    },
-    {
      "symbol": "FTNT",
      "label": "2순위 · 근접 (피벗 3% 이내)",
-     "close": 189.28,
+     "close": 189.1,
      "pivot": 192.41,
-     "to_pivot_pct": 1.65,
-     "rs": 91.84
+     "to_pivot_pct": 1.75,
+     "rs": 93.88
     },
     {
-     "symbol": "CSCO",
-     "label": "1순위 · 임박 (피벗 1% 이내)",
-     "close": 117.39,
-     "pivot": 118.4,
-     "to_pivot_pct": 0.86,
-     "rs": 81.63
-    },
-    {
-     "symbol": "NVDA",
+     "symbol": "AAPL",
      "label": "2순위 · 근접 (피벗 3% 이내)",
-     "close": 237.47,
-     "pivot": 243.37,
-     "to_pivot_pct": 2.48,
-     "rs": 75.51
+     "close": 340.42,
+     "pivot": 345.34,
+     "to_pivot_pct": 1.45,
+     "rs": 74.49
     }
    ],
    "performance": {
-    "equity": 100829042.0,
-    "return_pct": 0.83,
-    "bench_return_pct": 1.8,
-    "mdd_pct": 0.0,
-    "closed_trades": 0,
-    "win_rate_pct": null,
+    "equity": 98890204.0,
+    "return_pct": -1.11,
+    "bench_return_pct": 0.38,
+    "mdd_pct": -1.92,
+    "closed_trades": 1,
+    "win_rate_pct": 0.0,
     "avg_win_pct": null,
-    "avg_loss_pct": null,
-    "open_positions": 3
+    "avg_loss_pct": -7.37,
+    "open_positions": 2
    },
    "status_csv": "NDX100/status.csv",
    "audit": {
-    "days": 9,
-    "signal_files": 9,
+    "days": 10,
+    "signal_files": 10,
     "missing_days": [],
     "late": [],
     "uncommitted": [],
@@ -604,7 +566,7 @@
    }
   }
  },
- "updated_at": "2026-10-08T22:57:05Z",
+ "updated_at": "2026-10-08T22:58:05Z",
  "disclaimer": "기계적 룰 출력이며 투자 자문이 아닙니다. 매수·매도 결정은 소유자 본인이 합니다.",
  "unconfirmed": "미확인 추정값(스캐너 원본 코드 미확인): 피벗=직전 20봉 최고가(당일 제외) · 거래량 평균=직전 50일(당일 제외) · RS=지수 대비 가중 1년 수익률 ≥ 0%p(스캐너는 유니버스 백분위 ≥ 70) · 52주 고저=종가 기준 · 200일선 상승=22봉 전 대비 · 수축비=10/40일 평균 TR · 비용=편도 0.2%"
 }
