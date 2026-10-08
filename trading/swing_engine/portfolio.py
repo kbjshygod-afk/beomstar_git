@@ -54,6 +54,11 @@ class PortfolioConfig:
     min_fill_value: float = 0.0              # fractional markets: skip fills worth less than this
     min_fill_frac: float = 0.01              # fractional markets: skip fills < 1% of the desired size
                                              # (the analogue of "< 1 share"; avoids dust from cash residue)
+    # Paper trading: {date: {"entries": {symbols}, "exits": {symbols}}} decided at that date's close
+    # and committed before the next open. On those dates the day loop acts on these sets instead
+    # of the signals recomputed from today's data, so a data provider revising a bar after the
+    # open cannot change trades that were already executed (stops still follow the price bars).
+    signal_override: dict | None = None
 
     @property
     def whole_shares(self) -> bool:
@@ -70,6 +75,9 @@ class PortfolioResult:
     pending_entries: list = field(default_factory=list)
     pending_exits: list = field(default_factory=list)
     config: dict = field(default_factory=dict)
+    # signal_override dates: {"YYYY-MM-DD": {"entries": set, "exits": set}} that today's data
+    # would have produced given the executed holdings (for the paper-trading audit)
+    natural: dict = field(default_factory=dict)
 
 
 # ---------------------------------------------------------------------------
@@ -197,6 +205,8 @@ def simulate(frames: dict, cfg: PortfolioConfig) -> PortfolioResult:
     open_tr: dict[int, dict] = {}
     trades, skipped, rows = [], [], []
     cash = float(cfg.initial_equity)
+    override = {pd.Timestamp(k): v for k, v in (cfg.signal_override or {}).items()}
+    natural: dict[str, dict] = {}
 
     def close_trade(j, d, price, kind):
         nonlocal cash
@@ -217,6 +227,9 @@ def simulate(frames: dict, cfg: PortfolioConfig) -> PortfolioResult:
 
     for i, d in enumerate(cal):
         has = HAS[i]
+        ov = override.get(d)
+        if ov is not None:
+            nat = natural[_d(d)] = {"entries": set(), "exits": set()}
         # (1) pending exits at the open  (state.py step 1)
         for j in [j for j in open_tr if has[j] and machines[j].exit_pending]:
             ev = machines[j].fill_exit(d, O[i, j], bar=i)
@@ -268,7 +281,13 @@ def simulate(frames: dict, cfg: PortfolioConfig) -> PortfolioResult:
                 continue
             m = machines[j]
             open_tr[j]["_bars"] += 1
-            ev = m.check_exit(d, O[i, j], L[i, j], C[i, j], EMA[i, j], bar=i)
+            ema = EMA[i, j]
+            if ov is not None:
+                if not (L[i, j] <= m.stop_price) and C[i, j] < ema:
+                    nat["exits"].add(syms[j])
+                # the committed exit decision; the stop check above it still uses the bar
+                ema = math.inf if syms[j] in ov["exits"] else -math.inf
+            ev = m.check_exit(d, O[i, j], L[i, j], C[i, j], ema, bar=i)
             if ev is not None and ev.type == "STOP":
                 close_trade(j, d, ev.price, "STOP")
             elif ev is not None and ev.type == "EXIT_SIGNAL":
@@ -278,7 +297,11 @@ def simulate(frames: dict, cfg: PortfolioConfig) -> PortfolioResult:
         pos_value = float(sum(qty[j] * last_close[j] for j in open_tr))
         equity = cash + pos_value
         # (5) new signals for flat symbols (state.py step 4)
-        for j in np.flatnonzero(has & SIG[i]):
+        armed = np.flatnonzero(has & SIG[i])
+        if ov is not None:
+            nat["entries"] = {syms[j] for j in armed if not machines[j].in_pos}
+            armed = [j for j in range(S) if has[j] and syms[j] in ov["entries"]]
+        for j in armed:
             m = machines[j]
             if m.in_pos:
                 continue           # no re-entry while a position is open
@@ -314,7 +337,7 @@ def simulate(frames: dict, cfg: PortfolioConfig) -> PortfolioResult:
         tdf = tdf.drop(columns=[c for c in tdf.columns if c.startswith("_")])
     return PortfolioResult(eq, tdf, pd.DataFrame(skipped), open_positions, pending_entries,
                            pending_exits, _cfg_dict(cfg) | {"last_date": _d(cal[last_i]),
-                                                            "first_date": _d(cal[0])})
+                                                            "first_date": _d(cal[0])}, natural)
 
 
 def _cfg_dict(cfg: PortfolioConfig) -> dict:
