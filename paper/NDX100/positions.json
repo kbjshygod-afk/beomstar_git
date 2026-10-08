@@ -18,13 +18,13 @@
   "signal_date": "2026-10-06",
   "exit_signal_date": null,
   "entry_date": "2026-10-07",
-  "entry_price": 280.9949951,
+  "entry_price": 281.2999878,
   "qty": 37629.15296621845,
-  "stop_price": 261.32534544299995,
+  "stop_price": 261.608988654,
   "last_close": 284.6799927,
   "exit_ma": 232.42819916200003,
-  "unrealized_pnl": 96091.59708037041,
-  "price_pnl_pct": 1.3114104038360663,
+  "unrealized_pnl": 84592.02688456513,
+  "price_pnl_pct": 1.201565960394979,
   "exit_pending": false
  },
  {
@@ -32,13 +32,13 @@
   "signal_date": "2026-10-06",
   "exit_signal_date": null,
   "entry_date": "2026-10-07",
-  "entry_price": 376.6000061,
+  "entry_price": 376.0,
   "qty": 27706.372241194964,
-  "stop_price": 350.238005673,
+  "stop_price": 349.67999999999995,
   "last_close": 382.25,
   "exit_ma": 314.66099914399996,
-  "unrealized_pnl": 114490.87266540155,
-  "price_pnl_pct": 1.5002638896664644,
+  "unrealized_pnl": 131148.11300369538,
+  "price_pnl_pct": 1.66223404255319,
   "exit_pending": false
  }
 ]

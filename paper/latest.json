@@ -236,13 +236,13 @@
      "signal_date": "2026-10-06",
      "exit_signal_date": null,
      "entry_date": "2026-10-07",
-     "entry_price": 280.9949951,
+     "entry_price": 281.2999878,
      "qty": 37629.15296621845,
-     "stop_price": 261.32534544299995,
+     "stop_price": 261.608988654,
      "last_close": 284.6799927,
      "exit_ma": 232.42819916200003,
-     "unrealized_pnl": 96091.59708037041,
-     "price_pnl_pct": 1.3114104038360663,
+     "unrealized_pnl": 84592.02688456513,
+     "price_pnl_pct": 1.201565960394979,
      "exit_pending": false
     },
     {
@@ -250,13 +250,13 @@
      "signal_date": "2026-10-06",
      "exit_signal_date": null,
      "entry_date": "2026-10-07",
-     "entry_price": 376.6000061,
+     "entry_price": 376.0,
      "qty": 27706.372241194964,
-     "stop_price": 350.238005673,
+     "stop_price": 349.67999999999995,
      "last_close": 382.25,
      "exit_ma": 314.66099914399996,
-     "unrealized_pnl": 114490.87266540155,
-     "price_pnl_pct": 1.5002638896664644,
+     "unrealized_pnl": 131148.11300369538,
+     "price_pnl_pct": 1.66223404255319,
      "exit_pending": false
     }
    ],
@@ -304,8 +304,8 @@
     }
    ],
    "performance": {
-    "equity": 100823884.0,
-    "return_pct": 0.82,
+    "equity": 100829042.0,
+    "return_pct": 0.83,
     "bench_return_pct": 1.8,
     "mdd_pct": 0.0,
     "closed_trades": 0,
@@ -322,7 +322,8 @@
     "late": [],
     "uncommitted": [],
     "mismatched": [],
-    "revised": []
+    "revised": [],
+    "revised_after_open": []
    }
   },
   "CRYPTO": {
@@ -651,7 +652,7 @@
    }
   }
  },
- "updated_at": "2026-10-08T01:56:22Z",
+ "updated_at": "2026-10-08T01:57:19Z",
  "disclaimer": "기계적 룰 출력이며 투자 자문이 아닙니다. 매수·매도 결정은 소유자 본인이 합니다.",
  "unconfirmed": "미확인 추정값(스캐너 원본 코드 미확인): 피벗=직전 20봉 최고가(당일 제외) · 거래량 평균=직전 50일(당일 제외) · RS=지수 대비 가중 1년 수익률 ≥ 0%p(스캐너는 유니버스 백분위 ≥ 70) · 52주 고저=종가 기준 · 200일선 상승=22봉 전 대비 · 수축비=10/40일 평균 TR · 비용=편도 0.2%"
 }
