@@ -458,7 +458,7 @@
      "symbol": "041960.KQ",
      "signal_close": 11000.0,
      "rs": 71.03,
-     "desired_qty": 673.0,
+     "desired_qty": 678.0,
      "est_stop_from_close": 9900.0
     }
    ],
@@ -519,20 +519,6 @@
      "unrealized_pnl": 290967.60000000056,
      "price_pnl_pct": 4.289544235924936,
      "exit_pending": false
-    },
-    {
-     "symbol": "327260.KQ",
-     "signal_date": "2026-10-06",
-     "exit_signal_date": null,
-     "entry_date": "2026-10-07",
-     "entry_price": 58600.0,
-     "qty": 130.0,
-     "stop_price": 52740.0,
-     "last_close": 53400.0,
-     "exit_ma": 37745.4,
-     "unrealized_pnl": -705120.0,
-     "price_pnl_pct": -8.87372013651877,
-     "exit_pending": false
     }
    ],
    "stale_positions": [],
@@ -555,15 +541,15 @@
     }
    ],
    "performance": {
-    "equity": 98788117.0,
-    "return_pct": -1.21,
+    "equity": 99479353.0,
+    "return_pct": -0.52,
     "bench_return_pct": 5.72,
-    "mdd_pct": -1.7,
+    "mdd_pct": -1.02,
     "closed_trades": 1,
     "win_rate_pct": 0.0,
     "avg_win_pct": null,
     "avg_loss_pct": -10.36,
-    "open_positions": 5
+    "open_positions": 4
    },
    "status_csv": "KOSDAQ/status.csv",
    "audit": {
@@ -576,6 +562,9 @@
      "2026-10-06"
     ],
     "revised": [
+     "2026-10-06"
+    ],
+    "revised_after_open": [
      "2026-10-06"
     ]
    }
@@ -653,7 +642,7 @@
    }
   }
  },
- "updated_at": "2026-10-08T01:57:26Z",
+ "updated_at": "2026-10-08T01:57:49Z",
  "disclaimer": "기계적 룰 출력이며 투자 자문이 아닙니다. 매수·매도 결정은 소유자 본인이 합니다.",
  "unconfirmed": "미확인 추정값(스캐너 원본 코드 미확인): 피벗=직전 20봉 최고가(당일 제외) · 거래량 평균=직전 50일(당일 제외) · RS=지수 대비 가중 1년 수익률 ≥ 0%p(스캐너는 유니버스 백분위 ≥ 70) · 52주 고저=종가 기준 · 200일선 상승=22봉 전 대비 · 수축비=10/40일 평균 TR · 비용=편도 0.2%"
 }
