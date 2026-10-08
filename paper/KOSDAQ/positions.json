@@ -7,10 +7,10 @@
   "entry_price": 20000.0,
   "qty": 375.0,
   "stop_price": 18000.0,
-  "last_close": 19050.0,
-  "exit_ma": 14822.2,
-  "unrealized_pnl": -385537.5,
-  "price_pnl_pct": -4.749999999999998,
+  "last_close": 18270.0,
+  "exit_ma": 14916.0,
+  "unrealized_pnl": -677452.5,
+  "price_pnl_pct": -8.650000000000002,
   "exit_pending": false
  },
  {
@@ -21,10 +21,10 @@
   "entry_price": 52600.0,
   "qty": 141.0,
   "stop_price": 47340.0,
-  "last_close": 56200.0,
-  "exit_ma": 46281.0,
-  "unrealized_pnl": 476918.39999999944,
-  "price_pnl_pct": 6.844106463878319,
+  "last_close": 57700.0,
+  "exit_ma": 46632.0,
+  "unrealized_pnl": 687995.3999999994,
+  "price_pnl_pct": 9.695817490494306,
   "exit_pending": false
  },
  {
@@ -35,10 +35,10 @@
   "entry_price": 23350.0,
   "qty": 318.0,
   "stop_price": 21015.0,
-  "last_close": 22850.0,
-  "exit_ma": 18665.4,
-  "unrealized_pnl": -188383.19999999925,
-  "price_pnl_pct": -2.1413276231263434,
+  "last_close": 24800.0,
+  "exit_ma": 18868.8,
+  "unrealized_pnl": 430476.60000000056,
+  "price_pnl_pct": 6.209850107066384,
   "exit_pending": false
  },
  {
@@ -49,10 +49,24 @@
   "entry_price": 37300.0,
   "qty": 201.0,
   "stop_price": 33570.0,
-  "last_close": 38900.0,
-  "exit_ma": 31659.0,
-  "unrealized_pnl": 290967.60000000056,
-  "price_pnl_pct": 4.289544235924936,
+  "last_close": 38150.0,
+  "exit_ma": 31874.0,
+  "unrealized_pnl": 140519.10000000056,
+  "price_pnl_pct": 2.278820375335111,
+  "exit_pending": false
+ },
+ {
+  "symbol": "041960.KQ",
+  "signal_date": "2026-10-07",
+  "exit_signal_date": null,
+  "entry_date": "2026-10-08",
+  "entry_price": 11000.0,
+  "qty": 678.0,
+  "stop_price": 9900.0,
+  "last_close": 11360.0,
+  "exit_ma": 9120.0,
+  "unrealized_pnl": 213759.83999999985,
+  "price_pnl_pct": 3.2727272727272716,
   "exit_pending": false
  }
 ]
