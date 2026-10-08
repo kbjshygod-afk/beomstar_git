@@ -47,13 +47,13 @@
      "signal_date": "2026-10-06",
      "exit_signal_date": null,
      "entry_date": "2026-10-07",
-     "entry_price": 280.9949951,
+     "entry_price": 281.2999878,
      "qty": 26108.182259126945,
-     "stop_price": 252.89549559,
+     "stop_price": 253.16998902,
      "last_close": 284.6799927,
      "exit_ma": 232.42819916200003,
-     "unrealized_pnl": 66671.09760342352,
-     "price_pnl_pct": 1.3114104038360663,
+     "unrealized_pnl": 58692.36699412018,
+     "price_pnl_pct": 1.201565960394979,
      "exit_pending": false
     }
    ],
@@ -81,7 +81,7 @@
      "close": 645.86,
      "pivot": 658.52,
      "to_pivot_pct": 1.96,
-     "rs": 98.8
+     "rs": 98.79
     },
     {
      "symbol": "FTNT",
@@ -89,7 +89,7 @@
      "close": 189.28,
      "pivot": 192.41,
      "to_pivot_pct": 1.65,
-     "rs": 96.59
+     "rs": 96.58
     },
     {
      "symbol": "PSX",
@@ -105,7 +105,7 @@
      "close": 381.42,
      "pivot": 389.93,
      "to_pivot_pct": 2.23,
-     "rs": 95.18
+     "rs": 95.17
     },
     {
      "symbol": "ZBRA",
@@ -113,7 +113,7 @@
      "close": 386.05,
      "pivot": 390.8,
      "to_pivot_pct": 1.23,
-     "rs": 94.18
+     "rs": 94.16
     },
     {
      "symbol": "ANET",
@@ -121,7 +121,7 @@
      "close": 215.83,
      "pivot": 216.07,
      "to_pivot_pct": 0.11,
-     "rs": 92.97
+     "rs": 92.96
     },
     {
      "symbol": "FFIV",
@@ -129,7 +129,7 @@
      "close": 466.65,
      "pivot": 472.0,
      "to_pivot_pct": 1.15,
-     "rs": 92.37
+     "rs": 92.35
     },
     {
      "symbol": "CSCO",
@@ -137,7 +137,7 @@
      "close": 117.39,
      "pivot": 118.4,
      "to_pivot_pct": 0.86,
-     "rs": 91.37
+     "rs": 91.35
     },
     {
      "symbol": "EXPD",
@@ -145,7 +145,7 @@
      "close": 190.85,
      "pivot": 195.32,
      "to_pivot_pct": 2.34,
-     "rs": 88.35
+     "rs": 88.13
     },
     {
      "symbol": "NVDA",
@@ -153,7 +153,7 @@
      "close": 237.47,
      "pivot": 243.37,
      "to_pivot_pct": 2.48,
-     "rs": 87.55
+     "rs": 87.32
     },
     {
      "symbol": "JCI",
@@ -161,7 +161,7 @@
      "close": 155.93,
      "pivot": 160.41,
      "to_pivot_pct": 2.87,
-     "rs": 86.95
+     "rs": 86.72
     },
     {
      "symbol": "APH",
@@ -169,7 +169,7 @@
      "close": 87.55,
      "pivot": 89.93,
      "to_pivot_pct": 2.72,
-     "rs": 86.35
+     "rs": 86.12
     },
     {
      "symbol": "AAPL",
@@ -177,18 +177,18 @@
      "close": 336.67,
      "pivot": 345.34,
      "to_pivot_pct": 2.58,
-     "rs": 84.34
+     "rs": 84.1
     }
    ],
    "performance": {
-    "equity": 100007262.0,
-    "return_pct": 0.01,
+    "equity": 99993870.0,
+    "return_pct": -0.01,
     "bench_return_pct": 0.75,
     "mdd_pct": -0.3,
     "closed_trades": 1,
     "win_rate_pct": 0.0,
     "avg_win_pct": null,
-    "avg_loss_pct": -10.36,
+    "avg_loss_pct": -10.43,
     "open_positions": 3
    },
    "status_csv": "SP500/status.csv",
@@ -199,7 +199,8 @@
     "late": [],
     "uncommitted": [],
     "mismatched": [],
-    "revised": []
+    "revised": [],
+    "revised_after_open": []
    }
   },
   "NDX100": {
@@ -650,7 +651,7 @@
    }
   }
  },
- "updated_at": "2026-10-07T21:57:19Z",
+ "updated_at": "2026-10-08T01:56:22Z",
  "disclaimer": "기계적 룰 출력이며 투자 자문이 아닙니다. 매수·매도 결정은 소유자 본인이 합니다.",
  "unconfirmed": "미확인 추정값(스캐너 원본 코드 미확인): 피벗=직전 20봉 최고가(당일 제외) · 거래량 평균=직전 50일(당일 제외) · RS=지수 대비 가중 1년 수익률 ≥ 0%p(스캐너는 유니버스 백분위 ≥ 70) · 52주 고저=종가 기준 · 200일선 상승=22봉 전 대비 · 수축비=10/40일 평균 TR · 비용=편도 0.2%"
 }

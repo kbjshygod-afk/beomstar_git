@@ -32,13 +32,13 @@
   "signal_date": "2026-10-06",
   "exit_signal_date": null,
   "entry_date": "2026-10-07",
-  "entry_price": 280.9949951,
+  "entry_price": 281.2999878,
   "qty": 26108.182259126945,
-  "stop_price": 252.89549559,
+  "stop_price": 253.16998902,
   "last_close": 284.6799927,
   "exit_ma": 232.42819916200003,
-  "unrealized_pnl": 66671.09760342352,
-  "price_pnl_pct": 1.3114104038360663,
+  "unrealized_pnl": 58692.36699412018,
+  "price_pnl_pct": 1.201565960394979,
   "exit_pending": false
  }
 ]
