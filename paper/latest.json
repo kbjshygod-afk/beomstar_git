@@ -212,14 +212,14 @@
    }
   },
   "NDX100": {
-   "as_of": "2026-10-08",
+   "as_of": "2026-10-09",
    "start_date": "2026-09-25",
    "regime": {
     "benchmark": "^NDX",
     "mode": "MA200",
-    "close": 30725.8105,
-    "ma200": 27598.7157,
-    "ma20": 30238.1306,
+    "close": 30883.1484,
+    "ma200": 27625.8229,
+    "ma20": 30313.866,
     "on": true
    },
    "entries_next_open": [],
@@ -233,10 +233,10 @@
      "entry_price": 1053.26001,
      "qty": 10245.25752756148,
      "stop_price": 979.5318092999998,
-     "last_close": 1048.599976,
-     "exit_ma": 912.1357031120001,
-     "unrealized_pnl": -90811.44210408628,
-     "price_pnl_pct": -0.4424390896602959,
+     "last_close": 1103.35498,
+     "exit_ma": 920.3380029079999,
+     "unrealized_pnl": 469045.7165647689,
+     "price_pnl_pct": 4.7561826637660065,
      "exit_pending": false
     },
     {
@@ -247,36 +247,44 @@
      "entry_price": 281.2999878,
      "qty": 37629.15296621845,
      "stop_price": 261.608988654,
-     "last_close": 274.6600037,
-     "exit_ma": 234.653399358,
-     "unrealized_pnl": -291697.58451865986,
-     "price_pnl_pct": -2.360463699956117,
+     "last_close": 275.2799988,
+     "exit_ma": 236.49299927200002,
+     "unrealized_pnl": -268414.3538433686,
+     "price_pnl_pct": -2.140060171022873,
      "exit_pending": false
     }
    ],
    "stale_positions": [],
    "watchlist": [
     {
-     "symbol": "FTNT",
+     "symbol": "CSCO",
+     "label": "1순위 · 임박 (피벗 1% 이내)",
+     "close": 118.39,
+     "pivot": 118.4,
+     "to_pivot_pct": 0.01,
+     "rs": 80.61
+    },
+    {
+     "symbol": "AMGN",
      "label": "2순위 · 근접 (피벗 3% 이내)",
-     "close": 189.1,
-     "pivot": 192.41,
-     "to_pivot_pct": 1.75,
-     "rs": 93.88
+     "close": 414.87,
+     "pivot": 426.59,
+     "to_pivot_pct": 2.82,
+     "rs": 73.47
     },
     {
      "symbol": "AAPL",
      "label": "2순위 · 근접 (피벗 3% 이내)",
-     "close": 340.42,
+     "close": 336.64,
      "pivot": 345.34,
-     "to_pivot_pct": 1.45,
-     "rs": 74.49
+     "to_pivot_pct": 2.58,
+     "rs": 70.41
     }
    ],
    "performance": {
-    "equity": 98890204.0,
-    "return_pct": -1.11,
-    "bench_return_pct": 0.38,
+    "equity": 99474513.0,
+    "return_pct": -0.53,
+    "bench_return_pct": 0.9,
     "mdd_pct": -1.92,
     "closed_trades": 1,
     "win_rate_pct": 0.0,
@@ -286,8 +294,8 @@
    },
    "status_csv": "NDX100/status.csv",
    "audit": {
-    "days": 10,
-    "signal_files": 10,
+    "days": 11,
+    "signal_files": 11,
     "missing_days": [],
     "late": [],
     "uncommitted": [],
@@ -567,7 +575,7 @@
    }
   }
  },
- "updated_at": "2026-10-09T21:58:09Z",
+ "updated_at": "2026-10-09T21:59:10Z",
  "disclaimer": "기계적 룰 출력이며 투자 자문이 아닙니다. 매수·매도 결정은 소유자 본인이 합니다.",
  "unconfirmed": "미확인 추정값(스캐너 원본 코드 미확인): 피벗=직전 20봉 최고가(당일 제외) · 거래량 평균=직전 50일(당일 제외) · RS=지수 대비 가중 1년 수익률 ≥ 0%p(스캐너는 유니버스 백분위 ≥ 70) · 52주 고저=종가 기준 · 200일선 상승=22봉 전 대비 · 수축비=10/40일 평균 TR · 비용=편도 0.2%"
 }
