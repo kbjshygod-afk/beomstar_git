@@ -1,1 +1,2 @@
-symbol
+symbol,signal_date,signal_close,rs_at_signal,entry_date,entry_price,qty,desired_qty,partial,stop_price,entry_cost,cost_basis,exit_date,exit_price,exit_type,exit_cost,net_pnl,pnl_pct,price_pnl_pct,bars_held,days_held
+NEAR-USD,2026-09-25,4.948783875,95.83333333333334,2026-09-26,4.948895931,1515523.851806925,1515523.851806925,False,4.4540063379,15000.339647081477,7515170.1631878195,2026-10-08,4.4540063379,STOP,13500.305682373328,-778517.6276835287,-10.35928143712575,-9.999999999999998,13,12

@@ -489,60 +489,36 @@
    }
   },
   "CRYPTO": {
-   "as_of": "2026-10-06",
+   "as_of": "2026-10-08",
    "start_date": "2026-09-24",
    "regime": {
     "benchmark": "BTC-USD",
     "mode": "MA200",
-    "close": 85557.5625,
-    "ma200": 71656.16,
-    "ma20": 83836.7746,
+    "close": 81676.3359,
+    "ma200": 71798.1376,
+    "ma20": 84219.1262,
     "on": true
    },
    "entries_next_open": [],
    "exits_next_open": [],
-   "positions": [
-    {
-     "symbol": "NEAR-USD",
-     "signal_date": "2026-09-25",
-     "exit_signal_date": null,
-     "entry_date": "2026-09-26",
-     "entry_price": 4.948895931,
-     "qty": 1515523.851806925,
-     "stop_price": 4.4540063379,
-     "last_close": 5.068956852,
-     "exit_ma": 3.0946945738200005,
-     "unrealized_pnl": 151590.59977235273,
-     "price_pnl_pct": 2.4260142600278867,
-     "exit_pending": false
-    }
-   ],
+   "positions": [],
    "stale_positions": [],
-   "watchlist": [
-    {
-     "symbol": "WBT-USD",
-     "label": "2순위 · 근접 (피벗 3% 이내)",
-     "close": 85.4908,
-     "pivot": 87.8705,
-     "to_pivot_pct": 2.78,
-     "rs": 80.0
-    }
-   ],
+   "watchlist": [],
    "performance": {
-    "equity": 100166955.0,
-    "return_pct": 0.17,
-    "bench_return_pct": 1.4,
-    "mdd_pct": -1.03,
-    "closed_trades": 0,
-    "win_rate_pct": null,
+    "equity": 99221482.0,
+    "return_pct": -0.78,
+    "bench_return_pct": -3.2,
+    "mdd_pct": -1.4,
+    "closed_trades": 1,
+    "win_rate_pct": 0.0,
     "avg_win_pct": null,
-    "avg_loss_pct": null,
-    "open_positions": 1
+    "avg_loss_pct": -10.36,
+    "open_positions": 0
    },
    "status_csv": "CRYPTO/status.csv",
    "audit": {
-    "days": 13,
-    "signal_files": 5,
+    "days": 15,
+    "signal_files": 6,
     "missing_days": [
      "2026-09-26",
      "2026-09-27",
@@ -551,7 +527,8 @@
      "2026-10-02",
      "2026-10-03",
      "2026-10-04",
-     "2026-10-05"
+     "2026-10-05",
+     "2026-10-07"
     ],
     "late": [],
     "uncommitted": [],
@@ -603,7 +580,7 @@
    }
   }
  },
- "updated_at": "2026-10-09T09:20:06Z",
+ "updated_at": "2026-10-09T09:20:12Z",
  "disclaimer": "기계적 룰 출력이며 투자 자문이 아닙니다. 매수·매도 결정은 소유자 본인이 합니다.",
  "unconfirmed": "미확인 추정값(스캐너 원본 코드 미확인): 피벗=직전 20봉 최고가(당일 제외) · 거래량 평균=직전 50일(당일 제외) · RS=지수 대비 가중 1년 수익률 ≥ 0%p(스캐너는 유니버스 백분위 ≥ 70) · 52주 고저=종가 기준 · 200일선 상승=22봉 전 대비 · 수축비=10/40일 평균 TR · 비용=편도 0.2%"
 }
