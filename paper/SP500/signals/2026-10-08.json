@@ -1,0 +1,139 @@
+{
+ "market": "SP500",
+ "as_of": "2026-10-08",
+ "regime": {
+  "benchmark": "^GSPC",
+  "mode": "MA200",
+  "close": 7765.3599,
+  "ma200": 7245.9637,
+  "ma20": 7697.046,
+  "on": true
+ },
+ "entries_next_open": [],
+ "exits_next_open": [],
+ "positions": [
+  "LITE",
+  "MRVL",
+  "NTAP"
+ ],
+ "watchlist": [
+  {
+   "symbol": "P",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 150.57,
+   "pivot": 153.46,
+   "to_pivot_pct": 1.92,
+   "rs": 98.19
+  },
+  {
+   "symbol": "FTNT",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 189.1,
+   "pivot": 192.41,
+   "to_pivot_pct": 1.75,
+   "rs": 97.19
+  },
+  {
+   "symbol": "ZBRA",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 382.14,
+   "pivot": 390.8,
+   "to_pivot_pct": 2.27,
+   "rs": 94.58
+  },
+  {
+   "symbol": "FFIV",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 461.66,
+   "pivot": 472.25,
+   "to_pivot_pct": 2.29,
+   "rs": 92.57
+  },
+  {
+   "symbol": "TRGP",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 288.49,
+   "pivot": 296.87,
+   "to_pivot_pct": 2.9,
+   "rs": 91.37
+  },
+  {
+   "symbol": "XOM",
+   "label": "1순위 · 임박 (피벗 1% 이내)",
+   "close": 168.5,
+   "pivot": 169.64,
+   "to_pivot_pct": 0.68,
+   "rs": 89.76
+  },
+  {
+   "symbol": "EXPD",
+   "label": "1순위 · 임박 (피벗 1% 이내)",
+   "close": 193.71,
+   "pivot": 195.32,
+   "to_pivot_pct": 0.83,
+   "rs": 89.56
+  },
+  {
+   "symbol": "CVX",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 211.55,
+   "pivot": 217.78,
+   "to_pivot_pct": 2.94,
+   "rs": 87.95
+  },
+  {
+   "symbol": "AAPL",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 340.42,
+   "pivot": 345.34,
+   "to_pivot_pct": 1.45,
+   "rs": 86.55
+  },
+  {
+   "symbol": "IFF",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 84.65,
+   "pivot": 86.68,
+   "to_pivot_pct": 2.4,
+   "rs": 83.33
+  },
+  {
+   "symbol": "MET",
+   "label": "1순위 · 임박 (피벗 1% 이내)",
+   "close": 98.47,
+   "pivot": 99.06,
+   "to_pivot_pct": 0.6,
+   "rs": 80.92
+  },
+  {
+   "symbol": "ABBV",
+   "label": "1순위 · 임박 (피벗 1% 이내)",
+   "close": 272.42,
+   "pivot": 274.94,
+   "to_pivot_pct": 0.93,
+   "rs": 79.32
+  },
+  {
+   "symbol": "CAH",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 238.96,
+   "pivot": 242.12,
+   "to_pivot_pct": 1.32,
+   "rs": 79.12
+  },
+  {
+   "symbol": "EBAY",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 111.98,
+   "pivot": 113.63,
+   "to_pivot_pct": 1.47,
+   "rs": 70.28
+  }
+ ],
+ "coverage": {
+  "requested": 503,
+  "loaded": 503,
+  "failed": []
+ },
+ "generated_at": "2026-10-09T09:18:32Z"
+}
