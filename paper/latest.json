@@ -281,51 +281,36 @@
    }
   },
   "CRYPTO": {
-   "as_of": "2026-10-07",
+   "as_of": "2026-10-08",
    "start_date": "2026-09-25",
    "regime": {
     "benchmark": "BTC-USD",
     "mode": "MA200",
-    "close": 83275.9297,
-    "ma200": 71728.982,
-    "ma20": 84180.3824,
+    "close": 81676.3359,
+    "ma200": 71798.1376,
+    "ma20": 84219.1262,
     "on": true
    },
    "entries_next_open": [],
    "exits_next_open": [],
-   "positions": [
-    {
-     "symbol": "NEAR-USD",
-     "signal_date": "2026-09-25",
-     "exit_signal_date": null,
-     "entry_date": "2026-09-26",
-     "entry_price": 4.948895931,
-     "qty": 1515523.851806925,
-     "stop_price": 4.4540063379,
-     "last_close": 5.344985962,
-     "exit_ma": 3.1698189925600007,
-     "unrealized_pnl": 569082.6423703944,
-     "price_pnl_pct": 8.003603965864038,
-     "exit_pending": false
-    }
-   ],
+   "positions": [],
    "stale_positions": [],
    "watchlist": [],
    "performance": {
-    "equity": 100585284.0,
-    "return_pct": 0.59,
-    "bench_return_pct": -0.9,
-    "mdd_pct": -1.03,
-    "closed_trades": 0,
-    "win_rate_pct": null,
+    "equity": 99221482.0,
+    "return_pct": -0.78,
+    "bench_return_pct": -2.81,
+    "mdd_pct": -1.4,
+    "closed_trades": 1,
+    "win_rate_pct": 0.0,
     "avg_win_pct": null,
-    "avg_loss_pct": null,
-    "open_positions": 1
+    "avg_loss_pct": -10.36,
+    "open_positions": 0
    },
    "status_csv": "CRYPTO/status.csv",
    "audit": {
-    "days": 13,
-    "signal_files": 13,
+    "days": 14,
+    "signal_files": 14,
     "missing_days": [],
     "late": [],
     "uncommitted": [],
@@ -566,7 +551,7 @@
    }
   }
  },
- "updated_at": "2026-10-08T22:58:05Z",
+ "updated_at": "2026-10-09T08:28:36Z",
  "disclaimer": "기계적 룰 출력이며 투자 자문이 아닙니다. 매수·매도 결정은 소유자 본인이 합니다.",
  "unconfirmed": "미확인 추정값(스캐너 원본 코드 미확인): 피벗=직전 20봉 최고가(당일 제외) · 거래량 평균=직전 50일(당일 제외) · RS=지수 대비 가중 1년 수익률 ≥ 0%p(스캐너는 유니버스 백분위 ≥ 70) · 52주 고저=종가 기준 · 200일선 상승=22봉 전 대비 · 수축비=10/40일 평균 TR · 비용=편도 0.2%"
 }
