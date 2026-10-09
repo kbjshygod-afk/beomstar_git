@@ -1,0 +1,52 @@
+{
+ "market": "NDX100",
+ "as_of": "2026-10-09",
+ "regime": {
+  "benchmark": "^NDX",
+  "mode": "MA200",
+  "close": 30883.1484,
+  "ma200": 27625.8229,
+  "ma20": 30313.866,
+  "on": true
+ },
+ "entries_next_open": [],
+ "exits_next_open": [],
+ "positions": [
+  "LITE",
+  "MRVL"
+ ],
+ "watchlist": [
+  {
+   "symbol": "CSCO",
+   "label": "1순위 · 임박 (피벗 1% 이내)",
+   "close": 118.39,
+   "pivot": 118.4,
+   "to_pivot_pct": 0.01,
+   "rs": 80.61
+  },
+  {
+   "symbol": "AMGN",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 414.87,
+   "pivot": 426.59,
+   "to_pivot_pct": 2.82,
+   "rs": 73.47
+  },
+  {
+   "symbol": "AAPL",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 336.64,
+   "pivot": 345.34,
+   "to_pivot_pct": 2.58,
+   "rs": 70.41
+  }
+ ],
+ "coverage": {
+  "requested": 101,
+  "loaded": 100,
+  "failed": [
+   "WBD"
+  ]
+ },
+ "generated_at": "2026-10-09T21:59:10Z"
+}
