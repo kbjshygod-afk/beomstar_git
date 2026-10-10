@@ -305,14 +305,14 @@
    }
   },
   "CRYPTO": {
-   "as_of": "2026-10-08",
+   "as_of": "2026-10-09",
    "start_date": "2026-09-25",
    "regime": {
     "benchmark": "BTC-USD",
     "mode": "MA200",
-    "close": 81676.3359,
-    "ma200": 71798.1376,
-    "ma20": 84219.1262,
+    "close": 82546.3203,
+    "ma200": 71856.2949,
+    "ma20": 84284.7582,
     "on": true
    },
    "entries_next_open": [],
@@ -323,7 +323,7 @@
    "performance": {
     "equity": 99221482.0,
     "return_pct": -0.78,
-    "bench_return_pct": -2.81,
+    "bench_return_pct": -1.77,
     "mdd_pct": -1.4,
     "closed_trades": 1,
     "win_rate_pct": 0.0,
@@ -333,8 +333,8 @@
    },
    "status_csv": "CRYPTO/status.csv",
    "audit": {
-    "days": 14,
-    "signal_files": 14,
+    "days": 15,
+    "signal_files": 15,
     "missing_days": [],
     "late": [],
     "uncommitted": [],
@@ -575,7 +575,7 @@
    }
   }
  },
- "updated_at": "2026-10-09T21:59:10Z",
+ "updated_at": "2026-10-10T07:29:21Z",
  "disclaimer": "기계적 룰 출력이며 투자 자문이 아닙니다. 매수·매도 결정은 소유자 본인이 합니다.",
  "unconfirmed": "미확인 추정값(스캐너 원본 코드 미확인): 피벗=직전 20봉 최고가(당일 제외) · 거래량 평균=직전 50일(당일 제외) · RS=지수 대비 가중 1년 수익률 ≥ 0%p(스캐너는 유니버스 백분위 ≥ 70) · 52주 고저=종가 기준 · 200일선 상승=22봉 전 대비 · 수축비=10/40일 평균 TR · 비용=편도 0.2%"
 }
