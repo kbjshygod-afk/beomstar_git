@@ -10,8 +10,9 @@ DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 CLAUDE_BIN="${CLAUDE_BIN:-claude}"
 MODEL="${WORK_AGENT_MODEL:-sonnet}"
-START="${WORK_AGENT_START:-0830}"
-END="${WORK_AGENT_END:-1900}"
+START="${WORK_AGENT_START:-0900}"
+END="${WORK_AGENT_END:-1800}"
+HOLIDAYS="${WORK_AGENT_HOLIDAYS:-$DIR/holidays_kr.txt}"
 STATE="${WORK_AGENT_STATE:-$DIR/state}"
 INBOX="${WORK_AGENT_INBOX:-$DIR/inbox}"
 ALLOWED="${WORK_AGENT_ALLOWED_TOOLS:-}"
@@ -23,10 +24,15 @@ mkdir -p "$STATE" "$INBOX"
 log() { printf '%s %s\n' "$(TZ=Asia/Seoul date '+%F %T')" "$*" >> "$LOG"; }
 notify() { command -v osascript >/dev/null 2>&1 && osascript -e "display notification \"$2\" with title \"$1\"" >/dev/null 2>&1 || true; }
 
-# 1. business-hours gate (KST, Mon-Sat). WORK_AGENT_FORCE=1 skips it.
+# 1. business-hours gate (KST, Mon-Fri, START..END inclusive, minus listed holidays).
+#    WORK_AGENT_FORCE=1 skips it.
 if [ "${WORK_AGENT_FORCE:-0}" != "1" ]; then
-  dow="$(TZ=Asia/Seoul date +%u)"; hm=$((10#$(TZ=Asia/Seoul date +%H%M)))
-  if [ "$dow" = "7" ] || [ "$hm" -lt $((10#$START)) ] || [ "$hm" -ge $((10#$END)) ]; then exit 0; fi
+  dow="$(TZ=Asia/Seoul date +%u)"; hm=$((10#$(TZ=Asia/Seoul date +%H%M))); today="$(TZ=Asia/Seoul date +%F)"
+  if [ "$dow" -ge 6 ] || [ "$hm" -lt $((10#$START)) ] || [ "$hm" -gt $((10#$END)) ]; then exit 0; fi
+  if [ -f "$HOLIDAYS" ] && grep -q "^$today" "$HOLIDAYS"; then exit 0; fi
+  if ! { [ -f "$HOLIDAYS" ] && grep -q "^${today:0:4}-" "$HOLIDAYS"; }; then
+    log "warn: no holidays listed for ${today:0:4} in $(basename "$HOLIDAYS"); running anyway"
+  fi
 fi
 
 # 2. single instance (mkdir is atomic on macOS too); drop locks older than 20 min

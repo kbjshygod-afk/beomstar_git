@@ -8,7 +8,12 @@
     <string>/bin/bash</string>
     <string>__DIR__/poll.sh</string>
   </array>
-  <key>StartInterval</key><integer>1800</integer>
+  <!-- every :00 and :30; poll.sh itself skips weekends, holidays and off-hours -->
+  <key>StartCalendarInterval</key>
+  <array>
+    <dict><key>Minute</key><integer>0</integer></dict>
+    <dict><key>Minute</key><integer>30</integer></dict>
+  </array>
   <key>RunAtLoad</key><true/>
   <key>EnvironmentVariables</key>
   <dict>
