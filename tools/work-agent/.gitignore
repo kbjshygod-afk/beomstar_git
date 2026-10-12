@@ -1,0 +1,5 @@
+config.env
+state/
+inbox/
+*.plist
+!*.plist.template
