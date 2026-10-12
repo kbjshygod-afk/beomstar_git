@@ -37,7 +37,7 @@ trap 'rmdir "$LOCK" 2>/dev/null || true' EXIT
 # 3. inputs for this run
 NOW_ISO="$(TZ=Asia/Seoul date '+%Y-%m-%dT%H:%M:%S+09:00')"
 if [ -s "$STATE/last_ok_iso" ]; then SINCE_ISO="$(cat "$STATE/last_ok_iso")"
-else SINCE_ISO="$(python3 -c "import datetime as d;print((d.datetime.now(d.timezone(d.timedelta(hours=9)))-d.timedelta(minutes=30)).isoformat(timespec='seconds'))")"; fi
+else SINCE_ISO="$(python3 -c "import datetime as d;print((d.datetime.now(d.timezone(d.timedelta(hours=9)))-d.timedelta(minutes=60)).isoformat(timespec='seconds'))")"; fi
 SEEN_PLAUD="$( [ -s "$STATE/plaud_seen.txt" ] && tail -n 200 "$STATE/plaud_seen.txt" | paste -sd, - || true )"
 
 PROMPT="$(cat "$DIR/prompt.md")
