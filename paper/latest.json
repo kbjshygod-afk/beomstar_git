@@ -1,25 +1,17 @@
 {
  "markets": {
   "SP500": {
-   "as_of": "2026-10-09",
+   "as_of": "2026-10-12",
    "start_date": "2026-09-25",
    "regime": {
     "benchmark": "^GSPC",
     "mode": "MA200",
-    "close": 7811.54,
-    "ma200": 7250.629,
-    "ma20": 7704.774,
+    "close": 7807.2402,
+    "ma200": 7255.1162,
+    "ma20": 7714.137,
     "on": true
    },
-   "entries_next_open": [
-    {
-     "symbol": "HUM",
-     "signal_close": 431.87,
-     "rs": 93.79,
-     "desired_qty": 17321.004856,
-     "est_stop_from_close": 388.683
-    }
-   ],
+   "entries_next_open": [],
    "exits_next_open": [],
    "positions": [
     {
@@ -30,10 +22,10 @@
      "entry_price": 1053.26001,
      "qty": 7171.680269293038,
      "stop_price": 947.934009,
-     "last_close": 1103.35498,
-     "exit_ma": 920.3380029079999,
-     "unrealized_pnl": 328332.0015953379,
-     "price_pnl_pct": 4.7561826637660065,
+     "last_close": 995.4099731,
+     "exit_ma": 925.9674023220001,
+     "unrealized_pnl": -444266.7804057859,
+     "price_pnl_pct": -5.492474446077178,
      "exit_pending": false
     },
     {
@@ -44,10 +36,10 @@
      "entry_price": 225.4700012,
      "qty": 33217.68206857499,
      "stop_price": 202.92300108,
-     "last_close": 237.1499939,
-     "exit_ma": 198.267400826,
-     "unrealized_pnl": 357247.9562402824,
-     "price_pnl_pct": 5.180286795510058,
+     "last_close": 239.1799927,
+     "exit_ma": 199.48100068,
+     "unrealized_pnl": 424544.9472687943,
+     "price_pnl_pct": 6.080627767344859,
      "exit_pending": false
     },
     {
@@ -58,151 +50,165 @@
      "entry_price": 281.2999878,
      "qty": 26108.182259126945,
      "stop_price": 253.16998902,
-     "last_close": 275.2799988,
-     "exit_ma": 236.49299927200002,
-     "unrealized_pnl": -186233.55347381067,
-     "price_pnl_pct": -2.140060171022873,
+     "last_close": 265.8599854,
+     "exit_ma": 238.05899902800004,
+     "unrealized_pnl": -431681.1013509659,
+     "price_pnl_pct": -5.4888030819886025,
+     "exit_pending": false
+    },
+    {
+     "symbol": "HUM",
+     "signal_date": "2026-10-09",
+     "exit_signal_date": null,
+     "entry_date": "2026-10-12",
+     "entry_price": 434.5700073,
+     "qty": 17321.004855846855,
+     "stop_price": 391.11300657,
+     "last_close": 433.5,
+     "exit_ma": 389.41039856000003,
+     "unrealized_pnl": -48605.29126240779,
+     "price_pnl_pct": -0.24622207746181068,
      "exit_pending": false
     }
    ],
    "stale_positions": [],
    "watchlist": [
     {
-     "symbol": "DELL",
-     "label": "2순위 · 근접 (피벗 3% 이내)",
-     "close": 586.06,
-     "pivot": 595.51,
-     "to_pivot_pct": 1.61,
-     "rs": 99.6
-    },
-    {
      "symbol": "P",
      "label": "2순위 · 근접 (피벗 3% 이내)",
-     "close": 154.49,
+     "close": 155.31,
      "pivot": 157.05,
-     "to_pivot_pct": 1.66,
-     "rs": 98.6
+     "to_pivot_pct": 1.12,
+     "rs": 98.59
     },
     {
      "symbol": "MPC",
      "label": "2순위 · 근접 (피벗 3% 이내)",
-     "close": 455.03,
-     "pivot": 467.85,
-     "to_pivot_pct": 2.82,
-     "rs": 98.0
+     "close": 458.81,
+     "pivot": 470.0,
+     "to_pivot_pct": 2.44,
+     "rs": 98.39
     },
     {
-     "symbol": "VLO",
+     "symbol": "FTNT",
      "label": "2순위 · 근접 (피벗 3% 이내)",
-     "close": 433.75,
-     "pivot": 446.48,
-     "to_pivot_pct": 2.93,
-     "rs": 97.39
+     "close": 192.94,
+     "pivot": 194.95,
+     "to_pivot_pct": 1.04,
+     "rs": 97.59
+    },
+    {
+     "symbol": "DDOG",
+     "label": "2순위 · 근접 (피벗 3% 이내)",
+     "close": 287.29,
+     "pivot": 294.0,
+     "to_pivot_pct": 2.34,
+     "rs": 96.59
     },
     {
      "symbol": "PSX",
      "label": "2순위 · 근접 (피벗 3% 이내)",
-     "close": 278.18,
-     "pivot": 282.64,
-     "to_pivot_pct": 1.6,
-     "rs": 95.99
+     "close": 281.47,
+     "pivot": 286.57,
+     "to_pivot_pct": 1.81,
+     "rs": 96.39
     },
     {
-     "symbol": "KEYS",
+     "symbol": "APA",
      "label": "2순위 · 근접 (피벗 3% 이내)",
-     "close": 382.75,
-     "pivot": 389.93,
-     "to_pivot_pct": 1.88,
-     "rs": 94.99
+     "close": 46.84,
+     "pivot": 47.44,
+     "to_pivot_pct": 1.28,
+     "rs": 95.78
     },
     {
      "symbol": "ZBRA",
      "label": "1순위 · 임박 (피벗 1% 이내)",
-     "close": 387.18,
+     "close": 388.12,
      "pivot": 390.8,
-     "to_pivot_pct": 0.93,
-     "rs": 94.19
+     "to_pivot_pct": 0.69,
+     "rs": 94.98
     },
     {
-     "symbol": "ANET",
-     "label": "1순위 · 임박 (피벗 1% 이내)",
-     "close": 216.74,
-     "pivot": 217.32,
-     "to_pivot_pct": 0.27,
-     "rs": 92.79
+     "symbol": "FFIV",
+     "label": "2순위 · 근접 (피벗 3% 이내)",
+     "close": 473.49,
+     "pivot": 482.47,
+     "to_pivot_pct": 1.9,
+     "rs": 93.37
+    },
+    {
+     "symbol": "TRGP",
+     "label": "2순위 · 근접 (피벗 3% 이내)",
+     "close": 290.54,
+     "pivot": 296.63,
+     "to_pivot_pct": 2.1,
+     "rs": 91.77
     },
     {
      "symbol": "CSCO",
+     "label": "2순위 · 근접 (피벗 3% 이내)",
+     "close": 115.34,
+     "pivot": 118.65,
+     "to_pivot_pct": 2.87,
+     "rs": 91.37
+    },
+    {
+     "symbol": "COP",
+     "label": "2순위 · 근접 (피벗 3% 이내)",
+     "close": 137.56,
+     "pivot": 141.62,
+     "to_pivot_pct": 2.95,
+     "rs": 90.56
+    },
+    {
+     "symbol": "BIIB",
      "label": "1순위 · 임박 (피벗 1% 이내)",
-     "close": 118.39,
-     "pivot": 118.4,
-     "to_pivot_pct": 0.01,
-     "rs": 91.58
+     "close": 229.41,
+     "pivot": 230.49,
+     "to_pivot_pct": 0.47,
+     "rs": 90.16
     },
     {
      "symbol": "FCX",
      "label": "2순위 · 근접 (피벗 3% 이내)",
-     "close": 73.69,
+     "close": 73.29,
      "pivot": 74.9,
-     "to_pivot_pct": 1.64,
-     "rs": 90.58
+     "to_pivot_pct": 2.2,
+     "rs": 89.56
     },
     {
      "symbol": "EXPD",
      "label": "2순위 · 근접 (피벗 3% 이내)",
-     "close": 193.24,
-     "pivot": 195.32,
-     "to_pivot_pct": 1.08,
-     "rs": 89.38
+     "close": 193.41,
+     "pivot": 195.73,
+     "to_pivot_pct": 1.2,
+     "rs": 88.96
     },
     {
-     "symbol": "XOM",
-     "label": "1순위 · 임박 (피벗 1% 이내)",
-     "close": 168.94,
-     "pivot": 169.64,
-     "to_pivot_pct": 0.41,
-     "rs": 88.78
-    },
-    {
-     "symbol": "BIIB",
+     "symbol": "AMGN",
      "label": "2순위 · 근접 (피벗 3% 이내)",
-     "close": 225.71,
-     "pivot": 230.49,
-     "to_pivot_pct": 2.12,
-     "rs": 87.37
-    },
-    {
-     "symbol": "CVX",
-     "label": "2순위 · 근접 (피벗 3% 이내)",
-     "close": 211.98,
-     "pivot": 217.78,
-     "to_pivot_pct": 2.74,
-     "rs": 86.97
-    },
-    {
-     "symbol": "JCI",
-     "label": "2순위 · 근접 (피벗 3% 이내)",
-     "close": 157.44,
-     "pivot": 160.41,
-     "to_pivot_pct": 1.89,
-     "rs": 86.77
+     "close": 417.57,
+     "pivot": 426.59,
+     "to_pivot_pct": 2.16,
+     "rs": 87.95
     }
    ],
    "performance": {
-    "equity": 99738964.0,
-    "return_pct": -0.26,
-    "bench_return_pct": 0.88,
-    "mdd_pct": -1.09,
+    "equity": 98752721.0,
+    "return_pct": -1.25,
+    "bench_return_pct": 0.82,
+    "mdd_pct": -1.46,
     "closed_trades": 1,
     "win_rate_pct": 0.0,
     "avg_win_pct": null,
     "avg_loss_pct": -10.43,
-    "open_positions": 3
+    "open_positions": 4
    },
    "status_csv": "SP500/status.csv",
    "audit": {
-    "days": 11,
-    "signal_files": 11,
+    "days": 12,
+    "signal_files": 12,
     "missing_days": [],
     "late": [],
     "uncommitted": [],
@@ -561,7 +567,7 @@
    }
   }
  },
- "updated_at": "2026-10-12T15:15:47Z",
+ "updated_at": "2026-10-12T22:46:08Z",
  "disclaimer": "기계적 룰 출력이며 투자 자문이 아닙니다. 매수·매도 결정은 소유자 본인이 합니다.",
  "unconfirmed": "미확인 추정값(스캐너 원본 코드 미확인): 피벗=직전 20봉 최고가(당일 제외) · 거래량 평균=직전 50일(당일 제외) · RS=지수 대비 가중 1년 수익률 ≥ 0%p(스캐너는 유니버스 백분위 ≥ 70) · 52주 고저=종가 기준 · 200일선 상승=22봉 전 대비 · 수축비=10/40일 평균 TR · 비용=편도 0.2%"
 }
