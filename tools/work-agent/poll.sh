@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
 # Work agent, stage 0: run `claude -p` every few minutes in business hours,
 # collect new Slack requests / Plaud recordings, write a digest to inbox/.
-# Read-only by design. Checkpoint advances only after a valid result.
+# Read-only by design (the only outbound action is slack_dm.sh, which sends
+# fixed-template alerts to the owner). Checkpoint advances only after a valid result.
 set -euo pipefail
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck disable=SC1091
 [ -f "$DIR/config.env" ] && . "$DIR/config.env"
+. "$DIR/lib.sh"
 
 CLAUDE_BIN="${CLAUDE_BIN:-claude}"
 MODEL="${WORK_AGENT_MODEL:-sonnet}"
@@ -27,11 +29,10 @@ notify() { command -v osascript >/dev/null 2>&1 && osascript -e "display notific
 # 1. business-hours gate (KST, Mon-Fri, START..END inclusive, minus listed holidays).
 #    WORK_AGENT_FORCE=1 skips it.
 if [ "${WORK_AGENT_FORCE:-0}" != "1" ]; then
-  dow="$(TZ=Asia/Seoul date +%u)"; hm=$((10#$(TZ=Asia/Seoul date +%H%M))); today="$(TZ=Asia/Seoul date +%F)"
-  if [ "$dow" -ge 6 ] || [ "$hm" -lt $((10#$START)) ] || [ "$hm" -gt $((10#$END)) ]; then exit 0; fi
-  if [ -f "$HOLIDAYS" ] && grep -q "^$today" "$HOLIDAYS"; then exit 0; fi
-  if ! { [ -f "$HOLIDAYS" ] && grep -q "^${today:0:4}-" "$HOLIDAYS"; }; then
-    log "warn: no holidays listed for ${today:0:4} in $(basename "$HOLIDAYS"); running anyway"
+  in_work_hours "$START" "$END" || exit 0
+  year="$(kst +%F)"; year="${year:0:4}"
+  if ! { [ -f "$HOLIDAYS" ] && grep -q "^$year-" "$HOLIDAYS"; }; then
+    log "warn: no holidays listed for $year in $(basename "$HOLIDAYS"); running anyway"
   fi
 fi
 
@@ -120,6 +121,10 @@ if [ "$rc" = "0" ] && [ "$pyrc" = "0" ]; then
   if [ "${n:-0}" -gt 0 ]; then
     log "ok: $n new item(s), $u urgent, $e error(s)"
     notify "업무 에이전트" "새 항목 ${n}건 (긴급 ${u}건)"
+    if [ "${u:-0}" -gt 0 ]; then
+      f="${NOW_ISO:0:16}"; f="${f//-/}"; f="${f//:/}"; f="${f/T/-}.md"
+      "$DIR/slack_dm.sh" "urgent:$f" "[업무 에이전트] 긴급 ${u}건 (새 항목 ${n}건, $(kst +%H:%M) 확인분). 맥미니 inbox/$f 을 확인하세요." || true
+    fi
   else
     log "ok: nothing new"
   fi
@@ -127,5 +132,8 @@ else
   f=$(( $(cat "$STATE/fail_count" 2>/dev/null || echo 0) + 1 )); echo "$f" > "$STATE/fail_count"
   log "FAIL($f): claude rc=$rc, parse rc=$pyrc ($PYOUT); see state/last.err, state/last_raw.json"
   if [ "$f" -ge 3 ]; then notify "업무 에이전트 이상" "연속 ${f}회 실패. 로그 확인 필요"; fi
+  if [ "$f" -eq 3 ]; then
+    "$DIR/slack_dm.sh" "fail3:$(kst +%H%M)" "[업무 에이전트] 폴링이 연속 3회 실패했습니다($(kst +%H:%M)). 맥미니 state/poll.log 와 state/last.err 를 확인하세요." || true
+  fi
   exit 1
 fi
