@@ -344,14 +344,14 @@
    }
   },
   "KOSPI": {
-   "as_of": "2026-10-08",
+   "as_of": "2026-10-12",
    "start_date": "2026-09-29",
    "regime": {
     "benchmark": "^KS11",
     "mode": "MA200_AND_MA20",
-    "close": 6625.9302,
-    "ma200": 6364.7251,
-    "ma20": 6882.0341,
+    "close": 6384.2402,
+    "ma200": 6376.0932,
+    "ma20": 6853.5201,
     "on": false
    },
    "entries_next_open": [],
@@ -365,20 +365,20 @@
      "entry_price": 311000.0,
      "qty": 35.0,
      "stop_price": 289230.0,
-     "last_close": 306500.0,
-     "exit_ma": 255612.0,
-     "unrealized_pnl": -200725.0,
-     "price_pnl_pct": -1.4469453376205754,
+     "last_close": 295500.0,
+     "exit_ma": 257672.0,
+     "unrealized_pnl": -584955.0,
+     "price_pnl_pct": -4.983922829581989,
      "exit_pending": false
     }
    ],
    "stale_positions": [],
    "watchlist": [],
    "performance": {
-    "equity": 99820730.0,
-    "return_pct": -0.18,
-    "bench_return_pct": -3.56,
-    "mdd_pct": -0.18,
+    "equity": 99435730.0,
+    "return_pct": -0.56,
+    "bench_return_pct": -7.08,
+    "mdd_pct": -0.56,
     "closed_trades": 0,
     "win_rate_pct": null,
     "avg_win_pct": null,
@@ -387,8 +387,8 @@
    },
    "status_csv": "KOSPI/status.csv",
    "audit": {
-    "days": 7,
-    "signal_files": 7,
+    "days": 8,
+    "signal_files": 8,
     "missing_days": [],
     "late": [],
     "uncommitted": [],
@@ -575,7 +575,7 @@
    }
   }
  },
- "updated_at": "2026-10-12T07:30:55Z",
+ "updated_at": "2026-10-12T09:30:46Z",
  "disclaimer": "기계적 룰 출력이며 투자 자문이 아닙니다. 매수·매도 결정은 소유자 본인이 합니다.",
  "unconfirmed": "미확인 추정값(스캐너 원본 코드 미확인): 피벗=직전 20봉 최고가(당일 제외) · 거래량 평균=직전 50일(당일 제외) · RS=지수 대비 가중 1년 수익률 ≥ 0%p(스캐너는 유니버스 백분위 ≥ 70) · 52주 고저=종가 기준 · 200일선 상승=22봉 전 대비 · 수축비=10/40일 평균 TR · 비용=편도 0.2%"
 }
