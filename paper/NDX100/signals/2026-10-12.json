@@ -1,0 +1,67 @@
+{
+ "market": "NDX100",
+ "as_of": "2026-10-12",
+ "regime": {
+  "benchmark": "^NDX",
+  "mode": "MA200",
+  "close": 30664.6973,
+  "ma200": 27651.2073,
+  "ma20": 30390.743,
+  "on": true
+ },
+ "entries_next_open": [],
+ "exits_next_open": [],
+ "positions": [
+  "LITE"
+ ],
+ "watchlist": [
+  {
+   "symbol": "FTNT",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 192.94,
+   "pivot": 194.95,
+   "to_pivot_pct": 1.04,
+   "rs": 94.9
+  },
+  {
+   "symbol": "DDOG",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 287.29,
+   "pivot": 294.0,
+   "to_pivot_pct": 2.34,
+   "rs": 90.82
+  },
+  {
+   "symbol": "CSCO",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 115.34,
+   "pivot": 118.65,
+   "to_pivot_pct": 2.87,
+   "rs": 80.61
+  },
+  {
+   "symbol": "AMGN",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 417.57,
+   "pivot": 426.59,
+   "to_pivot_pct": 2.16,
+   "rs": 75.51
+  },
+  {
+   "symbol": "AAPL",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 340.97,
+   "pivot": 345.34,
+   "to_pivot_pct": 1.28,
+   "rs": 72.45
+  }
+ ],
+ "coverage": {
+  "requested": 101,
+  "loaded": 100,
+  "failed": [
+   "WBD"
+  ]
+ },
+ "generated_at": "2026-10-12T22:47:11Z"
+}
