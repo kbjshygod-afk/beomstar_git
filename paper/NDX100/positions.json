@@ -1,16 +1,1 @@
-[
- {
-  "symbol": "LITE",
-  "signal_date": "2026-10-01",
-  "exit_signal_date": null,
-  "entry_date": "2026-10-02",
-  "entry_price": 1053.26001,
-  "qty": 10245.25752756148,
-  "stop_price": 979.5318092999998,
-  "last_close": 995.4099731,
-  "exit_ma": 925.9674023220001,
-  "unrealized_pnl": -634666.8291511238,
-  "price_pnl_pct": -5.492474446077178,
-  "exit_pending": false
- }
-]
+[]

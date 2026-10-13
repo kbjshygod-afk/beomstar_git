@@ -219,92 +219,53 @@
    }
   },
   "NDX100": {
-   "as_of": "2026-10-12",
+   "as_of": "2026-10-13",
    "start_date": "2026-09-25",
    "regime": {
     "benchmark": "^NDX",
     "mode": "MA200",
-    "close": 30664.6992,
-    "ma200": 27651.2073,
-    "ma20": 30390.7431,
+    "close": 30569.4805,
+    "ma200": 27675.7739,
+    "ma20": 30472.3251,
     "on": true
    },
    "entries_next_open": [],
    "exits_next_open": [],
-   "positions": [
-    {
-     "symbol": "LITE",
-     "signal_date": "2026-10-01",
-     "exit_signal_date": null,
-     "entry_date": "2026-10-02",
-     "entry_price": 1053.26001,
-     "qty": 10245.25752756148,
-     "stop_price": 979.5318092999998,
-     "last_close": 995.4099731,
-     "exit_ma": 925.9674023220001,
-     "unrealized_pnl": -634666.8291511238,
-     "price_pnl_pct": -5.492474446077178,
-     "exit_pending": false
-    }
-   ],
+   "positions": [],
    "stale_positions": [],
    "watchlist": [
     {
-     "symbol": "FTNT",
+     "symbol": "ADI",
      "label": "2순위 · 근접 (피벗 3% 이내)",
-     "close": 192.94,
-     "pivot": 194.95,
-     "to_pivot_pct": 1.04,
-     "rs": 94.9
-    },
-    {
-     "symbol": "DDOG",
-     "label": "2순위 · 근접 (피벗 3% 이내)",
-     "close": 287.29,
-     "pivot": 294.0,
-     "to_pivot_pct": 2.34,
-     "rs": 90.82
-    },
-    {
-     "symbol": "CSCO",
-     "label": "2순위 · 근접 (피벗 3% 이내)",
-     "close": 115.34,
-     "pivot": 118.65,
-     "to_pivot_pct": 2.87,
+     "close": 414.7,
+     "pivot": 422.67,
+     "to_pivot_pct": 1.92,
      "rs": 80.61
-    },
-    {
-     "symbol": "AMGN",
-     "label": "2순위 · 근접 (피벗 3% 이내)",
-     "close": 417.57,
-     "pivot": 426.59,
-     "to_pivot_pct": 2.16,
-     "rs": 75.51
     },
     {
      "symbol": "AAPL",
      "label": "2순위 · 근접 (피벗 3% 이내)",
-     "close": 340.97,
+     "close": 341.27,
      "pivot": 345.34,
-     "to_pivot_pct": 1.28,
+     "to_pivot_pct": 1.19,
      "rs": 72.45
     }
    ],
    "performance": {
-    "equity": 97834472.0,
-    "return_pct": -2.17,
-    "bench_return_pct": 0.18,
-    "mdd_pct": -2.97,
-    "closed_trades": 2,
+    "equity": 97572515.0,
+    "return_pct": -2.43,
+    "bench_return_pct": -0.13,
+    "mdd_pct": -3.23,
+    "closed_trades": 3,
     "win_rate_pct": 0.0,
     "avg_win_pct": null,
-    "avg_loss_pct": -7.37,
-    "open_positions": 1
+    "avg_loss_pct": -7.62,
+    "open_positions": 0
    },
    "status_csv": "NDX100/status.csv",
    "audit": {
-    "days": 12,
-    "signal_files": 12,
+    "days": 13,
+    "signal_files": 13,
     "missing_days": [],
     "late": [],
     "uncommitted": [],
@@ -580,7 +541,7 @@
    }
   }
  },
- "updated_at": "2026-10-13T21:47:01Z",
+ "updated_at": "2026-10-13T21:48:04Z",
  "disclaimer": "기계적 룰 출력이며 투자 자문이 아닙니다. 매수·매도 결정은 소유자 본인이 합니다.",
  "unconfirmed": "미확인 추정값(스캐너 원본 코드 미확인): 피벗=직전 20봉 최고가(당일 제외) · 거래량 평균=직전 50일(당일 제외) · RS=지수 대비 가중 1년 수익률 ≥ 0%p(스캐너는 유니버스 백분위 ≥ 70) · 52주 고저=종가 기준 · 200일선 상승=22봉 전 대비 · 수축비=10/40일 평균 TR · 비용=편도 0.2%"
 }
