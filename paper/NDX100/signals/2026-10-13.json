@@ -1,0 +1,41 @@
+{
+ "market": "NDX100",
+ "as_of": "2026-10-13",
+ "regime": {
+  "benchmark": "^NDX",
+  "mode": "MA200",
+  "close": 30569.4805,
+  "ma200": 27675.7739,
+  "ma20": 30472.3251,
+  "on": true
+ },
+ "entries_next_open": [],
+ "exits_next_open": [],
+ "positions": [],
+ "watchlist": [
+  {
+   "symbol": "ADI",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 414.7,
+   "pivot": 422.67,
+   "to_pivot_pct": 1.92,
+   "rs": 80.61
+  },
+  {
+   "symbol": "AAPL",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 341.27,
+   "pivot": 345.34,
+   "to_pivot_pct": 1.19,
+   "rs": 72.45
+  }
+ ],
+ "coverage": {
+  "requested": 101,
+  "loaded": 100,
+  "failed": [
+   "WBD"
+  ]
+ },
+ "generated_at": "2026-10-13T21:48:04Z"
+}
