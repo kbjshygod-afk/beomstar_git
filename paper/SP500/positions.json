@@ -1,19 +1,5 @@
 [
  {
-  "symbol": "LITE",
-  "signal_date": "2026-10-01",
-  "exit_signal_date": null,
-  "entry_date": "2026-10-02",
-  "entry_price": 1053.26001,
-  "qty": 7171.680269293038,
-  "stop_price": 947.934009,
-  "last_close": 987.9899902,
-  "exit_ma": 930.129401834,
-  "unrealized_pnl": -497374.0978782838,
-  "price_pnl_pct": -6.196952241640696,
-  "exit_pending": false
- },
- {
   "symbol": "NTAP",
   "signal_date": "2026-10-02",
   "exit_signal_date": null,
@@ -21,10 +7,10 @@
   "entry_price": 225.4700012,
   "qty": 33217.68206857499,
   "stop_price": 202.92300108,
-  "last_close": 239.0099945,
-  "exit_ma": 200.602800606,
-  "unrealized_pnl": 418909.2950012842,
-  "price_pnl_pct": 6.005230508687287,
+  "last_close": 222.1999969,
+  "exit_ma": 201.23760041000003,
+  "unrealized_pnl": -138363.08253732417,
+  "price_pnl_pct": -1.4503057092279836,
   "exit_pending": false
  },
  {
@@ -35,10 +21,38 @@
   "entry_price": 434.5700073,
   "qty": 17321.004855846855,
   "stop_price": 391.11300657,
-  "last_close": 420.3800049,
-  "exit_ma": 390.327998658,
-  "unrealized_pnl": -275402.28710052185,
-  "price_pnl_pct": -3.2652972275199144,
+  "last_close": 427.3999939,
+  "exit_ma": 391.6327984619999,
+  "unrealized_pnl": -154052.2100706445,
+  "price_pnl_pct": -1.649909860219656,
+  "exit_pending": false
+ },
+ {
+  "symbol": "IFF",
+  "signal_date": "2026-10-13",
+  "exit_signal_date": null,
+  "entry_date": "2026-10-14",
+  "entry_price": 88.25,
+  "qty": 83437.14284278991,
+  "stop_price": 79.425,
+  "last_close": 89.59999847,
+  "exit_ma": 84.9736001584,
+  "unrealized_pnl": 82961.42372507602,
+  "price_pnl_pct": 1.5297433087818835,
+  "exit_pending": false
+ },
+ {
+  "symbol": "ELV",
+  "signal_date": "2026-10-13",
+  "exit_signal_date": null,
+  "entry_date": "2026-10-14",
+  "entry_price": 428.8200073,
+  "qty": 17304.667469142256,
+  "stop_price": 385.93800656999997,
+  "last_close": 428.0899963,
+  "exit_ma": 402.363601064,
+  "unrealized_pnl": -42289.68293037545,
+  "price_pnl_pct": -0.1702371595477592,
   "exit_pending": false
  }
 ]
