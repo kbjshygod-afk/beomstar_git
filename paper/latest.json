@@ -226,14 +226,14 @@
    }
   },
   "NDX100": {
-   "as_of": "2026-10-13",
+   "as_of": "2026-10-14",
    "start_date": "2026-09-25",
    "regime": {
     "benchmark": "^NDX",
     "mode": "MA200",
-    "close": 30569.4805,
-    "ma200": 27675.7739,
-    "ma20": 30472.3251,
+    "close": 29950.8164,
+    "ma200": 27697.3061,
+    "ma20": 30522.6129,
     "on": true
    },
    "entries_next_open": [],
@@ -242,26 +242,26 @@
    "stale_positions": [],
    "watchlist": [
     {
-     "symbol": "ADI",
-     "label": "2순위 · 근접 (피벗 3% 이내)",
-     "close": 414.7,
-     "pivot": 422.67,
-     "to_pivot_pct": 1.92,
-     "rs": 80.61
+     "symbol": "AMGN",
+     "label": "1순위 · 임박 (피벗 1% 이내)",
+     "close": 426.11,
+     "pivot": 426.59,
+     "to_pivot_pct": 0.11,
+     "rs": 78.57
     },
     {
      "symbol": "AAPL",
      "label": "2순위 · 근접 (피벗 3% 이내)",
-     "close": 341.27,
-     "pivot": 345.34,
-     "to_pivot_pct": 1.19,
-     "rs": 72.45
+     "close": 342.96,
+     "pivot": 348.15,
+     "to_pivot_pct": 1.51,
+     "rs": 73.47
     }
    ],
    "performance": {
     "equity": 97572515.0,
     "return_pct": -2.43,
-    "bench_return_pct": -0.13,
+    "bench_return_pct": -2.15,
     "mdd_pct": -3.23,
     "closed_trades": 3,
     "win_rate_pct": 0.0,
@@ -271,8 +271,8 @@
    },
    "status_csv": "NDX100/status.csv",
    "audit": {
-    "days": 13,
-    "signal_files": 13,
+    "days": 14,
+    "signal_files": 14,
     "missing_days": [],
     "late": [],
     "uncommitted": [],
@@ -523,7 +523,7 @@
    }
   }
  },
- "updated_at": "2026-10-14T22:48:14Z",
+ "updated_at": "2026-10-14T22:49:09Z",
  "disclaimer": "기계적 룰 출력이며 투자 자문이 아닙니다. 매수·매도 결정은 소유자 본인이 합니다.",
  "unconfirmed": "미확인 추정값(스캐너 원본 코드 미확인): 피벗=직전 20봉 최고가(당일 제외) · 거래량 평균=직전 50일(당일 제외) · RS=지수 대비 가중 1년 수익률 ≥ 0%p(스캐너는 유니버스 백분위 ≥ 70) · 52주 고저=종가 기준 · 200일선 상승=22봉 전 대비 · 수축비=10/40일 평균 TR · 비용=편도 0.2%"
 }
