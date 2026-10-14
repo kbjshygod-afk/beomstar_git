@@ -3,36 +3,36 @@ AAPL,2026-10-13,341.27,2순위 · 근접 (피벗 3% 이내),8,True,True,True,Tru
 ABNB,2026-10-13,165.58,후보 아님 (트렌드 템플릿 7/8),7,False,True,True,True,True,False,True,True,True,True,71.43,7.25,170.53,2.99,-2.9,0.47,171.5746,171.5746,149.0179,144.4804,-13.08,False,,,,False,False,153.9894
 ADBE,2026-10-13,236.28,후보 아님 (트렌드 템플릿 1/8),1,False,False,False,False,True,False,False,False,False,True,17.35,-23.5,264.46,11.93,-10.66,0.77,257.3322,257.3322,243.8705,255.8234,-34.35,False,,,,False,False,219.7404
 ADI,2026-10-13,414.7,2순위 · 근접 (피벗 3% 이내),8,True,True,True,True,True,True,True,True,True,True,80.61,17.2,422.67,1.92,-1.89,0.81,381.9558,381.9558,380.2457,364.3031,-6.91,False,,,,False,False,385.671
-ADP,2026-10-13,275.9,후보 아님 (트렌드 템플릿 6/8),6,False,True,False,True,True,True,True,True,False,True,59.18,-0.83,278.52,0.95,-0.94,0.59,272.052,272.052,238.2413,238.2599,-4.03,False,,,,False,False,256.587
+ADP,2026-10-13,275.9,후보 아님 (트렌드 템플릿 6/8),6,False,True,False,True,True,True,True,True,False,True,59.18,-0.83,278.52,0.95,-0.94,0.6,272.052,272.052,238.2413,238.2599,-4.03,False,,,,False,False,256.587
 ADSK,2026-10-13,230.43,후보 아님 (트렌드 템플릿 0/8),0,False,False,False,False,False,False,False,False,False,True,27.55,-18.02,238.59,3.54,-3.42,0.65,233.3838,233.3838,229.7903,236.6576,-26.5,False,,,,False,False,214.2999
 AEP,2026-10-13,125.65,후보 아님 (트렌드 템플릿 4/8),4,False,False,True,True,False,True,False,True,False,True,39.8,-14.54,124.3,-1.07,1.09,0.64,122.7112,122.7112,128.8339,127.3188,-9.4,False,,,,False,False,116.8545
 ALAB,2026-10-13,325.41,후보 아님 (트렌드 템플릿 7/8),7,False,True,True,True,True,True,True,False,True,True,85.71,30.49,401.74,23.46,-19.0,0.83,317.8024,317.8024,280.0692,247.914,-32.63,False,,,,False,False,302.6313
 ALNY,2026-10-13,223.82,후보 아님 (트렌드 템플릿 0/8),0,False,False,False,False,False,False,False,False,False,True,2.04,-47.0,257.27,14.95,-13.0,0.69,237.8842,237.8842,278.5199,296.8289,-54.44,False,,,,False,False,208.1526
 AMAT,2026-10-13,464.24,후보 아님 (트렌드 템플릿 5/8),5,False,False,True,True,True,False,True,False,True,True,78.57,15.9,547.25,17.88,-15.17,1.67,488.6604,488.6604,473.2111,436.5227,-35.79,False,,,,False,False,431.7432
-AMD,2026-10-13,605.53,3순위 · 관찰,8,True,True,True,True,True,True,True,True,True,True,95.92,93.86,658.52,8.75,-8.05,0.83,533.7006,533.7006,446.5159,389.1682,-6.76,False,,,,False,False,563.1429
+AMD,2026-10-13,605.53,3순위 · 관찰,8,True,True,True,True,True,True,True,True,True,True,95.92,93.86,658.52,8.75,-8.05,0.84,533.7006,533.7006,446.5159,389.1682,-6.76,False,,,,False,False,563.1429
 AMGN,2026-10-13,412.84,후보 아님 (트렌드 템플릿 7/8),7,False,True,True,True,True,False,True,True,True,True,73.47,9.38,426.59,3.33,-3.22,0.82,413.2156,413.2156,371.7129,367.3929,-7.04,False,,,,False,False,383.9412
 AMZN,2026-10-13,258.58,후보 아님 (트렌드 템플릿 7/8),7,False,True,True,True,True,True,True,True,False,True,46.94,-7.84,263.7,1.98,-1.94,0.7,258.3458,258.3458,248.3422,242.4195,-8.96,False,,,,False,False,240.4794
-APP,2026-10-13,272.28,후보 아님 (트렌드 템플릿 0/8),0,False,False,False,False,False,False,False,False,False,True,1.02,-59.61,336.94,23.75,-19.19,0.66,312.9946,312.9946,416.4163,441.2293,-62.88,False,,,,False,False,253.2204
-ARM,2026-10-13,255.39,후보 아님 (트렌드 템플릿 5/8),5,False,False,True,True,True,False,True,False,True,True,86.73,33.46,336.98,31.95,-24.21,1.4,270.5018,270.5018,256.4843,221.5488,-41.89,False,,,,False,False,237.5127
-ASML,2026-10-13,1717.76,후보 아님 (트렌드 템플릿 7/8),7,False,True,True,True,True,False,True,True,True,True,75.51,9.93,1873.5,9.07,-8.31,1.23,1742.5406,1742.5406,1640.5985,1568.5258,-13.66,False,,,,False,False,1597.5168
+APP,2026-10-13,272.28,후보 아님 (트렌드 템플릿 0/8),0,False,False,False,False,False,False,False,False,False,True,1.02,-59.61,336.94,23.75,-19.19,0.68,312.9946,312.9946,416.4163,441.2293,-62.88,False,,,,False,False,253.2204
+ARM,2026-10-13,255.39,후보 아님 (트렌드 템플릿 5/8),5,False,False,True,True,True,False,True,False,True,True,86.73,33.46,336.98,31.95,-24.21,1.41,270.5018,270.5018,256.4843,221.5488,-41.89,False,,,,False,False,237.5127
+ASML,2026-10-13,1717.76,후보 아님 (트렌드 템플릿 7/8),7,False,True,True,True,True,False,True,True,True,True,75.51,9.93,1873.5,9.07,-8.31,1.24,1742.5406,1742.5406,1640.5985,1568.5258,-13.66,False,,,,False,False,1597.5168
 AVGO,2026-10-13,357.31,후보 아님 (트렌드 템플릿 1/8),1,False,False,True,False,False,False,False,False,False,True,31.63,-16.74,380.84,6.59,-6.18,0.74,370.4792,370.4792,379.7645,368.3472,-25.8,False,,,,False,False,332.2983
 AXON,2026-10-13,413.35,후보 아님 (트렌드 템플릿 1/8),1,False,False,False,False,True,False,False,False,False,True,3.06,-36.95,475.99,15.15,-13.16,0.72,513.166,513.166,476.0579,491.2594,-45.57,False,,,,False,False,384.4155
 BKNG,2026-10-13,157.51,후보 아님 (트렌드 템플릿 1/8),1,False,False,False,False,True,False,False,False,False,True,11.22,-32.34,175.0,11.1,-9.99,0.85,184.88,184.88,177.2911,180.6171,-28.3,False,,,,False,False,146.4843
-BKR,2026-10-13,56.45,후보 아님 (트렌드 템플릿 3/8),3,False,False,True,True,False,False,False,True,False,True,47.96,-7.64,58.44,3.53,-3.41,0.9,60.2076,60.2076,60.9219,59.7544,-18.98,False,,,,False,False,52.4985
+BKR,2026-10-13,56.45,후보 아님 (트렌드 템플릿 3/8),3,False,False,True,True,False,False,False,True,False,True,47.96,-7.64,58.44,3.53,-3.41,0.92,60.2076,60.2076,60.9219,59.7544,-18.98,False,,,,False,False,52.4985
 CCEP,2026-10-13,105.38,후보 아님 (트렌드 템플릿 6/8),6,False,True,True,True,True,True,False,True,False,True,52.04,-3.9,105.13,-0.24,0.24,0.66,104.9328,104.9328,100.2887,99.19,-5.67,False,,,,False,False,98.0034
-CDNS,2026-10-13,334.2,후보 아님 (트렌드 템플릿 4/8),4,False,False,True,True,False,True,False,True,False,True,41.84,-14.24,361.91,8.29,-7.66,0.98,320.6374,320.6374,334.6227,326.887,-19.74,False,,,,False,False,310.806
+CDNS,2026-10-13,334.2,후보 아님 (트렌드 템플릿 4/8),4,False,False,True,True,False,True,False,True,False,True,41.84,-14.24,361.91,8.29,-7.66,1.0,320.6374,320.6374,334.6227,326.887,-19.74,False,,,,False,False,310.806
 CEG,2026-10-13,295.79,후보 아님 (트렌드 템플릿 2/8),2,False,True,False,False,False,True,False,False,False,True,38.78,-14.6,309.8,4.74,-4.52,0.71,275.0403,275.0403,277.4713,285.4632,-26.78,False,,,,False,False,275.0847
-CMCSA,2026-10-13,20.88,후보 아님 (트렌드 템플릿 0/8),0,False,False,False,False,False,False,False,False,False,True,9.18,-34.16,24.77,18.63,-15.7,0.84,24.3202,24.3202,25.3177,26.468,-35.71,False,,,,False,False,19.4184
-COST,2026-10-13,954.63,후보 아님 (트렌드 템플릿 4/8),4,False,False,True,True,False,True,False,True,False,True,43.88,-12.03,960.74,0.64,-0.64,0.69,931.589,931.589,965.1163,964.4072,-12.76,False,,,,False,False,887.8059
+CMCSA,2026-10-13,20.88,후보 아님 (트렌드 템플릿 0/8),0,False,False,False,False,False,False,False,False,False,True,9.18,-34.16,24.77,18.63,-15.7,0.85,24.3202,24.3202,25.3177,26.468,-35.71,False,,,,False,False,19.4184
+COST,2026-10-13,954.63,후보 아님 (트렌드 템플릿 4/8),4,False,False,True,True,False,True,False,True,False,True,43.88,-12.03,960.74,0.64,-0.64,0.7,931.589,931.589,965.1163,964.4072,-12.76,False,,,,False,False,887.8059
 CPRT,2026-10-13,26.37,후보 아님 (트렌드 템플릿 0/8),0,False,False,False,False,False,False,False,False,False,True,8.16,-34.32,31.83,20.71,-17.15,0.7,30.1208,30.1208,31.0998,33.0689,-42.37,False,,,,False,False,24.5241
 CRWD,2026-10-13,261.21,3순위 · 관찰,8,True,True,True,True,True,True,True,True,True,True,94.9,75.99,286.99,9.87,-8.98,0.64,231.3184,231.3184,175.6945,158.7425,-6.33,False,,,,False,False,242.9253
 CRWV,2026-10-13,77.81,후보 아님 (트렌드 템플릿 2/8),2,False,False,True,True,False,False,False,False,False,True,12.24,-31.87,93.21,19.79,-16.52,1.2,88.4386,88.4386,94.2408,92.582,-45.1,False,,,,False,False,72.3633
 CSCO,2026-10-13,115.07,3순위 · 관찰,8,True,True,True,True,True,True,True,True,True,True,82.65,19.95,118.65,3.11,-3.02,0.66,112.289,112.289,106.0757,99.0628,-11.48,False,,,,False,False,107.0151
-CSX,2026-10-13,47.76,후보 아님 (트렌드 템플릿 6/8),6,False,True,True,True,True,False,True,True,False,True,63.27,1.1,49.0,2.6,-2.53,1.06,48.9352,48.9352,46.6086,44.6765,-10.28,False,,,,False,False,44.4168
+CSX,2026-10-13,47.76,후보 아님 (트렌드 템플릿 6/8),6,False,True,True,True,True,False,True,True,False,True,63.27,1.1,49.0,2.6,-2.53,1.25,48.9352,48.9352,46.6086,44.6765,-10.28,False,,,,False,False,44.4168
 CTAS,2026-10-13,206.38,후보 아님 (트렌드 템플릿 5/8),5,False,True,False,True,True,True,False,True,False,True,51.02,-4.37,206.34,-0.02,0.02,0.88,200.4826,200.4826,186.4361,188.4716,-4.69,False,,,,False,False,191.9334
 DASH,2026-10-13,193.09,후보 아님 (트렌드 템플릿 3/8),3,False,True,False,False,True,False,True,False,False,True,29.59,-17.34,203.82,5.56,-5.26,0.52,206.0576,206.0576,181.7827,185.4163,-29.41,False,,,,False,False,179.5737
 DDOG,2026-10-13,283.34,3순위 · 관찰,8,True,True,True,True,True,True,True,True,True,True,90.82,60.52,300.68,6.12,-5.77,0.47,247.4572,247.4572,211.6021,189.7691,-3.38,False,,,,False,False,263.5062
-DXCM,2026-10-13,85.06,후보 아님 (트렌드 템플릿 7/8),7,False,True,True,True,True,False,True,True,True,True,74.49,9.84,90.39,6.27,-5.9,0.9,87.4536,87.4536,74.7043,73.6913,-7.88,False,,,,False,False,79.1058
+DXCM,2026-10-13,85.06,후보 아님 (트렌드 템플릿 7/8),7,False,True,True,True,True,False,True,True,True,True,74.49,9.84,90.39,6.27,-5.9,0.95,87.4536,87.4536,74.7043,73.6913,-7.88,False,,,,False,False,79.1058
 EXC,2026-10-13,42.34,후보 아님 (트렌드 템플릿 1/8),1,False,False,False,False,False,False,False,True,False,True,18.37,-21.9,42.95,1.44,-1.42,0.77,43.2012,43.2012,45.5407,45.5709,-15.81,False,,,,False,False,39.3762
 FANG,2026-10-13,198.18,3순위 · 관찰,8,True,True,True,True,True,True,True,True,True,True,70.41,4.18,213.31,7.63,-7.09,1.1,196.4238,196.4238,194.1038,186.073,-7.26,False,,,,False,False,184.3074
 FAST,2026-10-13,51.43,후보 아님 (트렌드 템플릿 7/8),7,False,True,True,True,True,True,True,True,False,True,65.31,1.48,51.83,0.78,-0.77,1.49,50.3338,50.3338,47.2329,46.5371,-1.81,False,,,,False,False,47.8299
@@ -41,7 +41,7 @@ FTNT,2026-10-13,190.76,3순위 · 관찰,8,True,True,True,True,True,True,True,Tr
 GEHC,2026-10-13,68.79,후보 아님 (트렌드 템플릿 2/8),2,False,False,False,False,False,True,False,True,False,True,30.61,-16.89,68.34,-0.65,0.66,1.05,68.6433,68.6433,67.0547,70.6824,-21.97,False,,,,False,False,63.9747
 GILD,2026-10-13,147.92,후보 아님 (트렌드 템플릿 5/8),5,False,True,False,True,True,True,False,True,False,True,64.29,1.31,154.2,4.25,-4.07,0.94,145.4514,145.4514,137.1944,137.5545,-5.06,False,,,,False,False,137.5656
 GOOG,2026-10-13,349.52,후보 아님 (트렌드 템플릿 6/8),6,False,True,True,True,False,True,True,True,False,True,50.0,-4.7,359.98,2.99,-2.91,0.87,342.7782,342.7782,345.0167,338.7195,-12.41,False,,,,False,False,325.0536
-GOOGL,2026-10-13,353.78,후보 아님 (트렌드 템플릿 6/8),6,False,True,True,True,False,True,True,True,False,True,54.08,-3.42,364.17,2.94,-2.85,0.88,345.788,345.788,347.3968,340.418,-12.13,False,,,,False,False,329.0154
+GOOGL,2026-10-13,353.78,후보 아님 (트렌드 템플릿 6/8),6,False,True,True,True,False,True,True,True,False,True,54.08,-3.42,364.17,2.94,-2.85,0.92,345.788,345.788,347.3968,340.418,-12.13,False,,,,False,False,329.0154
 HON,2026-10-13,207.29,후보 아님 (트렌드 템플릿 2/8),2,False,False,False,True,False,False,False,True,False,True,21.43,-20.07,216.13,4.26,-4.09,0.65,216.6842,216.6842,228.3302,230.5173,-20.31,False,,,,False,False,192.7797
 HONA,2026-10-13,158.18,후보 아님 (트렌드 템플릿 0/8),0,False,False,False,False,False,False,False,False,False,True,,,170.32,7.67,-7.13,0.35,162.1882,162.1882,,,,False,,,,False,False,147.1074
 IDXX,2026-10-13,520.31,후보 아님 (트렌드 템플릿 0/8),0,False,False,False,False,False,False,False,False,False,True,15.31,-27.63,536.84,3.18,-3.08,0.8,537.7764,537.7764,554.2179,581.7799,-32.13,False,,,,False,False,483.8883
@@ -50,17 +50,17 @@ INTU,2026-10-13,301.45,후보 아님 (트렌드 템플릿 0/8),0,False,False,Fal
 ISRG,2026-10-13,422.06,후보 아님 (트렌드 템플릿 1/8),1,False,False,False,False,False,True,False,False,False,True,26.53,-18.2,429.27,1.71,-1.68,0.73,388.5164,388.5164,415.5064,441.8891,-28.81,False,,,,False,False,392.5158
 KDP,2026-10-13,32.66,후보 아님 (트렌드 템플릿 6/8),6,False,True,True,True,True,True,False,True,False,True,68.37,3.07,32.78,0.37,-0.37,1.07,31.3486,31.3486,29.9305,29.5477,-2.51,False,,,,False,False,30.3738
 KLAC,2026-10-13,184.0,후보 아님 (트렌드 템플릿 3/8),3,False,False,True,True,False,False,True,False,False,True,67.35,2.43,208.68,13.41,-11.83,1.13,188.1544,188.1544,192.303,180.3109,-39.01,False,,,,False,False,171.12
-LIN,2026-10-13,492.11,후보 아님 (트렌드 템플릿 4/8),4,False,False,True,True,False,True,False,True,False,True,42.86,-12.2,492.1,-0.0,0.0,0.67,478.394,478.394,497.0383,488.4339,-9.98,False,,,,False,False,457.6623
-LITE,2026-10-13,987.99,3순위 · 관찰,8,True,True,True,True,True,True,True,True,True,True,98.98,151.88,1143.0,15.69,-13.56,0.83,930.1294,930.1294,862.9739,770.1947,-12.83,False,,,,False,False,918.8307
-LRCX,2026-10-13,301.11,후보 아님 (트렌드 템플릿 6/8),6,False,True,True,True,True,False,True,False,True,True,79.59,17.12,352.56,17.09,-14.59,0.97,311.1532,311.1532,300.4496,280.4481,-30.51,False,,,,False,False,280.0323
+LIN,2026-10-13,492.11,후보 아님 (트렌드 템플릿 4/8),4,False,False,True,True,False,True,False,True,False,True,42.86,-12.2,492.1,-0.0,0.0,0.68,478.394,478.394,497.0383,488.4339,-9.98,False,,,,False,False,457.6623
+LITE,2026-10-13,987.99,3순위 · 관찰,8,True,True,True,True,True,True,True,True,True,True,98.98,151.88,1143.0,15.69,-13.56,0.84,930.1294,930.1294,862.9739,770.1947,-12.83,False,,,,False,False,918.8307
+LRCX,2026-10-13,301.11,후보 아님 (트렌드 템플릿 6/8),6,False,True,True,True,True,False,True,False,True,True,79.59,17.12,352.56,17.09,-14.59,0.98,311.1532,311.1532,300.4496,280.4481,-30.51,False,,,,False,False,280.0323
 MAR,2026-10-13,371.5,후보 아님 (트렌드 템플릿 6/8),6,False,True,True,True,False,True,True,True,False,True,57.14,-1.99,370.14,-0.37,0.37,0.48,350.3786,350.3786,358.4227,351.2049,-7.71,False,,,,False,False,345.495
 MCHP,2026-10-13,74.16,후보 아님 (트렌드 템플릿 3/8),3,False,False,True,True,False,False,True,False,False,True,37.76,-15.0,83.4,12.46,-11.08,0.75,76.0244,76.0244,81.149,79.3096,-27.94,False,,,,False,False,68.9688
-MDLZ,2026-10-13,61.5,후보 아님 (트렌드 템플릿 5/8),5,False,True,True,True,True,False,False,True,False,True,44.9,-8.48,63.02,2.47,-2.41,0.93,61.6448,61.6448,60.418,59.8085,-5.37,False,,,,False,False,57.195
-MELI,2026-10-13,1876.04,후보 아님 (트렌드 템플릿 4/8),4,False,True,False,False,True,True,False,True,False,True,28.57,-17.92,1924.6,2.59,-2.52,0.44,1862.198,1862.198,1774.4593,1834.1508,-20.53,False,,,,False,False,1744.7172
+MDLZ,2026-10-13,61.5,후보 아님 (트렌드 템플릿 5/8),5,False,True,True,True,True,False,False,True,False,True,44.9,-8.48,63.02,2.47,-2.41,0.96,61.6448,61.6448,60.418,59.8085,-5.37,False,,,,False,False,57.195
+MELI,2026-10-13,1876.04,후보 아님 (트렌드 템플릿 4/8),4,False,True,False,False,True,True,False,True,False,True,28.57,-17.92,1924.6,2.59,-2.52,0.46,1862.198,1862.198,1774.4593,1834.1508,-20.53,False,,,,False,False,1744.7172
 META,2026-10-13,762.5,후보 아님 (트렌드 템플릿 6/8),6,False,True,False,True,True,True,True,True,False,True,58.16,-0.89,779.82,2.27,-2.22,1.19,646.9006,646.9006,622.7035,630.9988,-1.94,False,,,,False,False,709.125
 MNST,2026-10-13,43.31,후보 아님 (트렌드 템플릿 5/8),5,False,False,True,True,True,False,True,True,False,True,45.92,-8.23,45.08,4.09,-3.93,0.77,44.8505,44.8505,43.4328,42.5816,-13.33,False,,,,False,False,40.2783
-MPWR,2026-10-13,1319.55,후보 아님 (트렌드 템플릿 5/8),5,False,False,True,True,False,True,True,True,False,True,62.24,0.79,1491.64,13.04,-11.54,1.03,1314.217,1314.217,1370.3783,1299.3215,-21.92,False,,,,False,False,1227.1815
-MRVL,2026-10-13,268.725,3순위 · 관찰,8,True,True,True,True,True,True,True,True,True,True,96.94,105.84,301.27,12.11,-10.8,0.85,239.5579,239.5579,204.1576,173.5839,-15.08,False,,,,False,False,249.9143
+MPWR,2026-10-13,1319.55,후보 아님 (트렌드 템플릿 5/8),5,False,False,True,True,False,True,True,True,False,True,62.24,0.79,1491.64,13.04,-11.54,1.09,1314.217,1314.217,1370.3783,1299.3215,-21.92,False,,,,False,False,1227.1815
+MRVL,2026-10-13,268.73,3순위 · 관찰,8,True,True,True,True,True,True,True,True,True,True,96.94,105.84,301.27,12.11,-10.8,0.85,239.558,239.558,204.1577,173.584,-15.07,False,,,,False,False,249.9189
 MSFT,2026-10-13,543.45,후보 아님 (트렌드 템플릿 7/8),7,False,True,False,True,True,True,True,True,True,True,76.53,12.59,542.74,-0.13,0.13,0.99,503.0914,503.0914,434.5503,434.5525,0.0,False,,,,False,False,505.4085
 MSTR,2026-10-13,152.18,후보 아님 (트렌드 템플릿 3/8),3,False,True,False,False,False,True,True,False,False,True,60.2,-0.71,171.19,12.49,-11.1,0.52,132.1534,132.1534,132.4256,135.7972,-51.76,False,,,,False,False,141.5274
 MU,2026-10-13,953.19,후보 아님 (트렌드 템플릿 7/8),7,False,True,True,True,True,False,True,True,True,True,97.96,129.14,1108.72,16.32,-14.03,1.05,981.9802,981.9802,818.0013,708.5771,-21.46,False,,,,False,False,886.4667
@@ -76,7 +76,7 @@ PCAR,2026-10-13,107.98,후보 아님 (트렌드 템플릿 3/8),3,False,False,Fal
 PDD,2026-10-13,81.96,후보 아님 (트렌드 템플릿 0/8),0,False,False,False,False,False,False,False,False,False,True,10.2,-32.77,81.58,-0.46,0.47,1.45,82.7634,82.7634,88.8745,93.4569,-40.66,False,,,,False,False,76.2228
 PEP,2026-10-13,127.3,후보 아님 (트렌드 템플릿 0/8),0,False,False,False,False,False,False,False,False,False,True,16.33,-25.12,136.05,6.87,-6.43,1.41,135.0108,135.0108,143.6021,146.5132,-25.33,False,,,,False,False,118.389
 PLTR,2026-10-13,208.67,후보 아님 (트렌드 템플릿 7/8),7,False,True,False,True,True,True,True,True,True,True,84.69,26.15,212.94,2.05,-2.01,0.55,180.3588,180.3588,151.369,152.478,-0.18,False,,,,False,False,194.0631
-PYPL,2026-10-13,56.17,후보 아님 (트렌드 템플릿 4/8),4,False,True,False,False,True,False,True,True,False,True,40.82,-14.47,56.21,0.07,-0.07,0.68,56.2097,56.2097,50.0598,50.0882,-23.08,False,,,,False,False,52.2381
+PYPL,2026-10-13,56.17,후보 아님 (트렌드 템플릿 4/8),4,False,True,False,False,True,False,True,True,False,True,40.82,-14.47,56.21,0.07,-0.07,0.74,56.2097,56.2097,50.0598,50.0882,-23.08,False,,,,False,False,52.2381
 QCOM,2026-10-13,176.86,후보 아님 (트렌드 템플릿 5/8),5,False,True,True,True,False,True,True,False,False,True,53.06,-3.75,205.85,16.39,-14.08,1.05,174.1542,174.1542,174.8274,169.3594,-29.54,False,,,,False,False,164.4798
 REGN,2026-10-13,753.12,후보 아님 (트렌드 템플릿 5/8),5,False,True,False,True,True,False,True,True,False,True,56.12,-2.49,813.53,8.02,-7.43,0.88,789.5714,789.5714,723.2419,735.2852,-11.61,False,,,,False,False,700.4016
 RKLB,2026-10-13,64.22,후보 아님 (트렌드 템플릿 3/8),3,False,False,True,True,False,False,True,False,False,True,14.29,-27.96,78.28,21.89,-17.96,0.8,70.4232,70.4232,82.9324,81.4877,-57.25,False,,,,False,False,59.7246
@@ -94,8 +94,8 @@ TRI,2026-10-13,105.14,후보 아님 (트렌드 템플릿 4/8),4,False,True,False
 TSLA,2026-10-13,375.23,후보 아님 (트렌드 템플릿 2/8),2,False,False,False,False,False,True,False,True,False,True,19.39,-20.53,388.56,3.55,-3.43,0.51,357.1444,357.1444,377.8384,389.516,-23.4,False,,,,False,False,348.9639
 TTWO,2026-10-13,200.32,후보 아님 (트렌드 템플릿 1/8),1,False,False,False,False,False,False,False,True,False,True,13.27,-29.66,220.45,10.05,-9.13,2.06,220.9428,220.9428,222.2995,223.1362,-23.63,False,,,,False,False,186.2976
 TXN,2026-10-13,287.85,3순위 · 관찰,8,True,True,True,True,True,True,True,True,True,True,77.55,14.45,298.75,3.79,-3.65,1.0,272.3744,272.3744,269.156,252.7323,-13.37,False,,,,False,False,267.7005
-VRTX,2026-10-13,485.22,후보 아님 (트렌드 템플릿 5/8),5,False,True,True,True,True,False,False,True,False,True,48.98,-6.66,529.89,9.21,-8.43,1.05,521.352,521.352,477.5986,475.2503,-13.04,False,,,,False,False,451.2546
+VRTX,2026-10-13,485.22,후보 아님 (트렌드 템플릿 5/8),5,False,True,True,True,True,False,False,True,False,True,48.98,-6.66,529.89,9.21,-8.43,1.08,521.352,521.352,477.5986,475.2503,-13.04,False,,,,False,False,451.2546
 WDAY,2026-10-13,186.02,후보 아님 (트렌드 템플릿 4/8),4,False,True,False,False,True,False,True,True,False,True,69.39,3.83,201.0,8.05,-7.45,0.62,190.1742,190.1742,151.0969,156.1924,-24.28,False,,,,False,False,172.9986
 WDC,2026-10-13,380.71,후보 아님 (트렌드 템플릿 4/8),4,False,False,True,True,False,False,True,False,True,True,87.76,38.23,475.66,24.94,-19.96,1.6,451.5174,451.5174,461.5735,407.9481,-48.98,False,,,,False,False,354.0603
-WMT,2026-10-13,112.28,후보 아님 (트렌드 템플릿 2/8),2,False,False,False,False,False,True,False,True,False,True,36.73,-15.1,113.14,0.77,-0.76,0.72,108.575,108.575,116.9793,118.1827,-16.33,False,,,,False,False,104.4204
+WMT,2026-10-13,112.28,후보 아님 (트렌드 템플릿 2/8),2,False,False,False,False,False,True,False,True,False,True,36.73,-15.1,113.14,0.77,-0.76,0.73,108.575,108.575,116.9793,118.1827,-16.33,False,,,,False,False,104.4204
 XEL,2026-10-13,74.64,후보 아님 (트렌드 템플릿 2/8),2,False,False,True,False,False,False,False,True,False,True,24.49,-19.06,74.23,-0.55,0.55,0.77,74.9466,74.9466,78.1371,78.0571,-11.05,False,,,,False,False,69.4152
