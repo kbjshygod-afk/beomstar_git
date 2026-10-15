@@ -1,0 +1,41 @@
+{
+ "market": "NDX100",
+ "as_of": "2026-10-15",
+ "regime": {
+  "benchmark": "^NDX",
+  "mode": "MA200",
+  "close": 29935.5938,
+  "ma200": 27719.3562,
+  "ma20": 30547.0438,
+  "on": true
+ },
+ "entries_next_open": [
+  {
+   "symbol": "AMGN",
+   "signal_close": 434.03,
+   "rs": 81.63,
+   "desired_qty": 24086.349113,
+   "est_stop_from_close": 403.6479
+  }
+ ],
+ "exits_next_open": [],
+ "positions": [],
+ "watchlist": [
+  {
+   "symbol": "MSFT",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 539.44,
+   "pivot": 551.15,
+   "to_pivot_pct": 2.17,
+   "rs": 75.51
+  }
+ ],
+ "coverage": {
+  "requested": 101,
+  "loaded": 100,
+  "failed": [
+   "WBD"
+  ]
+ },
+ "generated_at": "2026-10-15T21:50:00Z"
+}
