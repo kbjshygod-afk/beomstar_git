@@ -1,0 +1,6 @@
+config.env
+state/
+inbox/
+*.plist
+!*.plist.template
+__pycache__/

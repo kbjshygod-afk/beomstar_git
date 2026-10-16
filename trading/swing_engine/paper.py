@@ -297,24 +297,65 @@ def _signal_sets(snap: dict) -> tuple[set, set]:
     return ({e["symbol"] for e in snap.get("entries_next_open", [])}, set(snap.get("exits_next_open", [])))
 
 
-def write_signal_file(sig_dir: Path, snap: dict, now: datetime) -> tuple[Path, str]:
-    """Write signals/<as_of>.json once. A rerun with the same signals keeps the original file;
-    different signals go to <as_of>.revN.json and are reported as a revision."""
+def _rev_no(p: Path) -> int:
+    """0 for signals/<date>.json, N for signals/<date>.revN.json."""
+    stem = p.name[: -len(".json")]
+    return int(stem.split(".rev", 1)[1]) if ".rev" in stem else 0
+
+
+def latest_signal_file(sig_dir: Path, as_of: str) -> Path | None:
+    files = [p for p in sig_dir.glob(f"{as_of}*.json") if p.name[:10] == as_of]
+    return max(files, key=_rev_no) if files else None
+
+
+def write_signal_file(sig_dir: Path, snap: dict, now: datetime,
+                      deadline: datetime | None = None) -> tuple[Path, str]:
+    """Write signals/<as_of>.json once. A rerun whose signals match the latest file for that date
+    writes nothing; different signals before `deadline` (the next open) go to <as_of>.revN.json
+    and are reported as a revision. After the open the trades are done, so a difference (a data
+    provider revising the bar later) writes no file; the audit records it instead."""
     sig_dir.mkdir(parents=True, exist_ok=True)
     body = dict(snap, generated_at=_iso(now))
     p = sig_dir / f"{snap['as_of']}.json"
     if not p.exists():
         p.write_text(json.dumps(_jsonable(body), ensure_ascii=False, indent=1))
         return p, "new"
-    old = json.loads(p.read_text())
-    if _signal_sets(old) == _signal_sets(snap):
-        return p, "unchanged"
-    n = 1
-    while (sig_dir / f"{snap['as_of']}.rev{n}.json").exists():
-        n += 1
-    q = sig_dir / f"{snap['as_of']}.rev{n}.json"
+    latest = latest_signal_file(sig_dir, snap["as_of"])
+    if _signal_sets(json.loads(latest.read_text())) == _signal_sets(snap):
+        return latest, "unchanged"
+    if deadline is not None and now > deadline:
+        return latest, "differs after the open"
+    q = sig_dir / f"{snap['as_of']}.rev{_rev_no(latest) + 1}.json"
     q.write_text(json.dumps(_jsonable(body), ensure_ascii=False, indent=1))
     return q, "revised"
+
+
+def executed_signals(market: str, root: Path, repo: Path | None, now: datetime) -> dict:
+    """{date: {"entries", "exits"}} the paper trader acted on: for every date whose next open has
+    passed, the latest signal file (original or revision) committed before that open. The ledger
+    replays these instead of signals recomputed from today's data (PortfolioConfig.signal_override):
+    on 2026-10-07 Yahoo raised the 10-06 KOSDAQ volumes during the next session, and the
+    recomputation added an entry (327260.KQ, volume 1.38x -> 1.41x) nobody could have known
+    before that open."""
+    if repo is None:
+        return {}
+    best: dict[str, tuple[int, Path]] = {}
+    for p in (root / "signals").glob("*.json"):
+        d = p.name[:10]
+        deadline = next_open_deadline(market, d)
+        if deadline > now:
+            continue                                  # not traded yet
+        t = first_commit_time(repo, p)
+        if t is None or t > deadline:
+            continue                                  # committed too late to act on
+        n = _rev_no(p)
+        if d not in best or n > best[d][0]:
+            best[d] = (n, p)
+    out = {}
+    for d, (_, p) in best.items():
+        e, x = _signal_sets(json.loads(p.read_text()))
+        out[d] = {"entries": e, "exits": x}
+    return out
 
 
 def recomputed_sets(res, as_of) -> dict:
@@ -342,7 +383,10 @@ def recomputed_sets(res, as_of) -> dict:
 def audit(market: str, root: Path, repo: Path | None, res, bench: pd.DataFrame, start_date, as_of) -> dict:
     sig_dir = root / "signals"
     rec = recomputed_sets(res, as_of)
-    days = [_day(d) for d in bench.index if pd.Timestamp(start_date) <= d <= pd.Timestamp(as_of)]
+    # on replayed dates: what today's data would signal given the holdings actually traded
+    for d, nat in (getattr(res, "natural", None) or {}).items():
+        rec["entries"][d], rec["exits"][d] = set(nat["entries"]), set(nat["exits"])
+    days =[_day(d) for d in bench.index if pd.Timestamp(start_date) <= d <= pd.Timestamp(as_of)]
     rows, missing = [], []
     for d in days:
         p = sig_dir / f"{d}.json"
@@ -355,7 +399,11 @@ def audit(market: str, root: Path, repo: Path | None, res, bench: pd.DataFrame, 
         committed = first_commit_time(repo, p) if repo else None
         deadline = next_open_deadline(market, d)
         revs = sorted(x.name for x in sig_dir.glob(f"{d}.rev*.json"))
+        # revisions committed after the open were never traded (written by engines before 2026-10-07)
+        late_revs = [x for x in revs
+                     if repo is not None and (t := first_commit_time(repo, sig_dir / x)) is not None and t > deadline]
         rows.append({"date": d, "committed_at": _iso(committed) if committed else None,
+                     "revisions_after_open": late_revs,
                      "deadline": _iso(deadline),
                      "on_time": None if committed is None else committed <= deadline,
                      "entries_match": ce == re_, "exits_match": cx == rx,
@@ -367,7 +415,10 @@ def audit(market: str, root: Path, repo: Path | None, res, bench: pd.DataFrame, 
     return {"market": market, "start_date": _day(start_date), "as_of": _day(as_of),
             "days": len(days), "signal_files": len(rows), "missing_days": missing,
             "late": late, "uncommitted": [r["date"] for r in rows if r["committed_at"] is None],
-            "mismatched": mism, "revised": [r["date"] for r in rows if r["revisions"]], "rows": rows}
+            "mismatched": mism, "revised": [r["date"] for r in rows if r["revisions"]],
+            "revised_after_open": [r["date"] for r in rows
+                                   if r["revisions"] and len(r["revisions_after_open"]) == len(r["revisions"])],
+            "rows": rows}
 
 
 def performance(res, bench: pd.DataFrame, start_date, initial_equity: float) -> dict:
@@ -470,7 +521,16 @@ def render_report(market, cfg, snap, perf, aud, res, params, stale=()) -> str:
           f"- 다음 시가 전 커밋: {on_time}/{aud['signal_files']} (늦음 {len(aud['late'])}, 미커밋 {len(aud['uncommitted'])})",
           f"- 재계산과 일치: {aud['signal_files'] - len(aud['mismatched'])}/{aud['signal_files']}"
           + (f" — 불일치 {', '.join(aud['mismatched'])}" if aud["mismatched"] else ""),
-          f"- 신호 수정본: {len(aud['revised'])}건" + (f" ({', '.join(aud['revised'])})" if aud["revised"] else ""), ""]
+          f"- 신호 수정본: {len(aud['revised'])}건" + (f" ({', '.join(aud['revised'])})" if aud["revised"] else "")
+          + (f" — 그중 {', '.join(aud['revised_after_open'])}은 다음 시가 이후에 쓰여 체결에 쓰이지 않음"
+             if aud.get("revised_after_open") else "")]
+    for r in aud.get("rows", []):
+        if r.get("date") in aud["mismatched"]:
+            diff = ([f"진입 +{s}" for s in r["entries_only_recomputed"]] + [f"진입 −{s}" for s in r["entries_only_committed"]]
+                    + [f"청산 +{s}" for s in r["exits_only_recomputed"]] + [f"청산 −{s}" for s in r["exits_only_committed"]])
+            L.append(f"  - {r['date']}: 지금 데이터로 다시 계산하면 {', '.join(diff)}. "
+                     "장부는 다음 시가 전에 커밋된 신호대로 체결합니다(커밋 뒤 데이터 수정 의심).")
+    L.append("")
     if snap["watchlist"]:
         L += ["## 관찰 (트렌드 템플릿 통과 · 레짐 ON · 피벗 3% 이내, RS 순)", "",
               "| 종목 | 상태 | 종가 | 피벗 | 피벗까지 |", "|---|---|---|---|---|"]
@@ -582,16 +642,23 @@ def run(args) -> dict:
     start_date = pd.Timestamp(cfg["start_date"])
     cov = {"requested": len(cfg["universe"]), "loaded": len(frames), "failed": failed}
 
+    # Dates whose next open has passed replay the signals committed before that open.
+    executed = executed_signals(market, root, repo, now)
     pcfg = PortfolioConfig(params=params, rs_mode=cfg["rs_mode"], initial_equity=cfg["initial_equity"],
-                           risk_pct=cfg["risk_pct"], cost_pct=cfg["cost_pct"], test_start=start_date, as_of=as_of)
+                           risk_pct=cfg["risk_pct"], cost_pct=cfg["cost_pct"], test_start=start_date, as_of=as_of,
+                           signal_override=executed or None)
     prepared = prepare_frames(frames, bench, pcfg)
     res = simulate(prepared, pcfg)
 
     # (3) signals first
     snap = build_snapshot(market, as_of, res, prepared, bench, params, cov)
-    sig_path, sig_state = write_signal_file(root / "signals", snap, now)
+    sig_path, sig_state = write_signal_file(root / "signals", snap, now, next_open_deadline(market, as_of))
     log.info("%s signals %s: %d entries, %d exits (%s)", market, snap["as_of"],
              len(snap["entries_next_open"]), len(snap["exits_next_open"]), sig_state)
+    if sig_state == "differs after the open":
+        log.warning("%s: the %s signals recomputed after the open differ from the committed ones; "
+                    "the ledger keeps the committed trades and the audit records the difference",
+                    market, snap["as_of"])
     if not args.no_commit:
         commit_and_push(repo, f"{market} signals {snap['as_of']} ({sig_state})", args.push_branch)
 
@@ -621,7 +688,7 @@ def run(args) -> dict:
         "entries_next_open": snap["entries_next_open"], "exits_next_open": snap["exits_next_open"],
         "positions": res.open_positions, "stale_positions": stale, "watchlist": snap["watchlist"],
         "performance": perf, "status_csv": f"{market}/status.csv",
-        "audit": {k: aud[k] for k in ("days", "signal_files", "missing_days", "late", "uncommitted", "mismatched", "revised")},
+        "audit": {k: aud[k] for k in ("days", "signal_files", "missing_days", "late", "uncommitted", "mismatched", "revised", "revised_after_open")},
     })))
     # The schedule reruns every market every 2 hours; a rerun with nothing new leaves the file
     # (and the ledger branch) untouched.
