@@ -8,7 +8,8 @@ set -uo pipefail
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck disable=SC1091
-[ -f "$DIR/config.env" ] && . "$DIR/config.env"
+CONFIG="${WORK_AGENT_CONFIG:-$DIR/config.env}"
+[ -f "$CONFIG" ] && . "$CONFIG"
 . "$DIR/lib.sh"
 
 TO="${WORK_AGENT_SLACK_DM_USER:-}"
@@ -29,7 +30,10 @@ PROMPT="Call $TOOL exactly once with channel_id \"$TO\" and the message between 
 $TEXT
 MESSAGE>>>"
 OUT="$STATE/dm_last.json"
+printf '%s\n' "$TOOL" > "$STATE/dm_allow.txt"
+guard_settings "$STATE/dm_settings.json" "$STATE/dm_allow.txt" "$STATE/tool_guard.log" || { log "dm: FAILED $KEY (guard setup)"; exit 1; }
 "${CLAUDE_BIN:-claude}" -p "$PROMPT" --model "${WORK_AGENT_DM_MODEL:-haiku}" --output-format json --max-turns 3 \
+  --settings "$STATE/dm_settings.json" \
   --allowedTools "$TOOL" \
   --disallowedTools Bash Write Edit NotebookEdit WebFetch WebSearch Read Glob Grep Task \
     mcp__claude_ai_Gmail mcp__claude_ai_Google_Calendar mcp__claude_ai_Google_Drive mcp__claude_ai_Notion \

@@ -9,7 +9,8 @@ set -euo pipefail
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck disable=SC1091
-[ -f "$DIR/config.env" ] && . "$DIR/config.env"
+CONFIG="${WORK_AGENT_CONFIG:-$DIR/config.env}"   # tests point this at a missing file
+[ -f "$CONFIG" ] && . "$CONFIG"
 . "$DIR/lib.sh"
 
 CLAUDE_BIN="${CLAUDE_BIN:-claude}"
@@ -60,7 +61,11 @@ PROMPT="$(cat "$DIR/prompt.md")
 
 # 4. run the agent
 RAW="$STATE/last_raw.json"; rm -f "$RAW"
-args=(-p "$PROMPT" --model "$MODEL" --output-format json --max-turns 30)
+# allowlist hook: the reader reads untrusted text, so any tool not in WORK_AGENT_ALLOWED_TOOLS is blocked,
+# including built-ins that -p would otherwise run without a permission check
+printf '%s\n' $ALLOWED > "$STATE/reader_allow.txt"
+guard_settings "$STATE/reader_settings.json" "$STATE/reader_allow.txt" "$STATE/tool_guard.log"
+args=(-p "$PROMPT" --model "$MODEL" --output-format json --max-turns 30 --settings "$STATE/reader_settings.json")
 [ -n "$ALLOWED" ] && args+=(--allowedTools $ALLOWED)
 [ -n "$DISALLOWED" ] && args+=(--disallowedTools $DISALLOWED)
 if ! (cd "$DIR" && "$CLAUDE_BIN" "${args[@]}") > "$RAW" 2> "$STATE/last.err"; then
@@ -131,6 +136,7 @@ if [ "$rc" = "0" ] && [ "$pyrc" = "0" ]; then
       DOUT="$(CLAUDE_BIN="$CLAUDE_BIN" WORK_AGENT_STATE="$STATE" \
         WORK_AGENT_DRAFT_TOOL="${WORK_AGENT_DRAFT_TOOL:-}" WORK_AGENT_DRAFT_MODEL="${WORK_AGENT_DRAFT_MODEL:-}" \
         WORK_AGENT_DRAFT_DAILY_MAX="${WORK_AGENT_DRAFT_DAILY_MAX:-}" WORK_AGENT_DRAFT_RUN_MAX="${WORK_AGENT_DRAFT_RUN_MAX:-}" \
+        WORK_AGENT_DRAFT_TIMEOUT="${WORK_AGENT_DRAFT_TIMEOUT:-}" \
         python3 "$DIR/slack_drafts.py" "$STATE/new_items.json" "$INBOX/$f" 2>> "$STATE/drafts.err")" || DOUT="drafts:error"
       log "$DOUT"
       case "$DOUT" in

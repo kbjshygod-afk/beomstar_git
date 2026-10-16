@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """Stand-in for the `claude` CLI in tests (no model, no network).
 
-Reader mode (no --settings): prints {"type":"result",...} whose result is the file
-named by FAKE_READER_RESULT, like `claude -p --output-format json`.
-Writer mode (--settings given, as slack_drafts.py does): runs the PreToolUse hook from
-the settings file on a simulated tool call and prints stream-json like the real CLI.
-FAKE_WRITER = honest | tamper_then_honest | tamper_only | send_attempt | none
+Reader mode (any other prompt): prints {"type":"result",...} whose result is the file
+named by FAKE_READER_RESULT, like `claude -p --output-format json`. If FAKE_READER_PROBE
+names tools, each is first run through the --settings hook and the exit codes are logged.
+Writer mode (prompt starts with "Call the tool ", as slack_drafts.py sends): runs the
+PreToolUse hook from the settings file on a simulated tool call and prints stream-json.
+FAKE_WRITER = honest | tamper_then_honest | tamper_only | send_attempt | none | hang
 FAKE_SLACK_MODE = ok | noid | exists | error   (answer of the simulated draft tool)
 FAKE_CALLS = file that receives one line per invocation (mode + tool calls that ran)
 """
@@ -14,6 +15,7 @@ import os
 import re
 import subprocess
 import sys
+import time
 
 
 def log(row):
@@ -67,6 +69,13 @@ def writer(settings_path):
         calls.append((tool.rsplit("__", 1)[0] + "__slack_send_message", dict(pinned)))
     if mode in ("honest", "tamper_then_honest", "send_attempt"):
         calls.append((tool, pinned))
+    if mode == "hang":  # the guard allows the call, then the Slack answer never comes back
+        emit({"type": "assistant", "message": {"content": [{"type": "tool_use", "id": "toolu_hang", "name": tool,
+                                                            "input": pinned}]}})
+        sys.stdout.flush()
+        run_hook(settings, tool, pinned)
+        log({"mode": "writer", "ran": [], "attempted": [tool]})
+        time.sleep(60)
     ran = []
     for i, (name, inp) in enumerate(calls):
         uid = "toolu_fake_%d" % i
@@ -85,14 +94,23 @@ def writer(settings_path):
 
 def reader():
     path = os.environ.get("FAKE_READER_RESULT")
-    text = open(path).read() if path else '{"status":"ok","items":[],"plaud_seen":[],"errors":[]}'
+    text = '{"status":"ok","items":[],"plaud_seen":[],"errors":[]}'
+    if path:
+        with open(path) as f:
+            text = f.read()
+    s = arg_after("--settings")
+    probes = {}
+    if s:
+        with open(s) as f:
+            settings = json.load(f)
+        for name in os.environ.get("FAKE_READER_PROBE", "").split():
+            probes[name] = run_hook(settings, name, {})[0]
     print(json.dumps({"type": "result", "subtype": "success", "is_error": False, "result": text}))
-    log({"mode": "reader"})
+    log({"mode": "reader", "guarded": bool(s), "probes": probes})
 
 
 if __name__ == "__main__":
-    s = arg_after("--settings")
-    if s:
-        writer(s)
+    if (arg_after("-p") or "").startswith("Call the tool "):
+        writer(arg_after("--settings"))
     else:
         reader()

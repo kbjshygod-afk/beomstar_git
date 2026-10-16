@@ -6,7 +6,8 @@ set -uo pipefail
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck disable=SC1091
-[ -f "$DIR/config.env" ] && . "$DIR/config.env"
+CONFIG="${WORK_AGENT_CONFIG:-$DIR/config.env}"
+[ -f "$CONFIG" ] && . "$CONFIG"
 . "$DIR/lib.sh"
 
 VERSION="${PIXEL_AGENTS_VERSION:-1.4.1}"

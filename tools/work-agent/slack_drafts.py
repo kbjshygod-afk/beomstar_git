@@ -19,6 +19,7 @@ import re
 import shlex
 import subprocess
 import sys
+import unicodedata
 
 DIR = os.path.dirname(os.path.abspath(__file__))
 KST = dt.timezone(dt.timedelta(hours=9))
@@ -26,7 +27,9 @@ KST = dt.timezone(dt.timedelta(hours=9))
 TS_RE = re.compile(r"^\d{9,11}\.\d{6}$")
 CHANNEL_RE = re.compile(r"^[CDGU][A-Z0-9]{6,}$")
 BROADCAST_RE = re.compile(r"<!(channel|here|everyone)\b|@(channel|here|everyone)\b", re.I)
-LINK_RE = re.compile(r"https?://|www\.|slack://|mailto:|\]\(", re.I)
+LINK_RE = re.compile(r"https?://|www\.|slack://|mailto:|\]\(|"
+                     r"\b[A-Za-z0-9-]+\.(?:com|net|org|io|ly|kr|co|me|ai|app|dev|gl|gle|link|page|site|xyz|to|so|"
+                     r"biz|info|us|cc|tv|ms|gg)\b", re.I)
 MARKER_RE = re.compile(r"<<<|>>>")
 SUSPECT_RE = re.compile(r"mcp__|ignore (all |any )?(the )?(previous|prior|above)|system (prompt|override)|"
                         r"(이전|위의?|앞의?) 지시|지시(를|사항을)? 무시|규칙(을)? 무시", re.I)
@@ -40,11 +43,17 @@ def env(name, default):
 
 
 def norm(text):
-    return str(text).replace("\r\n", "\n").strip()
+    return "" if text is None else str(text).replace("\r\n", "\n").strip()
 
 
 def sha(text):
     return hashlib.sha256(norm(text).encode("utf-8")).hexdigest()
+
+
+def flat(text):
+    """Text as Slack will render it, for the filters: NFKC, no invisible format chars, single spaces."""
+    t = unicodedata.normalize("NFKC", text)
+    return re.sub(r"\s+", " ", "".join(ch for ch in t if unicodedata.category(ch) != "Cf"))
 
 
 def truthy(v):
@@ -60,6 +69,7 @@ class Cfg(object):
         self.daily_max = int(env("WORK_AGENT_DRAFT_DAILY_MAX", "20"))
         self.run_max = int(env("WORK_AGENT_DRAFT_RUN_MAX", "5"))
         self.timeout = int(env("WORK_AGENT_DRAFT_TIMEOUT", "150"))
+        self.once_path = os.path.join(self.state, "draft_call", "once")
         self.threads_path = os.path.join(self.state, "drafted_threads.txt")
         self.log_path = os.path.join(self.state, "drafts_log.tsv")
         self.call_dir = os.path.join(self.state, "draft_call")
@@ -101,13 +111,15 @@ def plan(items, cfg):
             reason = "대표님이 이미 답함"
         elif len(msg) > MAX_LEN:
             reason = "초안이 너무 김(%d자)" % len(msg)
-        elif BROADCAST_RE.search(msg):
+        elif any(unicodedata.category(ch) == "Cf" for ch in msg):
+            reason = "보이지 않는 문자가 들어 있음"
+        elif BROADCAST_RE.search(flat(msg)):
             reason = "@channel·@here 같은 전체 알림이 들어 있음"
-        elif LINK_RE.search(msg):
+        elif LINK_RE.search(flat(msg)):
             reason = "링크가 들어 있음(필요하면 직접 넣으세요)"
-        elif MARKER_RE.search(msg):
+        elif MARKER_RE.search(flat(msg)):
             reason = "허용하지 않는 기호(<<< >>>)가 들어 있음"
-        elif SUSPECT_RE.search(msg):
+        elif SUSPECT_RE.search(flat(msg)):
             reason = "지시문으로 보이는 문구가 들어 있음"
         elif key in drafted or key in this_run:
             reason = "이 스레드에는 이미 초안을 넣었음"
@@ -155,8 +167,11 @@ def pinned(row, name, args, tool):
             and not (set(args) - {"channel_id", "thread_ts", "message"}))
 
 
-def classify(row, out_text, tool):
-    """Read stream-json output. Returns (status, draft_id, channel_link, note)."""
+def classify(row, out_text, tool, allowed=False, timed_out=False):
+    """Read stream-json output. Returns (status, draft_id, channel_link, note).
+
+    allowed: the guard let the pinned call through (its once-marker exists).
+    """
     uses, results, final = [], {}, {}
     for line in out_text.splitlines():
         try:
@@ -191,13 +206,15 @@ def classify(row, out_text, tool):
                 data = json.loads(text)
             except ValueError:
                 pass
-            link = str(data.get("channel_link", "")) if isinstance(data, dict) else ""
-            did = str(data.get("draft_id", "")) if isinstance(data, dict) else ""
+            link = str(data.get("channel_link") or "") if isinstance(data, dict) else ""
+            did = str(data.get("draft_id") or "") if isinstance(data, dict) else ""
             if not CHANNEL_LINK_RE.match(link):
                 link = ""
             return ("created" if did else "created_noid"), did, link, note
         return "failed", "", "", (note + " " if note else "") + "도구 오류: " + re.sub(r"\s+", " ", text)[:120]
-    why = "초안 도구가 호출되지 않음"
+    if allowed:
+        return "unknown", "", "", (note + " " if note else "") + ("시간 초과" if timed_out else "응답 없이 끝남")
+    why = "시간 초과" if timed_out else "초안 도구가 호출되지 않음"
     if final.get("is_error"):
         why = "claude 오류(%s)" % final.get("subtype", "")
     return "failed", "", "", (note + " " if note else "") + why
@@ -206,7 +223,7 @@ def classify(row, out_text, tool):
 def place(row, cfg):
     os.makedirs(cfg.call_dir, exist_ok=True)
     expect_path = os.path.join(cfg.call_dir, "expect.json")
-    once_path = os.path.join(cfg.call_dir, "once")
+    once_path = cfg.once_path
     settings_path = os.path.join(cfg.call_dir, "settings.json")
     if os.path.exists(once_path):
         os.remove(once_path)
@@ -218,7 +235,10 @@ def place(row, cfg):
     hook = "%s %s %s" % (shlex.quote(sys.executable), shlex.quote(os.path.join(DIR, "draft_guard.py")),
                          shlex.quote(expect_path))
     with open(settings_path, "w") as f:
-        json.dump({"hooks": {"PreToolUse": [{"matcher": "*", "hooks": [{"type": "command", "command": hook}]}]}}, f)
+        # disableAllHooks false overrides a true in user/project settings; onFailure block makes a crashed or
+        # missing guard block the call instead of letting it run (both checked on Claude Code 2.1.301).
+        json.dump({"disableAllHooks": False, "hooks": {"PreToolUse": [{"matcher": "*", "hooks": [
+            {"type": "command", "command": hook, "onFailure": "block"}]}]}}, f)
     call_args = json.dumps({"channel_id": row["channel"], "thread_ts": row["thread_ts"], "message": row["message"]},
                            ensure_ascii=False)
     prompt = ("Call the tool %s exactly once, with exactly these JSON arguments (copy every value unchanged, "
@@ -229,16 +249,17 @@ def place(row, cfg):
             "--max-turns", "4", "--settings", settings_path, "--allowedTools", cfg.tool,
             "--disallowedTools"] + disallowed(cfg.tool)
     out_path = os.path.join(cfg.call_dir, "out.jsonl")
+    timed_out = False
     try:
         with open(out_path, "w") as out, open(os.path.join(cfg.call_dir, "err.txt"), "w") as err:
             subprocess.run(args, stdin=subprocess.DEVNULL, stdout=out, stderr=err, cwd=cfg.call_dir,
                            timeout=cfg.timeout)
     except subprocess.TimeoutExpired:
-        pass
+        timed_out = True
     except OSError as e:
         return "failed", "", "", "claude 실행 불가(%s)" % e.__class__.__name__
     with open(out_path) as f:
-        return classify(row, f.read(), cfg.tool)
+        return classify(row, f.read(), cfg.tool, os.path.exists(once_path), timed_out)
 
 
 def label(it):
@@ -250,18 +271,23 @@ def main(argv):
         sys.stderr.write(__doc__)
         return 64
     cfg = Cfg()
+    if not cfg.tool.endswith("__slack_send_message_draft"):
+        sys.stderr.write("WORK_AGENT_DRAFT_TOOL must be a slack_send_message_draft tool, got %r\n" % cfg.tool)
+        return 65
     with open(argv[1]) as f:
         items = json.load(f)
     queue, skips = plan(items if isinstance(items, list) else [], cfg)
     lines, created, failed = [], 0, 0
     for row in queue:
         status, did, link, note = place(row, cfg)
+        reached = os.path.exists(cfg.once_path)
         now = dt.datetime.now(KST)
         with open(cfg.log_path, "a") as f:
             f.write("\t".join([now.strftime("%Y-%m-%d"), now.strftime("%H:%M:%S"), status, str(row["item"].get("id")),
                                row["channel"], row["thread_ts"], did]) + "\n")
-        with open(cfg.threads_path, "a") as f:
-            f.write(row["key"] + "\n")
+        if status != "failed" or reached:  # a draft may exist there: never touch this thread again
+            with open(cfg.threads_path, "a") as f:
+                f.write(row["key"] + "\n")
         where = (link + "/p" + row["thread_ts"].replace(".", "")) if link else norm(row["item"].get("link", ""))
         tail = (" " + where) if where else ""
         extra = (" (%s)" % note) if note else ""
@@ -272,6 +298,9 @@ def main(argv):
             created += 1
             lines.append("- ⚠️ %s: 초안 넣음, 확인 필요 — 같은 곳에 쓰던 초안이 있었다면 덮어썼을 수 있음%s%s"
                          % (label(row["item"]), tail, extra))
+        elif status == "unknown":
+            failed += 1
+            lines.append("- ⚠️ %s: 초안이 들어갔는지 모름(%s) — 슬랙 스레드에서 확인하세요%s" % (label(row["item"]), note, tail))
         elif status == "exists":
             lines.append("- ⏭ %s: 그 스레드에 대표님 초안이 이미 있어 넣지 않음%s" % (label(row["item"]), tail))
         else:

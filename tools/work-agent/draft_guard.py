@@ -20,7 +20,7 @@ ALLOW_ALWAYS = {"ToolSearch"}
 
 
 def norm(text):
-    return str(text).replace("\r\n", "\n").strip()
+    return "" if text is None else str(text).replace("\r\n", "\n").strip()
 
 
 def sha(text):
@@ -92,4 +92,10 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    # Fail closed: any exit code other than 2 lets Claude Code run the call.
+    try:
+        rc = main()
+    except BaseException:
+        sys.stderr.write("blocked by draft_guard: internal error\n")
+        rc = 2
+    sys.exit(rc)
