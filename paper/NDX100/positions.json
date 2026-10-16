@@ -1,1 +1,16 @@
-[]
+[
+ {
+  "symbol": "AMGN",
+  "signal_date": "2026-10-15",
+  "exit_signal_date": null,
+  "entry_date": "2026-10-16",
+  "entry_price": 437.8900146,
+  "qty": 24086.34911346862,
+  "stop_price": 407.23771357799995,
+  "last_close": 432.4899902,
+  "exit_ma": 415.014199214,
+  "unrealized_pnl": -171995.42623363994,
+  "price_pnl_pct": -1.2331919477389097,
+  "exit_pending": false
+ }
+]
