@@ -11,6 +11,9 @@ the PreToolUse hook from the settings file on a simulated tool call and prints s
   FAKE_SLACK_MODE = ok | noid | exists | error   (answer of the simulated draft tool)
   FAKE_DB = path of a JSON file that simulates the artifact database (ArtifactData calls)
   FAKE_CAL_MODE = ok | error                     (answer of a *__create_event tool)
+  FAKE_FAIL_ACTION = comma list of ArtifactData actions that answer with a tool error (e.g. get)
+  FAKE_DROP_RESULT = comma list of ArtifactData actions whose call RUNS but whose answer is never
+                     printed (claude killed mid-call): the next office cycle must recover
   FAKE_CALLS = file that receives one line per invocation (mode + tool calls that ran)
 """
 import json
@@ -186,6 +189,8 @@ def tool_answer(name, inp):
     if name.endswith("__slack_send_message_draft"):
         return slack_answer(inp.get("channel_id", ""))
     if name == "ArtifactData":
+        if inp.get("action") in os.environ.get("FAKE_FAIL_ACTION", "").split(","):
+            return True, "db read failed (unavailable): simulated outage"
         return artifact_data(inp)
     if name.endswith("__create_event"):
         if os.environ.get("FAKE_CAL_MODE", "ok") == "error":
@@ -236,6 +241,9 @@ def writer(settings_path):
         else:
             is_err, text = tool_answer(name, inp)
             ran.append(name)
+            if name == "ArtifactData" and inp.get("action") in os.environ.get("FAKE_DROP_RESULT", "").split(","):
+                log({"mode": "writer", "tool": tool, "ran": ran, "attempted": [c[0] for c in calls], "dropped": True})
+                return  # the write committed, but nobody ever sees the answer
         emit({"type": "user", "message": {"content": [{"type": "tool_result", "tool_use_id": uid, "content": text,
                                                          "is_error": is_err}]}})
     emit({"type": "result", "subtype": "success", "is_error": False, "result": "DONE"})

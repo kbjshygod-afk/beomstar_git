@@ -216,9 +216,12 @@ def pinned_call(cfg, tool, tool_input, label):
                     uses.append((b.get("id"), b.get("name"), b.get("input")))
                 elif o.get("type") == "user" and b.get("type") == "tool_result":
                     results[b.get("tool_use_id")] = (bool(b.get("is_error")), slack_drafts.text_of(b.get("content")))
-    blocked = 0
+    blocked, unanswered = 0, False
     for uid, name, inp in uses:
-        if name == tool and isinstance(inp, dict) and call_guard.sha(inp) == want and uid in results:
+        if name == tool and isinstance(inp, dict) and call_guard.sha(inp) == want:
+            if uid not in results:
+                unanswered = True  # the guard let it through, the answer never came back (killed mid-call)
+                continue
             is_err, text = results[uid]
             if "hook error" in text and "call_guard" in text:
                 blocked += 1
@@ -228,6 +231,8 @@ def pinned_call(cfg, tool, tool_input, label):
             blocked += 1
     if timed_out:
         return {"status": "timeout", "text": "시간 초과", "path": out_path}
+    if unanswered:
+        return {"status": "unknown", "text": "호출은 허용됐으나 응답 없이 끝남", "path": out_path}
     return {"status": "blocked_only" if blocked else "nocall", "text": "핀 고정 호출이 실행되지 않음(차단 %d건)" % blocked, "path": out_path}
 
 
@@ -255,8 +260,8 @@ def validate_payload(kind, p, t_now):
     if not isinstance(p, dict):
         return "payload가 객체가 아님"
     for k, v in p.items():
-        if not isinstance(k, str) or not (isinstance(v, str) or (isinstance(v, int) and not isinstance(v, bool))):
-            return "payload 값은 문자열·정수만 허용"
+        if not isinstance(k, str) or not isinstance(v, str):
+            return "payload 값은 문자열만 허용"
     if kind == "calendar_event":
         allowed = {"summary", "startTime", "endTime", "description"}
         if set(p) - allowed or not {"summary", "startTime", "endTime"} <= set(p):
@@ -288,7 +293,7 @@ def validate_proposal(role_cfg, p, t_now):
     if not isinstance(p, dict):
         return "제안이 객체가 아님"
     kind = p.get("kind")
-    if kind not in KINDS or kind not in set(role_cfg.get("proposal_kinds", [])):
+    if not isinstance(kind, str) or kind not in KINDS or kind not in set(role_cfg.get("proposal_kinds", [])):
         return "이 직원이 올릴 수 없는 종류: %s" % kind
     key = norm(p.get("key", ""))
     if not KEY_RE.match(key):
@@ -315,13 +320,42 @@ def load_proposals(cfg):
     return out
 
 
+def as_list(v, limit=5):
+    """Staff JSON fields that should be lists but may come back as a string or a number."""
+    if isinstance(v, list):
+        items = v
+    elif v in (None, "", 0, False):
+        items = []
+    else:
+        items = [v]
+    return [norm(x)[:160] for x in items if norm(x)][:limit]
+
+
+def key_state(cfg, role, t):
+    """(blocked keys, recently rejected) for a role, derived from the proposal files.
+    A key is blocked while its proposal waits on the board (not yet expired) or was executed;
+    rejected, expired and failed proposals free their key so the staff can raise it again."""
+    blocked, rejected = set(), []
+    for p in load_proposals(cfg).values():
+        if p.get("role") != role or not p.get("key"):
+            continue
+        st = p.get("local_status")
+        exp = parse_any(p.get("expires", ""))
+        if st == "executed" or (st in ("proposed", "pushed") and exp is not None and t <= exp):
+            blocked.add(p["key"])
+        elif st == "rejected":
+            rejected.append((p["key"], p.get("note", ""), p.get("created", "")))
+    rejected.sort(key=lambda x: x[2], reverse=True)
+    return blocked, rejected[:20]
+
+
 def record_staff_output(cfg, role_cfg, output):
     """Validate a staff run's JSON, store local proposals and the staff status. Returns (proposed, skipped, notes)."""
     role = role_cfg["role"]
     t = now()
     if not isinstance(output, dict) or output.get("status") != "ok":
         raise ValueError("status != ok")
-    keys = set(open(cfg.keys_path).read().split()) if os.path.exists(cfg.keys_path) else set()
+    keys = key_state(cfg, role, t)[0]
     proposals = output.get("proposals") or []
     if not isinstance(proposals, list):
         proposals = []
@@ -341,6 +375,8 @@ def record_staff_output(cfg, role_cfg, output):
             notes.append("건너뜀: 한 번 실행 상한")
             continue
         pid = "p-%s-%s-%d" % (t.strftime("%Y%m%d-%H%M%S"), role, i + 1)
+        while os.path.exists(proposal_path(cfg, pid)):  # never overwrite an earlier proposal (same second, clock reset)
+            pid = pid.rsplit("-", 1)[0] + "-%d" % (int(pid.rsplit("-", 1)[1]) + 1)
         payload = {k: (norm(v) if isinstance(v, str) else v) for k, v in p["payload"].items()}
         doc = {"id": pid, "role": role, "from_title": role_cfg.get("title", role), "from_emoji": role_cfg.get("emoji", ""),
                "kind": p["kind"], "key": key, "title": norm(p["title"]), "reason": norm(p.get("reason", "")),
@@ -348,11 +384,9 @@ def record_staff_output(cfg, role_cfg, output):
                "expires": utc_z(t + dt.timedelta(hours=cfg.ttl_hours)), "local_status": "proposed"}
         write_json(proposal_path(cfg, pid), doc)
         keys.add(key)
-        with open(cfg.keys_path, "a") as f:
-            f.write(key + "\n")
         proposed += 1
-    errors = [norm(e)[:160] for e in (output.get("errors") or []) if norm(e)][:5]
-    open_items = [norm(x)[:160] for x in (output.get("open_items") or []) if norm(x)][:5]
+    errors = as_list(output.get("errors"))
+    open_items = as_list(output.get("open_items"))
     status_doc = {"title": role_cfg.get("title", role), "emoji": role_cfg.get("emoji", ""), "order": role_cfg.get("order", 99),
                   "status": "blocked" if errors and not open_items and not proposed else "idle",
                   "last_run": utc_z(t), "summary": norm(output.get("summary", ""))[:200], "open_items": open_items,
@@ -382,11 +416,13 @@ def run_staff(cfg, role_cfg):
     os.makedirs(sdir, exist_ok=True)
     with open(os.path.join(DIR, role_cfg["prompt"])) as f:
         prompt = f.read()
-    keys = [k.split(":", 1)[1] for k in (open(cfg.keys_path).read().split() if os.path.exists(cfg.keys_path) else [])
-            if k.startswith(role + ":")]
     t = now()
-    prompt += ("\n\n## 이번 실행 입력\n- today: %s (KST, %s)\n- now: %s\n- already_proposed: %s\n"
-               % (t.strftime("%Y-%m-%d"), "월화수목금토일"[t.weekday()], t.isoformat(timespec="seconds"), ", ".join(keys[-100:]) or "(없음)"))
+    blocked, rejected = key_state(cfg, role, t)
+    keys = sorted(k.split(":", 1)[1] for k in blocked)
+    rej = ["%s (%s)" % (k.split(":", 1)[1], norm(note)[:60] or "사유 없음") for k, note, _ in rejected]
+    prompt += ("\n\n## 이번 실행 입력\n- today: %s (KST, %s)\n- now: %s\n- already_proposed: %s\n- recently_rejected: %s\n"
+               % (t.strftime("%Y-%m-%d"), "월화수목금토일"[t.weekday()], t.isoformat(timespec="seconds"),
+                  ", ".join(keys[-100:]) or "(없음)", "; ".join(rej) or "(없음)"))
     tools = [cfg.prefix + x for x in role_cfg.get("tools", [])]
     allow_path = os.path.join(sdir, "allow.txt")
     with open(allow_path, "w") as f:
@@ -441,9 +477,8 @@ def do_staff(cfg, role_cfg):
         return 0
     try:
         return record_staff_output(cfg, role_cfg, output)[0]
-    except ValueError as e:
-        # the staff answered but not with a usable report (status partial/error): show its own words on the board
-        said = [norm(x)[:160] for x in (output.get("errors") or []) if norm(x)][:3] if isinstance(output, dict) else []
+    except Exception as e:  # status partial/error, or a malformed field: show the staff's own words on the board
+        said = as_list(output.get("errors"), 3) if isinstance(output, dict) else []
         summary = norm(output.get("summary", "")) if isinstance(output, dict) else ""
         status = read_json(os.path.join(cfg.office, "staff", role + ".json"), {})
         status.update({"title": role_cfg.get("title", role), "emoji": role_cfg.get("emoji", ""), "order": role_cfg.get("order", 99),
@@ -520,41 +555,77 @@ def exec_count_today(cfg, t):
 
 
 def execute(cfg, prop):
+    """-> (status, result, reached). reached: the external tool may have acted (counts toward the daily cap)."""
     kind = prop["kind"]
     if kind == "info":
-        return "ok", "확인됨"
+        return "ok", "확인됨", False
     if kind == "calendar_event":
         r = pinned_call(cfg, cfg.calendar_tool, dict(prop["payload"]), "exec-" + prop["id"])
+        reached = r["status"] not in ("nocall", "blocked_only", "spawn_error")
         if r["status"] != "ok":
-            return "failed", "캘린더 도구 %s: %s" % (r["status"], re.sub(r"\s+", " ", r["text"])[:160])
+            return "failed", "캘린더 도구 %s: %s" % (r["status"], re.sub(r"\s+", " ", r["text"])[:160]), reached
         text = r["text"]
         try:
             data = json.loads(text)
             if isinstance(data, dict):
                 ref = str(data.get("htmlLink") or data.get("id") or "")
-                return "ok", ("등록됨 " + ref) if ref else "등록됨"
+                return "ok", ("등록됨 " + ref) if ref else "등록됨", True
         except ValueError:
             pass
-        return "ok", "등록됨: " + re.sub(r"\s+", " ", text)[:120]
-    return "failed", "이 버전에 실행기 없음: %s" % kind
+        return "ok", "등록됨: " + re.sub(r"\s+", " ", text)[:120], True
+    return "failed", "이 버전에 실행기 없음: %s" % kind, False
 
 
-def pull_and_execute(cfg):
-    """Read decisions from the board and execute approved proposals. Returns summary dict."""
-    t = now()
-    summary = {"approved": 0, "executed": 0, "failed": 0, "rejected": 0, "pull": "skipped"}
+def refresh_meta(cfg):
+    """Read board/meta (stop flag, version). Returns True when the read succeeded."""
     meta, meta_version, r = board_get(cfg, "board", "meta", "get-meta")
-    if meta is not None:
-        cfg.meta = {"stop": bool(meta.get("stop")), "version": meta_version, "seen": utc_z(t)}
-        write_json(os.path.join(cfg.office, "meta.json"), cfg.meta)
-    else:
+    if meta is None:
         log(cfg, "전광판 읽기 실패(meta): %s" % r["status"], board=False)
+        return False
+    cfg.meta = {"stop": bool(meta.get("stop")), "version": meta_version, "seen": utc_z(now())}
+    write_json(os.path.join(cfg.office, "meta.json"), cfg.meta)
+    versions = read_json(cfg.versions_path, {})
+    versions["board/meta"] = meta_version
+    write_json(cfg.versions_path, versions)
+    return True
+
+
+def is_workday(cfg, d):
+    if d.weekday() >= 5:
+        return False
+    hol = os.path.join(DIR, "holidays_kr.txt")
+    try:
+        with open(hol) as f:
+            return not any(line.strip().startswith(d.strftime("%Y-%m-%d")) for line in f)
+    except IOError:
+        return True
+
+
+def next_heartbeat(cfg, t):
+    """When the board should next hear from the Mac mini: the next poll inside Mon-Fri 09:00-18:00 KST."""
+    start, end = int(env("WORK_AGENT_START", "0900")), int(env("WORK_AGENT_END", "1800"))
+    c = t + dt.timedelta(minutes=30)
+    for _ in range(40):
+        hm = int(c.strftime("%H%M"))
+        if is_workday(cfg, c) and start <= hm <= end:
+            return c
+        if is_workday(cfg, c) and hm < start:
+            return c.replace(hour=start // 100, minute=start % 100, second=0, microsecond=0)
+        c = (c + dt.timedelta(days=1)).replace(hour=start // 100, minute=start % 100, second=0, microsecond=0)
+    return t + dt.timedelta(days=1)
+
+
+def pull_and_execute(cfg, meta_ok):
+    """Read decisions from the board and execute approved proposals. Returns summary dict.
+    meta_ok False (the stop flag could not be read this cycle) defers every execution."""
+    t = now()
+    summary = {"approved": 0, "executed": 0, "failed": 0, "rejected": 0, "deferred": 0, "pull": "skipped"}
     pull_dir = os.path.join(call_dir(cfg, "query-decisions"), "pull")
     if os.path.isdir(pull_dir):
         import shutil
         shutil.rmtree(pull_dir)
     q = pinned_call(cfg, "ArtifactData", {"action": "query", "url": cfg.board_url, "collection": "queue",
-                                          "query": {"where": [["status", "in", ["approved", "rejected"]]], "limit": 200},
+                                          "query": {"where": [["status", "in", ["approved", "rejected", "pending"]]], "limit": 200},
                                           "out_dir": pull_dir}, "query-decisions")
     if q["status"] != "ok":
         log(cfg, "전광판 읽기 실패(queue): %s" % q["status"], board=False)
@@ -575,8 +646,13 @@ def pull_and_execute(cfg):
                        {"id": doc_id, "local_status": "unknown", "report": {"status": "failed", "result": "맥미니에 원본 없음", "version": version}})
             continue
         if prop.get("local_status") in ("executed", "failed", "rejected", "expired", "unknown"):
-            if not prop.get("report"):
-                continue  # already reported
+            continue  # settled locally; its report (if any) goes out with the next push
+        expired = parse_any(prop.get("expires", "")) is None or t > parse_any(prop["expires"])
+        if decision == "pending":
+            if expired:
+                prop.update({"local_status": "expired", "report": {"status": "expired", "result": "만료(%d시간)" % cfg.ttl_hours, "version": version}})
+                write_json(proposal_path(cfg, prop["id"]), prop)
+                log(cfg, "만료: %s" % prop["title"])
             continue
         if decision == "rejected":
             summary["rejected"] += 1
@@ -593,28 +669,40 @@ def pull_and_execute(cfg):
             reason = "승인 코드가 맥미니 원본과 다름"
         elif call_guard.sha(doc.get("payload") or {}) != prop["payload_sha256"]:
             reason = "전광판의 내용이 맥미니 원본과 다름"
-        elif parse_any(prop["expires"]) is None or t > parse_any(prop["expires"]):
+        elif expired:
             reason = "만료됨"
-        elif stop_active(cfg):
-            reason = "전체 정지 중"
         elif prop["kind"] not in EXECUTABLE:
             reason = "이 종류는 실행하지 않음(초안·보고까지만)"
         elif os.path.exists(os.path.join(cfg.office, "executed", prop["id"])):
             reason = "이미 실행됨"
-        elif prop["kind"] != "info" and exec_count_today(cfg, t) >= cfg.daily_exec_max:
-            reason = "하루 실행 상한(%d건)" % cfg.daily_exec_max
         if reason:
             summary["failed"] += 1
             prop.update({"local_status": "failed", "report": {"status": "failed", "result": reason, "version": version}})
             write_json(proposal_path(cfg, prop["id"]), prop)
             log(cfg, "실행 거부: %s — %s" % (prop["title"], reason))
             continue
+        # these are pauses, not verdicts: the approval stays on the board and runs when the condition clears
+        hold = ""
+        if not meta_ok:
+            hold = "정지 여부를 확인하지 못함"
+        elif stop_active(cfg):
+            hold = "전체 정지 중"
+        elif prop["kind"] != "info" and exec_count_today(cfg, t) >= cfg.daily_exec_max:
+            hold = "하루 실행 상한(%d건)" % cfg.daily_exec_max
+        if hold:
+            summary["deferred"] += 1
+            if prop.get("hold") != hold:
+                prop["hold"] = hold
+                write_json(proposal_path(cfg, prop["id"]), prop)
+                log(cfg, "보류: %s — %s" % (prop["title"], hold))
+            continue
         with open(os.path.join(cfg.office, "executed", prop["id"]), "w") as f:
             f.write(utc_z(t) + "\n")
-        if prop["kind"] != "info":
+        status, result, reached = execute(cfg, prop)
+        if reached:
             with open(cfg.caps_path, "a") as f:
                 f.write("%s\t%s\t%s\n" % (t.strftime("%Y-%m-%d"), prop["id"], prop["kind"]))
-        status, result = execute(cfg, prop)
+        prop.pop("hold", None)
         if status == "ok":
             summary["executed"] += 1
             prop.update({"local_status": "executed", "report": {"status": "done", "result": result[:300], "version": version}})
@@ -661,7 +749,8 @@ def push(cfg):
         elif p.get("report"):
             rep = p["report"]
             body = {"status": rep["status"], "result": rep["result"], "executed_at": utc_z(t)}
-            add("update", "queue", pid, body, rep.get("version"), lambda p=p: (p.pop("report", None), write_json(proposal_path(cfg, p["id"]), p)))
+            add("update", "queue", pid, body, rep.get("version") or versions.get("queue/" + pid),
+                lambda p=p: (p.pop("report", None), write_json(proposal_path(cfg, p["id"]), p)))
     for name in sorted(os.listdir(os.path.join(cfg.office, "staff"))):
         if not name.endswith(".json"):
             continue
@@ -684,11 +773,9 @@ def push(cfg):
             key = "log/" + day
             add("update" if versions.get(key) else "set", "log", day, {"day": day, "entries": doc["entries"]}, versions.get(key),
                 lambda path=path, doc=doc: (doc.update({"dirty": False}), write_json(path, doc)))
-    hb = {"mac_last_seen": utc_z(t), "source": "office.py"}
-    mv = cfg.meta.get("version") or versions.get("board/meta")
+    hb = {"mac_last_seen": utc_z(t), "next_expected": utc_z(next_heartbeat(cfg, t)), "source": "office.py"}
+    mv = versions.get("board/meta") or cfg.meta.get("version")
     add("update" if mv else "set", "board", "meta", hb, mv, lambda: None)
-    if cfg.meta.get("version"):
-        versions["board/meta"] = cfg.meta["version"]
     r = pinned_call(cfg, "ArtifactData", {"action": "batch", "url": cfg.board_url, "writes": writes}, "push-batch")
     if r["status"] == "ok" and "committed" in r["text"]:
         for cb in after:
@@ -696,11 +783,29 @@ def push(cfg):
         versions.update(parse_versions(r["text"]))
         write_json(cfg.versions_path, versions)
         return "ok(%d)" % len(writes)
+    if r["status"] != "tool_error":
+        # unknown/timeout/spawn_error: the batch may have committed unseen. Forget what we believed about every
+        # document in it so the next cycle reads the board's versions back instead of trusting a stale cache.
+        for w in writes:
+            versions.pop(w["collection"] + "/" + w["doc_id"], None)
     # a version mismatch names the current version: remember it so the next cycle pins correctly
     for m in re.finditer(r'"([^"/]+)/([^"]+)"\) was pinned to version \d+ and that document is now at version (\d+)', r["text"]):
-        versions[m.group(1) + "/" + m.group(2)] = int(m.group(3))
+        coll, doc_id, cur = m.group(1), m.group(2), int(m.group(3))
+        versions[coll + "/" + doc_id] = cur
+        if coll == "queue" and props.get(doc_id, {}).get("report"):
+            props[doc_id]["report"]["version"] = cur  # re-pin the report to what the board holds now
+            write_json(proposal_path(cfg, doc_id), props[doc_id])
     for m in re.finditer(r'targets ([^/\s,]+)/([^\s,]+), which already exists, and carried no if_version', r["text"]):
-        versions.pop(m.group(1) + "/" + m.group(2), None)  # re-read it next cycle
+        coll, doc_id = m.group(1), m.group(2)
+        if coll == "queue" and props.get(doc_id, {}).get("local_status") == "proposed":
+            # our own earlier set did commit but its answer never arrived: the board already holds it
+            props[doc_id]["local_status"] = "pushed"
+            write_json(proposal_path(cfg, doc_id), props[doc_id])
+            log(cfg, "전광판에 이미 올라간 제안으로 확인: %s" % doc_id, board=False)
+        # we believed it absent; the other documents we believed absent probably landed in the same lost batch
+        for k in [k for k, v in versions.items() if not v]:
+            versions.pop(k)
+        versions.pop(coll + "/" + doc_id, None)  # re-read it next cycle
     write_json(cfg.versions_path, versions)
     log(cfg, "전광판 쓰기 실패: %s %s" % (r["status"], re.sub(r"\s+", " ", r["text"])[:160]), board=False)
     return "fail(%s)" % r["status"]
@@ -711,16 +816,16 @@ def push(cfg):
 def cmd_cycle(cfg):
     t = now()
     ran = 0
-    stop = stop_active(cfg)
-    if not stop:
+    meta_ok = refresh_meta(cfg) if cfg.board_url else False
+    if not stop_active(cfg):
         for role_cfg in cfg.roster.get("roles", []):
             if role_cfg.get("enabled") and role_cfg.get("prompt") and staff_due(cfg, role_cfg, t):
                 ran += 1
                 do_staff(cfg, role_cfg)
-    s = pull_and_execute(cfg) if cfg.board_url else {"pull": "no-url", "approved": 0, "executed": 0, "failed": 0, "rejected": 0}
+    s = pull_and_execute(cfg, meta_ok) if cfg.board_url else {"pull": "no-url", "approved": 0, "executed": 0, "failed": 0, "rejected": 0, "deferred": 0}
     pushed = push(cfg) if cfg.board_url else "no-url"
-    print("office: staff=%d pull=%s approved=%d executed=%d failed=%d rejected=%d push=%s stop=%d"
-          % (ran, s["pull"], s["approved"], s["executed"], s["failed"], s["rejected"], pushed, 1 if stop_active(cfg) else 0))
+    print("office: staff=%d pull=%s approved=%d executed=%d failed=%d deferred=%d rejected=%d push=%s stop=%d"
+          % (ran, s["pull"], s["approved"], s["executed"], s["failed"], s["deferred"], s["rejected"], pushed, 1 if stop_active(cfg) else 0))
     return 0
 
 

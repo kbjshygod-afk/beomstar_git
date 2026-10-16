@@ -8,6 +8,24 @@
 set -uo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; ROOT="$(dirname "$HERE")"
 [ -n "${WORK_AGENT_BOARD_URL:-}" ] || { echo "set WORK_AGENT_BOARD_URL"; exit 2; }
+if [ "${1:-}" = "--cleanup" ]; then
+  T="$(mktemp -d)"; trap 'rm -rf "$T"' EXIT
+  WORK_AGENT_STATE="$T/state" WORK_AGENT_CONFIG="$T/none.env" python3 - "$ROOT" <<'PY'
+import os, sys
+sys.path.insert(0, sys.argv[1]); import office
+cfg = office.Cfg()
+out_dir = os.path.join(office.call_dir(cfg, "e2e-cleanup"), "pull")
+r = office.pinned_call(cfg, "ArtifactData", {"action": "query", "url": cfg.board_url, "collection": "queue",
+    "query": {"where": [["key", ">=", "gate:e2e:"], ["key", "<=", "gate:e2e:~"]], "limit": 100}, "out_dir": out_dir}, "e2e-cleanup")
+if r["status"] != "ok": sys.exit("query failed: %s %s" % (r["status"], r["text"][:200]))
+listing = office.parse_listing(r["text"])
+if not listing: print("nothing to clean"); sys.exit(0)
+writes = [{"op": "delete", "collection": "queue", "doc_id": d, "if_version": v} for d, (v, _) in listing.items()]
+r = office.pinned_call(cfg, "ArtifactData", {"action": "batch", "url": cfg.board_url, "writes": writes}, "e2e-cleanup-delete")
+print(r["status"], r["text"][:300])
+PY
+  exit $?
+fi
 REAL="$(command -v claude)" || { echo "claude not found"; exit 2; }
 T="$(mktemp -d)"; trap 'rm -rf "$T"' EXIT
 mkdir -p "$T/state"

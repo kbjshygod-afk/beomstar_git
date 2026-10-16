@@ -148,14 +148,14 @@ class ValidationTests(Base):
             self.assertIn(want, office.validate_proposal(role, p, t), p)
         self.assertEqual(office.validate_proposal(role, {"kind": "info", "key": "RTE:dday", "title": "RTE 출시일 미확정",
                                                          "reason": "", "payload": {"text": "시트 C2 비어 있음"}}, t), "")
-        self.assertIn("text 하나", office.validate_proposal(role, {"kind": "info", "key": "k", "title": "t", "payload": {"text": "a", "x": 1}}, t))
+        self.assertIn("text 하나", office.validate_proposal(role, {"kind": "info", "key": "k", "title": "t", "payload": {"text": "a", "x": "b"}}, t))
 
-    def test_payload_values_must_be_strings_or_ints(self):
-        cfg = self.cfg()
+    def test_payload_values_must_be_strings(self):
         t = office.now()
-        self.assertIn("문자열·정수", office.validate_payload("info", {"text": 1.5}, t))
-        self.assertIn("문자열·정수", office.validate_payload("info", {"text": True}, t))
-        self.assertIn("문자열·정수", office.validate_payload("info", {"text": ["a"]}, t))
+        for v in (1.5, True, ["a"], 7, 9007199254740993):
+            self.assertIn("문자열만", office.validate_payload("info", {"text": v}, t), v)
+        role = self.cfg().role("gate")
+        self.assertIn("올릴 수 없는 종류", office.validate_proposal(role, proposal(kind=["calendar_event"]), t))
 
     def test_canonical_hash_matches_board_page_algorithm(self):
         # the page computes sha256 over sorted-key compact JSON; office.py must agree on these shapes
@@ -265,13 +265,17 @@ class CycleTests(Base):
             os.environ["WORK_AGENT_NOW"] = "2026-10-19T09:00:00+09:00"
         self.refuse_case(mut, "만료")
 
-    def test_refuses_when_stop_file(self):
-        self.refuse_case(lambda pid: wr(os.path.join(self.state, "STOP"), ""), "전체 정지")
+    def test_stop_file_defers_too(self):
+        self.propose(proposal())
+        pid = self.pids()[0]
+        self.cycle()
+        self.approve(pid)
+        wr(os.path.join(self.state, "STOP"), "")
+        rc, out, _ = self.cycle()
+        self.assertIn("executed=0 failed=0 deferred=1", out)
+        self.assertEqual([c for c in self.fake_calls() if c.get("tool") == CAL], [])
 
-    def test_refuses_when_board_stop(self):
-        self.refuse_case(lambda pid: self.dbset("board/meta", {"stop": True}), "전체 정지")
-
-    def test_daily_cap(self):
+    def test_daily_cap_defers_to_the_next_day(self):
         os.environ["WORK_AGENT_EXEC_DAILY_MAX"] = "1"
         self.propose(proposal(), proposal(key="k2", payload=cal(startTime="2026-11-06T09:00:00", endTime="2026-11-06T10:00:00")))
         a, b = self.pids()
@@ -279,8 +283,162 @@ class CycleTests(Base):
         self.approve(a)
         self.approve(b)
         rc, out, _ = self.cycle()
-        self.assertIn("approved=2 executed=1 failed=1", out)
-        self.assertIn("하루 실행 상한", self.dbdoc("queue/" + b)["data"]["result"])
+        self.assertIn("approved=2 executed=1 failed=0 deferred=1", out)
+        self.assertEqual(self.dbdoc("queue/" + b)["data"]["status"], "approved", "stays on the board, not failed")
+        self.assertIn("보류: " + proposal(key="k2")["title"] + " — 하루 실행 상한", rd(os.path.join(self.state, "office", "office.log")))
+        rc, out, _ = self.cycle(WORK_AGENT_NOW="2026-10-17T09:00:00+09:00")
+        self.assertIn("executed=1 failed=0 deferred=0", out)
+        self.assertEqual(len([c for c in self.fake_calls() if c.get("tool") == CAL]), 2)
+
+    def test_cap_counts_only_calls_that_reached_the_tool(self):
+        os.environ["WORK_AGENT_EXEC_DAILY_MAX"] = "1"
+        self.propose(proposal(), proposal(key="k2", payload=cal(startTime="2026-11-06T09:00:00", endTime="2026-11-06T10:00:00")))
+        a, b = self.pids()
+        self.cycle()
+        self.approve(a)
+        rc, out, _ = self.cycle(FAKE_WRITER="none", FAKE_TAMPER_TOOL="__create_event")  # the model never calls the tool
+        self.assertIn("executed=0 failed=1", out)
+        self.assertFalse(os.path.exists(os.path.join(self.state, "office", "exec_caps.tsv")), "nothing reached the calendar")
+        self.approve(b)
+        rc, out, _ = self.cycle()
+        self.assertIn("executed=1", out, "the day's budget was not burnt by the failed attempt")
+
+    def test_stop_defers_and_resumes(self):
+        self.propose(proposal())
+        pid = self.pids()[0]
+        self.cycle()
+        self.approve(pid)
+        self.dbset("board/meta", {"stop": True})
+        rc, out, _ = self.cycle()
+        self.assertIn("executed=0 failed=0 deferred=1", out)
+        self.assertIn("stop=1", out)
+        self.assertEqual(self.dbdoc("queue/" + pid)["data"]["status"], "approved")
+        self.dbset("board/meta", {"stop": False})
+        rc, out, _ = self.cycle()
+        self.assertIn("executed=1", out)
+
+    def test_unreadable_stop_flag_defers_execution(self):
+        self.propose(proposal())
+        pid = self.pids()[0]
+        self.cycle()
+        self.approve(pid)
+        self.dbset("board/meta", {"stop": True})
+        rc, out, _ = self.cycle(FAKE_FAIL_ACTION="get")  # the board says stop, but this cycle cannot read it
+        self.assertIn("executed=0 failed=0 deferred=1", out)
+        self.assertEqual([c for c in self.fake_calls() if c.get("tool") == CAL], [])
+        self.assertIn("정지 여부를 확인하지 못함", rd(os.path.join(self.state, "office", "office.log")))
+
+    def test_board_stop_also_holds_staff_in_the_same_cycle(self):
+        out_path = os.path.join(self.tmp, "gate_out.json")
+        jw(out_path, staff_output([proposal()]))
+        self.cycle()
+        self.dbset("board/meta", {"stop": True})
+        rc, out, _ = self.cycle(WORK_AGENT_NOW="2026-10-16T09:10:00+09:00", FAKE_READER_RESULT=out_path)
+        self.assertIn("staff=0", out)
+        self.assertEqual([c for c in self.fake_calls() if c["mode"] == "reader"], [])
+
+    def test_push_committed_but_unobserved_recovers_next_cycle(self):
+        self.propose(proposal())
+        pid = self.pids()[0]
+        rc, out, _ = self.cycle(FAKE_DROP_RESULT="batch")  # the batch commits, claude dies before answering
+        self.assertIn("push=fail(unknown)", out)
+        self.assertEqual(self.dbdoc("queue/" + pid)["data"]["status"], "pending", "it did land on the board")
+        self.assertEqual(self.local(pid)["local_status"], "proposed")
+        rc, out, _ = self.cycle()
+        self.assertIn("push=fail", out, "the retried set is refused: already exists")
+        self.assertEqual(self.local(pid)["local_status"], "pushed", "recognised as our own earlier write")
+        rc, out, _ = self.cycle()
+        self.assertIn("push=ok(", out)
+        self.approve(pid)
+        rc, out, _ = self.cycle()
+        self.assertIn("executed=1", out)
+        self.assertEqual(self.dbdoc("queue/" + pid)["data"]["status"], "done")
+
+    def test_report_committed_but_unobserved_heals(self):
+        self.propose(proposal())
+        pid = self.pids()[0]
+        self.cycle()
+        self.approve(pid)
+        rc, out, _ = self.cycle(FAKE_DROP_RESULT="batch")  # executed, report batch committed, answer lost
+        self.assertIn("executed=1", out)
+        self.assertEqual(self.dbdoc("queue/" + pid)["data"]["status"], "done")
+        self.assertIn("report", self.local(pid))
+        rc, out, _ = self.cycle()  # stale pin -> mismatch -> re-pinned
+        self.assertIn("push=fail(tool_error)", out)
+        rc, out, _ = self.cycle()
+        self.assertIn("push=ok(", out)
+        self.assertNotIn("report", self.local(pid))
+        self.assertEqual(len([c for c in self.fake_calls() if c.get("tool") == CAL]), 1)
+
+    def test_rejected_key_can_be_proposed_again_executed_key_cannot(self):
+        self.propose(proposal())
+        pid = self.pids()[0]
+        self.cycle()
+        self.dbset("queue/" + pid, {"status": "rejected", "note": "다음 주로", "decided_at": "2026-10-16T00:00:00Z"})
+        self.cycle()
+        rc, out, _ = self.propose(proposal())
+        self.assertEqual(out, "propose gate: proposed=1 skipped=0", "a rejected key is free again")
+        cfg = self.cfg()
+        blocked, rejected = office.key_state(cfg, "gate", office.now())
+        self.assertEqual([r[0] for r in rejected], ["gate:겨울:gate4"])
+        self.assertIn("gate:겨울:gate4", blocked, "the fresh proposal blocks it again while pending")
+        pid2 = self.pids()[1]
+        self.cycle()
+        self.approve(pid2)
+        self.cycle()
+        rc, out, _ = self.propose(proposal())
+        self.assertEqual(out, "propose gate: proposed=0 skipped=1", "an executed key stays blocked")
+
+    def test_expired_pending_is_reported_and_frees_its_key(self):
+        self.propose(proposal())
+        pid = self.pids()[0]
+        self.cycle()
+        rc, out, _ = self.cycle(WORK_AGENT_NOW="2026-10-19T09:00:00+09:00")
+        self.assertIn("push=ok(", out)
+        self.assertEqual(self.dbdoc("queue/" + pid)["data"]["status"], "expired")
+        self.assertEqual(self.local(pid)["local_status"], "expired")
+        rc, out, _ = self.propose(proposal())
+        self.assertEqual(out, "propose gate: proposed=1 skipped=0")
+
+    def test_staff_prompt_lists_rejections_with_reasons(self):
+        self.propose(proposal())
+        pid = self.pids()[0]
+        self.cycle()
+        self.dbset("queue/" + pid, {"status": "rejected", "note": "다음 주로", "decided_at": "2026-10-16T00:00:00Z"})
+        self.cycle()
+        cfg = self.cfg()
+        captured = {}
+        real_run = office.subprocess.run
+
+        def fake_run(args, **kw):
+            captured["prompt"] = args[args.index("-p") + 1]
+            with open(os.path.join(cfg.office, "staff", "gate", "last_raw.json"), "w") as f:
+                json.dump({"result": json.dumps(staff_output([]))}, f)
+        office.subprocess.run = fake_run
+        try:
+            office.run_staff(cfg, cfg.role("gate"))
+        finally:
+            office.subprocess.run = real_run
+        self.assertIn("- already_proposed: (없음)", captured["prompt"])
+        self.assertIn("- recently_rejected: 겨울:gate4 (다음 주로)", captured["prompt"])
+
+    def test_malformed_staff_fields_do_not_crash_the_cycle(self):
+        for bad in ({"errors": 3}, {"errors": "없음"}, {"open_items": "하나"}, {"proposals": [proposal(kind=["calendar_event"])]}):
+            out_path = os.path.join(self.tmp, "bad.json")
+            jw(out_path, staff_output([], **bad) if "proposals" not in bad else staff_output(bad["proposals"]))
+            rc, out, err = self.cycle(WORK_AGENT_NOW="2026-10-16T09:10:00+09:00", FAKE_READER_RESULT=out_path)
+            self.assertEqual(rc, 0, (bad, err))
+            self.assertIn("push=ok(", out, bad)
+            os.remove(os.path.join(self.state, "office", "staff", "gate.json"))
+        self.assertEqual(self.dbdoc("staff/gate")["data"]["errors"], [])
+
+    def test_heartbeat_carries_the_next_expected_time(self):
+        self.cycle()  # Friday 08:30 KST -> next poll 09:00
+        self.assertEqual(self.dbdoc("board/meta")["data"]["next_expected"], "2026-10-16T00:00:00Z")
+        self.cycle(WORK_AGENT_NOW="2026-10-16T18:00:00+09:00")  # Friday 18:00 -> Monday 09:00
+        self.assertEqual(self.dbdoc("board/meta")["data"]["next_expected"], "2026-10-19T00:00:00Z")
+        self.cycle(WORK_AGENT_NOW="2026-10-08T17:50:00+09:00")  # day before 한글날(10/9) -> Monday 10/12
+        self.assertEqual(self.dbdoc("board/meta")["data"]["next_expected"], "2026-10-12T00:00:00Z")
 
     def test_non_executable_kind_is_refused_even_when_approved(self):
         # a future role may propose notice_docx; until an executor exists an approval must not run anything
