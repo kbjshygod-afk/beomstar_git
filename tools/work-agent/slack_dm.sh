@@ -46,7 +46,16 @@ fi
     mcp__claude_ai_Claude_Docs mcp__claude_ai_Plaud \
   > "$OUT" 2> "$STATE/dm_last.err" < /dev/null
 rc=$?
-if [ $rc -eq 0 ] && python3 -c "import json,sys;o=json.load(open(sys.argv[1]));sys.exit(0 if not o.get('is_error') and not o.get('permission_denials') else 1)" "$OUT"; then
+ok=1
+if [ $rc -eq 0 ]; then
+  python3 -c "import json,sys;o=json.load(open(sys.argv[1]));sys.exit(0 if not o.get('is_error') and not o.get('permission_denials') else 3)" "$OUT" 2>/dev/null
+  prc=$?
+  if [ $prc -eq 0 ]; then ok=0
+  # python3 itself unusable (the case the no-guard fallback exists for): read claude's compact JSON directly
+  elif [ $prc -ne 3 ] && grep -q '"is_error":false' "$OUT" && grep -q '"permission_denials":\[\]' "$OUT"; then ok=0
+  fi
+fi
+if [ $ok -eq 0 ]; then
   echo "$today $KEY" >> "$SENT"; log "dm: sent $KEY"
 else
   log "dm: FAILED $KEY (rc=$rc); see state/dm_last.json"; exit 1

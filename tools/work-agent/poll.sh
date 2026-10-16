@@ -87,7 +87,13 @@ try:
     if outer.get("is_error"): raise ValueError("claude reported is_error")
     text = outer.get("result", "").strip()
     text = re.sub(r"^```(?:json)?\s*|\s*```$", "", text)
-    res = json.loads(text)
+    try:
+        res = json.loads(text)
+    except ValueError:
+        # the model sometimes writes a sentence (or a fence) before the JSON: take the last {"status": ...} object
+        starts = [m.start() for m in re.finditer(r'\{\s*"status"\s*:', text)]
+        if not starts: raise
+        res = json.JSONDecoder().raw_decode(text[starts[-1]:])[0]
     items = res.get("items", [])
     assert isinstance(items, list) and res.get("status") == "ok"
 except Exception as e:

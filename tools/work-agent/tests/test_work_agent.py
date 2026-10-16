@@ -448,9 +448,10 @@ class MainSafetyTests(MainTests):
 class PollTests(Base):
     """poll.sh wiring: drafts only when WORK_AGENT_SLACK_DRAFTS=1, counts in the log."""
 
-    def poll(self, items, drafts):
+    def poll(self, items, drafts, wrap=None):
         reader = os.path.join(self.tmp, "reader.json")
-        jwrite(reader, {"status": "ok", "items": items, "plaud_seen": [], "errors": []})
+        body = json.dumps({"status": "ok", "items": items, "plaud_seen": [], "errors": []}, ensure_ascii=False)
+        wr(reader, wrap % body if wrap else body)
         env = os.environ.copy()
         env.update({"WORK_AGENT_FORCE": "1", "WORK_AGENT_INBOX": os.path.join(self.tmp, "inbox"),
                     "FAKE_READER_RESULT": reader, "WORK_AGENT_SLACK_DRAFTS": drafts, "WORK_AGENT_SLACK_DM_USER": ""})
@@ -496,11 +497,11 @@ class PollTests(Base):
         self.assertEqual(st["hooks"]["PreToolUse"][0]["hooks"][0]["onFailure"], "block")
 
     def broken_python_path(self):
-        """PATH whose python3 fails like a stale Command Line Tools install, but only for `python3 -` scripts
-        (guard_settings, the digest parser), so the python-based fake claude still runs."""
+        """PATH whose python3 fails like a stale Command Line Tools install for `python3 -` and `python3 -c`
+        (guard_settings, the digest parser, the DM check), so the python-based fake claude (a script path) still runs."""
         b = os.path.join(self.tmp, "brokenbin")
         os.makedirs(b)
-        wr(os.path.join(b, "python3"), '#!/bin/sh\nif [ "$1" = "-" ]; then echo "xcrun: error: invalid active developer '
+        wr(os.path.join(b, "python3"), '#!/bin/sh\nif [ "$1" = "-" ] || [ "$1" = "-c" ]; then echo "xcrun: error: invalid active developer '
            'path" >&2; exit 1; fi\nexec %s "$@"\n' % sys.executable)
         os.chmod(os.path.join(b, "python3"), 0o755)
         return b + os.pathsep + os.environ["PATH"]
@@ -532,6 +533,45 @@ class PollTests(Base):
         r = self.fake_calls()[0]
         self.assertTrue(r["guarded"])
         self.assertEqual(r["probes"], {"mcp__claude_ai_Slack__slack_send_message": 0, "Bash": 2})
+
+    def test_reader_preamble_before_json_is_accepted(self):
+        for n, wrap in enumerate(("슬랙 검색에서는 새 항목이 없었습니다.\n\n%s",
+                                  "정리했습니다.\n```json\n%s\n```",
+                                  "예시 {\"status\": \"draft\"} 는 무시\n%s")):
+            os.environ["WORK_AGENT_STATE"] = os.path.join(self.tmp, "state%d" % n)
+            self.state = os.environ["WORK_AGENT_STATE"]
+            os.makedirs(self.state)
+            rc, log = self.poll([item(id="slack:C0AAAAAAA:179212864%d.883249" % n)], "0", wrap=wrap)
+            self.assertEqual(rc, 0, log)
+            self.assertIn("ok: 1 new item(s)", log, wrap)
+
+    def test_reader_garbage_still_fails(self):
+        rc, log = self.poll([item()], "0", wrap="죄송합니다, 처리하지 못했습니다.%.0s")
+        self.assertEqual(rc, 1)
+        self.assertIn("FAIL(1)", log)
+
+    def test_dm_success_recorded_when_python_check_is_broken(self):
+        os.environ["PATH"] = self.broken_python_path()
+        fake = os.path.join(self.tmp, "dm_claude.sh")
+        wr(fake, '#!/bin/sh\necho \'{"type":"result","is_error":false,"result":"DONE","permission_denials":[]}\'\n')
+        os.chmod(fake, 0o755)
+        env = os.environ.copy()
+        env.update({"WORK_AGENT_SLACK_DM_USER": "U0OWNER01", "CLAUDE_BIN": fake})
+        p = subprocess.run(["bash", os.path.join(ROOT, "slack_dm.sh"), "fail3:test", "[업무 에이전트] 시험"],
+                           capture_output=True, text=True, env=env)
+        self.assertEqual(p.returncode, 0, rd(os.path.join(self.state, "poll.log")))
+        self.assertIn("dm: sent fail3:test", rd(os.path.join(self.state, "poll.log")))
+
+    def test_dm_denial_is_still_a_failure(self):
+        fake = os.path.join(self.tmp, "dm_claude.sh")
+        wr(fake, '#!/bin/sh\necho \'{"type":"result","is_error":false,"result":"DONE","permission_denials":[{"tool_name":"Bash"}]}\'\n')
+        os.chmod(fake, 0o755)
+        env = os.environ.copy()
+        env.update({"WORK_AGENT_SLACK_DM_USER": "U0OWNER01", "CLAUDE_BIN": fake})
+        p = subprocess.run(["bash", os.path.join(ROOT, "slack_dm.sh"), "fail3:test", "[업무 에이전트] 시험"],
+                           capture_output=True, text=True, env=env)
+        self.assertEqual(p.returncode, 1)
+        self.assertIn("dm: FAILED", rd(os.path.join(self.state, "poll.log")))
 
     def test_new_items_file_written_even_when_empty(self):
         rc, log = self.poll([], "1")
