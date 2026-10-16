@@ -1,0 +1,61 @@
+{
+  "_comment": "Staff roles for the office. A role runs as a read-only claude -p with its own tool allowlist and may only PROPOSE. Tool names get WORK_AGENT_MCP_PREFIX (default mcp__claude_ai_) prepended. schedule: daily_at HHMM (KST, first poll cycle at/after that time) or on_demand.",
+  "roles": [
+    {
+      "role": "secretary",
+      "title": "요청 비서",
+      "emoji": "📨",
+      "order": 1,
+      "enabled": true,
+      "managed_by": "poll.sh",
+      "summary_hint": "슬랙·플라우드 요청 정리와 답장 초안 (1단계·2a)"
+    },
+    {
+      "role": "gate",
+      "title": "신메뉴 게이트 담당",
+      "emoji": "🗓️",
+      "order": 2,
+      "enabled": true,
+      "schedule": {"daily_at": "0900"},
+      "prompt": "staff/gate.md",
+      "model": "sonnet",
+      "max_turns": 25,
+      "tools": [
+        "Google_Drive__search_files", "Google_Drive__read_file_content", "Google_Drive__get_file_metadata",
+        "Slack__slack_search_public_and_private", "Slack__slack_read_thread"
+      ],
+      "proposal_kinds": ["calendar_event", "info"],
+      "max_proposals_per_run": 5
+    },
+    {
+      "role": "notice",
+      "title": "공지·문서 담당",
+      "emoji": "📝",
+      "order": 3,
+      "enabled": false,
+      "schedule": {"on_demand": true},
+      "prompt": "staff/notice.md",
+      "model": "sonnet",
+      "max_turns": 25,
+      "tools": ["Google_Drive__search_files", "Google_Drive__read_file_content", "Google_Drive__get_file_metadata"],
+      "proposal_kinds": ["notice_docx", "info"],
+      "max_proposals_per_run": 3,
+      "_todo": "stage 3b: docx draft via store-notice skill; needs the template file on the Mac mini"
+    },
+    {
+      "role": "cost",
+      "title": "원가 담당",
+      "emoji": "🧮",
+      "order": 4,
+      "enabled": false,
+      "schedule": {"on_demand": true},
+      "prompt": "staff/cost.md",
+      "model": "sonnet",
+      "max_turns": 25,
+      "tools": ["Google_Drive__search_files", "Google_Drive__read_file_content"],
+      "proposal_kinds": ["info"],
+      "max_proposals_per_run": 3,
+      "_todo": "stage 3b: MASTER 원가관리표 read via Drive; product-info-from-master skill"
+    }
+  ]
+}

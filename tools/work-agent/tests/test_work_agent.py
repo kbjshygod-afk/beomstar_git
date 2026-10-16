@@ -385,7 +385,7 @@ class MainTests(Base):
         self.assertIn("https://example-ws.slack.com/archives/C0AAAAAAA/p1792128600000100", inbox)
         self.assertIn("주의 표시", inbox)
         self.assertEqual(rd(os.path.join(self.state, "drafted_threads.txt")), "C0AAAAAAA 1792128600.000100\n")
-        self.assertEqual(self.fake_calls(), [{"mode": "writer", "ran": [TOOL], "attempted": [TOOL]}])
+        self.assertEqual([(c["mode"], c["ran"], c["attempted"]) for c in self.fake_calls()], [("writer", [TOOL], [TOOL])])
         out, _ = self.run_main([item()])
         self.assertEqual(out, "drafts:0:1:0", "same thread is never drafted twice")
 

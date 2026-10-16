@@ -19,6 +19,10 @@ TOOLS = [
     {"name": "slack_send_message", "description": "Sends a message to a Slack channel.", "inputSchema": SCHEMA},
     {"name": "big_result", "description": "Returns a very long text, like a long meeting transcript.",
      "inputSchema": {"type": "object", "properties": {}}},
+    {"name": "create_event", "description": "Creates a calendar event (fake).",
+     "inputSchema": {"type": "object", "properties": {"summary": {"type": "string"}, "startTime": {"type": "string"},
+                                                      "endTime": {"type": "string"}, "description": {"type": "string"}},
+                     "required": ["summary", "startTime", "endTime"]}},
 ]
 
 
@@ -47,6 +51,9 @@ def call(name, args):
     with open(LOG, "a") as f:
         f.write(json.dumps({"tool": name, "args": args}, ensure_ascii=False) + "\n")
     ch = args.get("channel_id", "")
+    if name == "create_event":
+        return {"content": [{"type": "text", "text": json.dumps({"id": "evt_fake_e2e", "htmlLink": "https://calendar.google.com/event?eid=fake",
+                                                                 "summary": args.get("summary", "")})}], "isError": False}
     if name == "big_result":
         return {"content": [{"type": "text", "text": big_text()}], "isError": False}
     if name == "slack_send_message":
