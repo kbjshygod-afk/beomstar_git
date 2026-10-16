@@ -87,7 +87,7 @@
 3. 직원을 바로 돌려 보려면 `bash office.sh staff gate` (1~3분, sonnet). 결과는 전광판 "직원 현황"과 "결재 대기".
 4. 끝까지 시험: `WORK_AGENT_BOARD_URL=<주소> bash tests/e2e_office.sh` — 실제 claude·실제 전광판·**가짜 캘린더**로 제안→승인→실행→보고를 한 바퀴 돕니다. 전광판에 "[e2e]" 완료 건 1개가 남습니다.
 
-**픽셀 사무실(Pixel Agents)**: 직원마다 책상 폴더 `state/office/desks/<desk>`(secretary·gate·notice·cost·runner)에서 실행됩니다. Pixel Agents는 사람 없는 세션을 책상 폴더 이름으로 이름표를 달아 보여 주고, `areaMappings`로 그 책상의 한글 구역("요청 비서", "신메뉴 게이트 담당"…)에 앉힙니다. 실행이 끝나도 기록 파일이 남아 있는 한 캐릭터가 자리를 지키며, 같은 책상의 이전 기록은 지워서 **책상당 1명**을 유지합니다(`office.py tidy`). 훅은 설치하지 않습니다(훅을 깔면 세션이 끝날 때 캐릭터가 사라져 사무실이 비어 보입니다).
+**픽셀 사무실(Pixel Agents)**: 직원마다 책상 폴더 `state/office/desks/<desk>`(secretary·gate·notice·cost·runner)에서 실행됩니다. Pixel Agents는 사람 없는 세션을 책상 폴더 이름으로 이름표를 달아 보여 주고, `areaMappings`로 그 책상의 한글 구역("요청비서", "게이트담당", "공지문서", "원가담당", "사무보조")에 앉힙니다. 실행이 끝나도 기록 파일이 남아 있는 한 캐릭터가 자리를 지키며, 같은 책상의 이전 기록은 지워서 **책상당 1명**을 유지합니다(`office.py tidy`). 훅은 설치하지 않습니다(훅을 깔면 세션이 끝날 때 캐릭터가 사라져 사무실이 비어 보입니다).
 - 설치(★ 1회): `bash pixel_office.sh install` → `~/.pixel-agents/config.json`에 설정(다른 폴더 세션 보기·이름표·구역 표시·구역 매핑)을 합치고, 배치 `pixel/layout-office.json`(기본 사무실 + 구역 5개)을 넣습니다. 기존 배치가 있으면 그대로 두고 알려 줍니다(`--force`로 교체, 백업 생성). 그다음 Pixel Agents를 다시 띄웁니다(`bash pixel.sh` 또는 다음 정시 자동 실행).
 - 확인: `bash pixel_office.sh status`. 사무실 화면에서 책상 위 이름표(gate 등)와 바닥 구역색을 봅니다.
 - 배치를 바꾸려면 Pixel Agents 편집기에서 수정하거나 `pixel/make_layout.py`의 AREAS를 고치고 다시 생성합니다. 기본 사무실 원본 `pixel/base-layout.json`은 pixel-agents 1.4.1(MIT)의 것입니다.

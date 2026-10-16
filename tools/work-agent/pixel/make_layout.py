@@ -4,7 +4,7 @@
 Usage: python3 pixel/make_layout.py [base-layout.json] [out.json]
 Base = Pixel Agents' bundled default layout (dist/assets/default-layout-1.json, MIT). Its six seats:
 benches (3,14) (7,14) at the two front desks, chairs (3,16) (3,18) (7,16) (7,18) at the side tables.
-Areas are painted on floor tiles only (never void 255 or wall 0). Python 3.9 compatible.
+Labels are kept short (4 chars) so neighbouring areas do not overlap on screen. Areas are painted on floor tiles only (never void 255 or wall 0). Python 3.9 compatible.
 """
 import json
 import os
@@ -15,11 +15,11 @@ VOID, WALL = 255, 0
 
 # label, color (#rrggbb), seat tile, painted block (col0, row0, col1, row1 inclusive)
 AREAS = [
-    ("요청 비서", "#d8b38a", (3, 14), (2, 12, 4, 15)),
-    ("신메뉴 게이트 담당", "#9fc5e8", (7, 14), (6, 12, 8, 15)),
-    ("공지·문서 담당", "#c9b6e4", (3, 16), (1, 16, 3, 17)),
-    ("원가 담당", "#b7d7a8", (3, 18), (1, 18, 3, 19)),
-    ("사무 보조", "#e2c4c4", (7, 16), (6, 16, 8, 17)),
+    ("요청비서", "#d8b38a", (3, 14), (2, 12, 4, 15)),
+    ("게이트담당", "#9fc5e8", (7, 14), (6, 12, 8, 15)),
+    ("공지문서", "#c9b6e4", (3, 16), (1, 16, 3, 17)),
+    ("원가담당", "#b7d7a8", (3, 18), (1, 18, 3, 19)),
+    ("사무보조", "#e2c4c4", (7, 16), (6, 16, 8, 17)),
 ]
 
 

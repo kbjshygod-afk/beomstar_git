@@ -77,7 +77,7 @@ class LayoutTests(unittest.TestCase):
             lay = json.load(f)
         cols = lay["cols"]
         labels = [a["label"] for a in lay["areas"]]
-        self.assertEqual(labels, ["요청 비서", "신메뉴 게이트 담당", "공지·문서 담당", "원가 담당", "사무 보조"])
+        self.assertEqual(labels, ["요청비서", "게이트담당", "공지문서", "원가담당", "사무보조"])
         self.assertTrue(all(a["color"].startswith("#") and len(a["color"]) == 7 for a in lay["areas"]))
         self.assertEqual(len(lay["areaTiles"]), len(lay["tiles"]))
         for label, _, (c, r), _ in make_layout.AREAS:
@@ -116,7 +116,7 @@ class InstallScriptTests(unittest.TestCase):
         self.assertEqual((std["watchAllSessions"], std["alwaysShowLabels"], std["showAreas"], std["ghostHeadlessAgents"]), (True, True, True, False))
         self.assertEqual(std["soundEnabled"], False, "unrelated settings survive")
         self.assertEqual(std["areaMappings"]["mine"], ["내 구역"], "existing mappings survive")
-        self.assertEqual(std["areaMappings"]["gate"], ["신메뉴 게이트 담당"])
+        self.assertEqual(std["areaMappings"]["gate"], ["게이트담당"])
         self.assertEqual(cfg["externalAssetDirectories"], ["/x"])
         self.assertTrue(any(n.startswith("config.json.bak-") for n in os.listdir(self.home)))
         self.assertEqual(jr(os.path.join(self.home, "layout.json"))["cols"], 1, "layout untouched without --force")
@@ -131,7 +131,7 @@ class InstallScriptTests(unittest.TestCase):
         self.assertTrue(os.path.exists(os.path.join(self.home, "layout.json")))
         p = self.run_sh("status")
         self.assertIn("watchAllSessions     True", p.stdout)
-        self.assertIn("신메뉴 게이트 담당", p.stdout)
+        self.assertIn("게이트담당", p.stdout)
 
 
 if __name__ == "__main__":
