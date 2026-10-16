@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 # Work agent, stage 0: run `claude -p` every few minutes in business hours,
 # collect new Slack requests / Plaud recordings, write a digest to inbox/.
-# Read-only by design (the only outbound action is slack_dm.sh, which sends
-# fixed-template alerts to the owner). Checkpoint advances only after a valid result.
+# The reader run is read-only. Writes happen only in two pinned helpers:
+# slack_dm.sh (fixed-template alerts to the owner) and, when WORK_AGENT_SLACK_DRAFTS=1,
+# slack_drafts.py (unsent reply drafts in the source threads; nothing is sent).
+# Checkpoint advances only after a valid result.
 set -euo pipefail
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -89,8 +91,10 @@ new = [i for i in items if i.get("id") and i["id"] not in seen]
 order = {"urgent": 0, "normal": 1, "fyi": 2}
 new.sort(key=lambda i: order.get(i.get("priority"), 3))
 
+fname = "-"
 if new:
     stamp = now_iso[:16].replace("-", "").replace(":", "").replace("T", "-")
+    fname = f"{stamp}.md"
     lines = [f"# 업무 수신함 {now_iso}", ""]
     for i in new:
         lines += [f"## [{i.get('priority','?')}] {i.get('from','')} — {i.get('summary','')}",
@@ -103,12 +107,13 @@ if new:
         lines.append("")
     if res.get("errors"):
         lines += ["## 확인하지 못한 것"] + [f"- {e}" for e in res["errors"]]
-    open(os.path.join(inbox, f"{stamp}.md"), "w").write("\n".join(lines) + "\n")
+    open(os.path.join(inbox, fname), "w").write("\n".join(lines) + "\n")
     open(seen_path, "a").write("".join(i["id"] + "\n" for i in new))
 if res.get("plaud_seen"):
     open(os.path.join(state, "plaud_seen.txt"), "a").write("".join(str(x) + "\n" for x in res["plaud_seen"]))
+json.dump(new, open(os.path.join(state, "new_items.json"), "w"), ensure_ascii=False)
 urgent = sum(1 for i in new if i.get("priority") == "urgent")
-print(f"ok:{len(new)}:{urgent}:{len(res.get('errors', []))}")
+print(f"ok:{len(new)}:{urgent}:{len(res.get('errors', []))}:{fname}")
 PY
 )"
 pyrc=$?
@@ -117,13 +122,24 @@ set -e
 # 6. checkpoint / failure accounting
 if [ "$rc" = "0" ] && [ "$pyrc" = "0" ]; then
   printf '%s' "$NOW_ISO" > "$STATE/last_ok_iso"; echo 0 > "$STATE/fail_count"; date +%s > "$STATE/heartbeat"
-  IFS=: read -r _ n u e <<< "$PYOUT"
+  IFS=: read -r _ n u e f <<< "$PYOUT"
   if [ "${n:-0}" -gt 0 ]; then
     log "ok: $n new item(s), $u urgent, $e error(s)"
-    notify "업무 에이전트" "새 항목 ${n}건 (긴급 ${u}건)"
+    # stage 2a: leave unsent reply drafts in the source Slack threads (off unless WORK_AGENT_SLACK_DRAFTS=1)
+    dnote=""
+    if [ "${WORK_AGENT_SLACK_DRAFTS:-0}" = "1" ]; then
+      DOUT="$(CLAUDE_BIN="$CLAUDE_BIN" WORK_AGENT_STATE="$STATE" \
+        WORK_AGENT_DRAFT_TOOL="${WORK_AGENT_DRAFT_TOOL:-}" WORK_AGENT_DRAFT_MODEL="${WORK_AGENT_DRAFT_MODEL:-}" \
+        WORK_AGENT_DRAFT_DAILY_MAX="${WORK_AGENT_DRAFT_DAILY_MAX:-}" WORK_AGENT_DRAFT_RUN_MAX="${WORK_AGENT_DRAFT_RUN_MAX:-}" \
+        python3 "$DIR/slack_drafts.py" "$STATE/new_items.json" "$INBOX/$f" 2>> "$STATE/drafts.err")" || DOUT="drafts:error"
+      log "$DOUT"
+      case "$DOUT" in
+        drafts:*:*:*) IFS=: read -r _ dc _ _ <<< "$DOUT"; if [ "${dc:-0}" -gt 0 ]; then dnote=", 슬랙 초안 ${dc}건"; fi ;;
+      esac
+    fi
+    notify "업무 에이전트" "새 항목 ${n}건 (긴급 ${u}건${dnote})"
     if [ "${u:-0}" -gt 0 ]; then
-      f="${NOW_ISO:0:16}"; f="${f//-/}"; f="${f//:/}"; f="${f/T/-}.md"
-      "$DIR/slack_dm.sh" "urgent:$f" "[업무 에이전트] 긴급 ${u}건 (새 항목 ${n}건, $(kst +%H:%M) 확인분). 맥미니 inbox/$f 을 확인하세요." || true
+      "$DIR/slack_dm.sh" "urgent:$f" "[업무 에이전트] 긴급 ${u}건 (새 항목 ${n}건${dnote}, $(kst +%H:%M) 확인분). 맥미니 inbox/$f 을 확인하세요." || true
     fi
   else
     log "ok: nothing new"

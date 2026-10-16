@@ -3,3 +3,4 @@ state/
 inbox/
 *.plist
 !*.plist.template
+__pycache__/
