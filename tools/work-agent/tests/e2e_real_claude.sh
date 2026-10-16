@@ -49,6 +49,7 @@ printf '{"disableAllHooks":false,"hooks":{"PreToolUse":[{"matcher":"*","hooks":[
 (cd "$F" && "$REAL" -p "Use the Write tool to create $F/out.txt with content X. Then reply DONE." --model haiku --output-format json \
   --max-turns 4 --settings "$F/s.json" --allowedTools Write --permission-mode acceptEdits < /dev/null > "$F/out.json" 2>&1)
 if [ -f "$F/out.txt" ]; then echo "FAIL fail-closed: $("$REAL" --version) ran the call although the hook crashed"; fails=$((fails+1))
+elif ! grep -q '"tool_name":"Write"' "$F/out.json"; then echo "FAIL fail-closed: no Write attempt was recorded, so nothing was proven"; fails=$((fails+1))
 else echo "PASS fail-closed: a crashed hook blocks the call ($("$REAL" --version))"; fi
 # the reader/DM allowlist guard (lib.sh guard_settings + tool_guard.py) with the real CLI: Read allowed, Write blocked
 G="$T/toolguard"; mkdir -p "$G"; printf 'probe\n' > "$G/in.txt"; printf 'Read\n' > "$G/allow.txt"
@@ -59,4 +60,17 @@ G="$T/toolguard"; mkdir -p "$G"; printf 'probe\n' > "$G/in.txt"; printf 'Read\n'
 if [ ! -f "$G/out.txt" ] && grep -q '"tool": "Write"' "$G/audit.log" 2>/dev/null && ! grep -q '"tool": "Read"' "$G/audit.log"; then
   echo "PASS tool-guard: Read ran, Write blocked although --allowedTools listed it"
 else echo "FAIL tool-guard: out.txt=$([ -f "$G/out.txt" ] && echo yes || echo no) audit=$(cat "$G/audit.log" 2>/dev/null)"; fails=$((fails+1)); fi
+# an MCP result over ~25k tokens is saved to the session's tool-results dir; the reader guard must let the model
+# Read/Grep it there (a long Plaud transcript), and only there
+O="$T/oversize"; mkdir -p "$O"; printf 'mcp__fakeslack__big_result\n' > "$O/allow.txt"
+( DIR="$ROOT"; . "$ROOT/lib.sh"; guard_settings "$O/s.json" "$O/allow.txt" "$O/audit.log" )
+cat > "$O/mcp.json" <<EOF
+{"mcpServers":{"fakeslack":{"command":"python3","args":["$HERE/fake_slack_mcp.py"],"env":{"FAKE_SLACK_LOG":"$O/calls.jsonl"}}}}
+EOF
+(cd "$O" && "$REAL" -p "Call mcp__fakeslack__big_result once. Its text ends with a line 'CODE: <word>'. Reply with that word only." \
+  --model haiku --output-format json --max-turns 8 --settings "$O/s.json" --mcp-config "$O/mcp.json" --strict-mcp-config \
+  --allowedTools mcp__fakeslack__big_result < /dev/null > "$O/out.json" 2>&1)
+if grep -q 'PINEAPPLE-42' "$O/out.json" && ! grep -qE '"tool": "(Read|Grep)"' "$O/audit.log" 2>/dev/null; then
+  echo "PASS oversize: saved MCP result read through the guard"
+else echo "FAIL oversize: $(head -c 300 "$O/out.json") audit=$(cat "$O/audit.log" 2>/dev/null)"; fails=$((fails+1)); fi
 echo "failures: $fails"; exit "$fails"

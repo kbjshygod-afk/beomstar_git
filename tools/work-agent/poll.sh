@@ -63,12 +63,15 @@ PROMPT="$(cat "$DIR/prompt.md")
 RAW="$STATE/last_raw.json"; rm -f "$RAW"
 # allowlist hook: the reader reads untrusted text, so any tool not in WORK_AGENT_ALLOWED_TOOLS is blocked,
 # including built-ins that -p would otherwise run without a permission check
-printf '%s\n' $ALLOWED > "$STATE/reader_allow.txt"
-guard_settings "$STATE/reader_settings.json" "$STATE/reader_allow.txt" "$STATE/tool_guard.log"
 args=(-p "$PROMPT" --model "$MODEL" --output-format json --max-turns 30 --settings "$STATE/reader_settings.json")
 [ -n "$ALLOWED" ] && args+=(--allowedTools $ALLOWED)
 [ -n "$DISALLOWED" ] && args+=(--disallowedTools $DISALLOWED)
-if ! (cd "$DIR" && "$CLAUDE_BIN" "${args[@]}") > "$RAW" 2> "$STATE/last.err"; then
+# a guard setup failure (e.g. python3 broken after a macOS update) must reach the FAIL count and alerts below;
+# claude is not started without its guard
+if ! { printf '%s\n' $ALLOWED > "$STATE/reader_allow.txt" &&
+       guard_settings "$STATE/reader_settings.json" "$STATE/reader_allow.txt" "$STATE/tool_guard.log"; } 2> "$STATE/last.err"; then
+  rc=1
+elif ! (cd "$DIR" && "$CLAUDE_BIN" "${args[@]}") > "$RAW" 2> "$STATE/last.err"; then
   rc=1
 else
   rc=0

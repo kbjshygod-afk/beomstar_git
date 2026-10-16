@@ -17,7 +17,20 @@ TOOLS = [
     {"name": "slack_send_message_draft", "description": "Creates a draft message in a Slack channel without sending it.",
      "inputSchema": SCHEMA},
     {"name": "slack_send_message", "description": "Sends a message to a Slack channel.", "inputSchema": SCHEMA},
+    {"name": "big_result", "description": "Returns a very long text, like a long meeting transcript.",
+     "inputSchema": {"type": "object", "properties": {}}},
 ]
+
+
+def big_text():
+    """~60k varied Hangul syllables (well over 25k tokens), deterministic, ending with the code line."""
+    x, out = 12345, []
+    for i in range(60000):
+        x = (x * 1103515245 + 12345) % 2147483648
+        out.append(chr(0xAC00 + x % 11172))
+        if i % 40 == 39:
+            out.append("\n")
+    return "".join(out) + "\nCODE: PINEAPPLE-42\n"
 
 
 def reply(mid, result=None, error=None):
@@ -34,6 +47,8 @@ def call(name, args):
     with open(LOG, "a") as f:
         f.write(json.dumps({"tool": name, "args": args}, ensure_ascii=False) + "\n")
     ch = args.get("channel_id", "")
+    if name == "big_result":
+        return {"content": [{"type": "text", "text": big_text()}], "isError": False}
     if name == "slack_send_message":
         return {"content": [{"type": "text", "text": json.dumps({"ok": True, "sent": True})}], "isError": False}
     if MODE == "exists":

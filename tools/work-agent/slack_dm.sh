@@ -30,10 +30,16 @@ PROMPT="Call $TOOL exactly once with channel_id \"$TO\" and the message between 
 $TEXT
 MESSAGE>>>"
 OUT="$STATE/dm_last.json"
-printf '%s\n' "$TOOL" > "$STATE/dm_allow.txt"
-guard_settings "$STATE/dm_settings.json" "$STATE/dm_allow.txt" "$STATE/tool_guard.log" || { log "dm: FAILED $KEY (guard setup)"; exit 1; }
+GUARD=()
+if printf '%s\n' "$TOOL" > "$STATE/dm_allow.txt" &&
+   guard_settings "$STATE/dm_settings.json" "$STATE/dm_allow.txt" "$STATE/tool_guard.log" 2>> "$STATE/dm_last.err"; then
+  GUARD=(--settings "$STATE/dm_settings.json")
+else
+  # the alert matters most when something is broken (e.g. python3); the text is our own template
+  log "dm: guard unavailable, sending $KEY with the tool allowlist only"
+fi
 "${CLAUDE_BIN:-claude}" -p "$PROMPT" --model "${WORK_AGENT_DM_MODEL:-haiku}" --output-format json --max-turns 3 \
-  --settings "$STATE/dm_settings.json" \
+  ${GUARD[@]+"${GUARD[@]}"} \
   --allowedTools "$TOOL" \
   --disallowedTools Bash Write Edit NotebookEdit WebFetch WebSearch Read Glob Grep Task \
     mcp__claude_ai_Gmail mcp__claude_ai_Google_Calendar mcp__claude_ai_Google_Drive mcp__claude_ai_Notion \

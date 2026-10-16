@@ -27,9 +27,11 @@ KST = dt.timezone(dt.timedelta(hours=9))
 TS_RE = re.compile(r"^\d{9,11}\.\d{6}$")
 CHANNEL_RE = re.compile(r"^[CDGU][A-Z0-9]{6,}$")
 BROADCAST_RE = re.compile(r"<!(channel|here|everyone)\b|@(channel|here|everyone)\b", re.I)
+# any ASCII host.tld counts (Slack auto-links them, e-mail domains included), except office file names;
+# ASCII lookarounds so "naver.com에서" still matches
 LINK_RE = re.compile(r"https?://|www\.|slack://|mailto:|\]\(|"
-                     r"\b[A-Za-z0-9-]+\.(?:com|net|org|io|ly|kr|co|me|ai|app|dev|gl|gle|link|page|site|xyz|to|so|"
-                     r"biz|info|us|cc|tv|ms|gg)\b", re.I)
+                     r"[A-Za-z0-9-]+\.(?!(?:xlsx?|xlsm|csv|docx?|pptx?|pdf|hwpx?|txt|jpe?g|png|gif|zip)(?![A-Za-z0-9]))"
+                     r"[A-Za-z]{2,63}(?![A-Za-z0-9-])", re.I)
 MARKER_RE = re.compile(r"<<<|>>>")
 SUSPECT_RE = re.compile(r"mcp__|ignore (all |any )?(the )?(previous|prior|above)|system (prompt|override)|"
                         r"(이전|위의?|앞의?) 지시|지시(를|사항을)? 무시|규칙(을)? 무시", re.I)
@@ -54,6 +56,18 @@ def flat(text):
     """Text as Slack will render it, for the filters: NFKC, no invisible format chars, single spaces."""
     t = unicodedata.normalize("NFKC", text)
     return re.sub(r"\s+", " ", "".join(ch for ch in t if unicodedata.category(ch) != "Cf"))
+
+
+def invisible(text):
+    """Format chars (zero-width etc.) that can hide text from the owner; a ZWJ joining emoji is fine."""
+    for i, ch in enumerate(text):
+        if unicodedata.category(ch) != "Cf":
+            continue
+        if (ch == "\u200d" and 0 < i < len(text) - 1 and unicodedata.category(text[i - 1]) in ("So", "Sk", "Mn")
+                and unicodedata.category(text[i + 1]) == "So"):
+            continue
+        return True
+    return False
 
 
 def truthy(v):
@@ -93,7 +107,8 @@ def plan(items, cfg):
     used_today = sum(1 for l in read_lines(cfg.log_path) if l.startswith(today() + "\t"))
     queue, skips, this_run = [], [], set()
     for it in items:
-        if not isinstance(it, dict) or it.get("source") != "slack" or not norm(it.get("draft", "")):
+        if (not isinstance(it, dict) or it.get("source") != "slack" or not isinstance(it.get("draft"), str)
+                or not norm(it["draft"])):
             continue
         msg = norm(it["draft"])
         parts = str(it.get("id", "")).split(":")
@@ -105,13 +120,14 @@ def plan(items, cfg):
         if not TS_RE.match(thread_ts) or float(thread_ts) > float(msg_ts):
             thread_ts = msg_ts
         key = channel + " " + thread_ts
-        if norm(it.get("flag", "")):
+        flag = it.get("flag")
+        if norm(flag) if isinstance(flag, str) else bool(flag):
             reason = "주의 표시가 있어 넣지 않음"
         elif truthy(it.get("already_replied")):
             reason = "대표님이 이미 답함"
         elif len(msg) > MAX_LEN:
             reason = "초안이 너무 김(%d자)" % len(msg)
-        elif any(unicodedata.category(ch) == "Cf" for ch in msg):
+        elif invisible(msg):
             reason = "보이지 않는 문자가 들어 있음"
         elif BROADCAST_RE.search(flat(msg)):
             reason = "@channel·@here 같은 전체 알림이 들어 있음"
