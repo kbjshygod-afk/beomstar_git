@@ -1,0 +1,43 @@
+{
+ "market": "NDX100",
+ "as_of": "2026-10-16",
+ "regime": {
+  "benchmark": "^NDX",
+  "mode": "MA200",
+  "close": 29187.5488,
+  "ma200": 27737.9812,
+  "ma20": 30524.213,
+  "on": true
+ },
+ "entries_next_open": [],
+ "exits_next_open": [],
+ "positions": [
+  "AMGN"
+ ],
+ "watchlist": [
+  {
+   "symbol": "ABNB",
+   "label": "1순위 · 임박 (피벗 1% 이내)",
+   "close": 173.7,
+   "pivot": 174.85,
+   "to_pivot_pct": 0.66,
+   "rs": 83.67
+  },
+  {
+   "symbol": "AAPL",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 343.46,
+   "pivot": 348.15,
+   "to_pivot_pct": 1.37,
+   "rs": 74.49
+  }
+ ],
+ "coverage": {
+  "requested": 101,
+  "loaded": 100,
+  "failed": [
+   "WBD"
+  ]
+ },
+ "generated_at": "2026-10-16T22:51:08Z"
+}
