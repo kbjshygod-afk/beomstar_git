@@ -21,7 +21,8 @@ DoD: 1주 시범(2026-10-13~10-19) 동안 업무시간의 새 슬랙 요청·플
   - JS(페이지)와 Python(맥미니)의 정규화 JSON sha256 일치 확인(한글·따옴표·줄바꿈 포함).
   - 게이트 담당 실제 실행(이 컨테이너): Drive 도구가 없어 `status: error`로 사유만 보고, 지어낸 값 0. 맥미니(커넥터 있음)에서 첫 실제 보고 예정.
 - **발견(실측)**: ① `--disallowedTools Artifact`가 ArtifactData까지 지움 ② Read/Write 차단 규칙이 ArtifactData의 file_path/out_dir를 막음 ③ ArtifactData 쓰기는 승인 프롬프트를 띄워 `-p`에서 거부됨 → 전광판 호출에만 `--permission-mode bypassPermissions`(훅이 유일한 관문) ④ 기존 문서 쓰기는 if_version 필수 → 모르는 문서는 먼저 읽어 버전 확보.
-- **막힌 것 / 원인**: ① 맥미니 적용은 대표님 `config.env` 2줄(`WORK_AGENT_OFFICE=1`, `WORK_AGENT_BOARD_URL`) ② 맥미니 Drive 커넥터 도구 이름(`mcp__claude_ai_Google_Drive__*`) 미확인 ③ 폰에서 실제 탭 → 실행까지는 맥미니 가동 후 확인.
+- **픽셀 사무실(추가 요청 "실제 사무실 직원으로 보이게")**: pixel-agents 1.4.1 소스 확인 → 사람 없는 세션은 작업 폴더 이름이 이름표, `areaMappings`(폴더→구역)로 좌석 배정, 기록 파일이 남는 한 캐릭터 유지, 훅 설치 시엔 세션 종료 때 사라짐. → 직원마다 책상 폴더에서 실행 + 이전 기록 정리(책상당 1명), 구역 5개를 칠한 배치(`pixel/layout-office.json`) + 설정 합치기(`pixel_office.sh install`). 이 컨테이너에서 Pixel Agents 1.4.1을 실제로 띄워 책상 세션이 "gate"·"runner" 이름표로 채택되고 구역에 앉는 화면을 스크린샷으로 확인. 시험 8건 추가(기록 정리·배치·설치 스크립트).
+- **막힌 것 / 원인**: ① 맥미니 적용은 대표님 `config.env` 2줄(`WORK_AGENT_OFFICE=1`, `WORK_AGENT_BOARD_URL`) + `bash pixel_office.sh install` 1회 ② 맥미니 Drive 커넥터 도구 이름(`mcp__claude_ai_Google_Drive__*`) 미확인 ③ 폰에서 실제 탭 → 실행까지는 맥미니 가동 후 확인.
 - **다음 1개 행동**: 2a 켜기(10-20)와 같은 날 `config.env`에 사무실 2줄 추가 → 다음 폴링 로그 `office: … push=ok` 확인 → 전광판 "직원 현황"에 게이트 담당 첫 보고 확인.
 - **보류 항목**: [보류-결정] 공지·문서 담당, 원가 담당 켜기(3b) / [보류-결정] 슬랙 초안을 전광판 결재로 통합(승인 → 초안 넣기) / Pixel Agents 캐릭터 이름 표시(미지원).
 

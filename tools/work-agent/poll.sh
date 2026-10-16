@@ -68,14 +68,19 @@ args=(-p "$PROMPT" --model "$MODEL" --output-format json --max-turns 30 --settin
 [ -n "$DISALLOWED" ] && args+=(--disallowedTools $DISALLOWED)
 # a guard setup failure (e.g. python3 broken after a macOS update) must reach the FAIL count and alerts below;
 # claude is not started without its guard
+DESK="$STATE/office/desks/secretary"; mkdir -p "$DESK"   # the reader's desk (Pixel Agents label "secretary")
 if ! { printf '%s\n' $ALLOWED > "$STATE/reader_allow.txt" &&
        guard_settings "$STATE/reader_settings.json" "$STATE/reader_allow.txt" "$STATE/tool_guard.log"; } 2> "$STATE/last.err"; then
   rc=1
-elif ! (cd "$DIR" && "$CLAUDE_BIN" "${args[@]}") > "$RAW" 2> "$STATE/last.err"; then
+elif ! (cd "$DESK" && "$CLAUDE_BIN" "${args[@]}") > "$RAW" 2> "$STATE/last.err"; then
   rc=1
 else
   rc=0
 fi
+# keep one transcript (= one Pixel Agents character) per desk
+python3 "$DIR/office.py" tidy "$(python3 -c 'import json,sys
+try: print(json.load(open(sys.argv[1])).get("session_id",""))
+except Exception: print("")' "$RAW")" > /dev/null 2>&1 || true
 
 # 5. validate + write digest (python does the JSON work; exit 0 = valid result)
 set +e

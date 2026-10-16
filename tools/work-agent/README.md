@@ -22,6 +22,7 @@
 | `call_guard.py` | (3단계) 고정 호출 훅. 코드가 정한 인자(sha256)로 도구 1개를 1회 부르는 것만 허용 |
 | `staff/roster.json`, `staff/*.md` | (3단계) 직원 명단과 역할별 지시문 |
 | `board/board.html` | (3단계) 전광판 페이지 원본(claude.ai 아티팩트로 게시) |
+| `desks.py`, `pixel_office.sh`, `pixel/` | (3단계) 픽셀 사무실: 책상 폴더·기록 정리, Pixel Agents 설정 합치기·배치 설치, 배치 생성기와 결과(`layout-office.json`) |
 | `tests/` | 회귀 시험(`test_work_agent.py`, `test_office.py`, 모델·네트워크 없이) · 실제 claude 끝까지 시험(`e2e_real_claude.sh` 가짜 슬랙, `e2e_office.sh` 실제 전광판 + 가짜 캘린더) |
 | `state/`, `inbox/` | 실행 기록과 결과(git에 올라가지 않음) |
 
@@ -86,11 +87,16 @@
 3. 직원을 바로 돌려 보려면 `bash office.sh staff gate` (1~3분, sonnet). 결과는 전광판 "직원 현황"과 "결재 대기".
 4. 끝까지 시험: `WORK_AGENT_BOARD_URL=<주소> bash tests/e2e_office.sh` — 실제 claude·실제 전광판·**가짜 캘린더**로 제안→승인→실행→보고를 한 바퀴 돕니다. 전광판에 "[e2e]" 완료 건 1개가 남습니다.
 
+**픽셀 사무실(Pixel Agents)**: 직원마다 책상 폴더 `state/office/desks/<desk>`(secretary·gate·notice·cost·runner)에서 실행됩니다. Pixel Agents는 사람 없는 세션을 책상 폴더 이름으로 이름표를 달아 보여 주고, `areaMappings`로 그 책상의 한글 구역("요청 비서", "신메뉴 게이트 담당"…)에 앉힙니다. 실행이 끝나도 기록 파일이 남아 있는 한 캐릭터가 자리를 지키며, 같은 책상의 이전 기록은 지워서 **책상당 1명**을 유지합니다(`office.py tidy`). 훅은 설치하지 않습니다(훅을 깔면 세션이 끝날 때 캐릭터가 사라져 사무실이 비어 보입니다).
+- 설치(★ 1회): `bash pixel_office.sh install` → `~/.pixel-agents/config.json`에 설정(다른 폴더 세션 보기·이름표·구역 표시·구역 매핑)을 합치고, 배치 `pixel/layout-office.json`(기본 사무실 + 구역 5개)을 넣습니다. 기존 배치가 있으면 그대로 두고 알려 줍니다(`--force`로 교체, 백업 생성). 그다음 Pixel Agents를 다시 띄웁니다(`bash pixel.sh` 또는 다음 정시 자동 실행).
+- 확인: `bash pixel_office.sh status`. 사무실 화면에서 책상 위 이름표(gate 등)와 바닥 구역색을 봅니다.
+- 배치를 바꾸려면 Pixel Agents 편집기에서 수정하거나 `pixel/make_layout.py`의 AREAS를 고치고 다시 생성합니다. 기본 사무실 원본 `pixel/base-layout.json`은 pixel-agents 1.4.1(MIT)의 것입니다.
+
 **기록**: `state/office/office.log`(사무실 활동), `state/office/call_guard.log`(고정 호출 허용·차단), `state/office/tool_guard.log`(직원 실행에서 막힌 도구), `state/office/proposals/`(결재 건 원본), `state/office/calls/<호출>/`(마지막 호출 원본).
 
 ## 알려진 한계
 - 사무실은 폴링 안에서 돕니다(평일 09:00~18:00). 저녁에 누른 승인은 다음 날 09:00 폴링에 실행됩니다.
-- Pixel Agents는 보는 창입니다. 직원 실행이 캐릭터로 뜨지만 이름을 붙이거나 승인 버튼을 달 수는 없습니다(README 기준 미지원).
+- Pixel Agents는 보는 창입니다. 이름표는 책상 폴더 이름(영문)이고 한글은 바닥 구역 라벨로만 보입니다. 승인 버튼은 없습니다(전광판에서).
 - 전광판 도구(ArtifactData)는 Claude Code 내장 도구라 맥미니의 claude.ai 로그인으로 동작합니다. 로그인이 끊기면 전광판 갱신·승인 반영이 함께 멈추고, "맥미니 신호"가 노랑→빨강으로 바뀝니다.
 - 시험은 `WORK_AGENT_CONFIG`를 없는 파일로 지정해 실제 `config.env`를 읽지 않습니다. 직접 다른 설정 파일로 돌려 볼 때도 이 변수를 씁니다.
 - 초안 대상(채널·스레드)은 읽는 실행이 적은 id를 형식만 검사합니다. 슬랙 원문 속 지시문이 읽는 실행을 속여 엉뚱한 스레드의 id를 적게 하면, 그 스레드에 "보내지 않은 초안"이 생길 수 있습니다(대표님이 보기 전에는 나가지 않음). 읽은 결과와 대조하는 검증은 다음 단계입니다.

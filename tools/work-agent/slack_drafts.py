@@ -21,6 +21,8 @@ import subprocess
 import sys
 import unicodedata
 
+import desks
+
 DIR = os.path.dirname(os.path.abspath(__file__))
 KST = dt.timezone(dt.timedelta(hours=9))
 
@@ -268,14 +270,18 @@ def place(row, cfg):
     timed_out = False
     try:
         with open(out_path, "w") as out, open(os.path.join(cfg.call_dir, "err.txt"), "w") as err:
-            subprocess.run(args, stdin=subprocess.DEVNULL, stdout=out, stderr=err, cwd=cfg.call_dir,
-                           timeout=cfg.timeout)
+            subprocess.run(args, stdin=subprocess.DEVNULL, stdout=out, stderr=err,
+                           cwd=desks.desk_dir(cfg.state, "secretary"), timeout=cfg.timeout)
     except subprocess.TimeoutExpired:
         timed_out = True
     except OSError as e:
         return "failed", "", "", "claude 실행 불가(%s)" % e.__class__.__name__
     with open(out_path) as f:
-        return classify(row, f.read(), cfg.tool, os.path.exists(once_path), timed_out)
+        text = f.read()
+    for m in re.finditer(r'"session_id":\s*"([0-9a-f-]{36})"', text):
+        desks.tidy_transcripts(m.group(1))
+        break
+    return classify(row, text, cfg.tool, os.path.exists(once_path), timed_out)
 
 
 def label(it):

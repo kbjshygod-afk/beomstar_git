@@ -7,6 +7,7 @@ Usage:
     office.py staff <role>       # run one staff role now (ignores its schedule) and record its proposals
     office.py propose <role> <staff_output.json>   # record proposals from a saved staff output (no model)
     office.py status             # print local proposal states
+    office.py tidy <session_id>  # drop older transcripts of the desk that ran <session_id> (Pixel Agents: 1 character/desk)
 
 Trust model (keep it this way):
 - Staff runs are read-only (tool_guard allowlist). They return JSON; code validates it and turns it into
@@ -31,6 +32,7 @@ import sys
 DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, DIR)
 import call_guard  # noqa: E402
+import desks  # noqa: E402
 import slack_drafts  # noqa: E402  (text filters)
 
 KST = dt.timezone(dt.timedelta(hours=9))
@@ -187,8 +189,10 @@ def pinned_call(cfg, tool, tool_input, label):
     out_path = os.path.join(cdir, "out.jsonl")
     timed_out = False
     try:
+        # cwd = the "runner" desk, so Pixel Agents shows these errands as one 사무 보조 character
         with open(out_path, "w") as out, open(os.path.join(cdir, "err.txt"), "w") as err:
-            subprocess.run(args, stdin=subprocess.DEVNULL, stdout=out, stderr=err, cwd=cdir, timeout=cfg.timeout)
+            subprocess.run(args, stdin=subprocess.DEVNULL, stdout=out, stderr=err, cwd=desks.desk_dir(cfg.state, "runner"),
+                           timeout=cfg.timeout)
     except subprocess.TimeoutExpired:
         timed_out = True
     except OSError as e:
@@ -201,6 +205,8 @@ def pinned_call(cfg, tool, tool_input, label):
                 o = json.loads(line)
             except ValueError:
                 continue
+            if o.get("type") == "result" and o.get("session_id"):
+                desks.tidy_transcripts(str(o["session_id"]))
             msg = o.get("message") if isinstance(o.get("message"), dict) else {}
             content = msg.get("content") if isinstance(msg.get("content"), list) else []
             for b in content:
@@ -397,13 +403,17 @@ def run_staff(cfg, role_cfg):
     args += ["--disallowedTools"] + BUILTIN_DENY
     raw = os.path.join(sdir, "last_raw.json")
     try:
+        # cwd = this role's desk: Pixel Agents labels the character by the desk folder and seats it in its Area
         with open(raw, "w") as out, open(os.path.join(sdir, "last.err"), "w") as err:
-            subprocess.run(args, stdin=subprocess.DEVNULL, stdout=out, stderr=err, cwd=sdir, timeout=cfg.staff_timeout)
+            subprocess.run(args, stdin=subprocess.DEVNULL, stdout=out, stderr=err,
+                           cwd=desks.desk_dir(cfg.state, role_cfg.get("desk", role)), timeout=cfg.staff_timeout)
     except subprocess.TimeoutExpired:
         return None, "시간 초과"
     except OSError as e:
         return None, "claude 실행 불가(%s)" % e.__class__.__name__
     outer = read_json(raw)
+    if isinstance(outer, dict) and outer.get("session_id"):
+        desks.tidy_transcripts(str(outer["session_id"]))
     if not isinstance(outer, dict) or outer.get("is_error"):
         return None, "claude 오류"
     text = re.sub(r"^```(?:json)?\s*|\s*```$", "", norm(outer.get("result", "")))
@@ -759,6 +769,9 @@ def main(argv):
         return cmd_propose(cfg, argv[2], argv[3])
     if cmd == "status":
         return cmd_status(cfg)
+    if cmd == "tidy" and len(argv) == 3:
+        print(desks.tidy_transcripts(argv[2]))
+        return 0
     sys.stderr.write(__doc__)
     return 64
 

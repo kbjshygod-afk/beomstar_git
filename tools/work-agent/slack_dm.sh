@@ -38,6 +38,7 @@ else
   # the alert matters most when something is broken (e.g. python3); the text is our own template
   log "dm: guard unavailable, sending $KEY with the tool allowlist only"
 fi
+DESK="$STATE/office/desks/secretary"; mkdir -p "$DESK"; cd "$DESK" || exit 1
 "${CLAUDE_BIN:-claude}" -p "$PROMPT" --model "${WORK_AGENT_DM_MODEL:-haiku}" --output-format json --max-turns 3 \
   ${GUARD[@]+"${GUARD[@]}"} \
   --allowedTools "$TOOL" \
@@ -46,6 +47,9 @@ fi
     mcp__claude_ai_Claude_Docs mcp__claude_ai_Plaud \
   > "$OUT" 2> "$STATE/dm_last.err" < /dev/null
 rc=$?
+python3 "$DIR/office.py" tidy "$(python3 -c 'import json,sys
+try: print(json.load(open(sys.argv[1])).get("session_id",""))
+except Exception: print("")' "$OUT")" > /dev/null 2>&1 || true
 ok=1
 if [ $rc -eq 0 ]; then
   python3 -c "import json,sys;o=json.load(open(sys.argv[1]));sys.exit(0 if not o.get('is_error') and not o.get('permission_denials') else 3)" "$OUT" 2>/dev/null
