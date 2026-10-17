@@ -15,15 +15,15 @@
     {
      "symbol": "EOG",
      "signal_close": 158.01,
-     "rs": 90.16,
-     "desired_qty": 45659.537334,
+     "rs": 90.14,
+     "desired_qty": 45662.591118,
      "est_stop_from_close": 142.209
     },
     {
      "symbol": "HST",
      "signal_close": 23.97,
-     "rs": 79.72,
-     "desired_qty": 300987.211124,
+     "rs": 79.68,
+     "desired_qty": 301007.34164,
      "est_stop_from_close": 21.573
     }
    ],
@@ -188,13 +188,13 @@
      "signal_date": "2026-10-15",
      "exit_signal_date": null,
      "entry_date": "2026-10-16",
-     "entry_price": 123.9618988,
+     "entry_price": 123.9400024,
      "qty": 59366.25714249474,
-     "stop_price": 111.56570892,
+     "stop_price": 111.54600216,
      "last_close": 120.2799988,
      "exit_ma": 107.64360000799999,
-     "unrealized_pnl": -247580.0767687373,
-     "price_pnl_pct": -2.9701868361506567,
+     "unrealized_pnl": -246277.56964121573,
+     "price_pnl_pct": -2.953044641864555,
      "exit_pending": false
     },
     {
@@ -202,13 +202,13 @@
      "signal_date": "2026-10-15",
      "exit_signal_date": null,
      "entry_date": "2026-10-16",
-     "entry_price": 34.43399811,
+     "entry_price": 34.40999985,
      "qty": 213478.84197954184,
-     "stop_price": 30.990598299,
+     "stop_price": 30.968999865,
      "last_close": 34.61999893,
      "exit_ma": 31.542599983600002,
-     "unrealized_pnl": 10224.105016530491,
-     "price_pnl_pct": 0.5401662026170317,
+     "unrealized_pnl": 15357.472012362443,
+     "price_pnl_pct": 0.6102850360808709,
      "exit_pending": false
     },
     {
@@ -217,11 +217,11 @@
      "exit_signal_date": null,
      "entry_date": "2026-10-16",
      "entry_price": 288.5599976,
-     "qty": 6140.939916239648,
+     "qty": 6163.198816020076,
      "stop_price": 259.70399784,
      "last_close": 289.0400085,
      "exit_ma": 287.75119934,
-     "unrealized_pnl": -4146.295770118944,
+     "unrealized_pnl": -4161.324736900628,
      "price_pnl_pct": 0.16634700027458038,
      "exit_pending": false
     }
@@ -234,7 +234,7 @@
      "close": 478.07,
      "pivot": 485.22,
      "to_pivot_pct": 1.5,
-     "rs": 99.0
+     "rs": 98.99
     },
     {
      "symbol": "PSX",
@@ -250,7 +250,7 @@
      "close": 69.16,
      "pivot": 71.01,
      "to_pivot_pct": 2.67,
-     "rs": 95.18
+     "rs": 95.17
     },
     {
      "symbol": "TRGP",
@@ -258,7 +258,7 @@
      "close": 294.9,
      "pivot": 296.78,
      "to_pivot_pct": 0.64,
-     "rs": 94.38
+     "rs": 94.37
     },
     {
      "symbol": "NUE",
@@ -266,7 +266,7 @@
      "close": 256.29,
      "pivot": 259.0,
      "to_pivot_pct": 1.06,
-     "rs": 94.18
+     "rs": 94.16
     },
     {
      "symbol": "A",
@@ -274,7 +274,7 @@
      "close": 172.97,
      "pivot": 177.05,
      "to_pivot_pct": 2.36,
-     "rs": 91.97
+     "rs": 91.95
     },
     {
      "symbol": "WST",
@@ -282,7 +282,7 @@
      "close": 384.02,
      "pivot": 384.4,
      "to_pivot_pct": 0.1,
-     "rs": 90.76
+     "rs": 90.74
     },
     {
      "symbol": "DVN",
@@ -290,7 +290,7 @@
      "close": 50.73,
      "pivot": 50.76,
      "to_pivot_pct": 0.06,
-     "rs": 90.56
+     "rs": 90.54
     },
     {
      "symbol": "ABNB",
@@ -298,7 +298,7 @@
      "close": 173.7,
      "pivot": 174.85,
      "to_pivot_pct": 0.66,
-     "rs": 89.36
+     "rs": 89.34
     },
     {
      "symbol": "STLD",
@@ -306,7 +306,7 @@
      "close": 240.54,
      "pivot": 245.19,
      "to_pivot_pct": 1.93,
-     "rs": 89.16
+     "rs": 89.13
     },
     {
      "symbol": "KO",
@@ -314,7 +314,7 @@
      "close": 93.9,
      "pivot": 94.1,
      "to_pivot_pct": 0.21,
-     "rs": 88.15
+     "rs": 88.13
     },
     {
      "symbol": "ABBV",
@@ -322,7 +322,7 @@
      "close": 285.42,
      "pivot": 291.4,
      "to_pivot_pct": 2.1,
-     "rs": 87.95
+     "rs": 87.93
     },
     {
      "symbol": "AAPL",
@@ -330,7 +330,7 @@
      "close": 343.46,
      "pivot": 348.15,
      "to_pivot_pct": 1.37,
-     "rs": 84.74
+     "rs": 84.71
     },
     {
      "symbol": "SJM",
@@ -338,7 +338,7 @@
      "close": 127.43,
      "pivot": 127.69,
      "to_pivot_pct": 0.2,
-     "rs": 84.14
+     "rs": 84.1
     },
     {
      "symbol": "BAX",
@@ -346,14 +346,14 @@
      "close": 25.28,
      "pivot": 25.89,
      "to_pivot_pct": 2.41,
-     "rs": 82.93
+     "rs": 82.9
     }
    ],
    "performance": {
-    "equity": 96195510.0,
+    "equity": 96201944.0,
     "return_pct": -3.8,
     "bench_return_pct": -1.08,
-    "mdd_pct": -4.01,
+    "mdd_pct": -4.0,
     "closed_trades": 3,
     "win_rate_pct": 0.0,
     "avg_win_pct": null,
@@ -642,7 +642,7 @@
    }
   }
  },
- "updated_at": "2026-10-16T22:51:08Z",
+ "updated_at": "2026-10-17T02:35:09Z",
  "disclaimer": "기계적 룰 출력이며 투자 자문이 아닙니다. 매수·매도 결정은 소유자 본인이 합니다.",
  "unconfirmed": "미확인 추정값(스캐너 원본 코드 미확인): 피벗=직전 20봉 최고가(당일 제외) · 거래량 평균=직전 50일(당일 제외) · RS=지수 대비 가중 1년 수익률 ≥ 0%p(스캐너는 유니버스 백분위 ≥ 70) · 52주 고저=종가 기준 · 200일선 상승=22봉 전 대비 · 수축비=10/40일 평균 TR · 비용=편도 0.2%"
 }
