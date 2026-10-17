@@ -1,0 +1,37 @@
+{
+ "market": "CRYPTO",
+ "as_of": "2026-10-16",
+ "regime": {
+  "benchmark": "BTC-USD",
+  "mode": "MA200",
+  "close": 81500.8047,
+  "ma200": 72359.9466,
+  "ma20": 83561.4027,
+  "on": true
+ },
+ "entries_next_open": [],
+ "exits_next_open": [],
+ "positions": [],
+ "watchlist": [
+  {
+   "symbol": "XMR-USD",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 556.4288,
+   "pivot": 571.1447,
+   "to_pivot_pct": 2.64,
+   "rs": 80.0
+  }
+ ],
+ "coverage": {
+  "requested": 30,
+  "loaded": 25,
+  "failed": [
+   "BTW-USD",
+   "CC-USD",
+   "FIGR_HELOC-USD",
+   "HYPE-USD",
+   "RAIN-USD"
+  ]
+ },
+ "generated_at": "2026-10-17T08:20:44Z"
+}
