@@ -7,24 +7,10 @@
   "entry_price": 37300.0,
   "qty": 201.0,
   "stop_price": 33570.0,
-  "last_close": 37750.0,
-  "exit_ma": 32924.0,
-  "unrealized_pnl": 60279.90000000037,
-  "price_pnl_pct": 1.206434316353877,
-  "exit_pending": false
- },
- {
-  "symbol": "041960.KQ",
-  "signal_date": "2026-10-07",
-  "exit_signal_date": null,
-  "entry_date": "2026-10-08",
-  "entry_price": 11000.0,
-  "qty": 678.0,
-  "stop_price": 9900.0,
-  "last_close": 10840.0,
-  "exit_ma": 9541.6,
-  "unrealized_pnl": -138095.04000000004,
-  "price_pnl_pct": -1.4545454545454528,
+  "last_close": 38000.0,
+  "exit_ma": 33150.0,
+  "unrealized_pnl": 110429.40000000037,
+  "price_pnl_pct": 1.8766756032171594,
   "exit_pending": false
  }
 ]
