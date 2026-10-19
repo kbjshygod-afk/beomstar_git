@@ -21,7 +21,7 @@
 1. ★ Claude Code CLI 설치 후 로그인 (`claude` 실행 → 로그인). 슬랙·플라우드 커넥터가 같은 계정에 연결돼 있어야 합니다.
 2. 이 저장소를 맥미니에 받습니다. `cd tools/work-agent && cp config.example.env config.env`
 3. **커넥터 확인(가장 중요)**: 터미널에서 `claude` → `/mcp` 로 슬랙·플라우드 도구 이름을 확인하고, 다르면 `config.env`의 `WORK_AGENT_ALLOWED_TOOLS`를 맞춥니다. 헤드리스(`-p`)에서 커넥터가 실제로 호출되는지 아래 4번으로 확인합니다.
-4. 수동 1회 시험: `WORK_AGENT_FORCE=1 bash poll.sh` → `state/poll.log` 마지막 줄이 `ok:`인지, `inbox/`에 파일이 생겼는지 확인. `FAIL`이면 `state/last.err`, `state/last_raw.json`을 봅니다.
+4. 수동 1회 시험: `WORK_AGENT_FORCE=1 bash poll.sh` → `state/poll.log` 마지막 줄이 `ok:`인지, `inbox/`에 파일이 생겼는지 확인. `FAIL`이면 `state/last.err`, `state/last_raw.jsonl`을 봅니다.
 5. `config.env`에 `CLAUDE_BIN=/절대경로/claude` 추가 (`which claude`로 확인; launchd는 PATH가 짧습니다).
 6. ★ 자동 실행 등록:
    ```

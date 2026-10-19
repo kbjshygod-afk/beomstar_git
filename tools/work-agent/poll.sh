@@ -45,6 +45,8 @@ trap 'rmdir "$LOCK" 2>/dev/null || true' EXIT
 NOW_ISO="$(TZ=Asia/Seoul date '+%Y-%m-%dT%H:%M:%S+09:00')"
 if [ -s "$STATE/last_ok_iso" ]; then SINCE_ISO="$(cat "$STATE/last_ok_iso")"
 else SINCE_ISO="$(python3 -c "import datetime as d;print((d.datetime.now(d.timezone(d.timedelta(hours=9)))-d.timedelta(minutes=60)).isoformat(timespec='seconds'))")"; fi
+SINCE_UNIX="$(python3 -c "import datetime,sys;print(int(datetime.datetime.fromisoformat(sys.argv[1]).timestamp()))" "$SINCE_ISO")"
+OWNER_ID="${WORK_AGENT_OWNER_ID:-${WORK_AGENT_SLACK_DM_USER:-}}"
 SEEN_PLAUD="$( [ -s "$STATE/plaud_seen.txt" ] && tail -n 200 "$STATE/plaud_seen.txt" | paste -sd, - || true )"
 
 PROMPT="$(cat "$DIR/prompt.md")
@@ -52,13 +54,16 @@ PROMPT="$(cat "$DIR/prompt.md")
 ## 이번 실행 입력
 - now: $NOW_ISO
 - since: $SINCE_ISO
+- since_unix: $SINCE_UNIX
+- owner_id: ${OWNER_ID:-[입력 필요]}
 - channels: ${WORK_AGENT_CHANNELS:-}
 - keywords: ${WORK_AGENT_KEYWORDS:-}
 - seen_plaud_ids: ${SEEN_PLAUD:-}"
 
 # 4. run the agent
-RAW="$STATE/last_raw.json"; rm -f "$RAW"
-args=(-p "$PROMPT" --model "$MODEL" --output-format json --max-turns 30)
+# stream-json keeps every tool call, so step 5 can verify the DM lookup really ran.
+RAW="$STATE/last_raw.jsonl"; rm -f "$RAW"
+args=(-p "$PROMPT" --model "$MODEL" --output-format stream-json --verbose --max-turns 30)
 [ -n "$ALLOWED" ] && args+=(--allowedTools $ALLOWED)
 [ -n "$DISALLOWED" ] && args+=(--disallowedTools $DISALLOWED)
 if ! (cd "$DIR" && "$CLAUDE_BIN" "${args[@]}") > "$RAW" 2> "$STATE/last.err"; then
@@ -72,14 +77,44 @@ set +e
 PYOUT="$(python3 - "$RAW" "$INBOX" "$STATE" "$NOW_ISO" <<'PY'
 import json, re, sys, os
 raw_path, inbox, state, now_iso = sys.argv[1:5]
+
+def dm_checked(events):
+    # True when at least one DM-only Slack lookup returned without a tool error.
+    # (A `to:` search finds no DMs, so it does not count.)
+    ids = set()
+    for ev in events:
+        if ev.get("type") != "assistant": continue
+        for b in ev.get("message", {}).get("content") or []:
+            if not isinstance(b, dict) or b.get("type") != "tool_use": continue
+            name, inp = b.get("name", ""), b.get("input") or {}
+            types = {t.strip() for t in str(inp.get("channel_types", "")).split(",") if t.strip()}
+            if name.endswith("slack_search_public_and_private") and (
+                    "is:dm" in str(inp.get("filters", "")) or (types and types <= {"im", "mpim"})):
+                ids.add(b.get("id"))
+            elif name.endswith("slack_read_channel") and str(inp.get("channel_id", "")).startswith(("D", "U")):
+                ids.add(b.get("id"))
+    for ev in events:
+        if ev.get("type") != "user": continue
+        content = ev.get("message", {}).get("content")
+        if not isinstance(content, list): continue
+        for b in content:
+            if isinstance(b, dict) and b.get("type") == "tool_result" and b.get("tool_use_id") in ids and not b.get("is_error"):
+                return True
+    return False
+
 try:
-    outer = json.load(open(raw_path))
+    events = []
+    for line in open(raw_path):
+        try: events.append(json.loads(line))
+        except ValueError: pass
+    outer = [e for e in events if e.get("type") == "result"][-1]
     if outer.get("is_error"): raise ValueError("claude reported is_error")
     text = outer.get("result", "").strip()
     text = re.sub(r"^```(?:json)?\s*|\s*```$", "", text)
     res = json.loads(text)
     items = res.get("items", [])
     assert isinstance(items, list) and res.get("status") == "ok"
+    if not dm_checked(events): raise ValueError("no successful Slack DM lookup (is:dm)")
 except Exception as e:
     print(f"invalid:{e}"); sys.exit(2)
 
@@ -103,6 +138,8 @@ if new:
         lines.append("")
     if res.get("errors"):
         lines += ["## 확인하지 못한 것"] + [f"- {e}" for e in res["errors"]]
+    if res.get("notes"):
+        lines += ([""] if res.get("errors") else []) + ["## 참고"] + [f"- {e}" for e in res["notes"]]
     open(os.path.join(inbox, f"{stamp}.md"), "w").write("\n".join(lines) + "\n")
     open(seen_path, "a").write("".join(i["id"] + "\n" for i in new))
 if res.get("plaud_seen"):
@@ -125,12 +162,14 @@ if [ "$rc" = "0" ] && [ "$pyrc" = "0" ]; then
       f="${NOW_ISO:0:16}"; f="${f//-/}"; f="${f//:/}"; f="${f/T/-}.md"
       "$DIR/slack_dm.sh" "urgent:$f" "[업무 에이전트] 긴급 ${u}건 (새 항목 ${n}건, $(kst +%H:%M) 확인분). 맥미니 inbox/$f 을 확인하세요." || true
     fi
+  elif [ "${e:-0}" -gt 0 ]; then
+    log "ok: nothing new, $e error(s)"
   else
     log "ok: nothing new"
   fi
 else
   f=$(( $(cat "$STATE/fail_count" 2>/dev/null || echo 0) + 1 )); echo "$f" > "$STATE/fail_count"
-  log "FAIL($f): claude rc=$rc, parse rc=$pyrc ($PYOUT); see state/last.err, state/last_raw.json"
+  log "FAIL($f): claude rc=$rc, parse rc=$pyrc ($PYOUT); see state/last.err, state/last_raw.jsonl"
   if [ "$f" -ge 3 ]; then notify "업무 에이전트 이상" "연속 ${f}회 실패. 로그 확인 필요"; fi
   if [ "$f" -eq 3 ]; then
     "$DIR/slack_dm.sh" "fail3:$(kst +%H%M)" "[업무 에이전트] 폴링이 연속 3회 실패했습니다($(kst +%H:%M)). 맥미니 state/poll.log 와 state/last.err 를 확인하세요." || true
