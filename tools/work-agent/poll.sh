@@ -74,9 +74,10 @@ fi
 
 # 5. validate + write digest (python does the JSON work; exit 0 = valid result)
 set +e
-PYOUT="$(python3 - "$RAW" "$INBOX" "$STATE" "$NOW_ISO" <<'PY'
+PYOUT="$(python3 - "$RAW" "$INBOX" "$STATE" "$NOW_ISO" "${WORK_AGENT_QUIET_CHANNELS:-}" <<'PY'
 import json, re, sys, os
-raw_path, inbox, state, now_iso = sys.argv[1:5]
+raw_path, inbox, state, now_iso, quiet_arg = sys.argv[1:6]
+quiet_channels = set(re.split(r"[\s,]+", quiet_arg.strip())) - {""}
 
 def dm_checked(events):
     # True when at least one DM-only Slack lookup returned without a tool error.
@@ -124,10 +125,18 @@ new = [i for i in items if i.get("id") and i["id"] not in seen]
 order = {"urgent": 0, "normal": 1, "fyi": 2}
 new.sort(key=lambda i: order.get(i.get("priority"), 3))
 
+def is_quiet(i):
+    # keyword hits in quiet channels go to one bundle at the bottom; DMs and mentions never do
+    parts = str(i.get("id", "")).split(":")
+    return (len(parts) >= 3 and parts[0] == "slack" and parts[1] in quiet_channels
+            and i.get("match") not in ("dm", "mention"))
+main = [i for i in new if not is_quiet(i)]
+quiet = [i for i in new if is_quiet(i)]
+
 if new:
     stamp = now_iso[:16].replace("-", "").replace(":", "").replace("T", "-")
     lines = [f"# 업무 수신함 {now_iso}", ""]
-    for i in new:
+    for i in main:
         lines += [f"## [{i.get('priority','?')}] {i.get('from','')} — {i.get('summary','')}",
                   f"- 출처: {i.get('source')} ({i.get('id')})",
                   f"- 대표님 할 일: {i.get('action','')}",
@@ -135,6 +144,10 @@ if new:
         if i.get("link"): lines.append(f"- 링크: {i['link']}")
         if i.get("flag"): lines.append(f"- ⚠ 주의: {i['flag']}")
         if i.get("draft"): lines += ["- 답변 초안:", "  > " + i["draft"].replace("\n", "\n  > ")]
+        lines.append("")
+    if quiet:
+        lines += [f"## 묶음: 조용히 볼 채널 {len(quiet)}건 (대표님 앞 DM·멘션 아님)"]
+        lines += [f"- {i.get('from','')} — {i.get('summary','')}" + (f" ({i['link']})" if i.get("link") else "") for i in quiet]
         lines.append("")
     if res.get("errors"):
         lines += ["## 확인하지 못한 것"] + [f"- {e}" for e in res["errors"]]
@@ -144,8 +157,8 @@ if new:
     open(seen_path, "a").write("".join(i["id"] + "\n" for i in new))
 if res.get("plaud_seen"):
     open(os.path.join(state, "plaud_seen.txt"), "a").write("".join(str(x) + "\n" for x in res["plaud_seen"]))
-urgent = sum(1 for i in new if i.get("priority") == "urgent")
-print(f"ok:{len(new)}:{urgent}:{len(res.get('errors', []))}")
+urgent = sum(1 for i in main if i.get("priority") == "urgent")
+print(f"ok:{len(main)}:{urgent}:{len(res.get('errors', []))}:{len(quiet)}")
 PY
 )"
 pyrc=$?
@@ -154,18 +167,19 @@ set -e
 # 6. checkpoint / failure accounting
 if [ "$rc" = "0" ] && [ "$pyrc" = "0" ]; then
   printf '%s' "$NOW_ISO" > "$STATE/last_ok_iso"; echo 0 > "$STATE/fail_count"; date +%s > "$STATE/heartbeat"
-  IFS=: read -r _ n u e <<< "$PYOUT"
+  IFS=: read -r _ n u e q <<< "$PYOUT"
+  qn=""; [ "${q:-0}" -gt 0 ] && qn=" (+$q quiet)"
   if [ "${n:-0}" -gt 0 ]; then
-    log "ok: $n new item(s), $u urgent, $e error(s)"
+    log "ok: $n new item(s), $u urgent, $e error(s)$qn"
     notify "업무 에이전트" "새 항목 ${n}건 (긴급 ${u}건)"
     if [ "${u:-0}" -gt 0 ]; then
       f="${NOW_ISO:0:16}"; f="${f//-/}"; f="${f//:/}"; f="${f/T/-}.md"
       "$DIR/slack_dm.sh" "urgent:$f" "[업무 에이전트] 긴급 ${u}건 (새 항목 ${n}건, $(kst +%H:%M) 확인분). 맥미니 inbox/$f 을 확인하세요." || true
     fi
   elif [ "${e:-0}" -gt 0 ]; then
-    log "ok: nothing new, $e error(s)"
+    log "ok: nothing new, $e error(s)$qn"
   else
-    log "ok: nothing new"
+    log "ok: nothing new$qn"
   fi
 else
   f=$(( $(cat "$STATE/fail_count" 2>/dev/null || echo 0) + 1 )); echo "$f" > "$STATE/fail_count"
