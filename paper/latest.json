@@ -444,34 +444,33 @@
    }
   },
   "CRYPTO": {
-   "as_of": "2026-10-17",
+   "as_of": "2026-10-18",
    "start_date": "2026-09-25",
    "regime": {
     "benchmark": "BTC-USD",
     "mode": "MA200",
-    "close": 81382.1484,
-    "ma200": 72425.6908,
-    "ma20": 83407.6059,
+    "close": 82017.6016,
+    "ma200": 72495.386,
+    "ma20": 83333.3555,
     "on": true
    },
-   "entries_next_open": [],
+   "entries_next_open": [
+    {
+     "symbol": "XMR-USD",
+     "signal_close": 597.4819,
+     "rs": 84.0,
+     "desired_qty": 12454.957245,
+     "est_stop_from_close": 537.7337
+    }
+   ],
    "exits_next_open": [],
    "positions": [],
    "stale_positions": [],
-   "watchlist": [
-    {
-     "symbol": "XMR-USD",
-     "label": "1순위 · 임박 (피벗 1% 이내)",
-     "close": 569.8843,
-     "pivot": 571.1447,
-     "to_pivot_pct": 0.22,
-     "rs": 84.0
-    }
-   ],
+   "watchlist": [],
    "performance": {
     "equity": 99221482.0,
     "return_pct": -0.78,
-    "bench_return_pct": -3.16,
+    "bench_return_pct": -2.4,
     "mdd_pct": -1.4,
     "closed_trades": 1,
     "win_rate_pct": 0.0,
@@ -481,8 +480,8 @@
    },
    "status_csv": "CRYPTO/status.csv",
    "audit": {
-    "days": 23,
-    "signal_files": 23,
+    "days": 24,
+    "signal_files": 24,
     "missing_days": [],
     "late": [],
     "uncommitted": [],
@@ -637,7 +636,7 @@
    }
   }
  },
- "updated_at": "2026-10-19T08:22:59Z",
+ "updated_at": "2026-10-19T08:23:04Z",
  "disclaimer": "기계적 룰 출력이며 투자 자문이 아닙니다. 매수·매도 결정은 소유자 본인이 합니다.",
  "unconfirmed": "미확인 추정값(스캐너 원본 코드 미확인): 피벗=직전 20봉 최고가(당일 제외) · 거래량 평균=직전 50일(당일 제외) · RS=지수 대비 가중 1년 수익률 ≥ 0%p(스캐너는 유니버스 백분위 ≥ 70) · 52주 고저=종가 기준 · 200일선 상승=22봉 전 대비 · 수축비=10/40일 평균 TR · 비용=편도 0.2%"
 }
