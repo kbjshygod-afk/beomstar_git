@@ -548,14 +548,14 @@
    }
   },
   "KOSDAQ": {
-   "as_of": "2026-10-19",
+   "as_of": "2026-10-20",
    "start_date": "2026-09-29",
    "regime": {
     "benchmark": "^KQ11",
     "mode": "NONE",
-    "close": 808.89,
-    "ma200": 980.5559,
-    "ma20": 845.2745,
+    "close": 781.97,
+    "ma200": 979.8893,
+    "ma20": 843.574,
     "on": true
    },
    "entries_next_open": [],
@@ -569,20 +569,29 @@
      "entry_price": 37300.0,
      "qty": 201.0,
      "stop_price": 33570.0,
-     "last_close": 38000.0,
-     "exit_ma": 33150.0,
-     "unrealized_pnl": 110429.40000000037,
-     "price_pnl_pct": 1.8766756032171594,
+     "last_close": 36900.0,
+     "exit_ma": 33329.0,
+     "unrealized_pnl": -110228.39999999944,
+     "price_pnl_pct": -1.072386058981234,
      "exit_pending": false
     }
    ],
    "stale_positions": [],
-   "watchlist": [],
+   "watchlist": [
+    {
+     "symbol": "093320.KQ",
+     "label": "1순위 · 임박 (피벗 1% 이내)",
+     "close": 141300.0,
+     "pivot": 142600.0,
+     "to_pivot_pct": 0.92,
+     "rs": 71.03
+    }
+   ],
    "performance": {
-    "equity": 96257557.0,
-    "return_pct": -3.74,
-    "bench_return_pct": -4.81,
-    "mdd_pct": -4.22,
+    "equity": 96036457.0,
+    "return_pct": -3.96,
+    "bench_return_pct": -7.98,
+    "mdd_pct": -4.44,
     "closed_trades": 5,
     "win_rate_pct": 0.0,
     "avg_win_pct": null,
@@ -591,8 +600,8 @@
    },
    "status_csv": "KOSDAQ/status.csv",
    "audit": {
-    "days": 13,
-    "signal_files": 13,
+    "days": 14,
+    "signal_files": 14,
     "missing_days": [],
     "late": [],
     "uncommitted": [],
@@ -654,7 +663,7 @@
    }
   }
  },
- "updated_at": "2026-10-20T09:08:44Z",
+ "updated_at": "2026-10-20T09:09:07Z",
  "disclaimer": "기계적 룰 출력이며 투자 자문이 아닙니다. 매수·매도 결정은 소유자 본인이 합니다.",
  "unconfirmed": "미확인 추정값(스캐너 원본 코드 미확인): 피벗=직전 20봉 최고가(당일 제외) · 거래량 평균=직전 50일(당일 제외) · RS=지수 대비 가중 1년 수익률 ≥ 0%p(스캐너는 유니버스 백분위 ≥ 70) · 52주 고저=종가 기준 · 200일선 상승=22봉 전 대비 · 수축비=10/40일 평균 TR · 비용=편도 0.2%"
 }
