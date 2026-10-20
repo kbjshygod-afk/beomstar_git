@@ -1,0 +1,51 @@
+{
+ "market": "NDX100",
+ "as_of": "2026-10-20",
+ "regime": {
+  "benchmark": "^NDX",
+  "mode": "MA200",
+  "close": 29490.2832,
+  "ma200": 27780.7993,
+  "ma20": 30414.4572,
+  "on": true
+ },
+ "entries_next_open": [],
+ "exits_next_open": [],
+ "positions": [
+  "AMGN"
+ ],
+ "watchlist": [
+  {
+   "symbol": "ABNB",
+   "label": "1순위 · 임박 (피벗 1% 이내)",
+   "close": 176.94,
+   "pivot": 176.98,
+   "to_pivot_pct": 0.02,
+   "rs": 82.65
+  },
+  {
+   "symbol": "AAPL",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 339.5,
+   "pivot": 348.15,
+   "to_pivot_pct": 2.55,
+   "rs": 74.49
+  },
+  {
+   "symbol": "KDP",
+   "label": "1순위 · 임박 (피벗 1% 이내)",
+   "close": 34.63,
+   "pivot": 34.74,
+   "to_pivot_pct": 0.32,
+   "rs": 73.47
+  }
+ ],
+ "coverage": {
+  "requested": 101,
+  "loaded": 100,
+  "failed": [
+   "WBD"
+  ]
+ },
+ "generated_at": "2026-10-20T21:39:07Z"
+}
