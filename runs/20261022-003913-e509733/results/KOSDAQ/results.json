@@ -1,0 +1,80 @@
+{
+  "market": "KOSDAQ",
+  "generated_at": "2026-10-22T00:36:13+00:00",
+  "config": {
+    "start": "2014-10-22",
+    "end": "2026-10-22",
+    "test_start": "2016-10-22",
+    "test_start_auto": false,
+    "warmup_bars": 253,
+    "warmup_end": "2015-10-28",
+    "initial_equity": 100000000.0,
+    "risk_pct": 0.75,
+    "cost_pct": 0.2,
+    "params": {
+      "stop_pct": 10.0,
+      "cap_on": true,
+      "year_bars": 252,
+      "regime_mode": "NONE",
+      "pivot_len": 20,
+      "vol_len": 50,
+      "vol_mult": 1.4,
+      "max_breakout_pct": 15.0,
+      "use_tt": true,
+      "ma200_rise_bars": 22,
+      "rs_min_diff": 0.0,
+      "exit_ma_len": 50,
+      "use_value_filter": false,
+      "min_trading_value": 3000000000.0,
+      "benchmark": "^KQ11",
+      "integer_shares": true
+    },
+    "oos_start": null,
+    "rs_modes": [
+      "proxy",
+      "percentile"
+    ]
+  },
+  "coverage": {
+    "requested": 0,
+    "loaded": 0,
+    "failed": [],
+    "benchmark": "^KQ11",
+    "benchmark_rows": 2939,
+    "short_history": []
+  },
+  "modes": {
+    "proxy": {
+      "metrics": {
+        "full": null,
+        "last_1y": null,
+        "years": {},
+        "oos": null
+      },
+      "open_positions": [],
+      "pending_entries": [],
+      "pending_exits": [],
+      "skipped_count": 0,
+      "first_date": null,
+      "last_date": null
+    },
+    "percentile": {
+      "metrics": {
+        "full": null,
+        "last_1y": null,
+        "years": {},
+        "oos": null
+      },
+      "open_positions": [],
+      "pending_entries": [],
+      "pending_exits": [],
+      "skipped_count": 0,
+      "first_date": null,
+      "last_date": null
+    }
+  },
+  "test_first_date": null,
+  "data_last_date": null,
+  "unconfirmed": "미확인 추정값(스캐너 원본 코드 미확인): 피벗=직전 20봉 최고가(당일 제외) · 거래량 평균=직전 50일(당일 제외) · RS=지수 대비 가중 1년 수익률 ≥ 0%p(스캐너는 유니버스 백분위 ≥ 70) · 52주 고저=종가 기준 · 200일선 상승=22봉 전 대비 · 수축비=10/40일 평균 TR · 비용=편도 0.2%",
+  "disclaimer": "기계적 룰 출력이며 투자 자문이 아닙니다. 매수·매도 결정은 소유자 본인이 합니다."
+}
