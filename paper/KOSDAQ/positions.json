@@ -1,16 +1,1 @@
-[
- {
-  "symbol": "096530.KQ",
-  "signal_date": "2026-10-01",
-  "exit_signal_date": null,
-  "entry_date": "2026-10-02",
-  "entry_price": 37300.0,
-  "qty": 201.0,
-  "stop_price": 33570.0,
-  "last_close": 36250.0,
-  "exit_ma": 33493.0,
-  "unrealized_pnl": -240617.09999999963,
-  "price_pnl_pct": -2.815013404825739,
-  "exit_pending": false
- }
-]
+[]
