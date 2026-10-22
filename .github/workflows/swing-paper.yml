@@ -39,7 +39,9 @@ env:
   ALERT_MARKETS: KOSDAQ KOSDAQ_V2
 
 concurrency:
-  group: swing-paper
+  # push-triggered trials write to paper-trading-trial: their own queue, so a trial waiting on
+  # data never holds back the real runs (2026-10-08: a trial blocked them for an hour)
+  group: swing-paper-${{ github.event_name == 'push' && 'trial' || 'live' }}
   cancel-in-progress: false
 
 jobs:
@@ -62,7 +64,7 @@ jobs:
           echo "markets=$m" >> "$GITHUB_OUTPUT"
           # data not ready (exit 75): scheduled and keeper runs (tries=1) leave it to the next run
           # 2 hours later; manual and trial runs retry stocks in place (crypto lags by hours)
-          if [ "${{ github.event_name }}" = "schedule" ]; then tries=1; else tries="${{ github.event.inputs.tries || '3' }}"; fi
+          if [ "${{ github.event_name }}" = "schedule" ] || [ "${{ github.event_name }}" = "push" ]; then tries=1; else tries="${{ github.event.inputs.tries || '3' }}"; fi
           echo "tries=$tries" >> "$GITHUB_OUTPUT"; echo "wait=600" >> "$GITHUB_OUTPUT"
           # push-triggered runs are trials: they write to a separate branch
           if [ "${{ github.event_name }}" = "push" ]; then echo "branch=paper-trading-trial" >> "$GITHUB_OUTPUT"; else echo "branch=paper-trading" >> "$GITHUB_OUTPUT"; fi

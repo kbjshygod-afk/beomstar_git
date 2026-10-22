@@ -279,3 +279,70 @@ def test_stale_positions_are_flagged():
     st = P.stale_positions(res, frames, bench, days[-1])
     assert st == [{"symbol": "HALT", "last_bar": "2024-06-25", "sessions_missing": 3},
                   {"symbol": "GONE", "last_bar": None, "sessions_missing": None}]
+
+
+def test_ledger_replays_committed_signals_after_a_data_revision(tmp_path, ledger_repo, monkeypatch):
+    """2026-10-07: Yahoo raised the 10-06 KOSDAQ volumes during the next session, so recomputing
+    10-06 added an entry nobody could have known before the open. The ledger must trade what was
+    committed before the open; the audit records the difference; no revision file is written
+    once the open has passed."""
+    offline = tmp_path / "data"
+    offline.mkdir()
+    days = _write_market(offline)
+    run_days = list(days[-15:])
+    d0 = sym = None
+    for i, day in enumerate(run_days[:-1]):
+        r = _run(offline, ledger_repo, _after_close(day), monkeypatch)
+        if r["snapshot"]["entries_next_open"]:
+            d0, d1, sym = day, run_days[i + 1], r["snapshot"]["entries_next_open"][0]["symbol"]
+            break
+    assert d0 is not None, "fixture should produce an entry signal"
+    d0s = d0.strftime("%Y-%m-%d")
+    # the provider revises d0's volume for that symbol after the open: the breakout loses its volume
+    f = offline / f"{sym}.csv"
+    df = pd.read_csv(f)
+    df.loc[df["Date"] == d0s, "Volume"] = 1.0
+    df.to_csv(f, index=False)
+    sig = ledger_repo / "paper" / "SP500" / "signals"
+    # during the next session (d1 bar not final yet): d0's open has passed, so d0 replays the
+    # committed signals - nothing to revise - while the audit already sees the difference
+    mid = datetime(d1.year, d1.month, d1.day, 15, 0, tzinfo=timezone.utc)
+    r = _run(offline, ledger_repo, mid, monkeypatch)
+    assert r["snapshot"]["as_of"] == d0s and r["signal_state"] == "unchanged"
+    assert sym in {e["symbol"] for e in r["snapshot"]["entries_next_open"]}
+    assert not list(sig.glob(f"{d0s}.rev*.json"))
+    assert d0s in r["audit"]["mismatched"]
+    # after d1's close: the committed entry was filled at d1's open
+    r = _run(offline, ledger_repo, _after_close(d1), monkeypatch)
+    root = ledger_repo / "paper" / "SP500"
+    trades = pd.read_csv(root / "trades.csv")
+    held = [p for p in json.loads((root / "positions.json").read_text()) if p["symbol"] == sym]
+    entered = held + ([] if trades.empty or "symbol" not in trades else
+                      trades[trades["symbol"] == sym].to_dict("records"))
+    assert any(e["entry_date"] == d1.strftime("%Y-%m-%d") for e in entered)
+    aud = r["audit"]
+    assert d0s in aud["mismatched"] and d0s not in aud["revised"] and aud["revised_after_open"] == []
+    row = next(x for x in aud["rows"] if x["date"] == d0s)
+    assert row["entries_only_committed"] == [sym] and row["on_time"]
+    assert f"진입 −{sym}" in (root / "report.md").read_text()
+
+
+def test_signal_file_revisions_compare_with_the_latest_and_stop_at_the_open(tmp_path):
+    sig = tmp_path / "signals"
+    snap = {"as_of": "2024-06-28", "entries_next_open": [{"symbol": "A"}], "exits_next_open": []}
+    other = dict(snap, entries_next_open=[{"symbol": "A"}, {"symbol": "B"}])
+    now = datetime(2024, 6, 28, 22, 0, tzinfo=timezone.utc)
+    deadline = datetime(2024, 7, 1, 13, 30, tzinfo=timezone.utc)
+    assert P.write_signal_file(sig, snap, now, deadline)[1] == "new"
+    p, state = P.write_signal_file(sig, other, now, deadline)
+    assert state == "revised" and p.name == "2024-06-28.rev1.json"
+    # the same revised signals again: compared with rev1, nothing new (was a new revN every run)
+    p, state = P.write_signal_file(sig, other, now, deadline)
+    assert state == "unchanged" and p.name == "2024-06-28.rev1.json"
+    assert P.write_signal_file(sig, snap, now, deadline)[0].name == "2024-06-28.rev2.json"
+    # after the open: nothing is written
+    after = datetime(2024, 7, 1, 15, 0, tzinfo=timezone.utc)
+    p, state = P.write_signal_file(sig, other, after, deadline)
+    assert state == "differs after the open" and p.name == "2024-06-28.rev2.json"
+    assert sorted(x.name for x in sig.glob("*.json")) == ["2024-06-28.json", "2024-06-28.rev1.json",
+                                                         "2024-06-28.rev2.json"]
