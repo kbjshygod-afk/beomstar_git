@@ -1,30 +1,16 @@
 [
  {
-  "symbol": "LITE",
-  "signal_date": "2026-10-01",
+  "symbol": "AMGN",
+  "signal_date": "2026-10-15",
   "exit_signal_date": null,
-  "entry_date": "2026-10-02",
-  "entry_price": 1053.26001,
-  "qty": 10245.25752756148,
-  "stop_price": 979.5318092999998,
-  "last_close": 1048.599976,
-  "exit_ma": 912.1357031120001,
-  "unrealized_pnl": -90811.44210408628,
-  "price_pnl_pct": -0.4424390896602959,
-  "exit_pending": false
- },
- {
-  "symbol": "MRVL",
-  "signal_date": "2026-10-06",
-  "exit_signal_date": null,
-  "entry_date": "2026-10-07",
-  "entry_price": 281.2999878,
-  "qty": 37629.15296621845,
-  "stop_price": 261.608988654,
-  "last_close": 274.6600037,
-  "exit_ma": 234.653399358,
-  "unrealized_pnl": -291697.58451865986,
-  "price_pnl_pct": -2.360463699956117,
+  "entry_date": "2026-10-16",
+  "entry_price": 437.8900146,
+  "qty": 24086.34911346862,
+  "stop_price": 407.23771357799995,
+  "last_close": 447.2799988,
+  "exit_ma": 416.831599114,
+  "unrealized_pnl": 183529.40967610106,
+  "price_pnl_pct": 2.144370478184454,
   "exit_pending": false
  }
 ]
