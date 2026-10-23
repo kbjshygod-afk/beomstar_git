@@ -19,6 +19,9 @@ strategy("Minervini Swing Watch (Backtest)", shorttitle = "MSW-BT", overlay = tr
      commission_type = strategy.commission.percent, commission_value = 0.2, slippage = 0,
      pyramiding = 0, calc_on_every_tick = false, process_orders_on_close = false)
 
+if not (timeframe.isdaily and timeframe.multiplier == 1)
+    runtime.error("이 전략은 1일봉(1D) 차트 전용입니다. 차트 주기를 1D로 바꾸세요.")
+
 // #############################################################################
 // 1. 입력값 (indicator와 동일)
 // #############################################################################
@@ -136,14 +139,21 @@ fullSignal  = breakout and volOK and capOK and ttPass and liquidityOK and regime
 inPos  = strategy.position_size > 0
 signal = barstate.isconfirmed and not inPos and fullSignal
 
-if signal
-    qtyRaw = strategy.equity * riskPct / 100 / (close * stopPct / 100)
-    qty    = fracQty ? qtyRaw : math.floor(qtyRaw)
-    if qty > 0
-        strategy.entry("Long", strategy.long, qty = qty, comment = "신호")
-        // 체결 봉에도 손절이 걸리도록 진입과 함께 손절폭(신호봉 종가 기준 틱)을 건다.
-        // 체결가는 신호 시점에 알 수 없어, 체결 봉에서만 손절선이 '체결가 − 종가×손절%'로 약간 다를 수 있다.
-        strategy.exit("STOP0", "Long", loss = close * stopPct / 100 / syminfo.mintick, comment = "STOP")
+// 수량은 계좌 통화의 자본을 종목 통화로 바꿔 계산한다. Properties의 Base currency를 바꿔도 맞는다.
+qtyRaw  = strategy.convert_to_symbol(strategy.equity) * riskPct / 100 / (close * stopPct / 100)
+qty     = fracQty ? qtyRaw : math.floor(qtyRaw)
+skipped = signal and not (qty > 0)
+
+if not inPos
+    // 50일선 청산(strategy.close)으로 끝난 거래의 손절 주문 "STOP"은 체결되지 않은 채 남을 수 있다.
+    // 남은 주문이 다음 진입의 체결 봉에 걸리지 않도록, 포지션이 없을 때마다 취소한다.
+    strategy.cancel("STOP")
+
+if signal and qty > 0
+    strategy.entry("Long", strategy.long, qty = qty, comment = "신호")
+    // 체결 봉에도 손절이 걸리도록 진입과 함께 손절폭(신호봉 종가 기준 틱)을 건다.
+    // 체결가는 신호 시점에 알 수 없어, 체결 봉에서만 손절선이 '체결가 − 종가×손절%'로 약간 다를 수 있다.
+    strategy.exit("STOP0", "Long", loss = close * stopPct / 100 / syminfo.mintick, comment = "STOP")
 
 if inPos
     // 체결 뒤에는 실제 진입가 기준 손절로 교체한다.
@@ -162,4 +172,5 @@ plot(ma200, "200일선", color.new(color.gray, 0), 2)
 plot(exitMaLen != 50 ? exitMa : na, "청산 이동평균", color.new(color.red, 30), 1)
 plot(pivot, "트리거(피벗)", color.new(color.teal, 40), 1, plot.style_stepline)
 plot(inPos ? strategy.position_avg_price * (1 - stopPct / 100) : na, "손절가", color.new(color.red, 0), 1, plot.style_linebr)
-plotshape(signal, title = "신호", style = shape.triangleup, location = location.belowbar, color = color.new(color.green, 0), size = size.tiny)
+plotshape(signal and qty > 0, title = "신호", style = shape.triangleup, location = location.belowbar, color = color.new(color.green, 0), size = size.tiny)
+plotshape(skipped, title = "수량 0 — 신호 건너뜀", style = shape.xcross, location = location.belowbar, color = color.new(color.red, 0), size = size.tiny)
