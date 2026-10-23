@@ -574,110 +574,48 @@
    }
   },
   "KOSDAQ": {
-   "as_of": "2026-10-08",
+   "as_of": "2026-10-23",
    "start_date": "2026-09-23",
    "regime": {
     "benchmark": "^KQ11",
     "mode": "NONE",
-    "close": 892.27,
-    "ma200": 983.8795,
-    "ma20": 847.4955,
+    "close": 751.69,
+    "ma200": 977.6126,
+    "ma20": 834.723,
     "on": true
    },
    "entries_next_open": [],
    "exits_next_open": [],
-   "positions": [
-    {
-     "symbol": "252990.KQ",
-     "signal_date": "2026-09-29",
-     "exit_signal_date": null,
-     "entry_date": "2026-09-30",
-     "entry_price": 20000.0,
-     "qty": 375.0,
-     "stop_price": 18000.0,
-     "last_close": 18270.0,
-     "exit_ma": 14916.0,
-     "unrealized_pnl": -677452.5,
-     "price_pnl_pct": -8.650000000000002,
-     "exit_pending": false
-    },
-    {
-     "symbol": "083450.KQ",
-     "signal_date": "2026-09-29",
-     "exit_signal_date": null,
-     "entry_date": "2026-09-30",
-     "entry_price": 52600.0,
-     "qty": 141.0,
-     "stop_price": 47340.0,
-     "last_close": 57700.0,
-     "exit_ma": 46632.0,
-     "unrealized_pnl": 687995.3999999994,
-     "price_pnl_pct": 9.695817490494306,
-     "exit_pending": false
-    },
-    {
-     "symbol": "059090.KQ",
-     "signal_date": "2026-10-01",
-     "exit_signal_date": null,
-     "entry_date": "2026-10-02",
-     "entry_price": 23350.0,
-     "qty": 318.0,
-     "stop_price": 21015.0,
-     "last_close": 24800.0,
-     "exit_ma": 18868.8,
-     "unrealized_pnl": 430476.60000000056,
-     "price_pnl_pct": 6.209850107066384,
-     "exit_pending": false
-    },
-    {
-     "symbol": "096530.KQ",
-     "signal_date": "2026-10-01",
-     "exit_signal_date": null,
-     "entry_date": "2026-10-02",
-     "entry_price": 37300.0,
-     "qty": 201.0,
-     "stop_price": 33570.0,
-     "last_close": 38150.0,
-     "exit_ma": 31874.0,
-     "unrealized_pnl": 140519.10000000056,
-     "price_pnl_pct": 2.278820375335111,
-     "exit_pending": false
-    },
-    {
-     "symbol": "041960.KQ",
-     "signal_date": "2026-10-07",
-     "exit_signal_date": null,
-     "entry_date": "2026-10-08",
-     "entry_price": 11000.0,
-     "qty": 673.0,
-     "stop_price": 9900.0,
-     "last_close": 11360.0,
-     "exit_ma": 9120.0,
-     "unrealized_pnl": 212183.4400000004,
-     "price_pnl_pct": 3.2727272727272716,
-     "exit_pending": false
-    }
-   ],
+   "positions": [],
    "stale_positions": [],
    "watchlist": [],
    "performance": {
-    "equity": 99304428.0,
-    "return_pct": -0.7,
-    "bench_return_pct": 5.66,
-    "mdd_pct": -1.7,
-    "closed_trades": 2,
+    "equity": 94568592.0,
+    "return_pct": -5.43,
+    "bench_return_pct": -10.99,
+    "mdd_pct": -5.9,
+    "closed_trades": 7,
     "win_rate_pct": 0.0,
     "avg_win_pct": null,
     "avg_loss_pct": -10.36,
-    "open_positions": 5
+    "open_positions": 0
    },
    "status_csv": "KOSDAQ/status.csv",
    "audit": {
-    "days": 9,
-    "signal_files": 7,
+    "days": 19,
+    "signal_files": 8,
     "missing_days": [
      "2026-10-02",
-     "2026-10-06"
+     "2026-10-06",
+     "2026-10-12",
+     "2026-10-13",
+     "2026-10-14",
+     "2026-10-15",
+     "2026-10-16",
+     "2026-10-19",
+     "2026-10-20",
+     "2026-10-21",
+     "2026-10-22"
     ],
     "late": [
      "2026-09-23",
@@ -783,7 +721,7 @@
    }
   }
  },
- "updated_at": "2026-10-23T10:24:47Z",
+ "updated_at": "2026-10-23T10:25:06Z",
  "disclaimer": "기계적 룰 출력이며 투자 자문이 아닙니다. 매수·매도 결정은 소유자 본인이 합니다.",
  "unconfirmed": "미확인 추정값(스캐너 원본 코드 미확인): 피벗=직전 20봉 최고가(당일 제외) · 거래량 평균=직전 50일(당일 제외) · RS=지수 대비 가중 1년 수익률 ≥ 0%p(스캐너는 유니버스 백분위 ≥ 70) · 52주 고저=종가 기준 · 200일선 상승=22봉 전 대비 · 수축비=10/40일 평균 TR · 비용=편도 0.2%"
 }
