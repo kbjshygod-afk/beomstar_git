@@ -377,39 +377,17 @@
    }
   },
   "NDX100": {
-   "as_of": "2026-10-22",
+   "as_of": "2026-10-23",
    "start_date": "2026-09-25",
    "regime": {
     "benchmark": "^NDX",
     "mode": "MA200",
-    "close": 28958.6895,
-    "ma200": 27819.5002,
-    "ma20": 30306.0601,
+    "close": 28957.5273,
+    "ma200": 27836.0183,
+    "ma20": 30223.5299,
     "on": true
    },
-   "entries_next_open": [
-    {
-     "symbol": "ADP",
-     "signal_close": 307.94,
-     "rs": 82.65,
-     "desired_qty": 34020.167675,
-     "est_stop_from_close": 286.3842
-    },
-    {
-     "symbol": "KDP",
-     "signal_close": 35.19,
-     "rs": 80.61,
-     "desired_qty": 297703.066875,
-     "est_stop_from_close": 32.7267
-    },
-    {
-     "symbol": "CSX",
-     "signal_close": 51.67,
-     "rs": 73.47,
-     "desired_qty": 202751.51706,
-     "est_stop_from_close": 48.0531
-    }
-   ],
+   "entries_next_open": [],
    "exits_next_open": [],
    "positions": [
     {
@@ -420,39 +398,89 @@
      "entry_price": 437.8900146,
      "qty": 24086.34911346862,
      "stop_price": 407.23771357799995,
-     "last_close": 447.2799988,
-     "exit_ma": 416.831599114,
-     "unrealized_pnl": 183529.40967610106,
-     "price_pnl_pct": 2.144370478184454,
+     "last_close": 439.2600098,
+     "exit_ma": 417.259999384,
+     "unrealized_pnl": -9256.50075419806,
+     "price_pnl_pct": 0.312862854671736,
+     "exit_pending": false
+    },
+    {
+     "symbol": "ADP",
+     "signal_date": "2026-10-22",
+     "exit_signal_date": null,
+     "entry_date": "2026-10-23",
+     "entry_price": 306.9899902,
+     "qty": 34020.16767493123,
+     "stop_price": 285.50069088600003,
+     "last_close": 304.1600037,
+     "exit_ma": 275.35959901,
+     "unrealized_pnl": -137859.46578181535,
+     "price_pnl_pct": -0.9218497639471357,
+     "exit_pending": false
+    },
+    {
+     "symbol": "KDP",
+     "signal_date": "2026-10-22",
+     "exit_signal_date": null,
+     "entry_date": "2026-10-23",
+     "entry_price": 35.31800079,
+     "qty": 297703.06687467825,
+     "stop_price": 32.845740734699994,
+     "last_close": 34.68000031,
+     "exit_ma": 32.027799988,
+     "unrealized_pnl": -231611.93876864947,
+     "price_pnl_pct": -1.8064456246930205,
+     "exit_pending": false
+    },
+    {
+     "symbol": "CSX",
+     "signal_date": "2026-10-22",
+     "exit_signal_date": null,
+     "entry_date": "2026-10-23",
+     "entry_price": 51.22999954,
+     "qty": 202751.5170602284,
+     "stop_price": 47.6438995722,
+     "last_close": 50.79000092,
+     "exit_ma": 48.7166000376,
+     "unrealized_pnl": -130579.80743690766,
+     "price_pnl_pct": -0.8588690688089096,
      "exit_pending": false
     }
    ],
    "stale_positions": [],
    "watchlist": [
     {
-     "symbol": "ABNB",
-     "label": "2순위 · 근접 (피벗 3% 이내)",
-     "close": 175.76,
-     "pivot": 179.13,
-     "to_pivot_pct": 1.92,
-     "rs": 83.67
+     "symbol": "AAPL",
+     "label": "1순위 · 임박 (피벗 1% 이내)",
+     "close": 347.725,
+     "pivot": 348.36,
+     "to_pivot_pct": 0.18,
+     "rs": 78.57
+    },
+    {
+     "symbol": "FANG",
+     "label": "1순위 · 임박 (피벗 1% 이내)",
+     "close": 205.75,
+     "pivot": 206.11,
+     "to_pivot_pct": 0.17,
+     "rs": 71.43
     }
    ],
    "performance": {
-    "equity": 97777591.0,
-    "return_pct": -2.22,
+    "equity": 97146307.0,
+    "return_pct": -2.85,
     "bench_return_pct": -5.39,
-    "mdd_pct": -3.56,
+    "mdd_pct": -3.65,
     "closed_trades": 3,
     "win_rate_pct": 0.0,
     "avg_win_pct": null,
     "avg_loss_pct": -7.62,
-    "open_positions": 1
+    "open_positions": 4
    },
    "status_csv": "NDX100/status.csv",
    "audit": {
-    "days": 20,
-    "signal_files": 20,
+    "days": 21,
+    "signal_files": 21,
     "missing_days": [],
     "late": [],
     "uncommitted": [],
@@ -646,7 +674,7 @@
    }
   }
  },
- "updated_at": "2026-10-23T21:41:40Z",
+ "updated_at": "2026-10-23T21:42:37Z",
  "disclaimer": "기계적 룰 출력이며 투자 자문이 아닙니다. 매수·매도 결정은 소유자 본인이 합니다.",
  "unconfirmed": "미확인 추정값(스캐너 원본 코드 미확인): 피벗=직전 20봉 최고가(당일 제외) · 거래량 평균=직전 50일(당일 제외) · RS=지수 대비 가중 1년 수익률 ≥ 0%p(스캐너는 유니버스 백분위 ≥ 70) · 52주 고저=종가 기준 · 200일선 상승=22봉 전 대비 · 수축비=10/40일 평균 TR · 비용=편도 0.2%"
 }
