@@ -1,0 +1,57 @@
+{
+ "market": "NDX100",
+ "as_of": "2026-10-22",
+ "regime": {
+  "benchmark": "^NDX",
+  "mode": "MA200",
+  "close": 28958.6875,
+  "ma200": 27819.5001,
+  "ma20": 30306.06,
+  "on": true
+ },
+ "entries_next_open": [
+  {
+   "symbol": "ADP",
+   "signal_close": 307.94,
+   "rs": 82.65,
+   "desired_qty": 34020.167675,
+   "est_stop_from_close": 286.3842
+  },
+  {
+   "symbol": "KDP",
+   "signal_close": 35.19,
+   "rs": 80.61,
+   "desired_qty": 297703.066875,
+   "est_stop_from_close": 32.7267
+  },
+  {
+   "symbol": "CSX",
+   "signal_close": 51.67,
+   "rs": 73.47,
+   "desired_qty": 202751.51706,
+   "est_stop_from_close": 48.0531
+  }
+ ],
+ "exits_next_open": [],
+ "positions": [
+  "AMGN"
+ ],
+ "watchlist": [
+  {
+   "symbol": "ABNB",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 175.76,
+   "pivot": 179.13,
+   "to_pivot_pct": 1.92,
+   "rs": 83.67
+  }
+ ],
+ "coverage": {
+  "requested": 101,
+  "loaded": 100,
+  "failed": [
+   "WBD"
+  ]
+ },
+ "generated_at": "2026-10-23T10:24:42Z"
+}
