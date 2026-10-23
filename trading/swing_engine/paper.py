@@ -393,16 +393,24 @@ def audit(market: str, root: Path, repo: Path | None, res, bench: pd.DataFrame, 
         if not p.exists():
             missing.append(d)
             continue
-        snap = json.loads(p.read_text())
-        ce, cx = _signal_sets(snap)
-        re_, rx = rec["entries"].get(d, set()), rec["exits"].get(d, set())
         committed = first_commit_time(repo, p) if repo else None
         deadline = next_open_deadline(market, d)
-        revs = sorted(x.name for x in sig_dir.glob(f"{d}.rev*.json"))
+        revs = sorted((x.name for x in sig_dir.glob(f"{d}.rev*.json")), key=lambda n: _rev_no(sig_dir / n))
+        rev_times = {x: first_commit_time(repo, sig_dir / x) if repo is not None else None for x in revs}
         # revisions committed after the open were never traded (written by engines before 2026-10-07)
-        late_revs = [x for x in revs
-                     if repo is not None and (t := first_commit_time(repo, sig_dir / x)) is not None and t > deadline]
+        late_revs = [x for x in revs if (t := rev_times[x]) is not None and t > deadline]
+        # compare with the file the ledger traded: the latest one committed before the open. A
+        # revision before the open (2026-10-22 SP500: the first run, 96 min after the close, missed
+        # MA; the 02:25 UTC rerun added it) is the signal that was acted on, not a mismatch.
+        traded = p.name
+        for x in revs:
+            if rev_times[x] is not None and rev_times[x] <= deadline:
+                traded = x
+        snap = json.loads((sig_dir / traded).read_text())
+        ce, cx = _signal_sets(snap)
+        re_, rx = rec["entries"].get(d, set()), rec["exits"].get(d, set())
         rows.append({"date": d, "committed_at": _iso(committed) if committed else None,
+                     "compared_file": traded,
                      "revisions_after_open": late_revs,
                      "deadline": _iso(deadline),
                      "on_time": None if committed is None else committed <= deadline,
