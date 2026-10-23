@@ -1,1 +1,16 @@
-[]
+[
+ {
+  "symbol": "XMR-USD",
+  "signal_date": "2026-10-18",
+  "exit_signal_date": null,
+  "entry_date": "2026-10-19",
+  "entry_price": 597.4818726,
+  "qty": 12454.957245047199,
+  "stop_price": 537.73368534,
+  "last_close": 600.6384277,
+  "exit_ma": 546.724458012,
+  "unrealized_pnl": 9469.684582816437,
+  "price_pnl_pct": 0.5283097688410177,
+  "exit_pending": false
+ }
+]
