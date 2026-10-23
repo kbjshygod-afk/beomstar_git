@@ -11,8 +11,8 @@
 //   후보  미너비니 트렌드 템플릿 8/8 (RS 조건은 지수 대비 가중수익률로 근사)
 //
 // 모든 판정은 확정봉(barstate.isconfirmed) 기준이라 repaint가 없고 미래 데이터를 쓰지 않는다.
-// 스캐너 원본 코드로 확인하지 못한 값(피벗 기간, 거래량 평균 기준, 수축비 정의, RS 방식)은
-// 입력값으로 빼 두었다 — README '확인이 필요한 가정' 참고. 기계적 룰 출력이며 투자 자문이 아니다.
+// 피벗 기간·거래량 평균·수축비·52주 고저는 2026-10에 스캐너 타점표 값과 대조해 맞췄다.
+// RS만 단일 차트 한계로 근사한다 — README 3절 '스캐너와 대조한 결과' 참고. 기계적 룰 출력이며 투자 자문이 아니다.
 // =============================================================================
 indicator("Minervini Swing Watch", shorttitle = "MSW", overlay = true, max_labels_count = 500)
 
@@ -32,8 +32,9 @@ customCapOn    = input.bool(true, "돌파폭 상한 적용 (직접 설정)", gro
 customYearBars = input.int(252, "1년 봉 수 (직접 설정 · 주식 252, 크립토 365)", minval = 50, group = grpMkt)
 
 grpSig = "진입 신호"
-pivotLen       = input.int(20, "트리거(피벗) = 직전 N봉 최고가", minval = 5, group = grpSig, tooltip = "스캐너 원본의 피벗 산출 기간은 확인되지 않아 20봉을 기본값으로 둡니다. 원본 코드를 확인하면 그 값으로 맞추세요.")
-volLen         = input.int(50, "거래량 평균 기간 (당일 제외)", minval = 10, group = grpSig)
+pivotLen       = input.int(20, "트리거(피벗) = 직전 N봉 최고가", minval = 5, group = grpSig, tooltip = "스캐너 타점표의 트리거와 대조한 결과 직전 20봉 최고가(당일 제외)가 미국 92%, 한국 100% 일치했습니다(2026-10).")
+volLen         = input.int(50, "거래량 평균 기간", minval = 10, group = grpSig)
+volInclToday   = input.bool(true, "거래량 평균에 당일 포함 (스캐너 방식)", group = grpSig, tooltip = "켜면 당일 거래량 ÷ 당일을 포함한 50일 평균입니다. 스캐너 타점표의 '거래량 배수'와 같은 계산입니다(2026-10 대조).\n끄면 직전 50일 평균(당일 제외)으로, 리포 엔진(trading/swing_engine)과 그 백테스트 방식입니다.")
 volMult        = input.float(1.4, "당일 거래량 배수", minval = 1.0, step = 0.1, group = grpSig)
 maxBreakoutPct = input.float(15.0, "돌파폭 상한 % (초과 = 추격 구간, 진입 제외)", minval = 1.0, group = grpSig)
 useTT          = input.bool(true, "트렌드 템플릿 8/8 필수", group = grpSig)
@@ -129,7 +130,8 @@ ttPass  = not useTT or ttCount == 8
 
 // ----- 3-3. 트리거 돌파 · 거래량 · 돌파폭 -----
 pivot       = ta.highest(high[1], pivotLen)
-volAvg      = ta.sma(volume, volLen)[1]
+volSma      = ta.sma(volume, volLen)
+volAvg      = volInclToday ? volSma : volSma[1]
 volX        = volAvg > 0 ? volume / volAvg : na
 breakoutPct = (close / pivot - 1) * 100
 toPivotPct  = (pivot / close - 1) * 100
@@ -143,7 +145,8 @@ candidate   = ttPass and liquidityOK
 fullSignal  = breakout and volOK and capOK and candidate and regimeOn
 
 // ----- 3-4. 관찰용 지표 (타점표의 수축비 · 거래량비 · 52주 고점 대비) -----
-contraction = ta.sma(ta.tr(true), 10) / ta.sma(ta.tr(true), 40)
+dailyRet    = close / close[1] - 1
+contraction = ta.stdev(dailyRet, 10, false) / ta.stdev(dailyRet, 40, false)   // 일간 수익률 표준편차 10일 ÷ 40일 (스캐너와 같은 표본 표준편차)
 dryUp       = ta.sma(volume, 10) / ta.sma(volume, 50)
 fromHigh52  = (close / hi52 - 1) * 100
 
@@ -154,6 +157,7 @@ var float entryPrice   = na
 var float stopPrice    = na
 
 signal     = false
+reSignal   = false
 flatNow    = false
 entryNow   = false
 stopHit    = false
@@ -189,6 +193,10 @@ if barstate.isconfirmed
         flatNow      := true
         signal       := fullSignal
         entryPending := signal
+    else
+        // 스캐너는 이미 신호가 난 종목도 조건을 다시 채우면 매일 다시 신호로 올린다.
+        // 이 지표는 첫 신호의 가상 포지션을 추적하므로, 보유 중 신호는 따로 표시한다.
+        reSignal := fullSignal
 
 inPos     = not na(entryPrice)
 nearPivot = flatNow and not signal and candidate and regimeOn and not breakout and toPivotPct <= 1
@@ -209,6 +217,9 @@ exitMaName = str.tostring(exitMaLen) + "일선"
 
 if signal
     label.new(bar_index, low, "BUY 신호\n다음 시가 진입", style = label.style_label_up, color = color.new(color.green, 0), textcolor = color.white, size = size.small)
+
+if reSignal
+    label.new(bar_index, low, "재신호\n(가상 보유 중)", style = label.style_label_up, color = color.new(color.teal, 30), textcolor = color.white, size = size.tiny)
 
 if stopHit
     label.new(bar_index, low, "STOP " + str.tostring(stopPnl, "+#.#;-#.#") + "%", style = label.style_label_up, color = color.new(color.red, 0), textcolor = color.white, size = size.small)
@@ -272,6 +283,7 @@ if showTable and barstate.isconfirmed and (barstate.islast or barstate.islastcon
 
 // ----- 알림 -----
 alertcondition(signal, title = "신호 확정", message = "미너비니 스캐너 신호 확정 — 다음 거래일 시가 진입, 매수와 동시에 손절 주문")
+alertcondition(reSignal, title = "재신호 (가상 보유 중)", message = "이전 신호의 가상 포지션 보유 중에 다시 신호 조건 충족 — 스캐너 타점표에는 신호로 올라옴. 아직 사지 않았다면 다음 거래일 시가 진입 후보")
 alertcondition(stopHit, title = "손절 (봉 마감 확인)", message = "손절가 도달 — 전량 청산 (봉 마감 기준 확인)")
 
 // 장중 손절가 터치 알림: '모든 alert() 함수 호출' 조건으로 알림을 만들면 받을 수 있다.

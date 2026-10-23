@@ -36,7 +36,8 @@ customYearBars = input.int(252, "1년 봉 수 (직접 설정 · 주식 252, 크�
 
 grpSig = "진입 신호"
 pivotLen       = input.int(20, "트리거(피벗) = 직전 N봉 최고가", minval = 5, group = grpSig)
-volLen         = input.int(50, "거래량 평균 기간 (당일 제외)", minval = 10, group = grpSig)
+volLen         = input.int(50, "거래량 평균 기간", minval = 10, group = grpSig)
+volInclToday   = input.bool(true, "거래량 평균에 당일 포함 (스캐너 방식)", group = grpSig, tooltip = "켜면 당일 거래량 ÷ 당일을 포함한 50일 평균입니다. 스캐너 타점표의 '거래량 배수'와 같은 계산입니다(2026-10 대조).\n끄면 직전 50일 평균(당일 제외)으로, 리포 엔진(trading/swing_engine)과 그 백테스트 방식입니다.")
 volMult        = input.float(1.4, "당일 거래량 배수", minval = 1.0, step = 0.1, group = grpSig)
 maxBreakoutPct = input.float(15.0, "돌파폭 상한 % (초과 = 추격 구간, 진입 제외)", minval = 1.0, group = grpSig)
 useTT          = input.bool(true, "트렌드 템플릿 8/8 필수", group = grpSig)
@@ -121,7 +122,8 @@ ttCount = (tt1 ? 1 : 0) + (tt2 ? 1 : 0) + (tt3 ? 1 : 0) + (tt4 ? 1 : 0) + (tt5 ?
 ttPass  = not useTT or ttCount == 8
 
 pivot       = ta.highest(high[1], pivotLen)
-volAvg      = ta.sma(volume, volLen)[1]
+volSma      = ta.sma(volume, volLen)
+volAvg      = volInclToday ? volSma : volSma[1]
 volX        = volAvg > 0 ? volume / volAvg : na
 breakoutPct = (close / pivot - 1) * 100
 
