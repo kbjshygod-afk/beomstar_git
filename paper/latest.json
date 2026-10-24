@@ -423,13 +423,13 @@
      "signal_date": "2026-10-22",
      "exit_signal_date": null,
      "entry_date": "2026-10-23",
-     "entry_price": 35.31800079,
+     "entry_price": 35.31999969,
      "qty": 297703.06687467825,
-     "stop_price": 32.845740734699994,
+     "stop_price": 32.8475997117,
      "last_close": 34.68000031,
      "exit_ma": 32.027799988,
-     "unrealized_pnl": -231611.93876864947,
-     "price_pnl_pct": -1.8064456246930205,
+     "unrealized_pnl": -232208.20758634806,
+     "price_pnl_pct": -1.8120027905357161,
      "exit_pending": false
     },
     {
@@ -437,13 +437,13 @@
      "signal_date": "2026-10-22",
      "exit_signal_date": null,
      "entry_date": "2026-10-23",
-     "entry_price": 51.22999954,
+     "entry_price": 51.56000137,
      "qty": 202751.5170602284,
-     "stop_price": 47.6438995722,
+     "stop_price": 47.9508012741,
      "last_close": 50.79000092,
      "exit_ma": 48.7166000376,
-     "unrealized_pnl": -130579.80743690766,
-     "price_pnl_pct": -0.8588690688089096,
+     "unrealized_pnl": -197621.99584539048,
+     "price_pnl_pct": -1.493406573972722,
      "exit_pending": false
     }
    ],
@@ -452,7 +452,7 @@
     {
      "symbol": "AAPL",
      "label": "1순위 · 임박 (피벗 1% 이내)",
-     "close": 347.725,
+     "close": 347.73,
      "pivot": 348.36,
      "to_pivot_pct": 0.18,
      "rs": 78.57
@@ -467,10 +467,10 @@
     }
    ],
    "performance": {
-    "equity": 97146307.0,
-    "return_pct": -2.85,
+    "equity": 97078669.0,
+    "return_pct": -2.92,
     "bench_return_pct": -5.39,
-    "mdd_pct": -3.65,
+    "mdd_pct": -3.72,
     "closed_trades": 3,
     "win_rate_pct": 0.0,
     "avg_win_pct": null,
@@ -674,7 +674,7 @@
    }
   }
  },
- "updated_at": "2026-10-24T01:26:54Z",
+ "updated_at": "2026-10-24T01:27:53Z",
  "disclaimer": "기계적 룰 출력이며 투자 자문이 아닙니다. 매수·매도 결정은 소유자 본인이 합니다.",
  "unconfirmed": "미확인 추정값(스캐너 원본 코드 미확인): 피벗=직전 20봉 최고가(당일 제외) · 거래량 평균=직전 50일(당일 제외) · RS=지수 대비 가중 1년 수익률 ≥ 0%p(스캐너는 유니버스 백분위 ≥ 70) · 52주 고저=종가 기준 · 200일선 상승=22봉 전 대비 · 수축비=10/40일 평균 TR · 비용=편도 0.2%"
 }
