@@ -6,6 +6,12 @@ Usage:
                                  # proposals, push staff status / new proposals / results / heartbeat
     office.py staff <role>       # run one staff role now (ignores its schedule) and record its proposals
     office.py order <role> "<요청>" [<Drive file id> ...]   # ask a role that takes orders (notice) for one piece of work
+    office.py teams              # one cycle for every enabled team in teams.json (what poll.sh runs)
+    office.py team <id> <command ...>   # any command above for one team (its roster, state and config.env)
+
+Teams: the default team (R&D) keeps the board paths of the single-team office (queue/, staff/, log/, board/meta);
+another team lives under teams/<id>/{queue,staff,log} and keeps its own state dir, daily caps and keys. In team
+mode every team writes its card teams/<id> (heartbeat) and obeys its own stop flag there besides the global one.
     office.py propose <role> <staff_output.json>   # record proposals from a saved staff output (no model)
     office.py status             # print local proposal states
     office.py tidy <session_id>  # drop older transcripts of the desk that ran <session_id> (Pixel Agents: 1 character/desk)
@@ -100,6 +106,11 @@ class Cfg(object):
         self.draft_folder = env("WORK_AGENT_DRIVE_DRAFT_FOLDER", "")
         self.create_tool = env("WORK_AGENT_DRIVE_CREATE_TOOL", self.prefix + "Google_Drive__create_file")
         self.roster = read_json(env("WORK_AGENT_ROSTER", os.path.join(DIR, "staff", "roster.json")), {"roles": []})
+        # team mode: set by `office.py teams` / `office.py team <id>`; "" keeps the single-team office of before
+        self.team = env("WORK_AGENT_TEAM", "")
+        self.team_cfg = team_entry(self.team) if self.team else {}
+        self.coll_prefix = "" if not self.team or self.team_cfg.get("default") else "teams/%s/" % self.team
+        self.team_meta = {}
         for d in ("proposals", "staff", "calls", "executed"):
             os.makedirs(os.path.join(self.office, d), exist_ok=True)
         self.versions_path = os.path.join(self.office, "versions.json")
@@ -113,6 +124,33 @@ class Cfg(object):
             if r.get("role") == name:
                 return r
         return None
+
+    def coll(self, name):
+        """Board collection of this team: queue -> queue (default team) or teams/<id>/queue."""
+        return self.coll_prefix + name
+
+    def tag(self, body):
+        """Board documents say which team they belong to (team mode only)."""
+        if self.team:
+            body["team"] = self.team
+        return body
+
+
+TEAM_ID_RE = re.compile(r"^[a-z][a-z0-9_]{1,19}$")
+
+
+def load_teams():
+    """teams.json -> enabled-or-not team entries in order. A malformed entry is dropped."""
+    d = read_json(env("WORK_AGENT_TEAMS", os.path.join(DIR, "teams.json")), {})
+    out = [t for t in (d.get("teams") or []) if isinstance(t, dict) and TEAM_ID_RE.match(str(t.get("id", ""))) and t.get("roster")]
+    return sorted(out, key=lambda t: t.get("order", 99))
+
+
+def team_entry(team_id):
+    for t in load_teams():
+        if t["id"] == team_id:
+            return t
+    return {}
 
 
 def now():
@@ -1051,7 +1089,7 @@ def ensure_versions(cfg, versions, keys):
     for key in keys:
         if key in versions:
             continue
-        collection, doc_id = key.split("/", 1)
+        collection, doc_id = key.rsplit("/", 1)
         _, version, r = board_get(cfg, collection, doc_id, "get-" + key.replace("/", "-"))
         if version is None:
             log(cfg, "전광판 읽기 실패(%s): %s" % (key, r["status"]), board=False)
@@ -1062,7 +1100,7 @@ def ensure_versions(cfg, versions, keys):
 
 
 def stop_active(cfg):
-    return os.path.exists(os.path.join(cfg.state, "STOP")) or bool(cfg.meta.get("stop"))
+    return os.path.exists(os.path.join(cfg.state, "STOP")) or bool(cfg.meta.get("stop")) or bool(cfg.team_meta.get("stop"))
 
 
 def exec_count_today(cfg, t):
@@ -1135,6 +1173,14 @@ def refresh_meta(cfg):
     write_json(os.path.join(cfg.office, "meta.json"), cfg.meta)
     versions = read_json(cfg.versions_path, {})
     versions["board/meta"] = meta_version
+    if cfg.team:  # the team's own card: its stop flag and the version our heartbeat pins to
+        card, card_version, r = board_get(cfg, "teams", cfg.team, "get-team")
+        if card is None:
+            log(cfg, "전광판 읽기 실패(team): %s" % r["status"], board=False)
+            write_json(cfg.versions_path, versions)
+            return False
+        cfg.team_meta = {"stop": bool(card.get("stop")), "version": card_version}
+        versions["teams/" + cfg.team] = card_version
     write_json(cfg.versions_path, versions)
     return True
 
@@ -1173,7 +1219,7 @@ def pull_and_execute(cfg, meta_ok):
     if os.path.isdir(pull_dir):
         import shutil
         shutil.rmtree(pull_dir)
-    q = pinned_call(cfg, "ArtifactData", {"action": "query", "url": cfg.board_url, "collection": "queue",
+    q = pinned_call(cfg, "ArtifactData", {"action": "query", "url": cfg.board_url, "collection": cfg.coll("queue"),
                                           "query": {"where": [["status", "in", ["approved", "rejected", "pending"]]], "limit": 200},
                                           "out_dir": pull_dir}, "query-decisions")
     if q["status"] != "ok":
@@ -1281,9 +1327,10 @@ def push(cfg):
         writes.append(w)
         after.append(done)
 
-    own = ["board/meta"]
-    own += ["staff/" + n[:-5] for n in os.listdir(os.path.join(cfg.office, "staff")) if n.endswith(".json") and read_json(os.path.join(cfg.office, "staff", n), {}).get("dirty")]
-    own += ["log/" + n[4:-5] for n in os.listdir(cfg.office) if n.startswith("log_") and n.endswith(".json") and read_json(os.path.join(cfg.office, n), {}).get("dirty")]
+    own = [] if cfg.coll_prefix else ["board/meta"]  # the global heartbeat stays with the default team
+    own += ["teams/" + cfg.team] if cfg.team else []
+    own += [cfg.coll("staff/") + n[:-5] for n in os.listdir(os.path.join(cfg.office, "staff")) if n.endswith(".json") and read_json(os.path.join(cfg.office, "staff", n), {}).get("dirty")]
+    own += [cfg.coll("log/") + n[4:-5] for n in os.listdir(cfg.office) if n.startswith("log_") and n.endswith(".json") and read_json(os.path.join(cfg.office, n), {}).get("dirty")]
     if not ensure_versions(cfg, versions, own):
         return "fail(get)"
 
@@ -1294,11 +1341,11 @@ def push(cfg):
         if p.get("local_status") == "proposed":
             body = {k: p[k] for k in ("kind", "title", "reason", "payload", "payload_sha256", "created", "expires", "key")}
             body.update({"status": "pending", "from_role": p["role"], "from_title": p["from_title"], "from_emoji": p["from_emoji"]})
-            add("set", "queue", pid, body, None, lambda p=p: (p.update({"local_status": "pushed"}), write_json(proposal_path(cfg, p["id"]), p)))
+            add("set", cfg.coll("queue"), pid, cfg.tag(body), None, lambda p=p: (p.update({"local_status": "pushed"}), write_json(proposal_path(cfg, p["id"]), p)))
         elif p.get("report"):
             rep = p["report"]
             body = {"status": rep["status"], "result": rep["result"], "executed_at": utc_z(t)}
-            add("update", "queue", pid, body, rep.get("version") or versions.get("queue/" + pid),
+            add("update", cfg.coll("queue"), pid, body, rep.get("version") or versions.get(cfg.coll("queue/") + pid),
                 lambda p=p: (p.pop("report", None), write_json(proposal_path(cfg, p["id"]), p)))
     for name in sorted(os.listdir(os.path.join(cfg.office, "staff"))):
         if not name.endswith(".json"):
@@ -1308,9 +1355,9 @@ def push(cfg):
         if not doc.get("dirty") or len(writes) >= PUSH_MAX:
             continue
         role = name[:-5]
-        body = {k: v for k, v in doc.items() if k not in ("dirty", "proposed_last_run")}
-        key = "staff/" + role
-        add("update" if versions.get(key) else "set", "staff", role, body, versions.get(key),
+        body = cfg.tag({k: v for k, v in doc.items() if k not in ("dirty", "proposed_last_run")})
+        key = cfg.coll("staff/") + role
+        add("update" if versions.get(key) else "set", cfg.coll("staff"), role, body, versions.get(key),
             lambda path=path, doc=doc: (doc.update({"dirty": False}), write_json(path, doc)))
     for name in sorted(os.listdir(cfg.office)):
         if name.startswith("log_") and name.endswith(".json"):
@@ -1319,12 +1366,19 @@ def push(cfg):
             if not doc.get("dirty") or len(writes) >= PUSH_MAX:
                 continue
             day = name[4:-5]
-            key = "log/" + day
-            add("update" if versions.get(key) else "set", "log", day, {"day": day, "entries": doc["entries"]}, versions.get(key),
+            key = cfg.coll("log/") + day
+            add("update" if versions.get(key) else "set", cfg.coll("log"), day, cfg.tag({"day": day, "entries": doc["entries"]}), versions.get(key),
                 lambda path=path, doc=doc: (doc.update({"dirty": False}), write_json(path, doc)))
-    hb = {"mac_last_seen": utc_z(t), "next_expected": utc_z(next_heartbeat(cfg, t)), "source": "office.py"}
-    mv = versions.get("board/meta") or cfg.meta.get("version")
-    add("update" if mv else "set", "board", "meta", hb, mv, lambda: None)
+    if not cfg.coll_prefix:
+        hb = {"mac_last_seen": utc_z(t), "next_expected": utc_z(next_heartbeat(cfg, t)), "source": "office.py"}
+        mv = versions.get("board/meta") or cfg.meta.get("version")
+        add("update" if mv else "set", "board", "meta", hb, mv, lambda: None)
+    if cfg.team:
+        tc = cfg.team_cfg
+        card = {"title": tc.get("title", cfg.team), "emoji": tc.get("emoji", ""), "order": tc.get("order", 99),
+                "default": bool(tc.get("default")), "last_seen": utc_z(t), "next_expected": utc_z(next_heartbeat(cfg, t))}
+        tv = versions.get("teams/" + cfg.team) or cfg.team_meta.get("version")
+        add("update" if tv else "set", "teams", cfg.team, card, tv, lambda: None)
     r = pinned_call(cfg, "ArtifactData", {"action": "batch", "url": cfg.board_url, "writes": writes}, "push-batch")
     if r["status"] == "ok" and "committed" in r["text"]:
         for cb in after:
@@ -1338,15 +1392,15 @@ def push(cfg):
         for w in writes:
             versions.pop(w["collection"] + "/" + w["doc_id"], None)
     # a version mismatch names the current version: remember it so the next cycle pins correctly
-    for m in re.finditer(r'"([^"/]+)/([^"]+)"\) was pinned to version \d+ and that document is now at version (\d+)', r["text"]):
+    for m in re.finditer(r'"([^"]+)/([^"/]+)"\) was pinned to version \d+ and that document is now at version (\d+)', r["text"]):
         coll, doc_id, cur = m.group(1), m.group(2), int(m.group(3))
         versions[coll + "/" + doc_id] = cur
-        if coll == "queue" and props.get(doc_id, {}).get("report"):
+        if coll == cfg.coll("queue") and props.get(doc_id, {}).get("report"):
             props[doc_id]["report"]["version"] = cur  # re-pin the report to what the board holds now
             write_json(proposal_path(cfg, doc_id), props[doc_id])
-    for m in re.finditer(r'targets ([^/\s,]+)/([^\s,]+), which already exists, and carried no if_version', r["text"]):
+    for m in re.finditer(r'targets (\S+)/([^/\s,]+), which already exists, and carried no if_version', r["text"]):
         coll, doc_id = m.group(1), m.group(2)
-        if coll == "queue" and props.get(doc_id, {}).get("local_status") == "proposed":
+        if coll == cfg.coll("queue") and props.get(doc_id, {}).get("local_status") == "proposed":
             # our own earlier set did commit but its answer never arrived: the board already holds it
             props[doc_id]["local_status"] = "pushed"
             write_json(proposal_path(cfg, doc_id), props[doc_id])
@@ -1409,10 +1463,55 @@ def cmd_status(cfg):
     return 0
 
 
+def team_env(team, base=None):
+    """The environment one team runs in: its id, roster, state dir (default team: the usual one) and the
+    KEY=VALUE lines of its local teams/<id>/config.env (git-ignored: file ids and folders stay off the repo)."""
+    e = dict(base if base is not None else os.environ)
+    e.update({"WORK_AGENT_TEAM": team["id"], "WORK_AGENT_ROSTER": os.path.join(DIR, team["roster"])})
+    if not team.get("default"):
+        e["WORK_AGENT_STATE"] = os.path.join(env("WORK_AGENT_STATE", os.path.join(DIR, "state")), "teams", team["id"])
+    try:
+        with open(os.path.join(env("WORK_AGENT_TEAMS_DIR", os.path.join(DIR, "teams")), team["id"], "config.env")) as f:
+            for line in f:
+                m = re.match(r"^\s*(?:export\s+)?(WORK_AGENT_[A-Z0-9_]+)=(.*)$", line.rstrip("\n"))
+                if m and m.group(1) not in ("WORK_AGENT_TEAM", "WORK_AGENT_STATE", "WORK_AGENT_ROSTER"):
+                    e[m.group(1)] = m.group(2).strip().strip('"').strip("'")
+    except IOError:
+        pass
+    return e
+
+
+def cmd_teams():
+    """One office cycle per enabled team, each in its own process: a team that fails does not stop the next."""
+    teams = [t for t in load_teams() if t.get("enabled")]
+    if not teams:
+        print("teams: none enabled (teams.json)")
+        return 0
+    lines = []
+    for team in teams:
+        try:
+            p = subprocess.run([sys.executable, os.path.join(DIR, "office.py"), "cycle"], env=team_env(team),
+                               capture_output=True, text=True, timeout=int(env("WORK_AGENT_TEAM_TIMEOUT", "1500")))
+            out = (p.stdout.strip().splitlines() or [""])[-1]
+            lines.append("%s: %s" % (team["id"], out if p.returncode == 0 and out else "error rc=%d %s" % (p.returncode, p.stderr.strip()[-160:])))
+        except subprocess.TimeoutExpired:
+            lines.append("%s: error timeout" % team["id"])
+    print(" | ".join(lines))
+    return 0
+
+
 def main(argv):
     if len(argv) < 2:
         sys.stderr.write(__doc__)
         return 64
+    if argv[1] == "teams":
+        return cmd_teams()
+    if argv[1] == "team" and len(argv) >= 4:
+        team = team_entry(argv[2])
+        if not team:
+            sys.stderr.write("unknown team: %s\n" % argv[2])
+            return 64
+        return subprocess.run([sys.executable, os.path.join(DIR, "office.py")] + argv[3:], env=team_env(team)).returncode
     cfg = Cfg()
     cmd = argv[1]
     if cmd == "cycle":

@@ -174,7 +174,7 @@ def artifact_data(args):
         if action in ("list", "query"):
             coll = args["collection"]
             q = args.get("query") or {}
-            docs = [(k.split("/", 1)[1], e) for k, e in sorted(db.items()) if k.startswith(coll + "/") and k.count("/") == coll.count("/") + 1]
+            docs = [(k[len(coll) + 1:], e) for k, e in sorted(db.items()) if k.startswith(coll + "/") and k.count("/") == coll.count("/") + 1]
             if action == "query":
                 docs = [(i, e) for i, e in docs if db_match(e["data"], q.get("where"))]
             docs = docs[: int(q.get("limit") or 100)]

@@ -22,7 +22,8 @@
 | `call_guard.py` | (3단계) 고정 호출 훅. 코드가 정한 인자(sha256)로 도구 1개를 1회 부르는 것만 허용. 긴 인자(초안 본문)는 모델이 제목·폴더만 보내고 훅이 원본 인자를 그대로 넣어 줌 |
 | `staff/roster.json`, `staff/*.md` | (3단계) 직원 명단과 역할별 지시문 |
 | `TEAM_PLAN.md` | R&D AI팀 설계(직원 8명 + 사무보조)와 겨울 2차 파일럿·채용 일정 |
-| `board/board.html` | (3단계) 전광판 페이지 원본(claude.ai 아티팩트로 게시) |
+| `board/board.html` | (3단계) 전광판(관제실) 페이지 원본(claude.ai 아티팩트로 게시). 팀이 둘 이상이면 팀 칩·팀 표시·팀별 정지 |
+| `teams.json`, `teams/` | 여러 팀: 팀 목록(기본 팀 = R&D)과 새 팀 틀(`teams/_template`), 추가 방법(`teams/README.md`). 팀 로컬 설정 `teams/<id>/config.env`는 git 제외 |
 | `desks.py`, `pixel_office.sh`, `pixel/` | (3단계) 픽셀 사무실: 책상 폴더·기록 정리, Pixel Agents 설정 합치기·배치 설치, 배치 생성기와 결과(`layout-office.json`) |
 | `cost_check.py` | (원가 담당) MASTER 형식 원가표 xlsx에서 시트가 오류 없이 0원으로 계산하는 입력을 찾는 검사기. 표준 라이브러리만 사용 |
 | `tests/` | 회귀 시험(`test_work_agent.py`, `test_office.py`, `test_cost.py`, 모델·네트워크 없이) · 실제 claude 끝까지 시험(`e2e_real_claude.sh` 가짜 슬랙, `e2e_office.sh` 실제 전광판 + 가짜 캘린더, `e2e_cost.sh`·`e2e_notice.sh` 가짜 Drive) |
@@ -71,6 +72,8 @@
 ## 3단계 사무실 (전광판 + 직원 + 승인 후 실행)
 
 **DoD(이번 단계)**: 직원이 올린 결재 건이 전광판에 나타나고, 대표님이 폰에서 승인하면 다음 폴링이 그 승인을 읽어 "되돌릴 수 있는 실행"(캘린더 등록)을 승인한 내용 그대로 수행하며, 결과가 전광판에 돌아온다. 에이전트 발송 0건.
+
+**여러 팀(관제실)**: `poll.sh`는 매 폴링 끝에 `office.sh teams`로 `teams.json`의 팀을 차례로 한 번씩 돌립니다(팀마다 별도 프로세스라 한 팀이 실패해도 다음 팀은 돕니다). 기본 팀(R&D)은 예전 경로(`queue/` `staff/` `log/` `board/meta`)를 그대로 쓰고, 다른 팀은 `teams/<id>/…` 아래에 쓰며 맥미니 기록도 `state/teams/<id>/`로 따로입니다. 모든 팀이 팀 카드 `teams/<id>`(심장박동·팀 정지)를 씁니다. 한 팀만 다루려면 `bash office.sh team <id> <명령>`(예: `staff`, `order`, `status`). 팀 추가 방법은 `teams/README.md`.
 
 **전광판**: claude.ai 페이지 `board/board.html` (게시본 `WORK_AGENT_BOARD_URL`). 저장소 규칙은 "쓰기는 아티팩트 소유자만". 맥미니의 `claude -p`는 대표님 계정이라 소유자로 쓰고, 페이지에서 대표님 탭도 소유자 쓰기. 다른 사람에게 공유하면 읽기 전용.
 

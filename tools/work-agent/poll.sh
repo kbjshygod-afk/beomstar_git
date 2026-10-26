@@ -140,7 +140,7 @@ set -e
 
 # 5b. the office (stage 3): run due staff, apply board decisions, push status. Independent of the reader result.
 if [ "${WORK_AGENT_OFFICE:-0}" = "1" ]; then
-  OOUT="$("$DIR/office.sh" cycle 2>> "$STATE/office.err")" || OOUT="office: error (see state/office.err)"
+  OOUT="$("$DIR/office.sh" teams 2>> "$STATE/office.err")" || OOUT="office: error (see state/office.err)"
   log "$OOUT"
 fi
 

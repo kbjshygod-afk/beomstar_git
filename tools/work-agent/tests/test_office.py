@@ -954,6 +954,109 @@ class NoticeStaffTests(Base):
         self.assertEqual(office.md_paragraphs("a\nb\n- x\n- y\n| 1 |\n| 2 |\n\nc"), "a\n\nb\n\n- x\n- y\n| 1 |\n| 2 |\n\nc")
 
 
+class TeamTests(Base):
+    """Several teams, one engine, one board: R&D keeps its paths, another team lives under teams/<id>/."""
+
+    def setUp(self):
+        super().setUp()
+        rnd = json.loads(rd(os.path.join(ROOT, "staff", "roster.json")))
+        rnd["roles"] = [r for r in rnd["roles"] if r["role"] == "gate"]
+        jw(os.path.join(self.tmp, "rnd.json"), rnd)
+        jw(os.path.join(self.tmp, "store.json"), {"roles": [{"role": "daily", "title": "매장 점검 담당", "emoji": "🏪", "order": 1, "enabled": True,
+            "schedule": {"daily_at": "0900"}, "prompt": "teams/_template/staff/example.md", "tools": [], "proposal_kinds": ["info"],
+            "max_proposals_per_run": 3, "desk": "runner"}]})
+        self.teams = os.path.join(self.tmp, "teams.json")
+        jw(self.teams, {"teams": [
+            {"id": "store", "title": "편의점팀", "emoji": "🏪", "order": 2, "enabled": True, "roster": os.path.join(self.tmp, "store.json")},
+            {"id": "rnd", "title": "R&D팀", "emoji": "🧪", "order": 1, "enabled": True, "default": True, "roster": os.path.join(self.tmp, "rnd.json")}]})
+        self.tdir = os.path.join(self.tmp, "teamcfg")
+        out = os.path.join(self.tmp, "staff_out.json")
+        jw(out, staff_output([{"kind": "info", "key": "x:1", "title": "보고 한 건", "reason": "", "payload": {"text": "확인만"}}]))
+        os.environ.update({"WORK_AGENT_TEAMS": self.teams, "WORK_AGENT_TEAMS_DIR": self.tdir, "FAKE_READER_RESULT": out,
+                           "WORK_AGENT_NOW": "2026-10-16T09:10:00+09:00"})
+
+    def teams_cycle(self, **env):
+        return self.run_cli("teams", env=env)
+
+    def board(self):
+        return json.loads(rd(self.db)) if os.path.exists(self.db) else {}
+
+    def test_two_teams_share_one_board_but_not_their_paths(self):
+        rc, out, err = self.teams_cycle()
+        self.assertEqual(rc, 0, err)
+        rnd, store = out.split(" | ")
+        self.assertTrue(rnd.startswith("rnd: office: staff=1 pull=ok"), out)
+        self.assertTrue(store.startswith("store: office: staff=1 pull=ok"), out)
+        db = self.board()
+        root_q = [k for k in db if k.startswith("queue/")]
+        store_q = [k for k in db if k.startswith("teams/store/queue/")]
+        self.assertEqual((len(root_q), len(store_q)), (1, 1))
+        self.assertEqual((db[root_q[0]]["data"]["team"], db[store_q[0]]["data"]["team"]), ("rnd", "store"))
+        self.assertEqual(db["staff/gate"]["data"]["team"], "rnd")
+        self.assertEqual(db["teams/store/staff/daily"]["data"]["title"], "매장 점검 담당")
+        self.assertIn("teams/store/log/2026-10-16", db)
+        self.assertEqual((db["teams/rnd"]["data"]["title"], db["teams/rnd"]["data"]["default"]), ("R&D팀", True))
+        self.assertEqual((db["teams/store"]["data"]["emoji"], db["teams/store"]["data"]["default"]), ("🏪", False))
+        self.assertEqual(db["board/meta"]["version"], 1, "only the default team writes the global heartbeat")
+        self.assertEqual(len(os.listdir(os.path.join(self.state, "office", "proposals"))), 1)
+        self.assertEqual(len(os.listdir(os.path.join(self.state, "teams", "store", "office", "proposals"))), 1)
+        self.assertEqual(self.teams_cycle()[1].count("staff=0"), 2, "each team keeps its own once-a-day")
+
+    def test_an_approval_runs_only_in_its_team(self):
+        self.teams_cycle()
+        sq = [k for k in self.board() if k.startswith("teams/store/queue/")][0]
+        doc = self.board()[sq]["data"]
+        self.dbset(sq, {"status": "approved", "decided_at": "2026-10-16T00:00:00Z", "approved_sha": doc["payload_sha256"]})
+        rc, out, _ = self.teams_cycle()
+        rnd, store = out.split(" | ")
+        self.assertIn("approved=0 executed=0", rnd)
+        self.assertIn("approved=1 executed=1", store)
+        self.assertEqual(self.board()[sq]["data"]["status"], "done")
+        self.assertEqual(len(os.listdir(os.path.join(self.state, "office", "proposals"))), 1, "R&D never saw the other team's item")
+
+    def test_team_stop_and_global_stop(self):
+        self.dbset("teams/store", {"stop": True})
+        rc, out, _ = self.teams_cycle()
+        rnd, store = out.split(" | ")
+        self.assertIn("staff=1", rnd)
+        self.assertIn("staff=0", store)
+        self.assertIn("stop=1", store)
+        self.dbset("board/meta", {"stop": True})
+        self.dbset("teams/store", {"stop": False})
+        rc, out, _ = self.teams_cycle(WORK_AGENT_NOW="2026-10-19T09:10:00+09:00")
+        self.assertEqual(out.count("stop=1"), 2, out)
+        self.assertEqual(out.count("staff=0"), 2, out)
+
+    def test_a_broken_team_does_not_stop_the_others(self):
+        os.makedirs(os.path.join(self.tdir, "rnd"))
+        wr(os.path.join(self.tdir, "rnd", "config.env"), "WORK_AGENT_EXEC_DAILY_MAX=many\n")
+        rc, out, _ = self.teams_cycle()
+        rnd, store = out.split(" | ")
+        self.assertTrue(rnd.startswith("rnd: error rc=1"), rnd)
+        self.assertTrue(store.startswith("store: office: staff=1"), store)
+
+    def test_team_config_and_commands(self):
+        os.makedirs(os.path.join(self.tdir, "store"))
+        wr(os.path.join(self.tdir, "store", "config.env"), 'WORK_AGENT_EXEC_DAILY_MAX="3"\nWORK_AGENT_TEAM=rnd\nOTHER=1\n')
+        e = office.team_env(office.team_entry("store"), {"WORK_AGENT_STATE": self.state})
+        self.assertEqual((e["WORK_AGENT_TEAM"], e["WORK_AGENT_EXEC_DAILY_MAX"], e["WORK_AGENT_STATE"]),
+                         ("store", "3", os.path.join(self.state, "teams", "store")), "a team file cannot rename its team")
+        self.assertNotIn("OTHER", e)
+        self.assertNotIn("WORK_AGENT_EXEC_DAILY_MAX", office.team_env(office.team_entry("rnd"), {}))
+        self.assertEqual(self.run_cli("team", "nope", "status")[0], 64)
+        self.assertEqual(self.run_cli("team", "store", "status")[0], 0)
+        self.assertEqual(self.run_cli("team", "store", "staff", "daily")[1], "staff daily: proposed=1")
+        self.assertTrue(os.listdir(os.path.join(self.state, "teams", "store", "office", "proposals")))
+
+    def test_disabled_and_malformed_teams_are_skipped(self):
+        d = json.loads(rd(self.teams))
+        d["teams"][0]["enabled"] = False
+        d["teams"].append({"id": "Bad Id", "enabled": True, "roster": "x.json"})
+        jw(self.teams, d)
+        rc, out, _ = self.teams_cycle()
+        self.assertTrue(out.startswith("rnd: office:") and " | " not in out, out)
+
+
 class CostStaffTests(Base):
     """원가 담당: one pinned Drive download per source, code findings as cards, the model only adds notes."""
     SRC = "겨울2차=FAKEMASTER0001,FAKEPLAN00001"

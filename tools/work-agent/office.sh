@@ -3,6 +3,8 @@
 #   office.sh cycle          (poll.sh calls this every cycle when WORK_AGENT_OFFICE=1)
 #   office.sh staff gate     (run one staff role now)
 #   office.sh status
+#   office.sh teams          (every enabled team in teams.json, one after another — what poll.sh runs)
+#   office.sh team <id> ...  (any command for one team)
 set -uo pipefail
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG="${WORK_AGENT_CONFIG:-$DIR/config.env}"

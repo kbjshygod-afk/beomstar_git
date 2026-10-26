@@ -1,4 +1,4 @@
-<title>R&D 사무실 전광판</title>
+<title>R&D 사무실 관제실</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -54,6 +54,13 @@ input[type=text] { font: inherit; width: 100%; min-width: 0; border: 1px solid v
 .stop { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; font-size: 0.85rem; }
 .stop button { background: transparent; color: var(--strip-fg); border-color: rgba(255,255,255,0.5); }
 .stop.on { color: var(--warn); }
+.teams { display: flex; flex-wrap: wrap; gap: 8px; }
+.teamchip { display: inline-flex; align-items: center; gap: 6px; background: transparent; color: var(--strip-fg); border: 1px solid rgba(255,255,255,0.35); border-radius: 999px; padding: 4px 12px; font-size: 0.85rem; }
+.teamchip.on { background: rgba(255,255,255,0.18); border-color: rgba(255,255,255,0.8); font-weight: 700; }
+.teamchip .n { font-family: var(--mono); font-weight: 700; }
+.teamchip .dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(246,238,224,0.5); }
+.teamchip .dot.good { background: #9be39b; } .teamchip .dot.warn { background: var(--warn); } .teamchip .dot.crit { background: #ff9b94; }
+.teamhead { grid-column: 1 / -1; font-size: 0.9rem; color: var(--muted); margin-top: 4px; }
 .banner { border-left: 3px solid var(--accent); background: var(--surface); padding: 10px 14px; border-radius: 0 8px 8px 0; font-size: 0.9rem; }
 section { display: grid; gap: 12px; min-width: 0; }
 .cards { display: grid; gap: 12px; }
@@ -93,7 +100,7 @@ details summary { cursor: pointer; color: var(--brand); font-weight: 500; }
 <main>
   <header class="strip">
     <div class="row">
-      <h1>R&D 사무실 전광판</h1>
+      <h1>R&D 사무실 관제실</h1>
       <div class="row" style="justify-content:flex-start">
         <span id="mac" class="chip off"><span class="dot"></span>맥미니 신호 확인 중</span>
         <span id="viewer" class="chip off">보는 사람 확인 중</span>
@@ -104,8 +111,10 @@ details summary { cursor: pointer; color: var(--brand); font-weight: 500; }
       <div class="tile"><div class="label">오늘 처리</div><div id="t-today" class="value">–</div><div id="t-today-sub" class="sub">완료 · 반려</div></div>
       <div class="tile"><div class="label">근무 중 직원</div><div id="t-staff" class="value">–</div><div id="t-staff-sub" class="sub">전체 직원</div></div>
     </div>
+    <div id="teams" class="teams" role="group" aria-label="팀 고르기" hidden></div>
     <div id="stop" class="stop" hidden>
       <button id="stop-btn" type="button">⏸ 전체 정지</button>
+      <button id="team-stop-btn" type="button" hidden></button>
       <span id="stop-text">정지하면 맥미니가 다음 폴링부터 실행·초안을 모두 멈춥니다.</span>
     </div>
   </header>
@@ -178,7 +187,29 @@ details summary { cursor: pointer; color: var(--brand); font-weight: 500; }
   function sha256(text) { return crypto.subtle.digest("SHA-256", new TextEncoder().encode(text)).then(function (buf) {
     return Array.prototype.map.call(new Uint8Array(buf), function (b) { return ("0" + b.toString(16)).slice(-2); }).join(""); }); }
 
-  var state = { db: null, user: null, owner: false, canWrite: null, queue: [], staff: [], logs: [], meta: null, busy: {}, notes: {} };
+  // Teams: the default team's documents sit at the root (queue/, staff/, log/), every other team's under
+  // teams/<id>/; the teams collection holds one card per team (title, heartbeat, stop). Data is kept per key:
+  // "@root" for the root collections, the team id otherwise.
+  var state = { db: null, user: null, owner: false, canWrite: null, meta: null, busy: {}, notes: {},
+    teams: {}, q: {}, st: {}, lg: {}, subs: {}, filter: "all" };
+  try { state.filter = localStorage.getItem("board.team") || "all"; } catch (e) {}
+
+  function defId() { return Object.keys(state.teams).filter(function (k) { return state.teams[k].default; })[0] || "@root"; }
+  function teamList() {
+    var ids = Object.keys(state.teams); if (ids.indexOf(defId()) < 0) ids.push(defId());
+    return ids.map(function (id) { return Object.assign({ id: id, title: id === "@root" ? "R&D팀" : id, emoji: "", order: 99 }, state.teams[id] || {}); })
+      .sort(function (a, b) { return (a.default ? 0 : a.order || 99) - (b.default ? 0 : b.order || 99); });
+  }
+  function teamOf(id) { return teamList().filter(function (x) { return x.id === id; })[0] || { id: id, title: id, emoji: "" }; }
+  function dataKey(id) { return id === defId() ? "@root" : id; }
+  function itemsFor(map, id) { return (map[dataKey(id)] || []).map(function (x) { return Object.assign({ _team: id }, x); }); }
+  function visible() { var all = teamList(); var f = all.filter(function (x) { return x.id === state.filter; }); return f.length ? f : all; }
+  function itemKey(q) { return q._path || q.id; }
+  function lateness(seen, next, now) {  // good / warn / crit / off, judged against the next heartbeat promised
+    var mins = seen ? (now - new Date(seen)) / 60000 : null; var due = next ? new Date(next) : null;
+    var late = due && !isNaN(due) ? (now - due) / 60000 : mins;
+    return mins == null ? "off" : late < 45 ? "good" : late < 180 ? "warn" : "crit";
+  }
 
   function payloadRows(q) {
     var p = q.payload || {}, rows = [];
@@ -200,6 +231,7 @@ details summary { cursor: pointer; color: var(--brand); font-weight: 500; }
     var c = el("article", "card" + (mode === "pending" ? " pending" : ""));
     var head = el("div", "head"); head.appendChild(el("span", "badge kind", k.label)); head.appendChild(status(q.status));
     if (q.from_role) head.appendChild(el("span", "badge", (q.from_emoji || "") + " " + q.from_title || q.from_role));
+    if (teamList().length > 1) { var tm = teamOf(q._team); head.appendChild(el("span", "badge", (tm.emoji ? tm.emoji + " " : "") + tm.title)); }
     c.appendChild(head);
     c.appendChild(el("h3", null, q.title || "(제목 없음)"));
     if (q.reason) c.appendChild(el("p", "small", q.reason));
@@ -215,28 +247,29 @@ details summary { cursor: pointer; color: var(--brand); font-weight: 500; }
     c.appendChild(meta);
     if (mode === "pending" && state.owner && state.canWrite !== false) {
       var act = el("div", "actions");
-      var note = el("input"); note.type = "text"; note.placeholder = "메모 (반려 사유 등, 선택)"; note.id = "note-" + q.id;
+      var note = el("input"); note.type = "text"; note.placeholder = "메모 (반려 사유 등, 선택)"; note.id = "note-" + itemKey(q).replace(/[^A-Za-z0-9_-]/g, "_");
       var ok = el("button", "primary", k.risk === "off" ? "확인" : "승인"); var no = el("button", "danger", "반려");
       var expired = q.expires && new Date(q.expires) < Date.now();
       if (expired) { ok.disabled = true; ok.textContent = "만료됨"; }
-      note.value = state.notes[q.id] || "";
-      note.oninput = function () { state.notes[q.id] = note.value; };
+      note.value = state.notes[itemKey(q)] || "";
+      note.oninput = function () { state.notes[itemKey(q)] = note.value; };
       ok.onclick = function () { decide(q, "approved", note.value, ok, no); }; no.onclick = function () { decide(q, "rejected", note.value, ok, no); };
-      if (state.busy[q.id]) { ok.disabled = no.disabled = true; }
+      if (state.busy[itemKey(q)]) { ok.disabled = no.disabled = true; }
       act.appendChild(ok); act.appendChild(no); act.appendChild(note); c.appendChild(act);
     }
     return c;
   }
 
   function decide(q, verdict, note, okBtn, noBtn) {
-    if (!state.db || state.busy[q.id]) return;
+    var key = itemKey(q);
+    if (!state.db || state.busy[key]) return;
     var p = q.payload || {};
     if (Object.keys(p).some(function (k) { return typeof p[k] !== "string"; })) { $("err").textContent = "이 건의 내용 형식이 맞지 않아 승인할 수 없습니다. 맥미니 로그를 확인해 주세요."; $("err").hidden = false; return; }
-    state.busy[q.id] = true; if (okBtn) okBtn.disabled = true; if (noBtn) noBtn.disabled = true;
+    state.busy[key] = true; if (okBtn) okBtn.disabled = true; if (noBtn) noBtn.disabled = true;
     var body = { status: verdict, decided_at: new Date().toISOString(), note: (note || "").slice(0, 300) };
-    sha256(canon(p)).then(function (h) { body.approved_sha = h; return state.db.doc("queue/" + q.id).update(body); })
-      .then(function () { delete state.busy[q.id]; delete state.notes[q.id]; $("err").hidden = true; render(); })
-      .catch(function (e) { delete state.busy[q.id]; if (e && e.code === "invalid_argument") { state.canWrite = false; $("ro").hidden = false; } else { $("err").textContent = "저장하지 못했습니다 (" + (e && e.code || "오류") + "). 잠시 후 다시 눌러 주세요."; $("err").hidden = false; } render(); });
+    sha256(canon(p)).then(function (h) { body.approved_sha = h; return state.db.doc(q._path || "queue/" + q.id).update(body); })
+      .then(function () { delete state.busy[key]; delete state.notes[key]; $("err").hidden = true; render(); })
+      .catch(function (e) { delete state.busy[key]; if (e && e.code === "invalid_argument") { state.canWrite = false; $("ro").hidden = false; } else { $("err").textContent = "저장하지 못했습니다 (" + (e && e.code || "오류") + "). 잠시 후 다시 눌러 주세요."; $("err").hidden = false; } render(); });
   }
 
   function toggleStop() {
@@ -245,10 +278,48 @@ details summary { cursor: pointer; color: var(--brand); font-weight: 500; }
     (state.meta ? ref.update(body) : ref.set(body)).catch(function (e) { $("err").textContent = "정지 상태를 바꾸지 못했습니다 (" + (e && e.code || "오류") + ")."; $("err").hidden = false; });
   }
 
+  function toggleTeamStop() {
+    var id = state.filter, card = state.teams[id];
+    if (!state.db || !card) return;
+    state.db.doc("teams/" + id).update({ stop: !card.stop, stop_changed_at: new Date().toISOString() })
+      .catch(function (e) { $("err").textContent = "팀 정지 상태를 바꾸지 못했습니다 (" + (e && e.code || "오류") + ")."; $("err").hidden = false; });
+  }
+
+  function watchTeam(key, base) {  // once per team: its queue, staff and log
+    if (state.subs[key] || !state.db) return; state.subs[key] = true;
+    state.db.collection(base + "queue").orderBy("created", "desc").limit(200).onSnapshot(function (snap) { state.q[key] = snap.docs.map(function (d) { return Object.assign({ id: d.id, _path: base + "queue/" + d.id }, d.data()); }); render(); }, function (e) { $("nodb").textContent = "결재 목록을 읽지 못했습니다 (" + e.code + ")."; $("nodb").hidden = false; });
+    state.db.collection(base + "staff").onSnapshot(function (snap) { state.st[key] = snap.docs.map(function (d) { return Object.assign({ role: d.id }, d.data()); }); render(); }, function () {});
+    state.db.collection(base + "log").orderBy("day", "desc").limit(3).onSnapshot(function (snap) { state.lg[key] = snap.docs.map(function (d) { return d.data(); }); render(); }, function () {});
+  }
+
+  function renderTeams(now) {
+    var all = teamList(), box = $("teams"); box.textContent = ""; box.hidden = all.length < 2;
+    if (all.length < 2) return;
+    function chip(id, label, n, dot) {
+      var b = el("button", "teamchip" + (state.filter === id || (id === "all" && !all.some(function (x) { return x.id === state.filter; })) ? " on" : ""));
+      b.type = "button"; b.setAttribute("aria-pressed", b.className.indexOf(" on") >= 0 ? "true" : "false");
+      if (dot) b.appendChild(el("span", "dot " + dot));
+      b.appendChild(document.createTextNode(label + " ")); b.appendChild(el("span", "n", String(n)));
+      b.onclick = function () { state.filter = id; try { localStorage.setItem("board.team", id); } catch (e) {} render(); };
+      box.appendChild(b);
+    }
+    var pend = function (id) { return itemsFor(state.q, id).filter(function (q) { return q.status === "pending" && !(q.expires && new Date(q.expires) < now); }).length; };
+    chip("all", "전체", all.reduce(function (n, x) { return n + pend(x.id); }, 0), null);
+    all.forEach(function (x) { chip(x.id, (x.emoji ? x.emoji + " " : "") + x.title + (x.stop ? " ⏸" : ""), pend(x.id), lateness(x.last_seen, x.next_expected, now)); });
+  }
+
   function render() {
     var now = Date.now(), today = kstDay(now);
-    var pending = [], approved = [], done = [];
-    state.queue.forEach(function (q) {
+    var pending = [], approved = [], done = [], vis = visible(), multi = teamList().length > 1;
+    var queue = [], staffBy = [], logs = [];
+    vis.forEach(function (tm) {
+      queue = queue.concat(itemsFor(state.q, tm.id));
+      staffBy.push({ team: tm, staff: itemsFor(state.st, tm.id).sort(function (a, b) { return (a.order || 99) - (b.order || 99); }) });
+      itemsFor(state.lg, tm.id).forEach(function (doc) { (doc.entries || []).forEach(function (e) { logs.push({ t: e.t, text: (multi ? (tm.emoji || tm.title) + " " : "") + String(e.text || "") }); }); });
+    });
+    var staffAll = staffBy.reduce(function (a, g) { return a.concat(g.staff); }, []);
+    renderTeams(now);
+    queue.forEach(function (q) {
       if (q.status === "pending") { if (q.expires && new Date(q.expires) < now) done.push(Object.assign({}, q, { status: "expired" })); else pending.push(q); }
       else if (q.status === "approved") approved.push(q); else done.push(q);
     });
@@ -258,44 +329,49 @@ details summary { cursor: pointer; color: var(--brand); font-weight: 500; }
     $("t-pending").textContent = pending.length; $("c-pending").textContent = pending.length ? pending.length + "건" : "";
     $("t-today").textContent = todayDone.length;
     $("t-today-sub").textContent = "완료 " + todayDone.filter(function (q) { return q.status === "done"; }).length + " · 반려 " + todayDone.filter(function (q) { return q.status === "rejected"; }).length;
-    var working = state.staff.filter(function (s) { return s.status === "working"; }).length;
-    $("t-staff").textContent = working; $("t-staff-sub").textContent = "전체 " + state.staff.length + "명";
-    $("c-approved").textContent = approved.length ? approved.length + "건" : ""; $("c-staff").textContent = state.staff.length ? state.staff.length + "명" : ""; $("c-done").textContent = done.length ? "최근 " + Math.min(done.length, 20) + "건" : "";
+    var working = staffAll.filter(function (s) { return s.status === "working"; }).length;
+    $("t-staff").textContent = working; $("t-staff-sub").textContent = "전체 " + staffAll.length + "명";
+    $("c-approved").textContent = approved.length ? approved.length + "건" : ""; $("c-staff").textContent = staffAll.length ? staffAll.length + "명" : ""; $("c-done").textContent = done.length ? "최근 " + Math.min(done.length, 20) + "건" : "";
 
     var P = $("pending"); P.textContent = ""; if (!pending.length) P.appendChild(el("div", "empty", state.db ? "결재 대기 건이 없습니다. 직원이 제안을 올리면 여기에 나타납니다." : "저장소 연결을 기다리는 중입니다.")); pending.forEach(function (q) { P.appendChild(card(q, "pending")); });
     var A = $("approved"); A.textContent = ""; if (!approved.length) A.appendChild(el("div", "empty", "실행을 기다리는 건이 없습니다.")); approved.forEach(function (q) { A.appendChild(card(q, "approved")); });
     var D = $("done"); D.textContent = ""; if (!done.length) D.appendChild(el("div", "empty", "아직 처리한 건이 없습니다.")); done.slice(0, 20).forEach(function (q) { D.appendChild(card(q, "done")); });
 
     var S = $("staff"); S.textContent = "";
-    if (!state.staff.length) S.appendChild(el("div", "empty", "맥미니가 첫 보고를 올리면 직원이 여기에 나타납니다."));
-    state.staff.forEach(function (s) {
+    if (!staffAll.length) S.appendChild(el("div", "empty", "맥미니가 첫 보고를 올리면 직원이 여기에 나타납니다."));
+    staffBy.forEach(function (g) {
+      if (multi && vis.length > 1 && g.staff.length) S.appendChild(el("h3", "teamhead", (g.team.emoji ? g.team.emoji + " " : "") + g.team.title + " · " + g.staff.length + "명"));
+      g.staff.forEach(function (s) {
       var d = el("div", "desk"); var who = el("div", "who"); who.appendChild(el("span", "emoji", s.emoji || "🧑‍💼")); var nm = el("div"); nm.appendChild(el("h3", null, s.title || s.role)); nm.appendChild(status(s.status || "off")); who.appendChild(nm); d.appendChild(who);
       d.appendChild(el("p", "small", "마지막 실행 " + (s.last_run ? ago(s.last_run) : "없음") + (s.next_run ? " · 다음 " + t(s.next_run) : "")));
       if (s.summary) d.appendChild(el("p", null, s.summary));
       if (Array.isArray(s.open_items) && s.open_items.length) { var ul = el("ul"); s.open_items.slice(0, 5).forEach(function (x) { ul.appendChild(el("li", null, String(x))); }); d.appendChild(ul); }
       if (Array.isArray(s.errors) && s.errors.length) { var er = el("p", "small"); er.appendChild(status("blocked")); er.lastChild.lastChild.textContent = "확인하지 못한 것 " + s.errors.length + "건: " + s.errors.slice(0, 2).join(" / "); d.appendChild(er); }
       S.appendChild(d);
+      });
     });
 
-    var L = $("log"); L.textContent = ""; var entries = [];
-    state.logs.forEach(function (doc) { (doc.entries || []).forEach(function (e) { entries.push(e); }); });
+    var L = $("log"); L.textContent = ""; var entries = logs;
     entries.sort(function (a, b) { return String(b.t).localeCompare(String(a.t)); });
     if (!entries.length) L.appendChild(el("div", "empty", "아직 기록이 없습니다."));
     entries.slice(0, 40).forEach(function (e) { var r = el("div"); r.appendChild(el("span", "t", t(e.t))); r.appendChild(document.createTextNode(String(e.text || ""))); L.appendChild(r); });
 
     // the Mac mini only reports in business hours: judge lateness against the heartbeat it promised next
-    var mac = $("mac"), seen = state.meta && state.meta.mac_last_seen, mins = seen ? (now - new Date(seen)) / 60000 : null;
+    var mac = $("mac"), seen = state.meta && state.meta.mac_last_seen;
     var due = state.meta && state.meta.next_expected ? new Date(state.meta.next_expected) : null;
-    var lateMin = due && !isNaN(due) ? (now - due) / 60000 : mins;
-    mac.className = "chip " + (mins == null ? "off" : lateMin < 45 ? "good" : lateMin < 180 ? "warn" : "crit");
-    mac.lastChild.textContent = mins == null ? "맥미니 신호 없음" : "맥미니 " + ago(seen) + (due && !isNaN(due) && due > now ? " · 다음 " + t(state.meta.next_expected) : "");
+    mac.className = "chip " + lateness(seen, state.meta && state.meta.next_expected, now);
+    mac.lastChild.textContent = !seen ? "맥미니 신호 없음" : "맥미니 " + ago(seen) + (due && !isNaN(due) && due > now ? " · 다음 " + t(state.meta.next_expected) : "");
     var st = $("stop"); st.hidden = !state.owner; st.className = "stop" + (state.meta && state.meta.stop ? " on" : "");
     $("stop-btn").textContent = state.meta && state.meta.stop ? "▶ 다시 시작" : "⏸ 전체 정지";
     $("stop-text").textContent = state.meta && state.meta.stop ? "정지 중입니다 (" + t(state.meta.stop_changed_at) + "부터). 맥미니는 실행·초안을 멈추고 읽기만 합니다." : "정지하면 맥미니가 다음 폴링부터 실행·초안을 모두 멈춥니다.";
+    var sel = state.teams[state.filter], tb = $("team-stop-btn");
+    tb.hidden = !(multi && sel);
+    if (sel) tb.textContent = (sel.stop ? "▶ " : "⏸ ") + (sel.title || state.filter) + (sel.stop ? " 다시 시작" : "만 정지");
   }
 
   render();
   $("stop-btn").onclick = toggleStop;
+  $("team-stop-btn").onclick = toggleTeamStop;
   if (!window.claude || typeof window.claude.use !== "function") { $("nodb").hidden = false; return; }
   Promise.all([window.claude.use("db"), window.claude.use("user")]).then(function (r) {
     state.db = r[0]; state.user = r[1];
@@ -303,9 +379,12 @@ details summary { cursor: pointer; color: var(--brand); font-weight: 500; }
     var v = $("viewer");
     var p = state.user ? Promise.all([state.user.isOwner(), state.user.can("data.write")]) : Promise.resolve([false, null]);
     p.then(function (x) { state.owner = !!x[0]; state.canWrite = x[1]; v.className = "chip " + (state.owner ? "good" : "off"); v.textContent = state.owner ? "대표님 (승인 가능)" : "읽기 전용"; if (!state.owner) $("ro").hidden = false; render(); });
-    state.db.collection("queue").orderBy("created", "desc").limit(200).onSnapshot(function (snap) { state.queue = snap.docs.map(function (d) { return Object.assign({ id: d.id }, d.data()); }); render(); }, function (e) { $("nodb").textContent = "결재 목록을 읽지 못했습니다 (" + e.code + ")."; $("nodb").hidden = false; });
-    state.db.collection("staff").onSnapshot(function (snap) { state.staff = snap.docs.map(function (d) { return Object.assign({ role: d.id }, d.data()); }).sort(function (a, b) { return (a.order || 99) - (b.order || 99); }); render(); }, function () {});
-    state.db.collection("log").orderBy("day", "desc").limit(3).onSnapshot(function (snap) { state.logs = snap.docs.map(function (d) { return d.data(); }); render(); }, function () {});
+    watchTeam("@root", "");
+    state.db.collection("teams").onSnapshot(function (snap) {
+      state.teams = {}; snap.docs.forEach(function (d) { state.teams[d.id] = d.data(); });
+      Object.keys(state.teams).forEach(function (id) { if (!state.teams[id].default) watchTeam(id, "teams/" + id + "/"); });
+      render();
+    }, function () {});
     state.db.doc("board/meta").onSnapshot(function (snap) { state.meta = snap.exists ? snap.data() : null; render(); }, function () {});
   });
 })();

@@ -4,3 +4,4 @@ inbox/
 *.plist
 !*.plist.template
 __pycache__/
+teams/*/config.env
