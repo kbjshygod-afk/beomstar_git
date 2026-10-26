@@ -10,6 +10,11 @@ expect.json:
      "calls": [{"sha256": "<sha256 of canonical tool_input>", "once": "/path/marker"}],
      "audit": "/path/audit.jsonl"}
 
+Substitute mode (a call with "input"): the arguments are too long to have a model retype them (a draft
+document). The model passes only "hint" (a few short fields that must match exactly) and this hook hands
+Claude Code the real arguments as updatedInput, so what runs is "input", byte for byte. Checked on Claude
+Code 2.1.296 and 2.1.310 (tests/e2e_cost.sh "substitute" proves it on each machine).
+
 canonical(tool_input) = json.dumps(obj, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
 Strings are compared after stripping surrounding whitespace and normalizing CRLF.
 ToolSearch (schema loading only) is always allowed. Python 3.9 compatible.
@@ -71,13 +76,23 @@ def main():
         return block(expect, name, "only %s may be called" % expect.get("tool"))
     digest = sha(args)
     for c in expect.get("calls", []):
-        if c.get("sha256") != digest:
+        full = c.get("input")
+        if isinstance(full, dict):
+            hint = c.get("hint") or {}
+            if not hint or any(canon(args.get(k)) != canon(v) for k, v in hint.items()):
+                continue
+        elif c.get("sha256") != digest:
             continue
         try:
             fd = os.open(c["once"], os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
             os.close(fd)
         except FileExistsError:
             return block(expect, name, "this call was already made once", digest)
+        if isinstance(full, dict):
+            audit(expect, "allow", name, "pinned call, arguments supplied by the guard", c.get("sha256", ""))
+            sys.stdout.write(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "allow",
+                                                                "updatedInput": full}}, ensure_ascii=False))
+            return 0
         audit(expect, "allow", name, "pinned call", digest)
         return 0
     return block(expect, name, "arguments differ from the pinned call (%s)" % digest[:12], digest)

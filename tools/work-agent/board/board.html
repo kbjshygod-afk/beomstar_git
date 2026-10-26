@@ -72,6 +72,7 @@ section { display: grid; gap: 12px; min-width: 0; }
 .meta { font-size: 0.8rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 12px; }
 .kv { display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 4px 10px; font-size: 0.9rem; }
 .kv dt { color: var(--muted); } .kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; white-space: pre-wrap; }
+.kv dd.long { max-height: 260px; overflow: auto; font-family: var(--mono); font-size: 0.8rem; background: var(--code-bg); padding: 6px 8px; border-radius: 6px; }
 .actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .actions input { flex: 1 1 180px; }
 .risk { font-size: 0.82rem; }
@@ -139,7 +140,7 @@ details summary { cursor: pointer; color: var(--brand); font-weight: 500; }
     <div id="log" class="log"></div>
   </section>
 
-  <p class="small">결제·삭제·권한 변경·외부 발송은 이 전광판으로 실행되지 않습니다. 슬랙·메일 건은 승인해도 초안까지만 준비됩니다. 시각은 한국 시간.</p>
+  <p class="small">결제·삭제·권한 변경·외부 발송은 이 전광판으로 실행되지 않습니다. 슬랙·메일 건은 승인해도 초안까지만 준비되고, Drive는 초안 폴더에 새 파일만 만듭니다. 시각은 한국 시간.</p>
 </main>
 
 <script>
@@ -149,6 +150,7 @@ details summary { cursor: pointer; color: var(--brand); font-weight: 500; }
     slack_draft: { label: "슬랙 답장 초안", risk: "warn", riskText: "발송 아님 — 승인 시 초안만 스레드에 넣음" },
     notice_docx: { label: "공지 문서 초안", risk: "good", riskText: "파일 생성만 (발송 없음)" },
     notion_page: { label: "노션 기록", risk: "good", riskText: "되돌릴 수 있음" },
+    drive_draft: { label: "Drive 초안 저장", risk: "good", riskText: "초안 폴더에 새 파일만 만듦 (덮어쓰기·발송 없음, 휴지통으로 되돌림)" },
     info: { label: "보고", risk: "off", riskText: "실행 없음 — 확인만" }
   };
   var STATUS = {
@@ -183,6 +185,12 @@ details summary { cursor: pointer; color: var(--brand); font-weight: 500; }
     if (q.kind === "calendar_event") { rows.push(["제목", p.summary]); rows.push(["시작", t(p.startTime)]); rows.push(["끝", t(p.endTime)]); if (p.description) rows.push(["설명", p.description]); }
     else if (q.kind === "slack_draft") { rows.push(["대상", (p.channel_id || "") + (p.thread_ts ? " · 스레드 " + p.thread_ts : "")]); rows.push(["초안", p.message]); }
     else if (q.kind === "notice_docx") { rows.push(["문서", p.title]); if (p.summary) rows.push(["요지", p.summary]); if (p.path) rows.push(["저장 위치", p.path]); }
+    else if (q.kind === "drive_draft") {
+      // the file name office.py gives it: [AI초안] <title>_<YYMMDD of the proposal, KST>
+      rows.push(["파일", "[AI초안] " + p.title + "_" + kstDay(new Date(q.created || Date.now())).slice(2).replace(/-/g, "")]);
+      rows.push(["형식", p.format === "sheet" ? "구글 시트 (CSV에서 변환)" : "구글 문서"]);
+      rows.push(["내용", p.content, "long"]); rows.push(["길이", String(p.content || "").length + "자"]);
+    }
     else { Object.keys(p).sort().forEach(function (k) { rows.push([k, typeof p[k] === "string" ? p[k] : JSON.stringify(p[k])]); }); }
     return rows;
   }
@@ -195,7 +203,7 @@ details summary { cursor: pointer; color: var(--brand); font-weight: 500; }
     c.appendChild(head);
     c.appendChild(el("h3", null, q.title || "(제목 없음)"));
     if (q.reason) c.appendChild(el("p", "small", q.reason));
-    var dl = el("dl", "kv"); payloadRows(q).forEach(function (r) { if (r[1] == null || r[1] === "") return; dl.appendChild(el("dt", null, r[0])); dl.appendChild(el("dd", null, String(r[1]))); }); c.appendChild(dl);
+    var dl = el("dl", "kv"); payloadRows(q).forEach(function (r) { if (r[1] == null || r[1] === "") return; dl.appendChild(el("dt", null, r[0])); dl.appendChild(el("dd", r[2] || null, String(r[1]))); }); c.appendChild(dl);
     var risk = el("p", "risk"); risk.appendChild(status(k.risk === "good" ? "done" : k.risk === "warn" ? "pending" : "off")); risk.lastChild.lastChild.textContent = k.riskText; c.appendChild(risk);
     var meta = el("div", "meta");
     meta.appendChild(el("span", null, "올림 " + t(q.created)));

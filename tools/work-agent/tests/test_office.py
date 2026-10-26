@@ -657,6 +657,26 @@ class CallGuardTests(Base):
         self.assertEqual(self.hook(e, "ArtifactData", args), 2, "only once")
         self.assertEqual(len(rd(os.path.join(self.tmp, "a.log")).splitlines()), 5)
 
+    def test_substitute_mode_hands_over_the_real_arguments_once(self):
+        full = {"title": "[AI초안] 검산표_261016", "parentId": "FOLDER0001", "textContent": "a,b\n1,2\n" * 300, "contentMimeType": "text/csv"}
+        hint = {"title": full["title"], "parentId": "FOLDER0001"}
+        e = os.path.join(self.tmp, "expect.json")
+        jw(e, {"tool": "mcp__x__create_file", "calls": [{"sha256": call_guard.sha(full), "once": os.path.join(self.tmp, "once"),
+                                                         "input": full, "hint": hint}], "audit": os.path.join(self.tmp, "a.log")})
+
+        def run(args):
+            p = subprocess.run([sys.executable, os.path.join(ROOT, "call_guard.py"), e], capture_output=True, text=True,
+                               input=json.dumps({"tool_name": "mcp__x__create_file", "tool_input": args}))
+            return p.returncode, p.stdout
+        self.assertEqual(run({"title": full["title"], "parentId": "OTHER"})[0], 2, "the hint must match")
+        self.assertEqual(run({"parentId": "FOLDER0001"})[0], 2, "every hint field")
+        rc, out = run({"title": " " + full["title"], "parentId": "FOLDER0001", "textContent": "typed by the model"})
+        self.assertEqual(rc, 0)
+        self.assertEqual(json.loads(out)["hookSpecificOutput"], {"hookEventName": "PreToolUse", "permissionDecision": "allow", "updatedInput": full})
+        self.assertEqual(run(hint)[0], 2, "only once")
+        jw(e, {"tool": "mcp__x__create_file", "calls": [{"sha256": "x", "once": os.path.join(self.tmp, "once2"), "input": full, "hint": {}}]})
+        self.assertEqual(run({})[0], 2, "no hint, no substitution")
+
     def test_fails_closed(self):
         p = subprocess.run([sys.executable, os.path.join(ROOT, "call_guard.py"), os.path.join(self.tmp, "missing.json")],
                            capture_output=True, text=True, input="{}")
@@ -676,6 +696,105 @@ class PollWiringTests(Base):
         log = self.poll("1")
         self.assertIn("office: staff=0 pull=ok", log)
         self.assertTrue(os.path.exists(self.db))
+
+
+def draft(**kw):
+    p = {"kind": "drive_draft", "key": "겨울2차:cost-sheet-1", "title": "겨울2차 원가 검산표 2건 (시트 초안)", "reason": "검산 결과 전체",
+         "payload": {"title": "겨울2차 원가 검산표", "format": "sheet", "content": "시즌,행,메뉴\n겨울2차,10,빈 메뉴\n겨울2차,-3,음수 행\n"}}
+    p.update(kw)
+    return p
+
+
+class DriveDraftTests(Base):
+    FOLDER = "FAKEFOLDER0001"
+    CREATE = "mcp__claude_ai_Google_Drive__create_file"
+
+    def setUp(self):
+        super().setUp()
+        self.created = os.path.join(self.tmp, "created.jsonl")
+        os.environ.update({"WORK_AGENT_DRIVE_DRAFT_FOLDER": self.FOLDER, "FAKE_DRIVE_CREATED": self.created})
+
+    def cost_role(self):
+        return self.cfg().role("cost")
+
+    def test_payload_rules(self):
+        role, t = self.cost_role(), office.now()
+        ok = draft()
+        self.assertEqual(office.validate_proposal(role, ok, t), "")
+        bad = [
+            (dict(ok["payload"], extra="x"), "키"),
+            (dict(ok["payload"], format="pdf"), "format"),
+            (dict(ok["payload"], title="../위로"), "경로"),
+            (dict(ok["payload"], title=""), "title"),
+            (dict(ok["payload"], content=""), "비어"),
+            (dict(ok["payload"], content="x" * (office.DRAFT_MAX + 1)), "너무 김"),
+            (dict(ok["payload"], content="참고 https://evil.example"), "링크"),
+            (dict(ok["payload"], content="a,b\n1,=IMPORTDATA(\"x\")\n"), "수식"),
+            (dict(ok["payload"], content="a\n +SUM(A1)\n"), "수식"),
+            (dict(ok["payload"], content="a\n@x\n"), "수식"),
+            (dict(ok["payload"], content="a\n-cmd\n"), "수식"),
+        ]
+        for payload, want in bad:
+            self.assertIn(want, office.validate_proposal(role, dict(ok, payload=payload), t), payload)
+        self.assertEqual(office.validate_proposal(role, dict(ok, payload=dict(ok["payload"], format="doc", content="=제목 줄도 문서에선 글자")), t), "")
+        self.assertIn("종류", office.validate_proposal(self.cfg().role("gate"), ok, t), "only roles that list drive_draft")
+
+    def test_sheet_cells_from_code_never_start_a_formula(self):
+        self.assertEqual([office.sheet_cell(v) for v in ("=IMPORTXML(1)", " +1", "@x", "-cmd", "-3", "-1,200", "-5%", 7, None, "보통", "'이름' 차이")],
+                         ["'=IMPORTXML(1)", "' +1", "'@x", "'-cmd", "-3", "-1,200", "-5%", "7", "", "보통", "''이름' 차이"])
+
+    def execute(self, prop, **env):
+        os.environ.update(env)
+        cfg = self.cfg()
+        prop = dict(prop, id="p-20261016-083000-cost-1", created="2026-10-15T23:30:00Z")
+        return office.execute(cfg, prop)
+
+    def test_executor_creates_a_new_file_with_the_exact_content_in_the_drafts_folder(self):
+        status, result, reached = self.execute(draft())
+        self.assertEqual((status, reached), ("ok", True), result)
+        self.assertEqual(result, "초안 저장 https://docs.google.com/document/d/fakedoc01/edit")
+        ran = [json.loads(l) for l in rd(self.created).splitlines()]
+        self.assertEqual(ran, [{"title": "[AI초안] 겨울2차 원가 검산표_261016", "parentId": self.FOLDER,
+                                "textContent": draft()["payload"]["content"], "contentMimeType": "text/csv"}],
+                         "the model only sent title+parentId; the guard supplied the rest")
+        call = [c for c in self.fake_calls() if c.get("tool") == self.CREATE]
+        self.assertEqual(call[0]["ran"], [self.CREATE])
+        status, result, _ = self.execute(dict(draft(), payload=dict(draft()["payload"], format="doc", content="첫 줄\n둘째 줄")))
+        self.assertEqual(json.loads(rd(self.created).splitlines()[-1])["contentMimeType"], "text/plain")
+
+    def test_executor_refuses_without_a_folder_and_reports_tool_trouble(self):
+        status, result, reached = self.execute(draft(), WORK_AGENT_DRIVE_DRAFT_FOLDER="")
+        self.assertEqual((status, reached, os.path.exists(self.created)), ("failed", False, False))
+        self.assertIn("초안 폴더 설정 없음", result)
+        os.environ["WORK_AGENT_DRIVE_DRAFT_FOLDER"] = self.FOLDER
+        status, result, reached = self.execute(draft(), FAKE_DRIVE_CREATE_MODE="wrong_parent")
+        self.assertEqual((status, reached), ("failed", True))
+        self.assertIn("초안 폴더가 아닌 곳", result)
+        status, result, reached = self.execute(draft(), FAKE_DRIVE_CREATE_MODE="error")
+        self.assertEqual(status, "failed")
+        self.assertIn("Drive 도구 tool_error", result)
+
+    def test_a_model_that_tampers_with_the_hint_runs_nothing(self):
+        status, result, reached = self.execute(draft(), FAKE_WRITER="tamper_only")
+        self.assertEqual((status, reached, os.path.exists(self.created)), ("failed", False, False), result)
+        status, result, reached = self.execute(draft(), FAKE_WRITER="tamper_then_honest")
+        ran = [json.loads(l) for l in rd(self.created).splitlines()]
+        self.assertEqual((status, [r["parentId"] for r in ran]), ("ok", [self.FOLDER]), "the honest retry runs, the other folder never")
+
+    def test_push_approve_execute_report(self):
+        self.propose(draft(), role="cost")
+        pid = self.pids()[0]
+        self.cycle()
+        self.assertEqual(self.dbdoc("queue/" + pid)["data"]["kind"], "drive_draft")
+        self.approve(pid)
+        rc, out, _ = self.cycle()
+        self.assertIn("approved=1 executed=1 failed=0", out)
+        q = self.dbdoc("queue/" + pid)["data"]
+        self.assertEqual((q["status"], q["result"]), ("done", "초안 저장 https://docs.google.com/document/d/fakedoc01/edit"))
+        self.assertEqual(len(rd(self.created).splitlines()), 1)
+        self.dbset("queue/" + pid, {"status": "approved"})
+        self.cycle()
+        self.assertEqual(len(rd(self.created).splitlines()), 1, "a replayed approval never makes a second file")
 
 
 class CostStaffTests(Base):
@@ -818,6 +937,25 @@ class CostStaffTests(Base):
         text = self.props()[0]["payload"]["text"]
         self.assertNotIn("evil", text)
         self.assertIn("- 행: 6", text)
+
+    def test_with_a_drafts_folder_the_findings_also_come_as_a_sheet_draft(self):
+        ai = json.loads(rd(self.ai))
+        ai["proposals"].append({"kind": "drive_draft", "key": "겨울2차:cost-model-draft", "title": "모델 초안", "reason": "",
+                                "payload": {"title": "모델", "format": "doc", "content": "모델이 쓴 글"}})
+        jw(self.ai, ai)
+        self.staff(WORK_AGENT_DRIVE_DRAFT_FOLDER="FAKEFOLDER0001")
+        p = self.props()
+        sheets = [x for x in p if x["kind"] == "drive_draft"]
+        self.assertEqual([x["title"] for x in sheets], ["겨울2차 원가 검산표 2건 (시트 초안)"], "code's sheet only, not the model's draft")
+        rows = sheets[0]["payload"]["content"].splitlines()
+        self.assertEqual(rows[0], "시즌,행,메뉴,구분,오류 종류,뜻,내용,심각도,확인")
+        self.assertEqual(rows[1].split(",")[:5], ["겨울2차", "6", "빈 메뉴 (HOT)", "HOT / M", "재료 미입력"])
+        self.assertEqual(len(rows), 3)
+        self.assertEqual(sheets[0]["payload"]["format"], "sheet")
+
+    def test_without_a_drafts_folder_there_is_no_sheet_draft(self):
+        self.staff()
+        self.assertEqual([x for x in self.props() if x["kind"] == "drive_draft"], [])
 
     def test_cost_runs_at_0930_in_the_cycle(self):
         roster = self.roster_without("gate")

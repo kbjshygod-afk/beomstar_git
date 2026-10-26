@@ -27,6 +27,10 @@ TOOLS = [
      "inputSchema": {"type": "object", "properties": {"fileId": {"type": "string"}}, "required": ["fileId"]}},
     {"name": "read_file_content", "description": "Returns a natural language representation of a Drive file (fake).",
      "inputSchema": {"type": "object", "properties": {"fileId": {"type": "string"}}, "required": ["fileId"]}},
+    {"name": "create_file", "description": "Creates a file in Google Drive (fake). Folders via mimeType.",
+     "inputSchema": {"type": "object", "properties": {"title": {"type": "string"}, "parentId": {"type": "string"},
+                                                      "textContent": {"type": "string"}, "contentMimeType": {"type": "string"}},
+                     "required": ["title"]}},
     {"name": "create_event", "description": "Creates a calendar event (fake).",
      "inputSchema": {"type": "object", "properties": {"summary": {"type": "string"}, "startTime": {"type": "string"},
                                                       "endTime": {"type": "string"}, "description": {"type": "string"}},
@@ -67,6 +71,11 @@ def call(name, args):
             body = {"content": base64.b64encode(f.read()).decode(), "id": args.get("fileId", ""),
                     "mimeType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "title": "fake.xlsx"}
         return {"content": [{"type": "text", "text": json.dumps(body)}], "isError": False}
+    if name == "create_file":
+        body = {"id": "fakefile%d" % (abs(hash(args.get("title", ""))) % 100000), "title": args.get("title", ""),
+                "parentId": args.get("parentId", ""), "mimeType": "application/vnd.google-apps.document",
+                "viewUrl": "https://docs.google.com/document/d/fakefile/edit"}
+        return {"content": [{"type": "text", "text": json.dumps(body, ensure_ascii=False)}], "isError": False}
     if name == "read_file_content":
         with open(os.environ["FAKE_DRIVE_TEXT"]) as f:
             body = {"fileContent": f.read(), "title": "plan.xlsx", "viewUrl": "about:blank"}

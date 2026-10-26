@@ -18,6 +18,8 @@ the PreToolUse hook from the settings file on a simulated tool call and prints s
   FAKE_DRIVE_FILE = file served by a *__download_file_content tool (base64 JSON, like the Drive connector)
   FAKE_DRIVE_SPILL = dir: answer that download the way Claude Code answers an oversized result (saved to a
                      file in this dir, the tool result only names the path)
+  FAKE_DRIVE_CREATED = file that receives the arguments each *__create_file call actually ran with
+  FAKE_DRIVE_CREATE_MODE = ok | wrong_parent | error
 """
 import base64
 import json
@@ -45,11 +47,18 @@ def arg_after(flag):
 
 
 def run_hook(settings, name, tool_input):
+    """-> (exit code, stderr, updatedInput or None). Like Claude Code, an allowed call runs with updatedInput."""
     cmd = settings["hooks"]["PreToolUse"][0]["hooks"][0]["command"]
     p = subprocess.run(cmd, shell=True, input=json.dumps({"hook_event_name": "PreToolUse", "tool_name": name,
                                                           "tool_input": tool_input}),
                        capture_output=True, text=True)
-    return p.returncode, p.stderr
+    updated = None
+    if p.returncode == 0 and p.stdout.strip():
+        try:
+            updated = json.loads(p.stdout)["hookSpecificOutput"]["updatedInput"]
+        except (ValueError, KeyError, TypeError):
+            pass
+    return p.returncode, p.stderr, updated
 
 
 def slack_answer(ch):
@@ -209,6 +218,17 @@ def tool_answer(name, inp):
             return False, ("Error: result (%d characters across 1 line) exceeds maximum allowed tokens. Output has been saved to %s.\n"
                            "Format: Plain text\nSearch within the file for specific content." % (len(body), path))
         return False, body
+    if name.endswith("__create_file"):
+        path = os.environ.get("FAKE_DRIVE_CREATED")
+        if path:
+            with open(path, "a") as f:
+                f.write(json.dumps(inp, ensure_ascii=False) + "\n")
+        mode = os.environ.get("FAKE_DRIVE_CREATE_MODE", "ok")
+        if mode == "error":
+            return True, "Error: insufficient permissions for the parent folder"
+        return False, json.dumps({"id": "fakedoc01", "title": inp.get("title", ""), "mimeType": "application/vnd.google-apps.document",
+                                  "parentId": "SOMEWHEREELSE" if mode == "wrong_parent" else inp.get("parentId", ""),
+                                  "viewUrl": "https://docs.google.com/document/d/fakedoc01/edit"}, ensure_ascii=False)
     if name.endswith("__create_event"):
         if os.environ.get("FAKE_CAL_MODE", "ok") == "error":
             return True, "Error: calendar unavailable"
@@ -232,6 +252,8 @@ def writer(settings_path):
         bad = dict(pinned)
         if "channel_id" in bad:
             bad["channel_id"] = "C0EVIL0001"
+        elif "parentId" in bad:  # a Drive draft: the model tries another folder
+            bad["parentId"] = "EVILFOLDER01"
         elif "summary" in bad:
             bad["summary"] = bad["summary"] + " (tampered)"
         else:
@@ -252,11 +274,11 @@ def writer(settings_path):
     for i, (name, inp) in enumerate(calls):
         uid = "toolu_fake_%d" % i
         emit({"type": "assistant", "message": {"content": [{"type": "tool_use", "id": uid, "name": name, "input": inp}]}})
-        rc, err = run_hook(settings, name, inp)
+        rc, err, updated = run_hook(settings, name, inp)
         if rc == 2:
             text, is_err = "PreToolUse:%s hook error: [guard]: %s" % (name, err), True
         else:
-            is_err, text = tool_answer(name, inp)
+            is_err, text = tool_answer(name, updated if updated is not None else inp)
             ran.append(name)
             if name == "ArtifactData" and inp.get("action") in os.environ.get("FAKE_DROP_RESULT", "").split(","):
                 log({"mode": "writer", "tool": tool, "ran": ran, "attempted": [c[0] for c in calls], "dropped": True})

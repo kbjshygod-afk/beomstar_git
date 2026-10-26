@@ -81,7 +81,8 @@
         "Google_Drive__get_file_metadata"
       ],
       "proposal_kinds": [
-        "info"
+        "info",
+        "drive_draft"
       ],
       "max_proposals_per_run": 8,
       "desk": "cost"
