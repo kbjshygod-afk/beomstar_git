@@ -21,6 +21,7 @@
 | `office.py`, `office.sh` | (3단계) 사무실: 직원 실행 → 제안 검증·저장 → 전광판 결정 읽기 → 승인 건 실행 → 상태·결과 쓰기. `poll.sh`가 매 폴링 끝에 `office.sh cycle` 호출(`WORK_AGENT_OFFICE=1`) |
 | `call_guard.py` | (3단계) 고정 호출 훅. 코드가 정한 인자(sha256)로 도구 1개를 1회 부르는 것만 허용 |
 | `staff/roster.json`, `staff/*.md` | (3단계) 직원 명단과 역할별 지시문 |
+| `TEAM_PLAN.md` | R&D AI팀 설계(직원 8명 + 사무보조)와 겨울 2차 파일럿·채용 일정 |
 | `board/board.html` | (3단계) 전광판 페이지 원본(claude.ai 아티팩트로 게시) |
 | `desks.py`, `pixel_office.sh`, `pixel/` | (3단계) 픽셀 사무실: 책상 폴더·기록 정리, Pixel Agents 설정 합치기·배치 설치, 배치 생성기와 결과(`layout-office.json`) |
 | `tests/` | 회귀 시험(`test_work_agent.py`, `test_office.py`, 모델·네트워크 없이) · 실제 claude 끝까지 시험(`e2e_real_claude.sh` 가짜 슬랙, `e2e_office.sh` 실제 전광판 + 가짜 캘린더) |

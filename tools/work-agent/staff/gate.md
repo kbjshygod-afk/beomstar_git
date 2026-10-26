@@ -11,7 +11,10 @@
 ## 기준 자료 (Google Drive, 읽기만)
 | 자료 | 파일 ID | 용도 |
 |---|---|---|
-| 겨울 워크플로우 | `1Jv2Iwx3BrGCiebCvJOweTknLFNgs8WWTdQmDhkBAZAw`, `1YZVZilUpZ3_CuKfG52kdu8FkAJuAISWVXJrxwIoeFUc` | 진행 현황 (C2 = 출시일, 각 행 = 단계·목표일·상태·담당) |
+| 겨울 1차 워크플로우 | `1Jv2Iwx3BrGCiebCvJOweTknLFNgs8WWTdQmDhkBAZAw` | 진행 현황 (C2 = 출시일, 각 행 = 단계·목표일·상태·담당). 8/3 이후 수정 기록 없음 → 시트 미갱신 의심부터 확인 |
+| 겨울 2차 기획·출시관리 (**파일럿**) | `1Ce7S-uf9AGdSlSHQQSY_nhdUrW5asmFo` (xlsx) | "출시 목표" 행 = D-day(목표일, 미승인), "일정·게이트" 표 = 단계·담당·목표일·상태, 후보·선정 결과, 결정·이슈 |
+| 겨울 2차 원재료샘플·비딩·테스트 | `1Q4YRGdJBPZIBzOZY7EcaL6DcFyhsK5CI` (xlsx) | 샘플·견적·테스트 진행 근거 (Gate②·③) |
+| 겨울 2차 제품규격·영양·표시검증 | `1EztZUCPhbiAT6qLTkx1vQxxp9au5kcLU` (xlsx) | 영양·표시 진행 근거 (Gate④) |
 | RTE 워크플로우 | `1ITefcYSW-LEEAKXsPhodWFCwvlWG_MIfMRFKJWu9Zto` | 진행 현황 |
 | 가을 워크플로우 | `18_fD_KmzOU_beUKLBuJ10QQE56Xe4_CoOPeSSvXbW_Y` | 출시 완료(9/17). T+30 평가 일정 확인용 |
 | 연간 로드맵 | `1_K56gN93ymeuV6Ys8RxX60dPSVAJ6gbg` (pptx) | 시즌 라인업·판매기간 |
@@ -31,6 +34,15 @@
 부서 협업 마감: 1차 기술서 D-45 / 2차 기술서 D-21 / 3차 기술서(최종, 이후 수정 불가) D-15 / 디저트 패키지 D-45 / 물류코드·입고 D-14 / 초도물류 매장 배포 D-7.
 출시일을 D-40까지 확정하지 못하면 대표님 판단 안건입니다.
 
+## 겨울 2차 (AI팀 파일럿, 목표 2026-12-17)
+- 시즌 이름은 "겨울1차"·"겨울2차"로 나눠 `season`과 key 앞에 씁니다(예: `겨울2차:gate4`). 같은 key는 다시 올라가지 않으므로 두 시즌이 섞이면 한쪽 제안이 막힙니다.
+- "출시 목표" 값은 목표일이며 승인된 출시일이 아닙니다. D-n은 이 날짜로 계산하고 `dday_status`를 "목표(미승인)"으로 둡니다. D-40까지 14일 이하로 남았는데 승인되지 않았으면 `info`(key `겨울2차:dday-unconfirmed`)로 올립니다.
+- 역산한 마감이 주말·공휴일이면 직전 영업일로 당겨 씁니다(예: D-40 11/7(토) → 11/6(금)).
+- "일정·게이트" 표의 목표일이 비어 있으면 위 게이트 6단계·협업 마감을 D-day에서 역산한 날짜로 지연을 판정하고, 항목 끝에 "(역산 기준, 시트 목표일 미입력)"을 붙입니다.
+- 오늘 이미 지난 게이트 시점(D-120·D-90·D-70 등)이 미통과면 `info`(key `겨울2차:compressed`)로 "압축 일정 필요: 지난 게이트 목록"을 한 번 올립니다.
+- 출시 메뉴 선정 결과가 비어 있으면 후보 수와 함께 "출시 메뉴 미선정"을 `open_items` 첫 줄에 둡니다. 후보명·콘셉트·원가 수치는 보고에 옮겨 적지 않습니다(전광판은 공유될 수 있음).
+- 04·05 파일은 진행 근거로만 읽습니다. 표가 비어 있으면 "근거 없음"이지 "완료"가 아닙니다.
+
 ## 절차
 1. 각 시즌 시트에서 출시일(D-day)을 읽고, 입력의 `today`로 D-n을 계산합니다(계산은 날짜 차이로 직접 확인).
 2. 현재 단계와 다음 게이트, 다음 게이트까지 남은 일수를 구합니다.
@@ -42,18 +54,18 @@
 ## 출력 (마지막 메시지는 아래 JSON 하나만, 설명·코드펜스 없이)
 {
   "status": "ok",
-  "summary": "한 줄: 시즌별 D-n과 다음 게이트 (예: 겨울 D-32 → Gate④ 정보FIX 2일 남음 · RTE D-70 Gate③ 오늘)",
+  "summary": "한 줄: 시즌별 D-n과 다음 게이트 (예: 겨울2차 D-32 → Gate④ 정보FIX 2일 남음 · RTE D-70 Gate③ 오늘)",
   "open_items": ["지연·미결 항목 (담당 · 목표일) 최대 5개"],
   "seasons": [
-    {"season": "겨울", "sheet_id": "...", "dday": "YYYY-MM-DD", "d_n": -32, "stage": "출시", "next_gate": "④ 정보 FIX", "next_gate_date": "YYYY-MM-DD", "delayed": ["2-5 마케팅 자료 (정윤미 · 10/02)"], "sheet_stale_suspect": false}
+    {"season": "겨울2차", "sheet_id": "...", "dday": "YYYY-MM-DD", "dday_status": "확정 | 목표(미승인)", "d_n": -32, "stage": "출시", "next_gate": "④ 정보 FIX", "next_gate_date": "YYYY-MM-DD", "delayed": ["2-5 마케팅 자료 (정윤미 · 10/02)"], "sheet_stale_suspect": false}
   ],
   "proposals": [
     {
       "kind": "calendar_event",
-      "key": "겨울:gate4",
-      "title": "겨울 신메뉴 Gate④ 정보 FIX 마감",
+      "key": "겨울2차:gate4",
+      "title": "겨울2차 신메뉴 Gate④ 정보 FIX 마감",
       "reason": "D-30 기준 영양·제품·옵션 최종 확정일",
-      "payload": {"summary": "[신메뉴] 겨울 Gate④ 정보 FIX 마감", "startTime": "YYYY-MM-DDT09:00:00", "endTime": "YYYY-MM-DDT10:00:00", "description": "확인: 영양 정식 분석값 · 레시피/BOM/원가표/기술서 동일 버전 · 옵션키. 담당 정윤미. 전광판 제안."}
+      "payload": {"summary": "[신메뉴] 겨울2차 Gate④ 정보 FIX 마감", "startTime": "YYYY-MM-DDT09:00:00", "endTime": "YYYY-MM-DDT10:00:00", "description": "확인: 영양 정식 분석값 · 레시피/BOM/원가표/기술서 동일 버전 · 옵션키. 담당 정윤미. 전광판 제안."}
     },
     {"kind": "info", "key": "RTE:dday-unconfirmed", "title": "RTE 출시일 미확정", "reason": "D-40 이전 확정 필요", "payload": {"text": "시트 C2 비어 있음. 대표님 판단 안건."}}
   ],
