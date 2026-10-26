@@ -63,6 +63,7 @@ KINDS = {"calendar_event", "info", "slack_draft", "notice_docx", "notion_page", 
 EXECUTABLE = {"calendar_event", "info", "drive_draft"}  # kinds this version executes after approval; others stay reports
 DRAFT_MAX = 20000  # characters of one draft file
 FORMULA_START = ("=", "+", "@", "\t", "\r")
+NEG_NUM_RE = re.compile(r"^-\d[\d,.]*%?$")
 PUSH_MAX = 40
 
 
@@ -359,8 +360,14 @@ def validate_payload(kind, p, t_now):
     return "이 버전에서 제안할 수 없는 종류: %s" % kind
 
 
+def formula_like(v):
+    """A cell Sheets would read as a formula (=IMPORTXML(...) would run). A plain negative number is fine."""
+    v = v.lstrip(" ")
+    return v.startswith(FORMULA_START) or (v.startswith("-") and not NEG_NUM_RE.match(v))
+
+
 def sheet_problem(text):
-    """CSV that Drive turns into a Google Sheet: a cell must not start like a formula (=IMPORTXML(...) would run)."""
+    """CSV that Drive turns into a Google Sheet: a cell must not start like a formula."""
     try:
         rows = list(csv.reader(io.StringIO(text)))
     except csv.Error:
@@ -369,9 +376,8 @@ def sheet_problem(text):
         return "CSV가 너무 큼(2000행·40열까지)"
     for r in rows:
         for c in r:
-            v = c.lstrip(" ")
-            if v.startswith(FORMULA_START) or (v.startswith("-") and not re.match(r"^-\d[\d,.]*%?$", v)):
-                return "수식으로 읽힐 칸: %s" % v[:20]
+            if formula_like(c):
+                return "수식으로 읽힐 칸: %s" % c.lstrip(" ")[:20]
     return ""
 
 
@@ -379,10 +385,7 @@ def sheet_cell(v):
     """A value for a code-built CSV: text that would start a formula gets a leading apostrophe, which Sheets
     keeps as a text mark and hides (checked on Drive 2026-10-26); a value that starts with one gets a second."""
     v = "" if v is None else str(v)
-    lead = v.lstrip(" ")
-    if lead.startswith(FORMULA_START + ("'",)) or (lead.startswith("-") and not re.match(r"^-\d[\d,.]*%?$", lead)):
-        return "'" + v
-    return v
+    return "'" + v if formula_like(v) or v.lstrip(" ").startswith("'") else v
 
 
 def validate_proposal(role_cfg, p, t_now):
@@ -445,8 +448,9 @@ def key_state(cfg, role, t):
     return blocked, rejected[:20]
 
 
-def record_staff_output(cfg, role_cfg, output):
-    """Validate a staff run's JSON, store local proposals and the staff status. Returns (proposed, skipped, notes)."""
+def record_staff_output(cfg, role_cfg, output, checked=False):
+    """Validate a staff run's JSON, store local proposals and the staff status. Returns (proposed, skipped, notes).
+    checked: code already read the role's data, so errors about a missing extra are not a blocked desk."""
     role = role_cfg["role"]
     t = now()
     if not isinstance(output, dict) or output.get("status") != "ok":
@@ -484,7 +488,7 @@ def record_staff_output(cfg, role_cfg, output):
     errors = as_list(output.get("errors"))
     open_items = as_list(output.get("open_items"))
     status_doc = {"title": role_cfg.get("title", role), "emoji": role_cfg.get("emoji", ""), "order": role_cfg.get("order", 99),
-                  "status": "blocked" if errors and not open_items and not proposed and not output.get("checked") else "idle",
+                  "status": "blocked" if errors and not open_items and not proposed and not checked else "idle",
                   "last_run": utc_z(t), "summary": norm(output.get("summary", ""))[:200], "open_items": open_items,
                   "errors": errors, "proposed_last_run": proposed, "dirty": True}
     write_json(os.path.join(cfg.office, "staff", role + ".json"), status_doc)
@@ -497,7 +501,6 @@ def record_staff_output(cfg, role_cfg, output):
 
 # Claude Code's notice for an oversized tool result; only its own first line counts (a file title could carry the words)
 SPILL_RE = re.compile(r"Error: result \([^)\n]*\) exceeds maximum allowed tokens\. Output has been saved to (/\S+?\.txt)\.?\s")
-COST_SOURCE_RE = re.compile(r"^([0-9A-Za-z가-힣_]{1,20})=([A-Za-z0-9_-]{10,100})(?:,([A-Za-z0-9_-]{10,100}))?$")
 CHECK_NAMES = {c: (short, means) for c, short, means in cost_check.CHECKS}
 UNIT_PRICE_RE = re.compile(r"\d[\d,.]*\s*원\s*/\s*(?:kg|g|ml|l|ea|bag|개|봉|팩)(?![A-Za-z])", re.I)
 
@@ -507,17 +510,24 @@ def mask_unit_prices(text):
     return UNIT_PRICE_RE.sub("[단가]", text) if isinstance(text, str) else text
 
 
-def cost_sources():
-    """WORK_AGENT_COST_SOURCES="겨울2차=<MASTER-format file id>[,<plan file id>] ..." -> ([(season, master, plan)], bad entries).
+def season_sources(var, max_ids):
+    """<var>="겨울2차=<file id>[,<file id>…] …" -> ([(season, [ids])], bad entries).
     The ids stay in config.env, not in this public repo."""
     out, bad = [], 0
-    for item in env("WORK_AGENT_COST_SOURCES", "").split():
-        m = COST_SOURCE_RE.match(item)
-        if m:
-            out.append((m.group(1), m.group(2), m.group(3) or ""))
+    for item in env(var, "").split():
+        m = re.match(r"^([0-9A-Za-z가-힣_]{1,20})=([A-Za-z0-9_,-]+)$", item)
+        ids = m.group(2).split(",") if m else []
+        if m and 1 <= len(ids) <= max_ids and all(FILE_ID_RE.match(i) for i in ids):
+            out.append((m.group(1), ids))
         else:
             bad += 1
     return out, bad
+
+
+def cost_sources():
+    """WORK_AGENT_COST_SOURCES="겨울2차=<MASTER-format file id>[,<plan file id>] ..." -> ([(season, master, plan)], bad entries)."""
+    out, bad = season_sources("WORK_AGENT_COST_SOURCES", 2)
+    return [(s, ids[0], ids[1] if len(ids) > 1 else "") for s, ids in out], bad
 
 
 def spilled_file(path):
@@ -579,7 +589,7 @@ def fetch_drive_text(cfg, file_id, label):
     return data["fileContent"], norm(data.get("title", ""))[:80], ""
 
 
-def cost_precheck(cfg):
+def cost_precheck(cfg, role_cfg):
     results, errors = [], []
     sources, bad = cost_sources()
     if bad:
@@ -653,12 +663,27 @@ def cost_sheet(r):
             "payload": {"title": "%s 원가 검산표" % r["season"], "format": "sheet", "content": buf.getvalue()}}
 
 
+def ai_part(output):
+    """The model's output of a code-assisted run, only when it finished (status ok)."""
+    return output if isinstance(output, dict) and output.get("status") == "ok" else {}
+
+
+def status_text(output):
+    return "결과 상태 %s" % (output.get("status") if isinstance(output, dict) else "?")
+
+
+def info_proposals(ai):
+    """A code-assisted model reports only: drafts and other actions come from code."""
+    props = ai.get("proposals")
+    return [p for p in props if isinstance(p, dict) and p.get("kind") == "info"] if isinstance(props, list) else []
+
+
 def cost_merge(cfg, role_cfg, pre, output, err):
     """Code findings + the model's notes -> one staff output (status ok). Without the model the findings still go up."""
     rejected = {k for k, _, _ in key_state(cfg, role_cfg["role"], now())[1]}
-    ai = output if isinstance(output, dict) and output.get("status") == "ok" else {}
+    ai = ai_part(output)
     notes = ai.get("notes") if isinstance(ai.get("notes"), dict) else {}
-    cards, summary = [], []
+    cards, summary, errors = [], [], list(pre["errors"])
     for r in pre["results"]:
         counts = []
         for check, short, _ in cost_check.CHECKS:
@@ -677,21 +702,19 @@ def cost_merge(cfg, role_cfg, pre, output, err):
             sheet = cost_sheet(r)
             prob = validate_proposal(role_cfg, sheet, now())
             if prob:
-                pre["errors"].append("%s 검산표 초안 생략(%s)" % (r["season"], prob[:60]))
+                errors.append("%s 검산표 초안 생략(%s)" % (r["season"], prob[:60]))
             elif "%s:%s" % (role_cfg["role"], sheet["key"]) not in rejected:
                 cards.append(sheet)
-    errors = list(pre["errors"])
     if not ai:
-        errors.append("AI 메모 없음(%s)" % (err or "결과 상태 %s" % (output.get("status") if isinstance(output, dict) else "?")))
-    # the model reports only; a draft file comes from code (cost_sheet), never from the model
-    extra = [p for p in (ai.get("proposals") or []) if isinstance(p, dict) and p.get("kind") == "info"] if isinstance(ai.get("proposals"), list) else []
+        errors.append("AI 메모 없음(%s)" % (err or status_text(output)))
+    extra = info_proposals(ai)  # the sheet draft comes from code (cost_sheet), never from the model
     for p in extra:
         for k in ("title", "reason"):
             p[k] = mask_unit_prices(p.get(k))
         if isinstance(p.get("payload"), dict):
             p["payload"] = {k: mask_unit_prices(v) for k, v in p["payload"].items()}
     open_items = [mask_unit_prices(x) for x in as_list(ai.get("open_items"))]
-    return {"status": "ok", "checked": True, "summary": " / ".join(summary), "open_items": open_items,
+    return {"status": "ok", "summary": " / ".join(summary), "open_items": open_items,
             "proposals": cards + extra, "errors": errors + as_list(ai.get("errors"))}
 
 
@@ -702,31 +725,19 @@ NUM_RE = re.compile(r"\d[\d,]*(?:\.\d+)?")
 INTERNAL_RE = re.compile(r"매입가|원가율|원가|마진|수익률|본사\s*수익|배합비|견적|거래처")
 
 
-def notice_sources():
-    """WORK_AGENT_NOTICE_SOURCES="겨울2차=<file id>,<file id>,..." (the season's plan, recipe, label files) -> ([(season, [ids])], bad)."""
-    out, bad = [], 0
-    for item in env("WORK_AGENT_NOTICE_SOURCES", "").split():
-        m = re.match(r"^([0-9A-Za-z가-힣_]{1,20})=([A-Za-z0-9_,-]+)$", item)
-        ids = m.group(2).split(",") if m else []
-        if m and 1 <= len(ids) <= 5 and all(FILE_ID_RE.match(i) for i in ids):
-            out.append((m.group(1), ids))
-        else:
-            bad += 1
-    return out, bad
-
-
 def notice_precheck(cfg, role_cfg):
-    """Pick the work (the oldest order, else the daily season check) and fetch its source texts by pinned reads."""
+    """Pick the work (the oldest order, else the daily season check) and fetch its source texts by pinned reads.
+    WORK_AGENT_NOTICE_SOURCES="겨울2차=<file id>,<file id>,..." holds each season's plan, recipe and label files."""
     role, t = role_cfg["role"], now()
     orders = pending_orders(cfg, role)
     order = orders[0] if orders else None
-    seasons, bad = notice_sources()
+    seasons, bad = season_sources("WORK_AGENT_NOTICE_SOURCES", 5)
     errors = ["공지 자료 설정 %d개 형식 오류(시즌=파일ID,파일ID…)" % bad] if bad else []
+    wanted = [(sn, f) for sn, ids in seasons for f in ids]
     if order:
-        wanted = [("요청", f) for f in order.get("files", [])] or [(sn, f) for sn, ids in seasons for f in ids]
+        wanted = [("요청", f) for f in order.get("files", [])] or wanted
     else:
         write_json(daily_marker(cfg, role), {"day": t.strftime("%Y-%m-%d")})  # once a day even if it fails
-        wanted = [(sn, f) for sn, ids in seasons for f in ids]
         if not seasons and not bad:
             errors.append("공지 자료 설정 없음(config.env WORK_AGENT_NOTICE_SOURCES)")
     sources = []
@@ -770,11 +781,12 @@ def md_paragraphs(text):
 
 
 def num_key(tok):
-    tok = tok.rstrip(",").replace(",", "")
+    """A NUM_RE match in one spelling: 1,200 / 1200 and 3.50 / 3.5 / 03.5 compare equal."""
+    tok = tok.replace(",", "")
     if "." in tok:
         tok = tok.rstrip("0").rstrip(".")
     head, dot, tail = tok.partition(".")
-    return str(int(head)) + (dot + tail if tail else "") if head.isdigit() else tok
+    return str(int(head)) + dot + tail
 
 
 FULL_DATE_RE = re.compile(r"(\d{4})\s*[-./년]\s*(\d{1,2})\s*[-./월]\s*(\d{1,2})(?:\s*일)?")
@@ -820,7 +832,7 @@ def notice_merge(cfg, role_cfg, pre, output, err):
     """The model's draft -> a drive_draft proposal with a code-made check block at the end (numbers not found in the
     sources, internal-info words). Order bookkeeping happens here too."""
     t = now()
-    ai = output if isinstance(output, dict) and output.get("status") == "ok" else {}
+    ai = ai_part(output)
     grounds = "\n".join(src["text"] for src in pre["sources"]) + "\n" + (pre["order"]["text"] if pre["order"] else "")
     cards, errors = [], list(pre["errors"])
     drafts = ai.get("drafts") if isinstance(ai.get("drafts"), list) else []
@@ -855,14 +867,14 @@ def notice_merge(cfg, role_cfg, pre, output, err):
                           "payload": {"text": "공지 초안을 전광판에 올리지 못했습니다: %s" % prob[:200]}})
         else:
             cards.append(card)
-    cards += [p for p in (ai.get("proposals") or []) if isinstance(p, dict) and p.get("kind") == "info"] if isinstance(ai.get("proposals"), list) else []
+    cards += info_proposals(ai)
     if not ai:
-        errors.append("AI 결과 없음(%s)" % (err or "결과 상태 %s" % (output.get("status") if isinstance(output, dict) else "?")))
+        errors.append("AI 결과 없음(%s)" % (err or status_text(output)))
     if pre["order"]:
         notice_close(cfg, pre["order"], bool(ai), "초안 %d건" % sum(1 for c in cards if c["kind"] == "drive_draft"))
     summary = norm(ai.get("summary")) or ("요청 처리" if pre["order"] else "출시 공지 점검") + " — AI 결과 없음"
-    return {"status": "ok", "checked": bool(pre["sources"]) or bool(pre["order"]), "summary": summary,
-            "open_items": ai.get("open_items") or [], "proposals": cards, "errors": errors + as_list(ai.get("errors"))}
+    return {"status": "ok", "summary": summary, "open_items": ai.get("open_items") or [], "proposals": cards,
+            "errors": errors + as_list(ai.get("errors"))}
 
 
 def notice_close(cfg, order, ok, result):
@@ -875,7 +887,7 @@ def notice_close(cfg, order, ok, result):
         close_order(cfg, order, "실패(2회)")
         log(cfg, "공지 요청 처리 실패(2회): %s" % order["text"][:80])
     else:
-        write_json(os.path.join(orders_dir(cfg, order["role"]), order["id"] + ".json"), order)
+        write_json(order_path(cfg, order["role"], order["id"]), order)
 
 
 # ---------------------------------------------------------------- staff runs
@@ -908,10 +920,11 @@ def daily_marker(cfg, role):
     return os.path.join(cfg.office, "staff", role + ".daily.json")
 
 
-def orders_dir(cfg, role, *more):
-    d = os.path.join(cfg.office, "orders", role, *more)
+def order_path(cfg, role, oid, sub=""):
+    """A waiting order's file; sub="done" for the closed ones."""
+    d = os.path.join(cfg.office, "orders", role, sub)
     os.makedirs(d, exist_ok=True)
-    return d
+    return os.path.join(d, oid + ".json")
 
 
 def pending_orders(cfg, role):
@@ -924,8 +937,8 @@ def pending_orders(cfg, role):
 
 def close_order(cfg, order, result):
     order.update({"closed": utc_z(now()), "result": result})
-    write_json(os.path.join(orders_dir(cfg, order["role"], "done"), order["id"] + ".json"), order)
-    os.remove(os.path.join(orders_dir(cfg, order["role"]), order["id"] + ".json"))
+    write_json(order_path(cfg, order["role"], order["id"], "done"), order)
+    os.remove(order_path(cfg, order["role"], order["id"]))
 
 
 def cmd_order(cfg, role, text, files):
@@ -941,9 +954,9 @@ def cmd_order(cfg, role, text, files):
         return 1
     t = now()
     oid = "o-%s-%s" % (t.strftime("%Y%m%d-%H%M%S"), role)
-    while os.path.exists(os.path.join(orders_dir(cfg, role), oid + ".json")):
+    while os.path.exists(order_path(cfg, role, oid)):
         oid += "x"
-    write_json(os.path.join(orders_dir(cfg, role), oid + ".json"),
+    write_json(order_path(cfg, role, oid),
                {"id": oid, "role": role, "text": text, "files": files, "created": utc_z(t), "attempts": 0})
     log(cfg, "%s %s: 요청 접수 — %s" % (role_cfg.get("emoji", ""), role_cfg.get("title", role), text[:80]))
     print("order %s: %s" % (role, oid))
@@ -1005,23 +1018,25 @@ def run_staff(cfg, role_cfg, extra=""):
             return None, "결과 JSON 해석 실패"
 
 
+# roster "precheck" -> (code reads the data, has it anything to work on, the model's input, merge, nothing-to-read text).
+# Without data there is no model run: the model must not report on its own.
+PRECHECKS = {
+    "cost": (cost_precheck, lambda pre: pre["results"], cost_prompt, cost_merge, "검산 자료 없음"),
+    "notice": (notice_precheck, lambda pre: pre["sources"] or pre["order"], notice_prompt, notice_merge, "공지 자료 없음"),
+}
+
+
 def do_staff(cfg, role_cfg):
     role = role_cfg["role"]
-    pre = None
-    if role_cfg.get("precheck") == "cost":
-        pre = cost_precheck(cfg)
-        if not pre["results"]:  # nothing checked: do not let the model report on its own
-            output, err = None, "; ".join(pre["errors"]) or "검산 자료 없음"
+    checked = False
+    if role_cfg.get("precheck") in PRECHECKS:
+        fetch, has_data, prompt, merge, nothing = PRECHECKS[role_cfg["precheck"]]
+        pre = fetch(cfg, role_cfg)
+        if not has_data(pre):
+            output, err = None, "; ".join(pre["errors"]) or nothing
         else:
-            output, err = run_staff(cfg, role_cfg, cost_prompt(pre))
-            output, err = cost_merge(cfg, role_cfg, pre, output, err), ""
-    elif role_cfg.get("precheck") == "notice":
-        pre = notice_precheck(cfg, role_cfg)
-        if not pre["sources"] and not pre["order"]:  # the daily check has nothing to read: no model run
-            output, err = None, "; ".join(pre["errors"]) or "공지 자료 없음"
-        else:
-            output, err = run_staff(cfg, role_cfg, notice_prompt(pre))
-            output, err = notice_merge(cfg, role_cfg, pre, output, err), ""
+            output, err = run_staff(cfg, role_cfg, prompt(pre))
+            output, err, checked = merge(cfg, role_cfg, pre, output, err), "", True
     else:
         output, err = run_staff(cfg, role_cfg)
     if output is None:
@@ -1032,14 +1047,14 @@ def do_staff(cfg, role_cfg):
         log(cfg, "%s %s: 실행 실패 — %s" % (role_cfg.get("emoji", ""), role_cfg.get("title", role), err))
         return 0
     try:
-        return record_staff_output(cfg, role_cfg, output)[0]
+        return record_staff_output(cfg, role_cfg, output, checked)[0]
     except Exception as e:  # status partial/error, or a malformed field: show the staff's own words on the board
         said = as_list(output.get("errors"), 3) if isinstance(output, dict) else []
         summary = norm(output.get("summary", "")) if isinstance(output, dict) else ""
         status = read_json(os.path.join(cfg.office, "staff", role + ".json"), {})
         status.update({"title": role_cfg.get("title", role), "emoji": role_cfg.get("emoji", ""), "order": role_cfg.get("order", 99),
                        "status": "blocked", "last_run": utc_z(now()), "summary": summary[:200],
-                       "errors": ["결과 상태 %s" % (output.get("status") if isinstance(output, dict) else "?")] + said, "dirty": True})
+                       "errors": [status_text(output)] + said, "dirty": True})
         write_json(os.path.join(cfg.office, "staff", role + ".json"), status)
         log(cfg, "%s %s: 보고 불가(%s) — %s" % (role_cfg.get("emoji", ""), role_cfg.get("title", role), e, "; ".join(said)[:160]))
         return 0
@@ -1110,6 +1125,14 @@ def exec_count_today(cfg, t):
     return sum(1 for l in open(cfg.caps_path) if l.startswith(day + "\t"))
 
 
+def call_failed(r, tool_name):
+    """An executor's pinned call that did not come back ok -> its (failed, result, reached) answer, else None."""
+    if r["status"] == "ok":
+        return None
+    return ("failed", "%s %s: %s" % (tool_name, r["status"], re.sub(r"\s+", " ", r["text"])[:160]),
+            r["status"] not in ("nocall", "blocked_only", "spawn_error"))
+
+
 def execute(cfg, prop):
     """-> (status, result, reached). reached: the external tool may have acted (counts toward the daily cap)."""
     kind = prop["kind"]
@@ -1117,9 +1140,9 @@ def execute(cfg, prop):
         return "ok", "확인됨", False
     if kind == "calendar_event":
         r = pinned_call(cfg, cfg.calendar_tool, dict(prop["payload"]), "exec-" + prop["id"])
-        reached = r["status"] not in ("nocall", "blocked_only", "spawn_error")
-        if r["status"] != "ok":
-            return "failed", "캘린더 도구 %s: %s" % (r["status"], re.sub(r"\s+", " ", r["text"])[:160]), reached
+        failed = call_failed(r, "캘린더 도구")
+        if failed:
+            return failed
         text = r["text"]
         try:
             data = json.loads(text)
@@ -1149,9 +1172,9 @@ def execute_drive_draft(cfg, prop):
     args = {"title": name, "parentId": cfg.draft_folder, "textContent": p["content"],
             "contentMimeType": {"sheet": "text/csv", "md": "text/markdown"}.get(p["format"], "text/plain")}
     r = pinned_call(cfg, cfg.create_tool, args, "exec-" + prop["id"], hint={"title": name, "parentId": cfg.draft_folder})
-    reached = r["status"] not in ("nocall", "blocked_only", "spawn_error")
-    if r["status"] != "ok":
-        return "failed", "Drive 도구 %s: %s" % (r["status"], re.sub(r"\s+", " ", r["text"])[:160]), reached
+    failed = call_failed(r, "Drive 도구")
+    if failed:
+        return failed
     try:
         data = json.loads(r["text"])
     except ValueError:
@@ -1179,7 +1202,7 @@ def refresh_meta(cfg):
             log(cfg, "전광판 읽기 실패(team): %s" % r["status"], board=False)
             write_json(cfg.versions_path, versions)
             return False
-        cfg.team_meta = {"stop": bool(card.get("stop")), "version": card_version}
+        cfg.team_meta = {"stop": bool(card.get("stop"))}
         versions["teams/" + cfg.team] = card_version
     write_json(cfg.versions_path, versions)
     return True
@@ -1377,7 +1400,7 @@ def push(cfg):
         tc = cfg.team_cfg
         card = {"title": tc.get("title", cfg.team), "emoji": tc.get("emoji", ""), "order": tc.get("order", 99),
                 "default": bool(tc.get("default")), "last_seen": utc_z(t), "next_expected": utc_z(next_heartbeat(cfg, t))}
-        tv = versions.get("teams/" + cfg.team) or cfg.team_meta.get("version")
+        tv = versions.get("teams/" + cfg.team)
         add("update" if tv else "set", "teams", cfg.team, card, tv, lambda: None)
     r = pinned_call(cfg, "ArtifactData", {"action": "batch", "url": cfg.board_url, "writes": writes}, "push-batch")
     if r["status"] == "ok" and "committed" in r["text"]:

@@ -77,7 +77,8 @@ def main():
     digest = sha(args)
     for c in expect.get("calls", []):
         full = c.get("input")
-        if isinstance(full, dict):
+        sub = isinstance(full, dict)
+        if sub:
             hint = c.get("hint") or {}
             if not hint or any(canon(args.get(k)) != canon(v) for k, v in hint.items()):
                 continue
@@ -88,7 +89,7 @@ def main():
             os.close(fd)
         except FileExistsError:
             return block(expect, name, "this call was already made once", digest)
-        if isinstance(full, dict):
+        if sub:
             audit(expect, "allow", name, "pinned call, arguments supplied by the guard", c.get("sha256", ""))
             sys.stdout.write(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "allow",
                                                                 "updatedInput": full}}, ensure_ascii=False))

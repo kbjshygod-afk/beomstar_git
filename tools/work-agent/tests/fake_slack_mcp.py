@@ -4,14 +4,13 @@
 Tools: slack_send_message_draft (answers like the real connector did on 2026-10-16)
 and slack_send_message (must never be called; every call is logged).
 Env: FAKE_SLACK_LOG (jsonl of calls), FAKE_SLACK_MODE = ok | noid | exists | error.
-download_file_content stands in for the Drive connector: it serves the file FAKE_DRIVE_FILE as the real
-tool does ({"content": base64, "id", "mimeType", "title"} as JSON text); read_file_content serves the text
-file FAKE_DRIVE_TEXT ({"fileContent", "title", "viewUrl"}).
+download_file_content, read_file_content and create_file stand in for the Drive connector (fake_drive.py).
 """
-import base64
 import json
 import os
 import sys
+
+import fake_drive
 
 LOG = os.environ.get("FAKE_SLACK_LOG", "/dev/null")
 MODE = os.environ.get("FAKE_SLACK_MODE", "ok")
@@ -66,22 +65,9 @@ def call(name, args):
     if name == "create_event":
         return {"content": [{"type": "text", "text": json.dumps({"id": "evt_fake_e2e", "htmlLink": "https://calendar.google.com/event?eid=fake",
                                                                  "summary": args.get("summary", "")})}], "isError": False}
-    if name == "download_file_content":
-        with open(os.environ["FAKE_DRIVE_FILE"], "rb") as f:
-            body = {"content": base64.b64encode(f.read()).decode(), "id": args.get("fileId", ""),
-                    "mimeType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "title": "fake.xlsx"}
-        return {"content": [{"type": "text", "text": json.dumps(body)}], "isError": False}
-    if name == "create_file":
-        body = {"id": "fakefile%d" % (abs(hash(args.get("title", ""))) % 100000), "title": args.get("title", ""),
-                "parentId": args.get("parentId", ""), "mimeType": "application/vnd.google-apps.document",
-                "viewUrl": "https://docs.google.com/document/d/fakefile/edit"}
-        return {"content": [{"type": "text", "text": json.dumps(body, ensure_ascii=False)}], "isError": False}
-    if name == "read_file_content":  # FAKE_DRIVE_TEXTS = {"<file id>": ["<title>", "<text file>"]}, else FAKE_DRIVE_TEXT
-        files = json.loads(os.environ.get("FAKE_DRIVE_TEXTS") or "{}")
-        title, path = files.get(args.get("fileId"), ["plan.xlsx", os.environ.get("FAKE_DRIVE_TEXT", "")])
-        with open(path) as f:
-            body = {"fileContent": f.read(), "title": title, "viewUrl": "about:blank"}
-        return {"content": [{"type": "text", "text": json.dumps(body, ensure_ascii=False)}], "isError": False}
+    drive = fake_drive.answer(name, args)
+    if drive:
+        return {"content": [{"type": "text", "text": drive[1]}], "isError": drive[0]}
     if name == "big_result":
         return {"content": [{"type": "text", "text": big_text()}], "isError": False}
     if name == "slack_send_message":

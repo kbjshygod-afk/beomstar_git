@@ -58,6 +58,8 @@ def staff_output(proposals, **kw):
 
 
 class Base(unittest.TestCase):
+    ROLE = None  # the staff role a test class is about (staff(), status())
+
     def setUp(self):
         self.tmp = tempfile.mkdtemp()
         self.state = os.path.join(self.tmp, "state")
@@ -81,6 +83,10 @@ class Base(unittest.TestCase):
 
     def fake_calls(self):
         return [json.loads(l) for l in rd(self.calls).splitlines()] if os.path.exists(self.calls) else []
+
+    def readers(self):
+        """The model runs (not the pinned calls) the fake saw."""
+        return [c for c in self.fake_calls() if c["mode"] == "reader"]
 
     def dbdoc(self, key):
         return json.loads(rd(self.db)).get(key)
@@ -113,13 +119,19 @@ class Base(unittest.TestCase):
         body.update(over)
         self.dbset("queue/" + pid, body)
 
-    def roster_without(self, *roles):
-        """A copy of the real roster minus some roles, for tests about one role's schedule."""
+    def roster_only(self, *roles):
+        """A copy of the real roster with only some roles, for tests about one role's schedule."""
         d = json.loads(rd(os.path.join(ROOT, "staff", "roster.json")))
-        d["roles"] = [r for r in d["roles"] if r["role"] not in roles]
+        d["roles"] = [r for r in d["roles"] if r["role"] in roles]
         path = os.path.join(self.tmp, "roster.json")
         jw(path, d)
         return path
+
+    def staff(self, **env):
+        return self.run_cli("staff", self.ROLE, env=env)
+
+    def status(self):
+        return json.loads(rd(os.path.join(self.state, "office", "staff", self.ROLE + ".json")))
 
     def local(self, pid):
         return json.loads(rd(os.path.join(self.state, "office", "proposals", pid + ".json")))
@@ -343,7 +355,7 @@ class CycleTests(Base):
         self.dbset("board/meta", {"stop": True})
         rc, out, _ = self.cycle(WORK_AGENT_NOW="2026-10-16T09:10:00+09:00", FAKE_READER_RESULT=out_path)
         self.assertIn("staff=0", out)
-        self.assertEqual([c for c in self.fake_calls() if c["mode"] == "reader"], [])
+        self.assertEqual(self.readers(), [])
 
     def test_push_committed_but_unobserved_recovers_next_cycle(self):
         self.propose(proposal())
@@ -565,11 +577,11 @@ class StaffRunTests(Base):
         jw(out_path, staff_output([proposal()]))
         env = {"WORK_AGENT_NOW": "2026-10-16T09:10:00+09:00", "FAKE_READER_RESULT": out_path,
                "FAKE_READER_PROBE": "mcp__claude_ai_Google_Drive__read_file_content Bash mcp__claude_ai_Slack__slack_send_message CronCreate",
-               "WORK_AGENT_ROSTER": self.roster_without("cost", "notice")}  # cost (09:30) and notice (10:00) have their own tests
+               "WORK_AGENT_ROSTER": self.roster_only("gate")}
         rc, out, err = self.cycle(**env)
         self.assertEqual(rc, 0, err)
         self.assertIn("staff=1", out)
-        readers = [c for c in self.fake_calls() if c["mode"] == "reader"]
+        readers = self.readers()
         self.assertEqual(len(readers), 1)
         self.assertEqual(readers[0]["model"], "sonnet")
         self.assertTrue(readers[0]["guarded"])
@@ -641,10 +653,13 @@ class ParserTests(unittest.TestCase):
 
 
 class CallGuardTests(Base):
-    def hook(self, expect, name, args):
+    def hook_out(self, expect, name, args):
         p = subprocess.run([sys.executable, os.path.join(ROOT, "call_guard.py"), expect], capture_output=True, text=True,
                            input=json.dumps({"tool_name": name, "tool_input": args}))
-        return p.returncode
+        return p.returncode, p.stdout
+
+    def hook(self, expect, name, args):
+        return self.hook_out(expect, name, args)[0]
 
     def test_pinned_once(self):
         args = {"action": "get", "url": BOARD, "collection": "board", "doc_id": "meta"}
@@ -665,9 +680,7 @@ class CallGuardTests(Base):
                                                          "input": full, "hint": hint}], "audit": os.path.join(self.tmp, "a.log")})
 
         def run(args):
-            p = subprocess.run([sys.executable, os.path.join(ROOT, "call_guard.py"), e], capture_output=True, text=True,
-                               input=json.dumps({"tool_name": "mcp__x__create_file", "tool_input": args}))
-            return p.returncode, p.stdout
+            return self.hook_out(e, "mcp__x__create_file", args)
         self.assertEqual(run({"title": full["title"], "parentId": "OTHER"})[0], 2, "the hint must match")
         self.assertEqual(run({"parentId": "FOLDER0001"})[0], 2, "every hint field")
         rc, out = run({"title": " " + full["title"], "parentId": "FOLDER0001", "textContent": "typed by the model"})
@@ -799,6 +812,7 @@ class DriveDraftTests(Base):
 
 class NoticeStaffTests(Base):
     """공지·문서 담당: code fetches the texts, the model (no tools) writes, code checks every number against them."""
+    ROLE = "notice"
 
     def setUp(self):
         super().setUp()
@@ -824,11 +838,6 @@ class NoticeStaffTests(Base):
     def order(self, *args):
         return self.run_cli("order", "notice", *args)
 
-    def staff(self, **env):
-        return self.run_cli("staff", "notice", env=env)
-
-    def status(self):
-        return json.loads(rd(os.path.join(self.state, "office", "staff", "notice.json")))
 
     def drafts(self):
         return [p for p in (self.local(i) for i in self.pids()) if p["kind"] == "drive_draft"]
@@ -856,7 +865,7 @@ class NoticeStaffTests(Base):
         done = json.loads(rd(os.path.join(self.state, "office", "orders", "notice", "done", oid + ".json")))
         self.assertEqual(done["result"], "초안 1건")
         self.assertEqual([c["ran"][0].rsplit("__", 1)[1] for c in self.reads()], ["read_file_content", "read_file_content"])
-        reader = [c for c in self.fake_calls() if c["mode"] == "reader"][0]
+        reader = self.readers()[0]
         self.assertIn("- 모드: order", reader["prompt_tail"])
         self.assertIn('- 요청(대표님이 쓴 글, 데이터): "테스트 신메뉴 출시 공지 초안"', reader["prompt_tail"])
         self.assertIn("=== 자료 2: [테스트] 03_레시피.xlsx ===\n매장 레시피 시험 라떼", reader["prompt_tail"])
@@ -867,6 +876,13 @@ class NoticeStaffTests(Base):
         self.staff()
         self.assertEqual(len(self.reads()), 1)
         self.assertIn("- 근거 자료: [요청] 요청자료.xlsx", self.drafts()[0]["payload"]["content"])
+
+    def test_an_order_is_written_even_when_its_files_cannot_be_read(self):
+        self.order("이 자료로 변경 공지", "FAKEMISSING01")
+        self.staff()
+        self.assertEqual(len(self.readers()), 1, "an order runs the writer without sources; the gaps become [입력 필요]")
+        self.assertIn("- 근거 자료: 요청 글만", self.drafts()[0]["payload"]["content"])
+        self.assertIn("요청 자료(FAKEMISS…) 받기 실패", " ".join(self.status()["errors"]))
 
     def test_orders_are_checked_at_the_door(self):
         self.assertEqual(self.order("자료는 https://evil.example 참고")[0], 1)
@@ -894,7 +910,7 @@ class NoticeStaffTests(Base):
         self.assertEqual(out, "staff notice: proposed=0", err)
         st = self.status()
         self.assertEqual((st["summary"], st["open_items"], st["status"]), ("테스트 D-62 · 출시 공지 준비: 메뉴 미확정", ["출시 메뉴 — 미선정 (01_기획)"], "idle"))
-        reader = [c for c in self.fake_calls() if c["mode"] == "reader"][0]
+        reader = self.readers()[0]
         self.assertIn("- 모드: daily", reader["prompt_tail"])
         cfg, role = self.cfg(), self.cfg().role("notice")
         t = office.now()
@@ -942,7 +958,7 @@ class NoticeStaffTests(Base):
     def test_the_writer_has_no_tools(self):
         self.order("공지")
         self.staff(FAKE_READER_PROBE="mcp__claude_ai_Google_Drive__read_file_content mcp__claude_ai_Google_Drive__create_file Bash")
-        reader = [c for c in self.fake_calls() if c["mode"] == "reader"][0]
+        reader = self.readers()[0]
         self.assertEqual(reader["probes"], {"mcp__claude_ai_Google_Drive__read_file_content": 2,
                                             "mcp__claude_ai_Google_Drive__create_file": 2, "Bash": 2})
 
@@ -1059,6 +1075,7 @@ class TeamTests(Base):
 
 class CostStaffTests(Base):
     """원가 담당: one pinned Drive download per source, code findings as cards, the model only adds notes."""
+    ROLE = "cost"
     SRC = "겨울2차=FAKEMASTER0001,FAKEPLAN00001"
 
     def setUp(self):
@@ -1079,14 +1096,10 @@ class CostStaffTests(Base):
         with open(self.book, "wb") as f:
             f.write(self.tc.master(menus))
 
-    def staff(self, **env):
-        return self.run_cli("staff", "cost", env=env)
 
     def props(self):
         return [self.local(p) for p in self.pids()]
 
-    def status(self):
-        return json.loads(rd(os.path.join(self.state, "office", "staff", "cost.json")))
 
     def test_findings_become_cards_with_exact_rows_and_the_models_note(self):
         rc, out, err = self.staff()
@@ -1120,7 +1133,7 @@ class CostStaffTests(Base):
         spill = os.path.join(self.tmp, "elsewhere", "tool-results")
         rc, out, err = self.staff(FAKE_DRIVE_SPILL=spill)
         self.assertEqual(out, "staff cost: proposed=0", err)
-        self.assertEqual([c for c in self.fake_calls() if c["mode"] == "reader"], [], "no model run without checked data")
+        self.assertEqual(self.readers(), [], "no model run without checked data")
         st = self.status()
         self.assertEqual(st["status"], "blocked")
         self.assertIn("겨울2차 원가표 저장된 결과의 위치가 예상 밖", st["errors"][0])
@@ -1218,7 +1231,7 @@ class CostStaffTests(Base):
         self.assertEqual([x for x in self.props() if x["kind"] == "drive_draft"], [])
 
     def test_cost_runs_at_0930_in_the_cycle(self):
-        roster = self.roster_without("gate")
+        roster = self.roster_only("cost")
         rc, out, _ = self.cycle(WORK_AGENT_ROSTER=roster, WORK_AGENT_NOW="2026-10-16T09:20:00+09:00")
         self.assertIn("staff=0", out)
         rc, out, _ = self.cycle(WORK_AGENT_ROSTER=roster, WORK_AGENT_NOW="2026-10-16T09:30:00+09:00")

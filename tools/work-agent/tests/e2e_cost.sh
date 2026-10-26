@@ -36,11 +36,10 @@ export CLAUDE_BIN="$T/claude" WORK_AGENT_STATE="$T/state" WORK_AGENT_CONFIG="$T/
 fails=0
 out="$(python3 "$ROOT/office.py" staff cost 2>&1)"; echo "$out"
 python3 - "$T/state" "$T/calls.jsonl" "$ROOT" "$BOOK" <<'PY' || fails=$((fails+1))
-import glob, json, os, re, sys
+import glob, json, os, sys
 st, calls = sys.argv[1], sys.argv[2]
-sys.path.insert(0, sys.argv[3]); import cost_check
-names = dict((c, short) for c, short, _ in cost_check.CHECKS)
-want = sorted({names[f["check"]] for f in cost_check.check(open(sys.argv[4], "rb").read())["findings"]})
+sys.path.insert(0, sys.argv[3]); import cost_check, office
+want = sorted({office.CHECK_NAMES[f["check"]][0] for f in cost_check.check(open(sys.argv[4], "rb").read())["findings"]})
 props = [json.load(open(p)) for p in sorted(glob.glob(os.path.join(st, "office", "proposals", "*.json")))]
 status = json.load(open(os.path.join(st, "office", "staff", "cost.json")))
 ran = [json.loads(l)["tool"] for l in open(calls)]
@@ -54,7 +53,7 @@ if status.get("status") != "idle": bad.append("status %s" % status.get("status")
 code = [p for p in props if p["reason"] == "코드 검산(입력값 기준)"]  # info cards made by code
 missing = [w for w in want if not any((" %s " % w) in p["title"] for p in code)]
 if missing or len(code) != len(want): bad.append("code cards %s, expected %s" % ([p["title"] for p in code], want))
-leaked = [x for x in status.get("open_items", []) + [body(p) for p in props] if re.search(r"\d\s*원\s*/\s*(kg|g|ml|bag)", x)]
+leaked = [x for x in status.get("open_items", []) + [body(p) for p in props] if office.UNIT_PRICE_RE.search(x)]
 if leaked: bad.append("unit price on the board: %s" % leaked[:2])
 if ran.count("download_file_content") != 1: bad.append("download calls %s" % ran)
 if [t for t in ran if t not in ("download_file_content", "read_file_content")]: bad.append("unexpected tools %s" % ran)

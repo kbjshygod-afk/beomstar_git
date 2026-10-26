@@ -15,19 +15,16 @@ the PreToolUse hook from the settings file on a simulated tool call and prints s
   FAKE_DROP_RESULT = comma list of ArtifactData actions whose call RUNS but whose answer is never
                      printed (claude killed mid-call): the next office cycle must recover
   FAKE_CALLS = file that receives one line per invocation (mode + tool calls that ran)
-  FAKE_DRIVE_FILE = file served by a *__download_file_content tool (base64 JSON, like the Drive connector)
-  FAKE_DRIVE_SPILL = dir: answer that download the way Claude Code answers an oversized result (saved to a
-                     file in this dir, the tool result only names the path)
-  FAKE_DRIVE_CREATED = file that receives the arguments each *__create_file call actually ran with
-  FAKE_DRIVE_CREATE_MODE = ok | wrong_parent | error
+  FAKE_DRIVE_* = the Drive tools' answers (fake_drive.py)
 """
-import base64
 import json
 import os
 import re
 import subprocess
 import sys
 import time
+
+import fake_drive
 
 
 def log(row):
@@ -205,37 +202,9 @@ def tool_answer(name, inp):
         if inp.get("action") in os.environ.get("FAKE_FAIL_ACTION", "").split(","):
             return True, "db read failed (unavailable): simulated outage"
         return artifact_data(inp)
-    if name.endswith("__download_file_content"):
-        with open(os.environ["FAKE_DRIVE_FILE"], "rb") as f:
-            body = json.dumps({"content": base64.b64encode(f.read()).decode(), "id": inp.get("fileId", ""),
-                               "mimeType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "title": "fake.xlsx"})
-        spill = os.environ.get("FAKE_DRIVE_SPILL")
-        if spill:
-            os.makedirs(spill, exist_ok=True)
-            path = os.path.join(spill, "mcp-drive-download_file_content-%d.txt" % int(time.time() * 1000))
-            with open(path, "w") as f:
-                f.write(body)
-            return False, ("Error: result (%d characters across 1 line) exceeds maximum allowed tokens. Output has been saved to %s.\n"
-                           "Format: Plain text\nSearch within the file for specific content." % (len(body), path))
-        return False, body
-    if name.endswith("__read_file_content"):  # FAKE_DRIVE_TEXTS = {"<file id>": ["<title>", "<text file>"]}
-        files = json.loads(os.environ.get("FAKE_DRIVE_TEXTS") or "{}")
-        if inp.get("fileId") not in files:
-            return True, "Error: File not found: %s" % inp.get("fileId")
-        title, path = files[inp["fileId"]]
-        with open(path) as f:
-            return False, json.dumps({"fileContent": f.read(), "title": title, "viewUrl": "about:blank"}, ensure_ascii=False)
-    if name.endswith("__create_file"):
-        path = os.environ.get("FAKE_DRIVE_CREATED")
-        if path:
-            with open(path, "a") as f:
-                f.write(json.dumps(inp, ensure_ascii=False) + "\n")
-        mode = os.environ.get("FAKE_DRIVE_CREATE_MODE", "ok")
-        if mode == "error":
-            return True, "Error: insufficient permissions for the parent folder"
-        return False, json.dumps({"id": "fakedoc01", "title": inp.get("title", ""), "mimeType": "application/vnd.google-apps.document",
-                                  "parentId": "SOMEWHEREELSE" if mode == "wrong_parent" else inp.get("parentId", ""),
-                                  "viewUrl": "https://docs.google.com/document/d/fakedoc01/edit"}, ensure_ascii=False)
+    drive = fake_drive.answer(name, inp)
+    if drive:
+        return drive
     if name.endswith("__create_event"):
         if os.environ.get("FAKE_CAL_MODE", "ok") == "error":
             return True, "Error: calendar unavailable"
