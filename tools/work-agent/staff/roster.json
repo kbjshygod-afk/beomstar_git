@@ -1,5 +1,5 @@
 {
-  "_comment": "Staff roles for the office. A role runs as a read-only claude -p with its own tool allowlist and may only PROPOSE. Tool names get WORK_AGENT_MCP_PREFIX (default mcp__claude_ai_) prepended. schedule: daily_at HHMM (KST, first poll cycle at/after that time) or on_demand. desk: folder name under state/office/desks (ASCII, no '-') = Pixel Agents label and areaMappings key.",
+  "_comment": "Staff roles for the office. A role runs as a read-only claude -p with its own tool allowlist and may only PROPOSE. Tool names get WORK_AGENT_MCP_PREFIX (default mcp__claude_ai_) prepended. precheck: \"cost\" = code downloads WORK_AGENT_COST_SOURCES and checks them before the model runs (office.py). schedule: daily_at HHMM (KST, first poll cycle at/after that time) or on_demand. desk: folder name under state/office/desks (ASCII, no '-') = Pixel Agents label and areaMappings key.",
   "roles": [
     {
       "role": "secretary",
@@ -64,25 +64,26 @@
     },
     {
       "role": "cost",
-      "title": "원가 담당",
+      "title": "원가·원재료 담당",
       "emoji": "🧮",
       "order": 4,
-      "enabled": false,
+      "enabled": true,
+      "summary_hint": "원가표 입력 오류 검산(코드) + 기획 파일 원가 미결 정리",
       "schedule": {
-        "on_demand": true
+        "daily_at": "0930"
       },
+      "precheck": "cost",
       "prompt": "staff/cost.md",
       "model": "sonnet",
-      "max_turns": 25,
+      "max_turns": 15,
       "tools": [
-        "Google_Drive__search_files",
-        "Google_Drive__read_file_content"
+        "Google_Drive__read_file_content",
+        "Google_Drive__get_file_metadata"
       ],
       "proposal_kinds": [
         "info"
       ],
-      "max_proposals_per_run": 3,
-      "_todo": "stage 3b: MASTER 원가관리표 read via Drive; product-info-from-master skill",
+      "max_proposals_per_run": 8,
       "desk": "cost"
     }
   ]
