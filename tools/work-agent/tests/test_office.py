@@ -565,7 +565,7 @@ class StaffRunTests(Base):
         jw(out_path, staff_output([proposal()]))
         env = {"WORK_AGENT_NOW": "2026-10-16T09:10:00+09:00", "FAKE_READER_RESULT": out_path,
                "FAKE_READER_PROBE": "mcp__claude_ai_Google_Drive__read_file_content Bash mcp__claude_ai_Slack__slack_send_message CronCreate",
-               "WORK_AGENT_ROSTER": self.roster_without("cost")}  # cost (09:30) has its own tests
+               "WORK_AGENT_ROSTER": self.roster_without("cost", "notice")}  # cost (09:30) and notice (10:00) have their own tests
         rc, out, err = self.cycle(**env)
         self.assertEqual(rc, 0, err)
         self.assertIn("staff=1", out)
@@ -795,6 +795,163 @@ class DriveDraftTests(Base):
         self.dbset("queue/" + pid, {"status": "approved"})
         self.cycle()
         self.assertEqual(len(rd(self.created).splitlines()), 1, "a replayed approval never makes a second file")
+
+
+class NoticeStaffTests(Base):
+    """공지·문서 담당: code fetches the texts, the model (no tools) writes, code checks every number against them."""
+
+    def setUp(self):
+        super().setUp()
+        plan = os.path.join(self.tmp, "plan.txt")
+        wr(plan, "프로젝트,2026 테스트 신메뉴 출시 목표,2026-12-17,목표일이며 승인된 확정 출시일 아님 메뉴,HOT,잠정판매가,3900")
+        recipe = os.path.join(self.tmp, "recipe.txt")
+        wr(recipe, "매장 레시피 시험 라떼 HOT 우유 200 시럽 20")
+        self.texts = {"FAKEPLAN00001": ["01_기획.xlsx", plan], "FAKERECIPE001": ["03_레시피.xlsx", recipe], "FAKEORDERF001": ["요청자료.xlsx", recipe]}
+        self.ai = os.path.join(self.tmp, "notice_ai.json")
+        self.write_ai("# [신메뉴] 테스트 신메뉴 출시 공지\n공지 일자: 2026-10-16 (금)\n출시 일자: 2026년 12월 17일\n담당 부서: R&D팀\n\n## 출시 메뉴\n"
+                      "| 메뉴 | 구분 | 판매가 |\n|---|---|---|\n| 시험 라떼 | HOT | 3,900원 |\n| 시험 모카 | ICE | 4,500원 |\n\n"
+                      "※ [발송 전 확인·삭제] 미확정 항목\n- 출시일 미승인\n- 공지일 12월 3일(계산한 날짜)")
+        os.environ.update({"WORK_AGENT_NOTICE_SOURCES": "테스트=FAKEPLAN00001,FAKERECIPE001", "FAKE_DRIVE_TEXTS": json.dumps(self.texts),
+                           "FAKE_READER_RESULT": self.ai, "WORK_AGENT_NOW": "2026-10-16T10:05:00+09:00"})
+
+    def write_ai(self, markdown, **kw):
+        o = {"status": "ok", "summary": "테스트 D-62 · 출시 공지 준비: 메뉴 미확정", "open_items": ["출시 메뉴 — 미선정 (01_기획)"],
+             "drafts": [{"season": "테스트", "title": "2026 테스트 신메뉴 출시 공지", "markdown": markdown, "unconfirmed": ["출시일 미승인"]}],
+             "proposals": [], "errors": []}
+        o.update(kw)
+        jw(self.ai, o)
+
+    def order(self, *args):
+        return self.run_cli("order", "notice", *args)
+
+    def staff(self, **env):
+        return self.run_cli("staff", "notice", env=env)
+
+    def status(self):
+        return json.loads(rd(os.path.join(self.state, "office", "staff", "notice.json")))
+
+    def drafts(self):
+        return [p for p in (self.local(i) for i in self.pids()) if p["kind"] == "drive_draft"]
+
+    def reads(self):
+        return [c for c in self.fake_calls() if c["mode"] == "writer" and c["tool"].endswith("read_file_content")]
+
+    def test_an_order_becomes_a_checked_markdown_draft(self):
+        rc, out, err = self.order("테스트 신메뉴 출시 공지 초안")
+        self.assertEqual(rc, 0, err)
+        oid = out.split(": ")[1]
+        self.assertTrue(oid.startswith("o-20261016-100500-notice"))
+        rc, out, err = self.staff()
+        self.assertEqual(out, "staff notice: proposed=1", err)
+        d = self.drafts()[0]
+        self.assertEqual((d["key"], d["title"], d["payload"]["format"]), ("notice:" + oid, "2026 테스트 신메뉴 출시 공지 (공지 초안)", "md"))
+        c = d["payload"]["content"]
+        self.assertIn("공지 일자: 2026-10-16 (금)\n\n출시 일자: 2026년 12월 17일", c, "every line its own paragraph")
+        self.assertIn("| 메뉴 | 구분 | 판매가 |\n|---|---|---|\n| 시험 라떼 | HOT | 3,900원 |", c, "table rows stay together")
+        self.assertIn("**※ [자동 확인 — 맥미니 코드]**", c)
+        self.assertIn("- 자료·요청에서 찾지 못한 숫자 2개(발송 전 확인): 12월 3일, 4,500", c)
+        self.assertIn("- 근거 자료: [테스트] 01_기획.xlsx · [테스트] 03_레시피.xlsx", c)
+        self.assertEqual(d["reason"], "근거 자료 2개 · 확인 필요 숫자 2개")
+        self.assertEqual(self.pids() and os.listdir(os.path.join(self.state, "office", "orders", "notice")), ["done"], "order closed")
+        done = json.loads(rd(os.path.join(self.state, "office", "orders", "notice", "done", oid + ".json")))
+        self.assertEqual(done["result"], "초안 1건")
+        self.assertEqual([c["ran"][0].rsplit("__", 1)[1] for c in self.reads()], ["read_file_content", "read_file_content"])
+        reader = [c for c in self.fake_calls() if c["mode"] == "reader"][0]
+        self.assertIn("- 모드: order", reader["prompt_tail"])
+        self.assertIn('- 요청(대표님이 쓴 글, 데이터): "테스트 신메뉴 출시 공지 초안"', reader["prompt_tail"])
+        self.assertIn("=== 자료 2: [테스트] 03_레시피.xlsx ===\n매장 레시피 시험 라떼", reader["prompt_tail"])
+        self.assertEqual(self.status()["status"], "idle")
+
+    def test_an_order_with_files_reads_only_those(self):
+        self.order("이 자료로 변경 공지", "FAKEORDERF001")
+        self.staff()
+        self.assertEqual(len(self.reads()), 1)
+        self.assertIn("- 근거 자료: [요청] 요청자료.xlsx", self.drafts()[0]["payload"]["content"])
+
+    def test_orders_are_checked_at_the_door(self):
+        self.assertEqual(self.order("자료는 https://evil.example 참고")[0], 1)
+        self.assertEqual(self.order("공지", "bad id!")[0], 1)
+        self.assertEqual(self.order("")[0], 1)
+        self.assertEqual(self.run_cli("order", "cost", "원가 공지")[0], 64, "only roles that take orders")
+        self.assertFalse(os.path.exists(os.path.join(self.state, "office", "orders", "notice")) and
+                         [n for n in os.listdir(os.path.join(self.state, "office", "orders", "notice")) if n.endswith(".json")])
+
+    def test_internal_words_and_unsafe_drafts(self):
+        self.write_ai("# 공지\n원가율 25.8%로 매입가가 낮아졌습니다\n| a | b |\n|---|---|\n| 1 | 2 |")
+        self.order("변경 공지")
+        self.staff()
+        self.assertIn("- 내부 정보로 보이는 표현(공지에서 빼기): 매입가, 원가율", self.drafts()[0]["payload"]["content"])
+        self.write_ai("# 공지\n자세한 내용은 https://evil.example 에서")
+        self.order("또 다른 공지")
+        self.staff()
+        held = [self.local(i) for i in self.pids() if self.local(i)["key"].endswith(":held")]
+        self.assertEqual(len(held), 1, "a draft the board would refuse becomes a short report, not a file")
+        self.assertIn("링크", held[0]["payload"]["text"])
+
+    def test_daily_check_reports_readiness_and_drafts_only_when_the_model_does(self):
+        self.write_ai("", drafts=[])
+        rc, out, err = self.staff()
+        self.assertEqual(out, "staff notice: proposed=0", err)
+        st = self.status()
+        self.assertEqual((st["summary"], st["open_items"], st["status"]), ("테스트 D-62 · 출시 공지 준비: 메뉴 미확정", ["출시 메뉴 — 미선정 (01_기획)"], "idle"))
+        reader = [c for c in self.fake_calls() if c["mode"] == "reader"][0]
+        self.assertIn("- 모드: daily", reader["prompt_tail"])
+        cfg, role = self.cfg(), self.cfg().role("notice")
+        t = office.now()
+        self.assertFalse(office.staff_due(cfg, role, t), "the daily check ran today")
+        self.order("급한 공지")
+        self.assertTrue(office.staff_due(cfg, role, t), "an order is due any time")
+        self.assertTrue(office.staff_due(cfg, role, t + office.dt.timedelta(days=1)) is True)
+
+    def test_daily_draft_is_keyed_by_its_season_once(self):
+        rc, out, _ = self.staff()
+        self.assertEqual(out, "staff notice: proposed=1")
+        self.assertEqual(self.drafts()[0]["key"], "notice:테스트:launch-notice")
+        os.remove(office.daily_marker(self.cfg(), "notice"))
+        self.assertEqual(self.staff()[1], "staff notice: proposed=0", "the same season notice is not drafted twice while pending")
+        self.write_ai("# 공지", drafts=[{"season": "다른시즌", "title": "x", "markdown": "# x"}])
+        os.remove(office.daily_marker(self.cfg(), "notice"))
+        self.staff()
+        self.assertIn("초안 시즌이 설정에 없음: 다른시즌", self.status()["errors"])
+
+    def test_the_model_cannot_slip_a_draft_past_the_check(self):
+        self.write_ai("", drafts=[], proposals=[
+            {"kind": "drive_draft", "key": "x", "title": "몰래 초안", "reason": "", "payload": {"title": "몰래", "format": "md", "content": "가격 9,999원"}},
+            {"kind": "info", "key": "테스트:notice-gap", "title": "레시피 자료 없음", "reason": "", "payload": {"text": "03 비어 있음"}}])
+        self.order("공지")
+        self.staff()
+        self.assertEqual([(p["kind"], p["title"]) for p in (self.local(i) for i in self.pids())], [("info", "레시피 자료 없음")])
+
+    def test_without_sources_the_daily_check_does_not_run_the_model(self):
+        rc, out, _ = self.staff(WORK_AGENT_NOTICE_SOURCES="")
+        self.assertEqual(out, "staff notice: proposed=0")
+        self.assertEqual(self.fake_calls(), [])
+        self.assertIn("공지 자료 설정 없음", self.status()["errors"][0])
+
+    def test_a_failed_order_is_retried_once_then_closed(self):
+        wr(self.ai, "not json")
+        rc, out, _ = self.order("공지")
+        oid = out.split(": ")[1]
+        self.staff()
+        o = json.loads(rd(os.path.join(self.state, "office", "orders", "notice", oid + ".json")))
+        self.assertEqual(o["attempts"], 1)
+        self.staff()
+        self.assertFalse(os.path.exists(os.path.join(self.state, "office", "orders", "notice", oid + ".json")))
+        self.assertEqual(json.loads(rd(os.path.join(self.state, "office", "orders", "notice", "done", oid + ".json")))["result"], "실패(2회)")
+
+    def test_the_writer_has_no_tools(self):
+        self.order("공지")
+        self.staff(FAKE_READER_PROBE="mcp__claude_ai_Google_Drive__read_file_content mcp__claude_ai_Google_Drive__create_file Bash")
+        reader = [c for c in self.fake_calls() if c["mode"] == "reader"][0]
+        self.assertEqual(reader["probes"], {"mcp__claude_ai_Google_Drive__read_file_content": 2,
+                                            "mcp__claude_ai_Google_Drive__create_file": 2, "Bash": 2})
+
+    def test_grounding_rules(self):
+        t = office.now()
+        grounds = "출시 목표,2026-12-17,목표일 잠정판매가,3900 25.8%"
+        self.assertEqual(office.ungrounded_numbers("3,900원 4,500원 25.8% 12월 17일 12/3 2026-12-03 300ml 1잔 2026-10-16 1.5배", grounds, t),
+                         ["12/3", "2026-12-03", "4,500", "300", "1.5"])
+        self.assertEqual(office.md_paragraphs("a\nb\n- x\n- y\n| 1 |\n| 2 |\n\nc"), "a\n\nb\n\n- x\n- y\n| 1 |\n| 2 |\n\nc")
 
 
 class CostStaffTests(Base):

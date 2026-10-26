@@ -76,9 +76,11 @@ def call(name, args):
                 "parentId": args.get("parentId", ""), "mimeType": "application/vnd.google-apps.document",
                 "viewUrl": "https://docs.google.com/document/d/fakefile/edit"}
         return {"content": [{"type": "text", "text": json.dumps(body, ensure_ascii=False)}], "isError": False}
-    if name == "read_file_content":
-        with open(os.environ["FAKE_DRIVE_TEXT"]) as f:
-            body = {"fileContent": f.read(), "title": "plan.xlsx", "viewUrl": "about:blank"}
+    if name == "read_file_content":  # FAKE_DRIVE_TEXTS = {"<file id>": ["<title>", "<text file>"]}, else FAKE_DRIVE_TEXT
+        files = json.loads(os.environ.get("FAKE_DRIVE_TEXTS") or "{}")
+        title, path = files.get(args.get("fileId"), ["plan.xlsx", os.environ.get("FAKE_DRIVE_TEXT", "")])
+        with open(path) as f:
+            body = {"fileContent": f.read(), "title": title, "viewUrl": "about:blank"}
         return {"content": [{"type": "text", "text": json.dumps(body, ensure_ascii=False)}], "isError": False}
     if name == "big_result":
         return {"content": [{"type": "text", "text": big_text()}], "isError": False}

@@ -218,6 +218,13 @@ def tool_answer(name, inp):
             return False, ("Error: result (%d characters across 1 line) exceeds maximum allowed tokens. Output has been saved to %s.\n"
                            "Format: Plain text\nSearch within the file for specific content." % (len(body), path))
         return False, body
+    if name.endswith("__read_file_content"):  # FAKE_DRIVE_TEXTS = {"<file id>": ["<title>", "<text file>"]}
+        files = json.loads(os.environ.get("FAKE_DRIVE_TEXTS") or "{}")
+        if inp.get("fileId") not in files:
+            return True, "Error: File not found: %s" % inp.get("fileId")
+        title, path = files[inp["fileId"]]
+        with open(path) as f:
+            return False, json.dumps({"fileContent": f.read(), "title": title, "viewUrl": "about:blank"}, ensure_ascii=False)
     if name.endswith("__create_file"):
         path = os.environ.get("FAKE_DRIVE_CREATED")
         if path:

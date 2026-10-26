@@ -188,7 +188,7 @@ details summary { cursor: pointer; color: var(--brand); font-weight: 500; }
     else if (q.kind === "drive_draft") {
       // the file name office.py gives it: [AI초안] <title>_<YYMMDD of the proposal, KST>
       rows.push(["파일", "[AI초안] " + p.title + "_" + kstDay(new Date(q.created || Date.now())).slice(2).replace(/-/g, "")]);
-      rows.push(["형식", p.format === "sheet" ? "구글 시트 (CSV에서 변환)" : "구글 문서"]);
+      rows.push(["형식", p.format === "sheet" ? "구글 시트 (CSV에서 변환)" : p.format === "md" ? "구글 문서 (제목·표 서식 포함)" : "구글 문서"]);
       rows.push(["내용", p.content, "long"]); rows.push(["길이", String(p.content || "").length + "자"]);
     }
     else { Object.keys(p).sort().forEach(function (k) { rows.push([k, typeof p[k] === "string" ? p[k] : JSON.stringify(p[k])]); }); }
