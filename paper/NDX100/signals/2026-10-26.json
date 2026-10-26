@@ -1,0 +1,46 @@
+{
+ "market": "NDX100",
+ "as_of": "2026-10-26",
+ "regime": {
+  "benchmark": "^NDX",
+  "mode": "MA200",
+  "close": 29273.4043,
+  "ma200": 27854.8498,
+  "ma20": 30173.3597,
+  "on": true
+ },
+ "entries_next_open": [],
+ "exits_next_open": [],
+ "positions": [
+  "ADP",
+  "AMGN",
+  "CSX",
+  "KDP"
+ ],
+ "watchlist": [
+  {
+   "symbol": "FANG",
+   "label": "1순위 · 임박 (피벗 1% 이내)",
+   "close": 207.13,
+   "pivot": 207.17,
+   "to_pivot_pct": 0.02,
+   "rs": 72.45
+  },
+  {
+   "symbol": "AAPL",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 343.91,
+   "pivot": 351.73,
+   "to_pivot_pct": 2.27,
+   "rs": 70.41
+  }
+ ],
+ "coverage": {
+  "requested": 101,
+  "loaded": 100,
+  "failed": [
+   "WBD"
+  ]
+ },
+ "generated_at": "2026-10-26T22:30:05Z"
+}
