@@ -1,9 +1,9 @@
 {
  "market": "KOSPI",
  "start_date": "2026-09-23",
- "as_of": "2026-10-23",
- "days": 19,
- "signal_files": 8,
+ "as_of": "2026-10-27",
+ "days": 21,
+ "signal_files": 9,
  "missing_days": [
   "2026-10-02",
   "2026-10-06",
@@ -15,7 +15,8 @@
   "2026-10-19",
   "2026-10-20",
   "2026-10-21",
-  "2026-10-22"
+  "2026-10-22",
+  "2026-10-26"
  ],
  "late": [
   "2026-09-23",
@@ -139,6 +140,21 @@
    "compared_file": "2026-10-23.json",
    "revisions_after_open": [],
    "deadline": "2026-10-26T00:00:00Z",
+   "on_time": true,
+   "entries_match": true,
+   "exits_match": true,
+   "entries_only_committed": [],
+   "entries_only_recomputed": [],
+   "exits_only_committed": [],
+   "exits_only_recomputed": [],
+   "revisions": []
+  },
+  {
+   "date": "2026-10-27",
+   "committed_at": "2026-10-27T10:28:32Z",
+   "compared_file": "2026-10-27.json",
+   "revisions_after_open": [],
+   "deadline": "2026-10-28T00:00:00Z",
    "on_time": true,
    "entries_match": true,
    "exits_match": true,
