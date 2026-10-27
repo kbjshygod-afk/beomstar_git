@@ -14,6 +14,7 @@
   {
    "date": "2026-09-25",
    "committed_at": "2026-09-26T16:44:49Z",
+   "compared_file": "2026-09-25.json",
    "revisions_after_open": [],
    "deadline": "2026-09-27T00:00:00Z",
    "on_time": true,
@@ -28,6 +29,7 @@
   {
    "date": "2026-09-26",
    "committed_at": "2026-09-27T21:35:52Z",
+   "compared_file": "2026-09-26.json",
    "revisions_after_open": [],
    "deadline": "2026-09-28T00:00:00Z",
    "on_time": true,
@@ -42,6 +44,7 @@
   {
    "date": "2026-09-27",
    "committed_at": "2026-09-28T23:29:45Z",
+   "compared_file": "2026-09-27.json",
    "revisions_after_open": [],
    "deadline": "2026-09-29T00:00:00Z",
    "on_time": true,
@@ -56,6 +59,7 @@
   {
    "date": "2026-09-28",
    "committed_at": "2026-09-29T10:56:09Z",
+   "compared_file": "2026-09-28.json",
    "revisions_after_open": [],
    "deadline": "2026-09-30T00:00:00Z",
    "on_time": true,
@@ -70,6 +74,7 @@
   {
    "date": "2026-09-29",
    "committed_at": "2026-09-30T12:37:25Z",
+   "compared_file": "2026-09-29.json",
    "revisions_after_open": [],
    "deadline": "2026-10-01T00:00:00Z",
    "on_time": true,
@@ -84,6 +89,7 @@
   {
    "date": "2026-09-30",
    "committed_at": "2026-10-01T08:50:22Z",
+   "compared_file": "2026-09-30.json",
    "revisions_after_open": [],
    "deadline": "2026-10-02T00:00:00Z",
    "on_time": true,
@@ -98,6 +104,7 @@
   {
    "date": "2026-10-01",
    "committed_at": "2026-10-02T07:50:41Z",
+   "compared_file": "2026-10-01.json",
    "revisions_after_open": [],
    "deadline": "2026-10-03T00:00:00Z",
    "on_time": true,
@@ -112,6 +119,7 @@
   {
    "date": "2026-10-02",
    "committed_at": "2026-10-03T08:36:58Z",
+   "compared_file": "2026-10-02.json",
    "revisions_after_open": [],
    "deadline": "2026-10-04T00:00:00Z",
    "on_time": true,
@@ -126,6 +134,7 @@
   {
    "date": "2026-10-03",
    "committed_at": "2026-10-04T07:37:54Z",
+   "compared_file": "2026-10-03.json",
    "revisions_after_open": [],
    "deadline": "2026-10-05T00:00:00Z",
    "on_time": true,
@@ -140,6 +149,7 @@
   {
    "date": "2026-10-04",
    "committed_at": "2026-10-05T08:39:38Z",
+   "compared_file": "2026-10-04.json",
    "revisions_after_open": [],
    "deadline": "2026-10-06T00:00:00Z",
    "on_time": true,
@@ -154,6 +164,7 @@
   {
    "date": "2026-10-05",
    "committed_at": "2026-10-06T07:40:24Z",
+   "compared_file": "2026-10-05.json",
    "revisions_after_open": [],
    "deadline": "2026-10-07T00:00:00Z",
    "on_time": true,
@@ -168,6 +179,7 @@
   {
    "date": "2026-10-06",
    "committed_at": "2026-10-07T08:41:37Z",
+   "compared_file": "2026-10-06.json",
    "revisions_after_open": [],
    "deadline": "2026-10-08T00:00:00Z",
    "on_time": true,
@@ -182,6 +194,7 @@
   {
    "date": "2026-10-07",
    "committed_at": "2026-10-08T07:41:56Z",
+   "compared_file": "2026-10-07.json",
    "revisions_after_open": [],
    "deadline": "2026-10-09T00:00:00Z",
    "on_time": true,
@@ -196,6 +209,7 @@
   {
    "date": "2026-10-08",
    "committed_at": "2026-10-09T08:28:46Z",
+   "compared_file": "2026-10-08.json",
    "revisions_after_open": [],
    "deadline": "2026-10-10T00:00:00Z",
    "on_time": true,
@@ -210,6 +224,7 @@
   {
    "date": "2026-10-09",
    "committed_at": "2026-10-10T07:29:31Z",
+   "compared_file": "2026-10-09.json",
    "revisions_after_open": [],
    "deadline": "2026-10-11T00:00:00Z",
    "on_time": true,
@@ -224,6 +239,7 @@
   {
    "date": "2026-10-10",
    "committed_at": "2026-10-11T08:30:08Z",
+   "compared_file": "2026-10-10.json",
    "revisions_after_open": [],
    "deadline": "2026-10-12T00:00:00Z",
    "on_time": true,
@@ -238,6 +254,7 @@
   {
    "date": "2026-10-11",
    "committed_at": "2026-10-12T07:31:04Z",
+   "compared_file": "2026-10-11.json",
    "revisions_after_open": [],
    "deadline": "2026-10-13T00:00:00Z",
    "on_time": true,
@@ -252,6 +269,7 @@
   {
    "date": "2026-10-12",
    "committed_at": "2026-10-13T08:32:33Z",
+   "compared_file": "2026-10-12.json",
    "revisions_after_open": [],
    "deadline": "2026-10-14T00:00:00Z",
    "on_time": true,
@@ -266,6 +284,7 @@
   {
    "date": "2026-10-13",
    "committed_at": "2026-10-14T07:33:16Z",
+   "compared_file": "2026-10-13.json",
    "revisions_after_open": [],
    "deadline": "2026-10-15T00:00:00Z",
    "on_time": true,
@@ -280,6 +299,7 @@
   {
    "date": "2026-10-14",
    "committed_at": "2026-10-15T08:19:50Z",
+   "compared_file": "2026-10-14.json",
    "revisions_after_open": [],
    "deadline": "2026-10-16T00:00:00Z",
    "on_time": true,
@@ -294,6 +314,7 @@
   {
    "date": "2026-10-15",
    "committed_at": "2026-10-16T07:20:18Z",
+   "compared_file": "2026-10-15.json",
    "revisions_after_open": [],
    "deadline": "2026-10-17T00:00:00Z",
    "on_time": true,
@@ -308,6 +329,7 @@
   {
    "date": "2026-10-16",
    "committed_at": "2026-10-17T08:20:53Z",
+   "compared_file": "2026-10-16.json",
    "revisions_after_open": [],
    "deadline": "2026-10-18T00:00:00Z",
    "on_time": true,
@@ -322,6 +344,7 @@
   {
    "date": "2026-10-17",
    "committed_at": "2026-10-18T07:22:09Z",
+   "compared_file": "2026-10-17.json",
    "revisions_after_open": [],
    "deadline": "2026-10-19T00:00:00Z",
    "on_time": true,
@@ -336,6 +359,7 @@
   {
    "date": "2026-10-18",
    "committed_at": "2026-10-19T08:23:14Z",
+   "compared_file": "2026-10-18.json",
    "revisions_after_open": [],
    "deadline": "2026-10-20T00:00:00Z",
    "on_time": true,
@@ -350,6 +374,7 @@
   {
    "date": "2026-10-19",
    "committed_at": "2026-10-20T07:24:01Z",
+   "compared_file": "2026-10-19.json",
    "revisions_after_open": [],
    "deadline": "2026-10-21T00:00:00Z",
    "on_time": true,
@@ -364,6 +389,7 @@
   {
    "date": "2026-10-20",
    "committed_at": "2026-10-21T07:41:09Z",
+   "compared_file": "2026-10-20.json",
    "revisions_after_open": [],
    "deadline": "2026-10-22T00:00:00Z",
    "on_time": true,
@@ -378,6 +404,7 @@
   {
    "date": "2026-10-21",
    "committed_at": "2026-10-22T07:10:54Z",
+   "compared_file": "2026-10-21.json",
    "revisions_after_open": [],
    "deadline": "2026-10-23T00:00:00Z",
    "on_time": true,
@@ -392,6 +419,7 @@
   {
    "date": "2026-10-22",
    "committed_at": "2026-10-23T07:34:24Z",
+   "compared_file": "2026-10-22.json",
    "revisions_after_open": [],
    "deadline": "2026-10-24T00:00:00Z",
    "on_time": true,
@@ -406,6 +434,7 @@
   {
    "date": "2026-10-23",
    "committed_at": "2026-10-24T07:12:58Z",
+   "compared_file": "2026-10-23.json",
    "revisions_after_open": [],
    "deadline": "2026-10-25T00:00:00Z",
    "on_time": true,
@@ -420,6 +449,7 @@
   {
    "date": "2026-10-24",
    "committed_at": "2026-10-25T08:13:50Z",
+   "compared_file": "2026-10-24.json",
    "revisions_after_open": [],
    "deadline": "2026-10-26T00:00:00Z",
    "on_time": true,
@@ -434,6 +464,7 @@
   {
    "date": "2026-10-25",
    "committed_at": "2026-10-26T07:14:11Z",
+   "compared_file": "2026-10-25.json",
    "revisions_after_open": [],
    "deadline": "2026-10-27T00:00:00Z",
    "on_time": true,
@@ -448,6 +479,7 @@
   {
    "date": "2026-10-26",
    "committed_at": "2026-10-27T07:54:12Z",
+   "compared_file": "2026-10-26.json",
    "revisions_after_open": [],
    "deadline": "2026-10-28T00:00:00Z",
    "on_time": true,
