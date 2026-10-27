@@ -346,3 +346,41 @@ def test_signal_file_revisions_compare_with_the_latest_and_stop_at_the_open(tmp_
     assert state == "differs after the open" and p.name == "2024-06-28.rev2.json"
     assert sorted(x.name for x in sig.glob("*.json")) == ["2024-06-28.json", "2024-06-28.rev1.json",
                                                          "2024-06-28.rev2.json"]
+
+
+def test_audit_compares_with_the_revision_traded_before_the_open(tmp_path, ledger_repo, monkeypatch):
+    """2026-10-22 SP500: the first run after the close missed an entry (MA) that the 02:25 UTC
+    rerun, still before the open, added as rev1. The ledger trades rev1, so the audit compares
+    with rev1: a revision before the open is recorded as revised, not as a mismatch."""
+    offline = tmp_path / "data"
+    offline.mkdir()
+    days = _write_market(offline)
+    run_days = list(days[-15:])
+    d0 = sym = None
+    for i, day in enumerate(run_days[:-1]):
+        r = _run(offline, ledger_repo, _after_close(day), monkeypatch)
+        if r["snapshot"]["entries_next_open"]:
+            d0, d1, sym = day, run_days[i + 1], r["snapshot"]["entries_next_open"][0]["symbol"]
+            break
+    assert d0 is not None, "fixture should produce an entry signal"
+    d0s = d0.strftime("%Y-%m-%d")
+    # the provider revises d0's volume for that symbol before the next open
+    f = offline / f"{sym}.csv"
+    df = pd.read_csv(f)
+    df.loc[df["Date"] == d0s, "Volume"] = 1.0
+    df.to_csv(f, index=False)
+    before_open = datetime(d1.year, d1.month, d1.day, 2, 30, tzinfo=timezone.utc)
+    r = _run(offline, ledger_repo, before_open, monkeypatch)
+    assert r["signal_state"] == "revised"
+    assert sym not in {e["symbol"] for e in r["snapshot"]["entries_next_open"]}
+    r = _run(offline, ledger_repo, _after_close(d1), monkeypatch)
+    aud = r["audit"]
+    row = next(x for x in aud["rows"] if x["date"] == d0s)
+    assert row["compared_file"] == f"{d0s}.rev1.json"
+    assert d0s in aud["revised"] and d0s not in aud["mismatched"] and aud["revised_after_open"] == []
+    root = ledger_repo / "paper" / "SP500"
+    d1s = d1.strftime("%Y-%m-%d")
+    held = {p["symbol"] for p in json.loads((root / "positions.json").read_text()) if p["entry_date"] == d1s}
+    trades = pd.read_csv(root / "trades.csv")
+    filled = set() if trades.empty or "symbol" not in trades else set(trades.loc[trades["entry_date"] == d1s, "symbol"])
+    assert sym not in held | filled                    # rev1 dropped it, and rev1 is what was traded
