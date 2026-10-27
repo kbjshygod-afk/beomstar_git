@@ -1,17 +1,32 @@
 {
  "markets": {
   "SP500": {
-   "as_of": "2026-10-26",
+   "as_of": "2026-10-27",
    "start_date": "2026-09-25",
    "regime": {
     "benchmark": "^GSPC",
     "mode": "MA200",
-    "close": 7676.77,
-    "ma200": 7295.0914,
-    "ma20": 7727.1291,
+    "close": 7722.6001,
+    "ma200": 7298.873,
+    "ma20": 7729.7171,
     "on": true
    },
-   "entries_next_open": [],
+   "entries_next_open": [
+    {
+     "symbol": "NUE",
+     "signal_close": 270.79,
+     "rs": 92.77,
+     "desired_qty": 26970.131783,
+     "est_stop_from_close": 243.711
+    },
+    {
+     "symbol": "WST",
+     "signal_close": 398.29,
+     "rs": 92.17,
+     "desired_qty": 18336.493658,
+     "est_stop_from_close": 358.461
+    }
+   ],
    "exits_next_open": [],
    "positions": [
     {
@@ -22,10 +37,10 @@
      "entry_price": 434.5700073,
      "qty": 17321.004855846855,
      "stop_price": 391.11300657,
-     "last_close": 417.2200012,
-     "exit_ma": 398.35219970799994,
-     "unrealized_pnl": -330027.257653852,
-     "price_pnl_pct": -3.9924536457994986,
+     "last_close": 414.8500061,
+     "exit_ma": 398.96299987800006,
+     "unrealized_pnl": -370995.8528960161,
+     "price_pnl_pct": -4.5378191933955865,
      "exit_pending": false
     },
     {
@@ -36,10 +51,10 @@
      "entry_price": 88.25,
      "qty": 83437.14284278991,
      "stop_price": 79.425,
-     "last_close": 93.69000244,
-     "exit_ma": 86.0766003416,
-     "unrealized_pnl": 423537.15270659793,
-     "price_pnl_pct": 6.164308713881028,
+     "last_close": 93.20999908,
+     "exit_ma": 86.3042002866,
+     "unrealized_pnl": 383567.14401108585,
+     "price_pnl_pct": 5.620395558073654,
      "exit_pending": false
     },
     {
@@ -50,10 +65,10 @@
      "entry_price": 428.8200073,
      "qty": 17304.667469142256,
      "stop_price": 385.93800656999997,
-     "last_close": 431.3200073,
-     "exit_ma": 408.667401118,
-     "unrealized_pnl": 13492.794813742861,
-     "price_pnl_pct": 0.5829951861949789,
+     "last_close": 421.4899902,
+     "exit_ma": 409.292401118,
+     "unrealized_pnl": -156272.17196347564,
+     "price_pnl_pct": -1.709345873610768,
      "exit_pending": false
     },
     {
@@ -64,10 +79,10 @@
      "entry_price": 1339.939941,
      "qty": 5493.013899604515,
      "stop_price": 1205.9459469,
-     "last_close": 1357.599976,
-     "exit_ma": 1297.3290014799998,
-     "unrealized_pnl": 67371.56920486409,
-     "price_pnl_pct": 1.3179721314091175,
+     "last_close": 1342.719971,
+     "exit_ma": 1297.8297998199998,
+     "unrealized_pnl": -14201.032937739044,
+     "price_pnl_pct": 0.20747422439884033,
      "exit_pending": false
     },
     {
@@ -78,10 +93,10 @@
      "entry_price": 319.9500122,
      "qty": 23309.928482928455,
      "stop_price": 287.95501098,
-     "last_close": 318.1799927,
-     "exit_ma": 278.41859955,
-     "unrealized_pnl": -71008.55751244724,
-     "price_pnl_pct": -0.5532175128949657,
+     "last_close": 313.4599915,
+     "exit_ma": 279.92099945399997,
+     "unrealized_pnl": -180811.4021429615,
+     "price_pnl_pct": -2.0284483364679806,
      "exit_pending": false
     },
     {
@@ -92,10 +107,10 @@
      "entry_price": 199.7700043,
      "qty": 36733.3211190051,
      "stop_price": 179.79300387,
-     "last_close": 196.4299927,
-     "exit_ma": 190.80940094399998,
-     "unrealized_pnl": -151797.20207830146,
-     "price_pnl_pct": -1.6719284818076163,
+     "last_close": 199.6399994,
+     "exit_ma": 191.036800846,
+     "unrealized_pnl": -34118.82358685415,
+     "price_pnl_pct": -0.06507728748145203,
      "exit_pending": false
     },
     {
@@ -106,10 +121,10 @@
      "entry_price": 437.8900146,
      "qty": 16811.52663459441,
      "stop_price": 394.10101313999996,
-     "last_close": 444.6300049,
-     "exit_ma": 417.848399652,
-     "unrealized_pnl": 83636.50881858543,
-     "price_pnl_pct": 1.539197075812937,
+     "last_close": 447.9500122,
+     "exit_ma": 418.41979979799993,
+     "unrealized_pnl": 139339.2711872803,
+     "price_pnl_pct": 2.2973799960224195,
      "exit_pending": false
     },
     {
@@ -120,10 +135,10 @@
      "entry_price": 1256.0,
      "qty": 5829.856722531004,
      "stop_price": 1130.4,
-     "last_close": 1279.140015,
-     "exit_ma": 1188.5843945000001,
-     "unrealized_pnl": 105343.96588920709,
-     "price_pnl_pct": 1.8423578821656017,
+     "last_close": 1281.910034,
+     "exit_ma": 1190.5593945,
+     "unrealized_pnl": 121460.4821501188,
+     "price_pnl_pct": 2.0629007961783463,
      "exit_pending": false
     },
     {
@@ -134,10 +149,10 @@
      "entry_price": 370.0,
      "qty": 19007.284918942456,
      "stop_price": 333.0,
-     "last_close": 400.1700134,
-     "exit_ma": 372.048402098,
-     "unrealized_pnl": 544172.3589406731,
-     "price_pnl_pct": 8.154057675675674,
+     "last_close": 397.0299988,
+     "exit_ma": 372.69880187800004,
+     "unrealized_pnl": 484608.5730931368,
+     "price_pnl_pct": 7.305405081081084,
      "exit_pending": false
     },
     {
@@ -148,10 +163,10 @@
      "entry_price": 252.0200043,
      "qty": 28951.739553947024,
      "stop_price": 226.81800387,
-     "last_close": 249.9600067,
-     "exit_ma": 235.38339965599997,
-     "unrealized_pnl": -88706.90307647549,
-     "price_pnl_pct": -0.817394478554101,
+     "last_close": 250.4499969,
+     "exit_ma": 235.58399963,
+     "unrealized_pnl": -74549.20655939728,
+     "price_pnl_pct": -0.622969356881331,
      "exit_pending": false
     },
     {
@@ -162,10 +177,10 @@
      "entry_price": 123.9400024,
      "qty": 59366.25714249474,
      "stop_price": 111.54600216,
-     "last_close": 118.6200027,
-     "exit_ma": 109.461600188,
-     "unrealized_pnl": -344628.22945869714,
-     "price_pnl_pct": -4.292399222996945,
+     "last_close": 117.8300018,
+     "exit_ma": 109.79940017600002,
+     "unrealized_pnl": -391433.8272377541,
+     "price_pnl_pct": -4.92980513287451,
      "exit_pending": false
     },
     {
@@ -176,10 +191,10 @@
      "entry_price": 34.40999985,
      "qty": 213478.84197954184,
      "stop_price": 30.968999865,
-     "last_close": 34.99000168,
-     "exit_ma": 32.098800011,
-     "unrealized_pnl": 94187.25509440899,
-     "price_pnl_pct": 1.6855618498353486,
+     "last_close": 34.86000061,
+     "exit_ma": 32.19040000940001,
+     "unrealized_pnl": 66490.28217046801,
+     "price_pnl_pct": 1.3077615866365688,
      "exit_pending": false
     },
     {
@@ -190,10 +205,10 @@
      "entry_price": 242.0200043,
      "qty": 30083.193491035752,
      "stop_price": 217.81800387,
-     "last_close": 252.2599945,
-     "exit_ma": 224.22939971800002,
-     "unrealized_pnl": 278312.5648476109,
-     "price_pnl_pct": 4.2310511602614564,
+     "last_close": 252.7299957,
+     "exit_ma": 225.10099975400001,
+     "unrealized_pnl": 292423.42361414805,
+     "price_pnl_pct": 4.425250479181142,
      "exit_pending": false
     },
     {
@@ -204,140 +219,140 @@
      "entry_price": 341.4299927,
      "qty": 3519.2543534161273,
      "stop_price": 307.28699343,
-     "last_close": 357.269989,
-     "exit_ma": 295.488599244,
-     "unrealized_pnl": 50827.17003221135,
-     "price_pnl_pct": 4.639310148103459,
+     "last_close": 358.8399963,
+     "exit_ma": 296.932598878,
+     "unrealized_pnl": 56341.37454758049,
+     "price_pnl_pct": 5.099143008006735,
      "exit_pending": false
     }
    ],
    "stale_positions": [],
    "watchlist": [
     {
-     "symbol": "APA",
+     "symbol": "RVTY",
      "label": "2순위 · 근접 (피벗 3% 이내)",
-     "close": 51.66,
-     "pivot": 52.39,
-     "to_pivot_pct": 1.41,
-     "rs": 96.59
+     "close": 161.86,
+     "pivot": 166.25,
+     "to_pivot_pct": 2.71,
+     "rs": 95.78
     },
     {
      "symbol": "ZBRA",
      "label": "2순위 · 근접 (피벗 3% 이내)",
-     "close": 384.15,
+     "close": 381.67,
      "pivot": 392.78,
-     "to_pivot_pct": 2.25,
-     "rs": 95.18
+     "to_pivot_pct": 2.91,
+     "rs": 94.78
     },
     {
-     "symbol": "COP",
-     "label": "1순위 · 임박 (피벗 1% 이내)",
-     "close": 151.37,
-     "pivot": 152.77,
-     "to_pivot_pct": 0.92,
-     "rs": 94.58
+     "symbol": "TRGP",
+     "label": "2순위 · 근접 (피벗 3% 이내)",
+     "close": 302.61,
+     "pivot": 306.16,
+     "to_pivot_pct": 1.17,
+     "rs": 93.98
     },
     {
      "symbol": "HPQ",
-     "label": "1순위 · 임박 (피벗 1% 이내)",
-     "close": 34.09,
-     "pivot": 34.25,
-     "to_pivot_pct": 0.47,
-     "rs": 94.38
+     "label": "2순위 · 근접 (피벗 3% 이내)",
+     "close": 33.58,
+     "pivot": 34.27,
+     "to_pivot_pct": 2.05,
+     "rs": 93.78
     },
     {
-     "symbol": "EOG",
+     "symbol": "VTRS",
      "label": "1순위 · 임박 (피벗 1% 이내)",
-     "close": 163.68,
-     "pivot": 165.11,
-     "to_pivot_pct": 0.87,
-     "rs": 92.57
-    },
-    {
-     "symbol": "CVX",
-     "label": "1순위 · 임박 (피벗 1% 이내)",
-     "close": 232.01,
-     "pivot": 233.74,
-     "to_pivot_pct": 0.75,
-     "rs": 92.37
-    },
-    {
-     "symbol": "WST",
-     "label": "1순위 · 임박 (피벗 1% 이내)",
-     "close": 394.73,
-     "pivot": 397.16,
-     "to_pivot_pct": 0.62,
-     "rs": 91.97
+     "close": 18.72,
+     "pivot": 18.75,
+     "to_pivot_pct": 0.16,
+     "rs": 91.57
     },
     {
      "symbol": "A",
-     "label": "2순위 · 근접 (피벗 3% 이내)",
-     "close": 175.96,
+     "label": "1순위 · 임박 (피벗 1% 이내)",
+     "close": 177.49,
      "pivot": 179.1,
-     "to_pivot_pct": 1.78,
-     "rs": 91.37
+     "to_pivot_pct": 0.91,
+     "rs": 91.16
     },
     {
      "symbol": "BBY",
      "label": "2순위 · 근접 (피벗 3% 이내)",
-     "close": 97.95,
+     "close": 98.5,
      "pivot": 100.58,
-     "to_pivot_pct": 2.69,
-     "rs": 90.76
+     "to_pivot_pct": 2.11,
+     "rs": 90.96
     },
     {
-     "symbol": "OXY",
+     "symbol": "CVX",
      "label": "2순위 · 근접 (피벗 3% 이내)",
-     "close": 64.07,
-     "pivot": 64.96,
-     "to_pivot_pct": 1.39,
-     "rs": 90.56
+     "close": 228.23,
+     "pivot": 234.08,
+     "to_pivot_pct": 2.56,
+     "rs": 89.96
     },
     {
-     "symbol": "VTRS",
+     "symbol": "EOG",
      "label": "2순위 · 근접 (피벗 3% 이내)",
-     "close": 18.29,
-     "pivot": 18.75,
-     "to_pivot_pct": 2.52,
-     "rs": 90.36
+     "close": 161.1,
+     "pivot": 165.11,
+     "to_pivot_pct": 2.49,
+     "rs": 89.56
+    },
+    {
+     "symbol": "XOM",
+     "label": "2순위 · 근접 (피벗 3% 이내)",
+     "close": 179.91,
+     "pivot": 184.59,
+     "to_pivot_pct": 2.6,
+     "rs": 88.96
+    },
+    {
+     "symbol": "TMO",
+     "label": "2순위 · 근접 (피벗 3% 이내)",
+     "close": 693.02,
+     "pivot": 705.79,
+     "to_pivot_pct": 1.84,
+     "rs": 87.75
     },
     {
      "symbol": "DVN",
-     "label": "1순위 · 임박 (피벗 1% 이내)",
-     "close": 51.64,
-     "pivot": 51.69,
-     "to_pivot_pct": 0.1,
-     "rs": 89.36
-    },
-    {
-     "symbol": "WAT",
      "label": "2순위 · 근접 (피벗 3% 이내)",
-     "close": 455.98,
-     "pivot": 465.36,
-     "to_pivot_pct": 2.06,
-     "rs": 88.96
+     "close": 51.23,
+     "pivot": 51.97,
+     "to_pivot_pct": 1.44,
+     "rs": 87.55
     },
     {
      "symbol": "ABBV",
      "label": "2순위 · 근접 (피벗 3% 이내)",
-     "close": 286.74,
+     "close": 286.39,
      "pivot": 291.4,
-     "to_pivot_pct": 1.63,
-     "rs": 86.95
+     "to_pivot_pct": 1.75,
+     "rs": 86.75
     },
     {
-     "symbol": "ADP",
-     "label": "2순위 · 근접 (피벗 3% 이내)",
-     "close": 301.12,
-     "pivot": 309.4,
-     "to_pivot_pct": 2.75,
-     "rs": 84.94
+     "symbol": "HST",
+     "label": "1순위 · 임박 (피벗 1% 이내)",
+     "close": 25.22,
+     "pivot": 25.3,
+     "to_pivot_pct": 0.32,
+     "rs": 85.74
+    },
+    {
+     "symbol": "STLD",
+     "label": "1순위 · 임박 (피벗 1% 이내)",
+     "close": 246.8,
+     "pivot": 248.96,
+     "to_pivot_pct": 0.88,
+     "rs": 85.54
     }
    ],
    "performance": {
-    "equity": 97730135.0,
-    "return_pct": -2.27,
-    "bench_return_pct": -0.86,
+    "equity": 97376563.0,
+    "return_pct": -2.62,
+    "bench_return_pct": -0.27,
     "mdd_pct": -4.04,
     "closed_trades": 5,
     "win_rate_pct": 0.0,
@@ -347,8 +362,8 @@
    },
    "status_csv": "SP500/status.csv",
    "audit": {
-    "days": 22,
-    "signal_files": 22,
+    "days": 23,
+    "signal_files": 23,
     "missing_days": [],
     "late": [],
     "uncommitted": [],
@@ -666,7 +681,7 @@
    }
   }
  },
- "updated_at": "2026-10-27T14:33:44Z",
+ "updated_at": "2026-10-27T21:30:15Z",
  "disclaimer": "기계적 룰 출력이며 투자 자문이 아닙니다. 매수·매도 결정은 소유자 본인이 합니다.",
  "unconfirmed": "미확인 추정값(스캐너 원본 코드 미확인): 피벗=직전 20봉 최고가(당일 제외) · 거래량 평균=직전 50일(당일 제외) · RS=지수 대비 가중 1년 수익률 ≥ 0%p(스캐너는 유니버스 백분위 ≥ 70) · 52주 고저=종가 기준 · 200일선 상승=22봉 전 대비 · 수축비=10/40일 평균 TR · 비용=편도 0.2%"
 }
