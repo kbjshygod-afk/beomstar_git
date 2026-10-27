@@ -1,0 +1,31 @@
+{
+ "market": "KOSDAQ",
+ "as_of": "2026-10-27",
+ "regime": {
+  "benchmark": "^KQ11",
+  "mode": "NONE",
+  "close": 743.83,
+  "ma200": 975.7065,
+  "ma20": 824.332,
+  "on": true
+ },
+ "entries_next_open": [],
+ "exits_next_open": [],
+ "positions": [],
+ "watchlist": [
+  {
+   "symbol": "425420.KQ",
+   "label": "1순위 · 임박 (피벗 1% 이내)",
+   "close": 76200.0,
+   "pivot": 76700.0,
+   "to_pivot_pct": 0.66,
+   "rs": 95.17
+  }
+ ],
+ "coverage": {
+  "requested": 150,
+  "loaded": 150,
+  "failed": []
+ },
+ "generated_at": "2026-10-27T10:28:35Z"
+}
