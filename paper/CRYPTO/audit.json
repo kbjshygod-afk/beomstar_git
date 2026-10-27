@@ -1,9 +1,9 @@
 {
  "market": "CRYPTO",
  "start_date": "2026-09-24",
- "as_of": "2026-10-22",
- "days": 29,
- "signal_files": 7,
+ "as_of": "2026-10-26",
+ "days": 33,
+ "signal_files": 8,
  "missing_days": [
   "2026-09-26",
   "2026-09-27",
@@ -26,7 +26,10 @@
   "2026-10-18",
   "2026-10-19",
   "2026-10-20",
-  "2026-10-21"
+  "2026-10-21",
+  "2026-10-23",
+  "2026-10-24",
+  "2026-10-25"
  ],
  "late": [],
  "uncommitted": [],
@@ -130,6 +133,21 @@
    "compared_file": "2026-10-22.json",
    "revisions_after_open": [],
    "deadline": "2026-10-24T00:00:00Z",
+   "on_time": true,
+   "entries_match": true,
+   "exits_match": true,
+   "entries_only_committed": [],
+   "entries_only_recomputed": [],
+   "exits_only_committed": [],
+   "exits_only_recomputed": [],
+   "revisions": []
+  },
+  {
+   "date": "2026-10-26",
+   "committed_at": "2026-10-27T10:29:08Z",
+   "compared_file": "2026-10-26.json",
+   "revisions_after_open": [],
+   "deadline": "2026-10-28T00:00:00Z",
    "on_time": true,
    "entries_match": true,
    "exits_match": true,
