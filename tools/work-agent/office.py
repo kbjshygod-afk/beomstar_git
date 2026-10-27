@@ -14,6 +14,8 @@ another team lives under teams/<id>/{queue,staff,log} and keeps its own state di
 mode every team writes its card teams/<id> (heartbeat) and obeys its own stop flag there besides the global one.
     office.py propose <role> <staff_output.json>   # record proposals from a saved staff output (no model)
     office.py status             # print local proposal states
+    office.py doctor             # the owner's health check from local files; report [days] = adoption per staff role;
+                                 # timelog <업무> <분> = minutes spent by hand (doctor.py)
     office.py tidy <session_id>  # drop older transcripts of the desk that ran <session_id> (Pixel Agents: 1 character/desk)
 
 Trust model (keep it this way):
@@ -1537,6 +1539,9 @@ def main(argv):
         return subprocess.run([sys.executable, os.path.join(DIR, "office.py")] + argv[3:], env=team_env(team)).returncode
     cfg = Cfg()
     cmd = argv[1]
+    if cmd in ("doctor", "report", "timelog"):
+        import doctor  # the owner's own checks from local files (doctor.py)
+        return doctor.main(cfg, cmd, argv[2:])
     if cmd == "cycle":
         return cmd_cycle(cfg)
     if cmd == "order" and len(argv) >= 4:

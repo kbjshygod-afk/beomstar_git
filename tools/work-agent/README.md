@@ -25,6 +25,7 @@
 | `board/board.html` | (3단계) 전광판(관제실) 페이지 원본(claude.ai 아티팩트로 게시). 팀이 둘 이상이면 팀 칩·팀 표시·팀별 정지 |
 | `teams.json`, `teams/` | 여러 팀: 팀 목록(기본 팀 = R&D)과 새 팀 틀(`teams/_template`), 추가 방법(`teams/README.md`). 팀 로컬 설정 `teams/<id>/config.env`는 git 제외 |
 | `desks.py`, `pixel_office.sh`, `pixel/` | (3단계) 픽셀 사무실: 책상 폴더·기록 정리, Pixel Agents 설정 합치기·배치 설치, 배치 생성기와 결과(`layout-office.json`) |
+| `doctor.py` | 대표님 점검 명령: `office.sh doctor`(설정·폴링·막힌 직원·결재 대기 점검) · `report`(직원별 채택률·업무 시간 비교) · `timelog`(업무 시간 기록). 로컬 파일만 읽음 |
 | `cost_check.py` | (원가 담당) MASTER 형식 원가표 xlsx에서 시트가 오류 없이 0원으로 계산하는 입력을 찾는 검사기. 표준 라이브러리만 사용 |
 | `tests/` | 회귀 시험(`test_work_agent.py`, `test_office.py`, `test_cost.py`, 모델·네트워크 없이) · 실제 claude 끝까지 시험(`e2e_real_claude.sh` 가짜 슬랙, `e2e_office.sh` 실제 전광판 + 가짜 캘린더, `e2e_cost.sh`·`e2e_notice.sh` 가짜 Drive) |
 | `state/`, `inbox/` | 실행 기록과 결과(git에 올라가지 않음) |
@@ -100,6 +101,12 @@
 - 배치를 바꾸려면 Pixel Agents 편집기에서 수정하거나 `pixel/make_layout.py`의 AREAS를 고치고 다시 생성합니다. 기본 사무실 원본 `pixel/base-layout.json`은 pixel-agents 1.4.1(MIT)의 것입니다.
 
 **기록**: `state/office/office.log`(사무실 활동), `state/office/call_guard.log`(고정 호출 허용·차단), `state/office/tool_guard.log`(직원 실행에서 막힌 도구), `state/office/proposals/`(결재 건 원본), `state/office/calls/<호출>/`(마지막 호출 원본).
+
+### 대표님 점검 명령 (doctor · report · timelog)
+게임 「관제실 수습 과정」에서 배운 점검을 명령 하나로 합니다. 로컬 파일만 읽고 전광판·모델·네트워크는 쓰지 않습니다(timelog만 기록 파일에 한 줄 추가).
+- `bash office.sh doctor`: 설정, 폴링, 정지, 막힌 직원, 결재 대기, 요청을 점검해 ✔/▲/✖와 할 일, 관련 교육 번호를 보여 줍니다. ✖가 있으면 종료 코드 1. 폴링이 늦었는지는 전광판과 같이 "다음 예정 시각" 기준이라 저녁·주말엔 늦음이 아닙니다.
+- `bash office.sh report [일수]`: 직원별 올림·승인·반려·만료·대기와 채택률(승인 ÷ 승인·반려·만료, 기본 14일). 결정된 제안이 4건 미만이면 판단 보류, 2주 연속 50% 미만이면 ✖(지시문 고치기·합치기·끄기 검토), 70% 이상이면 v1 목표 달성. 실행 실패 이유와 업무 시간 비교도 함께 나옵니다.
+- `bash office.sh timelog <업무> <분> [메모]`: 사람이 직접 한 업무 시간을 기록합니다(요청정리·공지·원가검산·게이트점검·주간보고). 업무별 첫 기록부터 7일이 기준선이고 report가 최근 7일과 비교합니다(v1 목표 40% 감소). 기록 파일: `state/office/timelog.tsv`.
 
 ### Drive 초안 저장 (`drive_draft`)
 

@@ -1239,5 +1239,85 @@ class CostStaffTests(Base):
         self.assertEqual(len(self.pids()), 3)
 
 
+class DoctorTests(Base):
+    """doctor / report / timelog: the owner's checks from local files only (no board, no model)."""
+
+    def poll_log(self, *lines):
+        wr(os.path.join(self.state, "poll.log"), "".join(l + "\n" for l in lines))
+
+    def prop(self, pid, role, created, status, **kw):
+        os.makedirs(os.path.join(self.state, "office", "proposals"), exist_ok=True)
+        p = {"id": pid, "role": role, "kind": "info", "title": "제안 " + pid, "created": created, "local_status": status}
+        p.update(kw)
+        jw(os.path.join(self.state, "office", "proposals", pid + ".json"), p)
+
+    def test_doctor_names_the_fix_and_the_lesson(self):
+        os.makedirs(os.path.join(self.state, "office", "staff"))
+        jw(os.path.join(self.state, "office", "staff", "cost.json"),
+           {"status": "blocked", "errors": ["원가 자료 설정 없음(config.env WORK_AGENT_COST_SOURCES)"], "last_run": "2026-10-16T00:30:00Z"})
+        rc, out, err = self.run_cli("doctor", env={"WORK_AGENT_NOTICE_SOURCES": "테스트=short"})
+        self.assertEqual(rc, 1, out + err)
+        self.assertIn("▲ 설정  사무실이 꺼져 있음", out)
+        self.assertIn("✖ 설정  공지·문서 담당 자료 설정 1개 형식 오류", out)
+        self.assertIn("▲ 설정  원가·원재료 담당 자료 설정 없음", out)
+        self.assertIn("✖ 직원  🧮 원가·원재료 담당 막힘: 원가 자료 설정 없음", out)
+        self.assertIn("→ config.env에 오류 문구에 나온 설정을 넣기  (교육-04)", out)
+        self.assertIn("▲ 폴링  폴링 기록 없음", out)
+        self.assertNotIn("ANTHROPIC_API_KEY", out)
+        self.assertEqual(self.fake_calls(), [], "doctor never runs claude")
+        _, out, _ = self.run_cli("doctor", env={"ANTHROPIC_API_KEY": "sk-test"})
+        self.assertIn("▲ 설정  ANTHROPIC_API_KEY가 설정돼 있음", out)
+
+    def test_doctor_reads_poll_timing_like_the_board(self):
+        office_line = "office: staff=0 pull=ok approved=0 executed=0 failed=0 deferred=0 rejected=0 push=ok(1) stop=0"
+        self.poll_log("2026-10-20 10:00:01 " + office_line, "2026-10-20 10:00:02 ok: nothing new")
+        _, out, _ = self.run_cli("doctor", env={"WORK_AGENT_NOW": "2026-10-20T10:20:00+09:00"})
+        self.assertIn("✔ 폴링  마지막 10-20 10:00 · ok: nothing new", out)
+        _, out, _ = self.run_cli("doctor", env={"WORK_AGENT_NOW": "2026-10-20T10:45:00+09:00"})
+        self.assertNotIn("멈춤", out, "a poll that runs long (staff runs) is not a stopped Mac mini")
+        _, out, _ = self.run_cli("doctor", env={"WORK_AGENT_NOW": "2026-10-20T13:10:00+09:00"})
+        self.assertIn("✖ 폴링  폴링이 멈춤: 마지막 기록 10-20 10:00, 예정이던 시각 10-20 10:30", out)
+        self.poll_log("2026-10-23 18:00:01 ok: nothing new")
+        _, out, _ = self.run_cli("doctor", env={"WORK_AGENT_NOW": "2026-10-24T11:00:00+09:00"})
+        self.assertNotIn("멈춤", out, "Saturday: the next poll is due Monday 09:00")
+        self.poll_log("2026-10-20 10:00:01 ok: nothing new", "2026-10-20 10:30:01 rnd: office: staff=0 pull=timeout push=fail(get)",
+                      "2026-10-20 10:30:02 FAIL(1): claude rc=1", "2026-10-20 11:00:02 FAIL(2): claude rc=1", "2026-10-20 11:30:02 FAIL(3): claude rc=1")
+        _, out, _ = self.run_cli("doctor", env={"WORK_AGENT_NOW": "2026-10-20T11:40:00+09:00"})
+        self.assertIn("✖ 폴링  최근 폴링 3회 연속 실패", out)
+        self.assertIn("▲ 폴링  전광판 주고받기 실패", out)
+
+    def test_report_applies_the_adoption_rules(self):
+        for i, (day, status) in enumerate([("10-03", "executed"), ("10-04", "rejected"), ("10-05", "rejected"), ("10-06", "rejected"),
+                                           ("10-10", "executed"), ("10-11", "rejected"), ("10-12", "rejected"), ("10-13", "expired"),
+                                           ("10-14", "pushed")]):
+            self.prop("g%d" % i, "gate", "2026-%sT01:00:00Z" % day, status)
+        self.prop("h1", "gate", "2026-10-15T01:00:00Z", "pushed", hold="하루 실행 상한(10건)")
+        self.prop("c1", "cost", "2026-10-15T01:00:00Z", "executed")
+        self.prop("c2", "cost", "2026-10-15T02:00:00Z", "failed", report={"status": "failed", "result": "만료됨"})
+        self.prop("old", "gate", "2026-09-01T01:00:00Z", "rejected")
+        for i, (day, status) in enumerate([("10-04", "rejected"), ("10-05", "rejected"), ("10-12", "executed"), ("10-13", "executed")]):
+            self.prop("n%d" % i, "notice", "2026-%sT01:00:00Z" % day, status)  # one bad week, one good week
+        rc, out, _ = self.run_cli("report")
+        self.assertEqual(rc, 0)
+        self.assertIn("🗓️ 신메뉴 게이트 담당  올림 10 · 승인 3 · 반려 5 · 만료 1 · 대기 1 · 채택률 33%", out)
+        self.assertIn("✖ 2주 연속 50% 미만 (지난주 25% · 이번 주 40%)", out)
+        self.assertEqual(out.count("2주 연속"), 1, "notice had one good week")
+        self.assertIn("판단 보류(결정된 제안 4건 미만)", out)
+        self.assertIn("실행: 완료 5 · 실패 1 (만료됨 1)", out)
+
+    def test_timelog_sets_the_baseline_report_compares(self):
+        for day, task, minutes in (("10-01", "공지", "60"), ("10-02", "공지", "50"), ("10-14", "공지", "30"), ("10-15", "공지", "20"),
+                                   ("10-15", "원가검산", "40")):
+            rc, out, _ = self.run_cli("timelog", task, minutes, "판매 종료 공지\t수기", env={"WORK_AGENT_NOW": "2026-%sT11:00:00+09:00" % day})
+            self.assertEqual(rc, 0)
+        self.assertEqual(rd(os.path.join(self.state, "office", "timelog.tsv")).splitlines()[0], "2026-10-01\t공지\t60\t판매 종료 공지 수기")
+        _, out, _ = self.run_cli("report")
+        self.assertIn("공지: 기준선 55분/건 (2건) → 최근 7일 25분/건 (2건) −55% ✔", out)
+        self.assertIn("원가검산: 기준선 40분/건 (1건) · 최근 7일 비교 기록 없음", out)
+        self.assertIn("주간보고: 기록 없음 → bash office.sh timelog 주간보고 <분>", out)
+        self.assertEqual(self.run_cli("timelog", "커피", "10")[0], 64)
+        self.assertEqual(self.run_cli("timelog", "공지", "0")[0], 64)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
