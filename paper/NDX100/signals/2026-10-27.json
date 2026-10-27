@@ -1,0 +1,38 @@
+{
+ "market": "NDX100",
+ "as_of": "2026-10-27",
+ "regime": {
+  "benchmark": "^NDX",
+  "mode": "MA200",
+  "close": 29651.4414,
+  "ma200": 27874.2757,
+  "ma20": 30138.965,
+  "on": true
+ },
+ "entries_next_open": [],
+ "exits_next_open": [],
+ "positions": [
+  "ADP",
+  "AMGN",
+  "CSX",
+  "KDP"
+ ],
+ "watchlist": [
+  {
+   "symbol": "AAPL",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 347.1,
+   "pivot": 351.73,
+   "to_pivot_pct": 1.33,
+   "rs": 72.45
+  }
+ ],
+ "coverage": {
+  "requested": 101,
+  "loaded": 100,
+  "failed": [
+   "WBD"
+  ]
+ },
+ "generated_at": "2026-10-27T21:31:08Z"
+}
