@@ -642,16 +642,16 @@
    }
   },
   "KOSDAQ_V2": {
-   "as_of": "2026-10-27",
+   "as_of": "2026-10-28",
    "start_date": "2026-10-02",
    "regime": {
     "benchmark": "^KQ11",
     "mode": "BREADTH50",
-    "close": 743.83,
-    "ma200": 975.7065,
-    "ma20": 824.332,
+    "close": 771.28,
+    "ma200": 974.9356,
+    "ma20": 820.567,
     "on": false,
-    "breadth_pct": 20.1
+    "breadth_pct": 27.5
    },
    "entries_next_open": [],
    "exits_next_open": [],
@@ -661,7 +661,7 @@
    "performance": {
     "equity": 98209054.0,
     "return_pct": -1.79,
-    "bench_return_pct": -16.73,
+    "bench_return_pct": -13.66,
     "mdd_pct": -1.79,
     "closed_trades": 2,
     "win_rate_pct": 0.0,
@@ -671,8 +671,8 @@
    },
    "status_csv": "KOSDAQ_V2/status.csv",
    "audit": {
-    "days": 16,
-    "signal_files": 16,
+    "days": 17,
+    "signal_files": 17,
     "missing_days": [],
     "late": [],
     "uncommitted": [],
@@ -688,7 +688,7 @@
    }
   }
  },
- "updated_at": "2026-10-28T08:34:46Z",
+ "updated_at": "2026-10-28T08:35:02Z",
  "disclaimer": "기계적 룰 출력이며 투자 자문이 아닙니다. 매수·매도 결정은 소유자 본인이 합니다.",
  "unconfirmed": "미확인 추정값(스캐너 원본 코드 미확인): 피벗=직전 20봉 최고가(당일 제외) · 거래량 평균=직전 50일(당일 제외) · RS=지수 대비 가중 1년 수익률 ≥ 0%p(스캐너는 유니버스 백분위 ≥ 70) · 52주 고저=종가 기준 · 200일선 상승=22봉 전 대비 · 수축비=10/40일 평균 TR · 비용=편도 0.2%"
 }
