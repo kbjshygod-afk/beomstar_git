@@ -7,24 +7,10 @@
   "entry_price": 437.8900146,
   "qty": 24086.34911346862,
   "stop_price": 407.23771357799995,
-  "last_close": 447.9500122,
-  "exit_ma": 418.41979979799993,
-  "unrealized_pnl": 199635.30998587795,
-  "price_pnl_pct": 2.2973799960224195,
-  "exit_pending": false
- },
- {
-  "symbol": "ADP",
-  "signal_date": "2026-10-22",
-  "exit_signal_date": null,
-  "entry_date": "2026-10-23",
-  "entry_price": 306.9899902,
-  "qty": 34020.16767493123,
-  "stop_price": 285.50069088600003,
-  "last_close": 293.1099854,
-  "exit_ma": 276.463798838,
-  "unrealized_pnl": -513031.09420811944,
-  "price_pnl_pct": -4.521321620603114,
+  "last_close": 451.8299866,
+  "exit_ma": 418.950799554,
+  "unrealized_pnl": 292902.8190996982,
+  "price_pnl_pct": 3.183441397432585,
   "exit_pending": false
  },
  {
@@ -35,10 +21,10 @@
   "entry_price": 35.31999969,
   "qty": 297703.06687467825,
   "stop_price": 32.8475997117,
-  "last_close": 34.86000061,
-  "exit_ma": 32.19040000940001,
-  "unrealized_pnl": -178728.73952068388,
-  "price_pnl_pct": -1.3023756626199479,
+  "last_close": 34.93000031,
+  "exit_ma": 32.2731999972,
+  "unrealized_pnl": -157931.29240111634,
+  "price_pnl_pct": -1.1041885147876296,
   "exit_pending": false
  },
  {
@@ -49,10 +35,10 @@
   "entry_price": 51.56000137,
   "qty": 202751.5170602284,
   "stop_price": 47.9508012741,
-  "last_close": 52.27000046,
-  "exit_ma": 48.7734000406,
-  "unrealized_pnl": 101850.01183408312,
-  "price_pnl_pct": 1.3770346608507067,
+  "last_close": 51.97999954,
+  "exit_ma": 48.8081999978,
+  "unrealized_pnl": 43169.48160817847,
+  "price_pnl_pct": 0.8145813786660794,
   "exit_pending": false
  }
 ]
