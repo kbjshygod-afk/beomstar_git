@@ -7,10 +7,10 @@
   "entry_price": 437.8900146,
   "qty": 24086.34911346862,
   "stop_price": 407.23771357799995,
-  "last_close": 451.8299866,
-  "exit_ma": 418.950799554,
-  "unrealized_pnl": 292902.8190996982,
-  "price_pnl_pct": 3.183441397432585,
+  "last_close": 460.730011,
+  "exit_ma": 419.318200066,
+  "unrealized_pnl": 506843.1757268552,
+  "price_pnl_pct": 5.2159208108145005,
   "exit_pending": false
  },
  {
@@ -21,10 +21,10 @@
   "entry_price": 35.31999969,
   "qty": 297703.06687467825,
   "stop_price": 32.8475997117,
-  "last_close": 34.93000031,
-  "exit_ma": 32.2731999972,
-  "unrealized_pnl": -157931.29240111634,
-  "price_pnl_pct": -1.1041885147876296,
+  "last_close": 35.29999924,
+  "exit_ma": 32.3579999926,
+  "unrealized_pnl": -48001.77583217062,
+  "price_pnl_pct": -0.0566264161255603,
   "exit_pending": false
  },
  {
@@ -35,10 +35,10 @@
   "entry_price": 51.56000137,
   "qty": 202751.5170602284,
   "stop_price": 47.9508012741,
-  "last_close": 51.97999954,
-  "exit_ma": 48.8081999978,
-  "unrealized_pnl": 43169.48160817847,
-  "price_pnl_pct": 0.8145813786660794,
+  "last_close": 52.24000168,
+  "exit_ma": 48.8394000252,
+  "unrealized_pnl": 95779.87827543728,
+  "price_pnl_pct": 1.3188523893167492,
   "exit_pending": false
  }
 ]
