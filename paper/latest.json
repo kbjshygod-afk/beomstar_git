@@ -15,14 +15,14 @@
     {
      "symbol": "WST",
      "signal_close": 403.64,
-     "rs": 93.57,
+     "rs": 93.59,
      "desired_qty": 17994.147004,
      "est_stop_from_close": 363.276
     },
     {
      "symbol": "LH",
      "signal_close": 360.25,
-     "rs": 88.96,
+     "rs": 88.98,
      "desired_qty": 20161.437222,
      "est_stop_from_close": 324.225
     }
@@ -242,7 +242,7 @@
      "close": 165.33,
      "pivot": 166.25,
      "to_pivot_pct": 0.56,
-     "rs": 96.18
+     "rs": 96.19
     },
     {
      "symbol": "ZBRA",
@@ -250,7 +250,7 @@
      "close": 384.7,
      "pivot": 392.78,
      "to_pivot_pct": 2.1,
-     "rs": 94.98
+     "rs": 94.99
     },
     {
      "symbol": "TRGP",
@@ -258,7 +258,7 @@
      "close": 305.9,
      "pivot": 307.87,
      "to_pivot_pct": 0.64,
-     "rs": 94.58
+     "rs": 94.59
     },
     {
      "symbol": "SWKS",
@@ -266,7 +266,7 @@
      "close": 87.23,
      "pivot": 89.71,
      "to_pivot_pct": 2.84,
-     "rs": 93.98
+     "rs": 93.99
     },
     {
      "symbol": "COP",
@@ -274,7 +274,7 @@
      "close": 149.06,
      "pivot": 152.77,
      "to_pivot_pct": 2.49,
-     "rs": 93.17
+     "rs": 93.19
     },
     {
      "symbol": "NUE",
@@ -282,7 +282,7 @@
      "close": 271.79,
      "pivot": 275.9,
      "to_pivot_pct": 1.51,
-     "rs": 92.97
+     "rs": 92.99
     },
     {
      "symbol": "VTRS",
@@ -290,7 +290,7 @@
      "close": 18.77,
      "pivot": 18.83,
      "to_pivot_pct": 0.32,
-     "rs": 91.97
+     "rs": 91.98
     },
     {
      "symbol": "IQV",
@@ -298,7 +298,7 @@
      "close": 279.04,
      "pivot": 284.5,
      "to_pivot_pct": 1.96,
-     "rs": 91.57
+     "rs": 91.58
     },
     {
      "symbol": "CVX",
@@ -306,7 +306,7 @@
      "close": 229.2,
      "pivot": 234.08,
      "to_pivot_pct": 2.13,
-     "rs": 89.96
+     "rs": 89.98
     },
     {
      "symbol": "XOM",
@@ -314,7 +314,7 @@
      "close": 182.02,
      "pivot": 184.88,
      "to_pivot_pct": 1.57,
-     "rs": 89.76
+     "rs": 89.78
     },
     {
      "symbol": "TMO",
@@ -322,7 +322,7 @@
      "close": 704.15,
      "pivot": 705.79,
      "to_pivot_pct": 0.23,
-     "rs": 89.16
+     "rs": 89.18
     },
     {
      "symbol": "EOG",
@@ -330,7 +330,7 @@
      "close": 160.92,
      "pivot": 165.11,
      "to_pivot_pct": 2.6,
-     "rs": 88.76
+     "rs": 88.78
     },
     {
      "symbol": "ABBV",
@@ -338,7 +338,7 @@
      "close": 285.99,
      "pivot": 291.4,
      "to_pivot_pct": 1.89,
-     "rs": 87.15
+     "rs": 87.17
     },
     {
      "symbol": "DVN",
@@ -346,7 +346,7 @@
      "close": 51.27,
      "pivot": 51.97,
      "to_pivot_pct": 1.37,
-     "rs": 86.75
+     "rs": 86.77
     }
    ],
    "performance": {
@@ -687,7 +687,7 @@
    }
   }
  },
- "updated_at": "2026-10-29T08:02:48Z",
+ "updated_at": "2026-10-29T15:46:53Z",
  "disclaimer": "기계적 룰 출력이며 투자 자문이 아닙니다. 매수·매도 결정은 소유자 본인이 합니다.",
  "unconfirmed": "미확인 추정값(스캐너 원본 코드 미확인): 피벗=직전 20봉 최고가(당일 제외) · 거래량 평균=직전 50일(당일 제외) · RS=지수 대비 가중 1년 수익률 ≥ 0%p(스캐너는 유니버스 백분위 ≥ 70) · 52주 고저=종가 기준 · 200일선 상승=22봉 전 대비 · 수축비=10/40일 평균 TR · 비용=편도 0.2%"
 }
