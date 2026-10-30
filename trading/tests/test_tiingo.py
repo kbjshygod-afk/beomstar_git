@@ -88,8 +88,10 @@ def test_run_tiingo_falls_back_to_the_previous_session_and_compares(monkeypatch)
         df.attrs.update(missing=[], unlisted=["MSFT"] if len(df) else [], calls=len(symbols))
         return df
     monkeypatch.setattr(tiingo, "bars_on", bars_on)
-    rec = xcheck.run_tiingo("SP500", frames, bench, pd.Timestamp("2026-10-30"), "t", focus=["AAPL"])
-    assert asked[0][0] == "2026-10-30" and asked[1][0] == "2026-10-29" and asked[1][1] == ["AAPL", "MSFT"]
+    frames["NOTSAMPLED"] = frames["MSFT"]           # outside the sample: never counted as missing
+    rec = xcheck.run_tiingo("SP500", frames, bench, pd.Timestamp("2026-10-30"), "t", focus=["AAPL"], sample_n=1)
+    assert asked[0][0] == "2026-10-30" and asked[1][0] == "2026-10-29" and len(asked[1][1]) == 2 and "AAPL" in asked[1][1]
+    assert rec["symbols"]["missing"] == [] and "NOTSAMPLED" not in str(rec["symbols"])
     assert rec["source"] == "Tiingo" and rec["checked"] == "2026-10-29" and rec["status"] == "mismatch"
     assert [(m["symbol"], m["field"]) for m in rec["symbols"]["mismatches"]] == [("AAPL", "volume")]   # 1.25%
     assert rec["symbols"]["unlisted"] == ["MSFT"] and rec["symbols"]["focus"] == ["AAPL"] and rec["index"] is None

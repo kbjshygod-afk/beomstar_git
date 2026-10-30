@@ -198,9 +198,10 @@ def run_tiingo(market: str, frames: dict, bench: pd.DataFrame, as_of: pd.Timesta
         rec["calls"] += ex.attrs.get("calls", 0)
         if len(ex) == 0:
             continue                                   # Tiingo has not published this date yet
-        sym = compare_bars(bars_on(frames, d), ex, d)
-        sym["missing"] = sorted(set(sym["missing"]) | set(ex.attrs.get("missing", [])))
+        mine = bars_on({k: v for k, v in frames.items() if k in syms}, d)      # only the sampled symbols
+        sym = compare_bars(mine, ex, d)
         sym["unlisted"] = ex.attrs.get("unlisted", [])
+        sym["missing"] = sorted((set(sym["missing"]) | set(ex.attrs.get("missing", []))) - set(sym["unlisted"]))
         sym["sampled"] = len(syms)
         sym["focus"] = sorted(set(focus) & set(frames))
         rec["checked"] = d.strftime("%Y-%m-%d")
