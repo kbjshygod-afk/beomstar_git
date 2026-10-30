@@ -1,0 +1,31 @@
+{
+ "market": "NDX100",
+ "as_of": "2026-10-29",
+ "source": "Tiingo",
+ "status": "mismatch",
+ "checked": "2026-10-29",
+ "index": null,
+ "symbols": {
+  "date": "2026-10-29",
+  "compared": 13,
+  "missing": [],
+  "mismatches": [
+   {
+    "symbol": "CRWV",
+    "field": "volume",
+    "yahoo": 46608600.0,
+    "krx": 47160800.0,
+    "diff_pct": 1.171
+   }
+  ],
+  "unlisted": [],
+  "sampled": 13,
+  "focus": [
+   "AMGN",
+   "CSX",
+   "KDP"
+  ]
+ },
+ "error": null,
+ "calls": 0
+}
