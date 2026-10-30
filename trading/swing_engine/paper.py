@@ -518,9 +518,9 @@ def _store_xcheck(market: str, root: Path, rec: dict, suffix: str) -> dict:
     return rec
 
 
-def cross_check_kis(market: str, frames: dict, bench: pd.DataFrame, as_of, root: Path, cache_dir) -> dict | None:
+def kis_record(market: str, frames: dict, bench: pd.DataFrame, as_of, cache_dir) -> dict | None:
     """Yahoo vs KIS record for the signal day of a Korean market when KIS_APP_KEY/SECRET are set
-    (checklist 2.4), written to root/xcheck/<date>.kis.json. Observation only."""
+    (checklist 2.4); None when KIS does not apply. Not stored yet (see cross_check_kis). Never raises."""
     dm = data_market(market)
     if dm not in kis.INDEX_CODE:
         return None
@@ -532,19 +532,64 @@ def cross_check_kis(market: str, frames: dict, bench: pd.DataFrame, as_of, root:
     if cred is None:
         return None
     try:
-        rec = xcheck.run_kis(dm, frames, bench, pd.Timestamp(as_of), cred, cache_dir)
+        return xcheck.run_kis(dm, frames, bench, pd.Timestamp(as_of), cred, cache_dir)
     except Exception as e:                            # noqa: BLE001 - a cross-check must never stop the ledger
         log.warning("%s: KIS cross-check failed: %s", market, e)
-        rec = {"market": dm, "as_of": _day(as_of), "source": xcheck.KIS_SOURCE, "status": "error",
-               "checked": None, "index": None, "symbols": None, "error": str(e)}
-    return _store_xcheck(market, root, rec, ".kis")
+        return {"market": dm, "as_of": _day(as_of), "source": xcheck.KIS_SOURCE, "status": "error",
+                "checked": None, "index": None, "symbols": None, "error": str(e)}
+
+
+def cross_check_kis(market: str, frames: dict, bench: pd.DataFrame, as_of, root: Path, cache_dir, rec=None) -> dict | None:
+    """kis_record written to root/xcheck/<date>.kis.json (observation only). Pass `rec` when the
+    guard already fetched it so KIS is called once per run."""
+    if rec is None:
+        rec = kis_record(market, frames, bench, as_of, cache_dir)
+    return None if rec is None else _store_xcheck(market, root, rec, ".kis")
+
+
+# Data guard (grade 1, no rule change): Yahoo's same-day Korean bars are provisional for hours
+# after the close. 2026-10-30 18:03 KST: 148 of 150 KOSDAQ closes differed from KIS (e.g. 086520
+# Yahoo 72,200 vs KRX 70,800, +1.9%); the index matched. Signals computed from such bars would be
+# revised later, so when many closes disagree with KIS the run waits for the next 2-hourly run,
+# until the next open is close enough that a late signal beats none.
+GUARD_MIN_SHARE = 0.05      # share of compared symbols whose close differs from KIS ...
+GUARD_MIN_SYMBOLS = 5       # ... and at least this many, before the run is held back
+GUARD_GIVE_UP_HOURS = 6     # within this many hours of the next open, proceed with a warning
+
+
+def kis_guard(market: str, frames: dict, bench: pd.DataFrame, as_of, now: datetime, cache_dir) -> tuple[bool, str, dict | None]:
+    """(ready, reason, kis record). Not ready when the share of symbols whose Yahoo close differs
+    from KIS reaches GUARD_MIN_SHARE (and GUARD_MIN_SYMBOLS). Skipped - ready - when KIS does not
+    apply, errs or has no bar yet; late in the session the run proceeds and the record says so."""
+    rec = kis_record(market, frames, bench, as_of, cache_dir)
+    if rec is None or not rec.get("symbols") or rec["status"] in ("error", "not_published"):
+        return True, "", rec
+    sym = rec["symbols"]
+    bad = sorted({m["symbol"] for m in sym["mismatches"] if m["field"] == "close"})
+    n = sym["compared"]
+    share = len(bad) / n if n else 0.0
+    guard = {"close_mismatched": len(bad), "compared": n, "share_pct": round(share * 100, 1), "blocked": False, "late": False}
+    rec["guard"] = guard
+    if len(bad) < GUARD_MIN_SYMBOLS or share < GUARD_MIN_SHARE:
+        return True, "", rec
+    why = (f"KIS와 종가가 다른 종목 {len(bad)}/{n} ({share:.0%}) — Yahoo의 {_day(as_of)} 봉이 아직 확정 전으로 보임"
+           f" (예: {', '.join(bad[:3])})")
+    deadline = next_open_deadline(market, as_of)
+    if now >= deadline - timedelta(hours=GUARD_GIVE_UP_HOURS):
+        guard["late"] = True
+        log.warning("%s: %s; the next open (%s) is within %dh, so the signals go out with a warning",
+                    market, why, _iso(deadline), GUARD_GIVE_UP_HOURS)
+        return True, why, rec
+    guard["blocked"] = True
+    return False, why, rec
 
 
 def _xcheck_summary(rec: dict | None) -> dict | None:
     return None if rec is None else {
         "source": rec.get("source"), "status": rec["status"], "checked": rec["checked"], "error": rec["error"],
         "mismatched_symbols": sorted({m["symbol"] for m in rec["symbols"]["mismatches"]}) if rec["symbols"] else [],
-        "index_match": rec["index"]["match"] if rec["index"] else None}
+        "index_match": rec["index"]["match"] if rec["index"] else None,
+        **({"guard": rec["guard"]} if rec.get("guard") else {})}
 
 
 def render_report(market, cfg, snap, perf, aud, res, params, stale=(), xrec=None, xrec_kis=None) -> str:
@@ -564,6 +609,10 @@ def render_report(market, cfg, snap, perf, aud, res, params, stale=(), xrec=None
     for r in (xrec, xrec_kis):
         if r is not None:
             L.append(xcheck.summary_line(r))
+    if xrec_kis and xrec_kis.get("guard", {}).get("late"):
+        g = xrec_kis["guard"]
+        L.append(f"- ⚠ **데이터 가드 해제**: KIS와 종가가 다른 종목 {g['close_mismatched']}/{g['compared']}개인데도 "
+                 f"다음 시가가 {GUARD_GIVE_UP_HOURS}시간 안이라 신호를 냈습니다. Yahoo 봉이 확정되면 신호가 바뀔 수 있습니다.")
     L.append("")
     L += ["## 다음 시가 진입 (오늘 신호)", ""]
     if snap["entries_next_open"]:
@@ -699,12 +748,16 @@ def run(args) -> dict:
     if ok and floor is not None and as_of < floor:
         ok, why = False, (f"{params['benchmark']} 마지막 확정 봉 {_day(as_of)}이 장부에 이미 있는 "
                           f"{_day(floor)}보다 이전 (Yahoo가 최근 봉을 빠뜨림)")
+    xrec_kis = None
+    if ok:
+        ok, why, xrec_kis = kis_guard(market, frames, bench, as_of, now, args.cache_dir)
     if not ok:
         msg = f"{market}: 데이터 미준비 — {why}. 아무것도 커밋하지 않고 종료합니다."
         log.warning(msg)
         print(msg)
         forget_cached_bars(args.cache_dir, list(cfg["universe"]) + [params["benchmark"]])
-        return {"started": cfg["start_date"] is not None, "ready": False, "as_of": _day(as_of), "reason": why}
+        return {"started": cfg["start_date"] is not None, "ready": False, "as_of": _day(as_of), "reason": why,
+                "xcheck_kis": xrec_kis}
     if cfg["start_date"] is None:
         # The paper period may only start with a signal file committed before the next open;
         # a first run that is already past that deadline (e.g. after a holiday) waits.
@@ -756,7 +809,7 @@ def run(args) -> dict:
     for st in stale:
         log.warning("%s: held %s has no bar on %s (last %s)", market, st["symbol"], _day(as_of), st["last_bar"])
     xrec = cross_check(market, frames, bench, as_of, root, args.cache_dir)
-    xrec_kis = cross_check_kis(market, frames, bench, as_of, root, args.cache_dir)
+    xrec_kis = cross_check_kis(market, frames, bench, as_of, root, args.cache_dir, rec=xrec_kis)
     report = render_report(market, cfg, snap, perf, aud, res, params, stale, xrec, xrec_kis)
     (root / "report.md").write_text(report)
 
