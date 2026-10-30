@@ -1,0 +1,5 @@
+ERROR yfinance: 
+1 Failed download:
+ERROR yfinance: ['ARE']: OperationalError('database is locked')
+INFO swing_engine.backtest: simulating proxy (503 symbols)
+INFO swing_engine.backtest: simulating percentile (503 symbols)
