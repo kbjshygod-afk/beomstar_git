@@ -14,3 +14,16 @@ in_work_hours() {
   if [ -f "$hol" ] && grep -q "^$today" "$hol"; then return 1; fi
   return 0
 }
+
+# Write a claude --settings file ($1) whose PreToolUse hook (tool_guard.py) allows only ToolSearch and
+# the tools listed in $2, logging blocks to $3. onFailure block: a crashed or missing guard blocks too.
+guard_settings() {
+  python3 - "$1" "$DIR/tool_guard.py" "$2" "$3" <<'GUARD_PY'
+import json, shlex, sys
+out, guard, allow, audit = sys.argv[1:5]
+cmd = " ".join(shlex.quote(x) for x in (sys.executable, guard, allow, audit))
+with open(out, "w") as f:
+    json.dump({"disableAllHooks": False, "hooks": {"PreToolUse": [{"matcher": "*", "hooks": [
+        {"type": "command", "command": cmd, "onFailure": "block"}]}]}}, f)
+GUARD_PY
+}

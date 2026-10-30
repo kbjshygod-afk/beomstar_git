@@ -1,13 +1,16 @@
 #!/usr/bin/env bash
 # Work agent, stage 0: run `claude -p` every few minutes in business hours,
 # collect new Slack requests / Plaud recordings, write a digest to inbox/.
-# Read-only by design (the only outbound action is slack_dm.sh, which sends
-# fixed-template alerts to the owner). Checkpoint advances only after a valid result.
+# The reader run is read-only. Writes happen only in two pinned helpers:
+# slack_dm.sh (fixed-template alerts to the owner) and, when WORK_AGENT_SLACK_DRAFTS=1,
+# slack_drafts.py (unsent reply drafts in the source threads; nothing is sent).
+# Checkpoint advances only after a valid result.
 set -euo pipefail
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck disable=SC1091
-[ -f "$DIR/config.env" ] && . "$DIR/config.env"
+CONFIG="${WORK_AGENT_CONFIG:-$DIR/config.env}"   # tests point this at a missing file
+[ -f "$CONFIG" ] && . "$CONFIG"
 . "$DIR/lib.sh"
 
 CLAUDE_BIN="${CLAUDE_BIN:-claude}"
@@ -45,7 +48,8 @@ trap 'rmdir "$LOCK" 2>/dev/null || true' EXIT
 NOW_ISO="$(TZ=Asia/Seoul date '+%Y-%m-%dT%H:%M:%S+09:00')"
 if [ -s "$STATE/last_ok_iso" ]; then SINCE_ISO="$(cat "$STATE/last_ok_iso")"
 else SINCE_ISO="$(python3 -c "import datetime as d;print((d.datetime.now(d.timezone(d.timedelta(hours=9)))-d.timedelta(minutes=60)).isoformat(timespec='seconds'))")"; fi
-SINCE_UNIX="$(python3 -c "import datetime,sys;print(int(datetime.datetime.fromisoformat(sys.argv[1]).timestamp()))" "$SINCE_ISO")"
+# a broken python3 must not stop the run here: the guard step below records it as a counted failure
+SINCE_UNIX="$(python3 -c "import datetime,sys;print(int(datetime.datetime.fromisoformat(sys.argv[1]).timestamp()))" "$SINCE_ISO" 2>/dev/null || echo "[입력 필요]")"
 OWNER_ID="${WORK_AGENT_OWNER_ID:-${WORK_AGENT_SLACK_DM_USER:-}}"
 SEEN_PLAUD="$( [ -s "$STATE/plaud_seen.txt" ] && tail -n 200 "$STATE/plaud_seen.txt" | paste -sd, - || true )"
 
@@ -61,16 +65,34 @@ PROMPT="$(cat "$DIR/prompt.md")
 - seen_plaud_ids: ${SEEN_PLAUD:-}"
 
 # 4. run the agent
-# stream-json keeps every tool call, so step 5 can verify the DM lookup really ran.
+# stream-json keeps every tool call, so step 5 can verify the DM lookup really ran (last line = the result object).
 RAW="$STATE/last_raw.jsonl"; rm -f "$RAW"
-args=(-p "$PROMPT" --model "$MODEL" --output-format stream-json --verbose --max-turns 30)
+# allowlist hook: the reader reads untrusted text, so any tool not in WORK_AGENT_ALLOWED_TOOLS is blocked,
+# including built-ins that -p would otherwise run without a permission check
+args=(-p "$PROMPT" --model "$MODEL" --output-format stream-json --verbose --max-turns 30 --settings "$STATE/reader_settings.json")
 [ -n "$ALLOWED" ] && args+=(--allowedTools $ALLOWED)
 [ -n "$DISALLOWED" ] && args+=(--disallowedTools $DISALLOWED)
-if ! (cd "$DIR" && "$CLAUDE_BIN" "${args[@]}") > "$RAW" 2> "$STATE/last.err"; then
+# a guard setup failure (e.g. python3 broken after a macOS update) must reach the FAIL count and alerts below;
+# claude is not started without its guard
+DESK="$STATE/office/desks/secretary"; mkdir -p "$DESK"   # the reader's desk (Pixel Agents label "secretary")
+if ! { printf '%s\n' $ALLOWED > "$STATE/reader_allow.txt" &&
+       guard_settings "$STATE/reader_settings.json" "$STATE/reader_allow.txt" "$STATE/tool_guard.log"; } 2> "$STATE/last.err"; then
+  rc=1
+elif ! (cd "$DESK" && "$CLAUDE_BIN" "${args[@]}") > "$RAW" 2> "$STATE/last.err"; then
   rc=1
 else
   rc=0
 fi
+# keep one transcript (= one Pixel Agents character) per desk
+python3 "$DIR/office.py" tidy "$(python3 -c 'import json,sys
+sid = ""
+try:
+    for line in open(sys.argv[1]):
+        try: ev = json.loads(line)
+        except ValueError: continue
+        if isinstance(ev, dict) and ev.get("type") == "result": sid = ev.get("session_id", "") or sid
+except Exception: pass
+print(sid)' "$RAW")" > /dev/null 2>&1 || true
 
 # 5. validate + write digest (python does the JSON work; exit 0 = valid result)
 set +e
@@ -112,7 +134,13 @@ try:
     if outer.get("is_error"): raise ValueError("claude reported is_error")
     text = outer.get("result", "").strip()
     text = re.sub(r"^```(?:json)?\s*|\s*```$", "", text)
-    res = json.loads(text)
+    try:
+        res = json.loads(text)
+    except ValueError:
+        # the model sometimes writes a sentence (or a fence) before the JSON: take the last {"status": ...} object
+        starts = [m.start() for m in re.finditer(r'\{\s*"status"\s*:', text)]
+        if not starts: raise
+        res = json.JSONDecoder().raw_decode(text[starts[-1]:])[0]
     items = res.get("items", [])
     assert isinstance(items, list) and res.get("status") == "ok"
     if not dm_checked(events): raise ValueError("no successful Slack DM lookup (is:dm)")
@@ -125,6 +153,7 @@ new = [i for i in items if i.get("id") and i["id"] not in seen]
 order = {"urgent": 0, "normal": 1, "fyi": 2}
 new.sort(key=lambda i: order.get(i.get("priority"), 3))
 
+fname = "-"
 def is_quiet(i):
     # keyword hits in quiet channels go to one bundle at the bottom; DMs and mentions never do
     parts = str(i.get("id", "")).split(":")
@@ -135,6 +164,7 @@ quiet = [i for i in new if is_quiet(i)]
 
 if new:
     stamp = now_iso[:16].replace("-", "").replace(":", "").replace("T", "-")
+    fname = f"{stamp}.md"
     lines = [f"# 업무 수신함 {now_iso}", ""]
     for i in main:
         lines += [f"## [{i.get('priority','?')}] {i.get('from','')} — {i.get('summary','')}",
@@ -153,28 +183,48 @@ if new:
         lines += ["## 확인하지 못한 것"] + [f"- {e}" for e in res["errors"]]
     if res.get("notes"):
         lines += ([""] if res.get("errors") else []) + ["## 참고"] + [f"- {e}" for e in res["notes"]]
-    open(os.path.join(inbox, f"{stamp}.md"), "w").write("\n".join(lines) + "\n")
+    open(os.path.join(inbox, fname), "w").write("\n".join(lines) + "\n")
     open(seen_path, "a").write("".join(i["id"] + "\n" for i in new))
 if res.get("plaud_seen"):
     open(os.path.join(state, "plaud_seen.txt"), "a").write("".join(str(x) + "\n" for x in res["plaud_seen"]))
+# drafts are offered only for items the digest shows in full (quiet-channel bundle entries get none)
+json.dump(main, open(os.path.join(state, "new_items.json"), "w"), ensure_ascii=False)
 urgent = sum(1 for i in main if i.get("priority") == "urgent")
-print(f"ok:{len(main)}:{urgent}:{len(res.get('errors', []))}:{len(quiet)}")
+print(f"ok:{len(main)}:{urgent}:{len(res.get('errors', []))}:{len(quiet)}:{fname}")
 PY
 )"
 pyrc=$?
 set -e
 
+# 5b. the office (stage 3): run due staff, apply board decisions, push status. Independent of the reader result.
+if [ "${WORK_AGENT_OFFICE:-0}" = "1" ]; then
+  OOUT="$("$DIR/office.sh" teams 2>> "$STATE/office.err")" || OOUT="office: error (see state/office.err)"
+  log "$OOUT"
+fi
+
 # 6. checkpoint / failure accounting
 if [ "$rc" = "0" ] && [ "$pyrc" = "0" ]; then
   printf '%s' "$NOW_ISO" > "$STATE/last_ok_iso"; echo 0 > "$STATE/fail_count"; date +%s > "$STATE/heartbeat"
-  IFS=: read -r _ n u e q <<< "$PYOUT"
+  IFS=: read -r _ n u e q f <<< "$PYOUT"
   qn=""; [ "${q:-0}" -gt 0 ] && qn=" (+$q quiet)"
   if [ "${n:-0}" -gt 0 ]; then
     log "ok: $n new item(s), $u urgent, $e error(s)$qn"
-    notify "업무 에이전트" "새 항목 ${n}건 (긴급 ${u}건)"
+    # stage 2a: leave unsent reply drafts in the source Slack threads (off unless WORK_AGENT_SLACK_DRAFTS=1)
+    dnote=""
+    if [ "${WORK_AGENT_SLACK_DRAFTS:-0}" = "1" ]; then
+      DOUT="$(CLAUDE_BIN="$CLAUDE_BIN" WORK_AGENT_STATE="$STATE" \
+        WORK_AGENT_DRAFT_TOOL="${WORK_AGENT_DRAFT_TOOL:-}" WORK_AGENT_DRAFT_MODEL="${WORK_AGENT_DRAFT_MODEL:-}" \
+        WORK_AGENT_DRAFT_DAILY_MAX="${WORK_AGENT_DRAFT_DAILY_MAX:-}" WORK_AGENT_DRAFT_RUN_MAX="${WORK_AGENT_DRAFT_RUN_MAX:-}" \
+        WORK_AGENT_DRAFT_TIMEOUT="${WORK_AGENT_DRAFT_TIMEOUT:-}" \
+        python3 "$DIR/slack_drafts.py" "$STATE/new_items.json" "$INBOX/$f" 2>> "$STATE/drafts.err")" || DOUT="drafts:error"
+      log "$DOUT"
+      case "$DOUT" in
+        drafts:*:*:*) IFS=: read -r _ dc _ _ <<< "$DOUT"; if [ "${dc:-0}" -gt 0 ]; then dnote=", 슬랙 초안 ${dc}건"; fi ;;
+      esac
+    fi
+    notify "업무 에이전트" "새 항목 ${n}건 (긴급 ${u}건${dnote})"
     if [ "${u:-0}" -gt 0 ]; then
-      f="${NOW_ISO:0:16}"; f="${f//-/}"; f="${f//:/}"; f="${f/T/-}.md"
-      "$DIR/slack_dm.sh" "urgent:$f" "[업무 에이전트] 긴급 ${u}건 (새 항목 ${n}건, $(kst +%H:%M) 확인분). 맥미니 inbox/$f 을 확인하세요." || true
+      "$DIR/slack_dm.sh" "urgent:$f" "[업무 에이전트] 긴급 ${u}건 (새 항목 ${n}건${dnote}, $(kst +%H:%M) 확인분). 맥미니 inbox/$f 을 확인하세요." || true
     fi
   elif [ "${e:-0}" -gt 0 ]; then
     log "ok: nothing new, $e error(s)$qn"

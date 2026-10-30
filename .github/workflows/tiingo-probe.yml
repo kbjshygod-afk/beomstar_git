@@ -1,0 +1,43 @@
+# Tiingo end-of-day probe (checklist 3.1, 3.3). Manual only. Reads one date's bars for a few
+# tickers with the TIINGO_TOKEN repository secret. Nothing is committed; the token is never echoed.
+name: tiingo-probe
+
+on:
+  workflow_dispatch:
+    inputs:
+      date:
+        description: 'US trading day, YYYY-MM-DD (yesterday is safe)'
+        required: true
+      symbols:
+        description: 'Comma-separated tickers'
+        default: 'AAPL,BRK-B,BF-B,WBD,GOOGL'
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: trading/requirements.txt
+      - run: pip install -r trading/requirements.txt
+      - uses: actions/cache/restore@v4
+        with:
+          path: trading/.cache
+          key: swing-paper-data-none
+          restore-keys: swing-paper-data-
+      - name: Probe
+        working-directory: trading
+        env:
+          TIINGO_TOKEN: ${{ secrets.TIINGO_TOKEN }}
+        run: |
+          if [ -z "$TIINGO_TOKEN" ]; then echo "::error::TIINGO_TOKEN secret is not set"; exit 2; fi
+          python tools/tiingo_probe.py --date "${{ github.event.inputs.date }}" --symbols "${{ github.event.inputs.symbols }}" \
+            --cache-dir .cache | tee probe.txt
+          { echo '```'; cat probe.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
