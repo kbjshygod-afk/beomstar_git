@@ -26,6 +26,8 @@ def test_coinbase_and_kraken_candles_parse_and_unknown_is_none(monkeypatch):
             return [[TS, "80000", "82000", "81000", "81676.3", "12345.6"]]          # time, low, high, open, close, vol
         if "pair=NOPEUSD" in url:
             return {"error": ["EQuery:Unknown asset pair"], "result": {}}
+        if "pair=NOPE2USD" in url:
+            return {"error": ["EQuery:Invalid asset pair"], "result": {}}     # what Kraken answered on 10-30
         if "pair=XMRUSD" in url:
             return {"error": [], "result": {"XXMRZUSD": [[TS - 86400, "1", "1", "1", "1", "1", "1", 1],
                                                           [TS, "300", "320", "295", "310.5", "305", "9999", 10]], "last": TS}}
@@ -34,7 +36,7 @@ def test_coinbase_and_kraken_candles_parse_and_unknown_is_none(monkeypatch):
     assert X.coinbase_bar("BTC-USD", DAY) == {"open": 81000.0, "high": 82000.0, "low": 80000.0, "close": 81676.3, "volume": 12345.6}
     assert X.coinbase_bar("NOPE-USD", DAY) is None
     assert X.kraken_bar("XMRUSD", DAY)["close"] == 310.5 and X.kraken_bar("XMRUSD", DAY)["volume"] == 9999.0
-    assert X.kraken_bar("NOPEUSD", DAY) is None
+    assert X.kraken_bar("NOPEUSD", DAY) is None and X.kraken_bar("NOPE2USD", DAY) is None
 
 
 def test_venue_bar_falls_back_to_kraken(monkeypatch):

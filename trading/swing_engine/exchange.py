@@ -105,7 +105,7 @@ def kraken_bar(pair: str, day: datetime) -> dict | None:
     data = _get_json(f"{KRAKEN}/OHLC?pair={pair}&interval=1440&since={int(t0.timestamp()) - 1}")
     errs = data.get("error") or []
     if errs:
-        if any("Unknown asset pair" in e for e in errs):
+        if any("asset pair" in e for e in errs):   # EQuery:Unknown asset pair / EQuery:Invalid asset pair
             return None
         raise ExchangeError("Kraken: " + "; ".join(errs))
     result = data.get("result") or {}
@@ -172,7 +172,13 @@ def listing(symbols, day: datetime | None = None) -> dict:
     for y in symbols:
         base = base_symbol(y)
         cb, kr = coinbase_product(y), kraken_pair(y)
-        out[y] = {"coinbase": cb if coinbase_bar(cb, day) is not None else None,
-                  "kraken": kr if kraken_bar(kr, day) is not None else None,
-                  "upbit": sorted(m for m in ups if m.split("-", 1)[1] == base)}
+        row = {"coinbase": None, "kraken": None, "upbit": sorted(m for m in ups if m.split("-", 1)[1] == base)}
+        for venue, fn, sym in (("coinbase", coinbase_bar, cb), ("kraken", kraken_bar, kr)):
+            try:
+                if fn(sym, day) is not None:
+                    row[venue] = sym
+            except ExchangeError as e:            # one venue's hiccup must not hide the others
+                log.warning("%s %s: %s", venue, sym, e)
+                row[venue] = f"error: {e}"
+        out[y] = row
     return out

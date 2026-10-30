@@ -49,9 +49,14 @@ def main(argv=None) -> int:
     except X.ExchangeError as e:
         print("venues unreachable:", e)
         return 1
-    missing = [s for s, w in where.items() if w["coinbase"] is None and w["kraken"] is None]
-    n_cb = sum(1 for w in where.values() if w["coinbase"])
-    n_kr = sum(1 for w in where.values() if w["coinbase"] is None and w["kraken"])
+    def ok(v):
+        return bool(v) and not str(v).startswith("error:")
+    missing = [s for s, w in where.items() if not ok(w["coinbase"]) and not ok(w["kraken"])]
+    n_cb = sum(1 for w in where.values() if ok(w["coinbase"]))
+    n_kr = sum(1 for w in where.values() if not ok(w["coinbase"]) and ok(w["kraken"]))
+    errs = [(s, v, w[v]) for s, w in where.items() for v in ("coinbase", "kraken") if str(w[v]).startswith("error:")]
+    for s, v, e in errs:
+        print(f"  {v} error for {s}: {e}")
     print(f"\nlisted: Coinbase USD {n_cb}, Kraken-only USD {n_kr}, neither {len(missing)} / {len(syms)}")
     for s in missing:
         print(f"  NOT on Coinbase or Kraken: {s} · Upbit markets: {where[s]['upbit'] or 'none'}")
