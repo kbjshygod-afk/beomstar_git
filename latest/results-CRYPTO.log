@@ -1,10 +1,10 @@
 ERROR yfinance: $HYPE-USD: possibly delisted; no timezone found
-ERROR yfinance: $FIGR_HELOC-USD: possibly delisted; no timezone found
-ERROR yfinance: $CC-USD: possibly delisted; no timezone found
 ERROR yfinance: $RAIN-USD: possibly delisted; no timezone found
+ERROR yfinance: $CC-USD: possibly delisted; no timezone found
+ERROR yfinance: $FIGR_HELOC-USD: possibly delisted; no timezone found
 ERROR yfinance: 
 4 Failed downloads:
-ERROR yfinance: ['HYPE-USD', 'FIGR_HELOC-USD', 'CC-USD', 'RAIN-USD']: possibly delisted; no timezone found
+ERROR yfinance: ['HYPE-USD', 'RAIN-USD', 'CC-USD', 'FIGR_HELOC-USD']: possibly delisted; no timezone found
 WARNING swing_engine.data: yahoo SHIB-USD: dropped 217 row(s) with a missing or non-positive price
 ERROR yfinance: $RAIN-USD: possibly delisted; no timezone found
 ERROR yfinance: $CC-USD: possibly delisted; no timezone found
