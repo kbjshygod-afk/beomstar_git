@@ -5,6 +5,7 @@
 - 시작일 2026-09-24 · 기준일(마지막 확정 봉) 2026-10-29 · RS 방식 percentile · 손절 -10% · 1회 리스크 0.75% · 비용 편도 0.2%
 - 레짐 (MA200): **ON** — BTC-USD 종가 77,775.11 · 200일선 73,101.84
 - 데이터: 유니버스 30종목 중 25종목 로드 (실패 5)
+- 데이터 대조 (Binance): 실패 — HTTP 451 Service unavailable from a restricted location according to 'b. Eligibility' in https://www.binance.com/en/terms. Please contact customer service if you believe you received this message in error.
 
 ## 다음 시가 진입 (오늘 신호)
 
