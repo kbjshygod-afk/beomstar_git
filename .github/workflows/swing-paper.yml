@@ -98,6 +98,7 @@ jobs:
           KIS_APP_KEY: ${{ secrets.KIS_APP_KEY }}
           KIS_APP_SECRET: ${{ secrets.KIS_APP_SECRET }}
           KIS_ENV: ${{ vars.KIS_ENV || 'vps' }}
+          TIINGO_TOKEN: ${{ secrets.TIINGO_TOKEN }}
         run: |
           status=0
           for market in ${{ steps.m.outputs.markets }}; do

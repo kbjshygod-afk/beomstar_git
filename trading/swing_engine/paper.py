@@ -37,7 +37,7 @@ from zoneinfo import ZoneInfo
 import pandas as pd
 
 from . import data as D
-from . import kis, krx, xcheck
+from . import kis, krx, tiingo, xcheck
 from .backtest import _jsonable, warmup_bars
 from .notes import DISCLAIMER, UNCONFIRMED_LINE
 from .params import COST_PCT, RISK_PCT, data_market, normalize_preset, resolve
@@ -481,24 +481,32 @@ def stale_positions(res, frames: dict, bench: pd.DataFrame, as_of) -> list[dict]
     return out
 
 
-def cross_check(market: str, frames: dict, bench: pd.DataFrame, as_of, root: Path, cache_dir) -> dict | None:
-    """Yahoo vs KRX record for Korean markets when KRX_API_KEY is set (checklist 1.5), written to
-    root/xcheck/<checked date>.json when it changed. Observation only: never raises, never
+def cross_check(market: str, frames: dict, bench: pd.DataFrame, as_of, root: Path, cache_dir, focus=()) -> dict | None:
+    """Yahoo vs the exchange/second source record, written to root/xcheck/<checked date>.json when
+    it changed. Korean markets: KRX when KRX_API_KEY is set (checklist 1.5). Crypto: Coinbase/Kraken
+    (checklist 4). US markets: Tiingo when TIINGO_TOKEN is set (checklist 3.4), a sample of the
+    universe plus `focus` (held and pending symbols). Observation only: never raises, never
     touches signals or trades."""
-    key = krx.api_key()
     dm = data_market(market)
+    key, tok = krx.api_key(), tiingo.token()
     if dm == "CRYPTO":
-        pass                                          # Coinbase/Kraken public APIs, no key needed
-    elif key is None or dm not in krx.STOCK_SERVICE:
+        src = xcheck.CRYPTO_SOURCE                    # public APIs, no key needed
+    elif dm in krx.STOCK_SERVICE and key is not None:
+        src = "KRX Open API"
+    elif dm in tiingo.MARKETS and tok is not None:
+        src = xcheck.TIINGO_SOURCE
+    else:
         return None
     try:
         if dm == "CRYPTO":
             rec = xcheck.run_crypto(frames, bench, pd.Timestamp(as_of), cache_dir)
+        elif src == xcheck.TIINGO_SOURCE:
+            rec = xcheck.run_tiingo(dm, frames, bench, pd.Timestamp(as_of), tok, cache_dir, focus)
         else:
             rec = xcheck.run(dm, frames, bench, pd.Timestamp(as_of), key, cache_dir)
     except Exception as e:                            # noqa: BLE001 - a cross-check must never stop the ledger
-        log.warning("%s: KRX cross-check failed: %s", market, e)
-        return {"market": dm, "as_of": _day(as_of), "source": xcheck.CRYPTO_SOURCE if dm == "CRYPTO" else "KRX Open API", "status": "error",
+        log.warning("%s: %s cross-check failed: %s", market, src, e)
+        return {"market": dm, "as_of": _day(as_of), "source": src, "status": "error",
                 "checked": None, "index": None, "symbols": None, "error": str(e)}
     return _store_xcheck(market, root, rec, "")
 
@@ -808,7 +816,8 @@ def run(args) -> dict:
     stale = stale_positions(res, frames, bench, as_of)
     for st in stale:
         log.warning("%s: held %s has no bar on %s (last %s)", market, st["symbol"], _day(as_of), st["last_bar"])
-    xrec = cross_check(market, frames, bench, as_of, root, args.cache_dir)
+    focus = [p["symbol"] for p in res.open_positions] + [e["symbol"] for e in snap["entries_next_open"]]
+    xrec = cross_check(market, frames, bench, as_of, root, args.cache_dir, focus)
     xrec_kis = cross_check_kis(market, frames, bench, as_of, root, args.cache_dir, rec=xrec_kis)
     report = render_report(market, cfg, snap, perf, aud, res, params, stale, xrec, xrec_kis)
     (root / "report.md").write_text(report)
