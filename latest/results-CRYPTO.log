@@ -1,12 +1,10 @@
-INFO yfinance: Failed to create TzCache, reason: Error creating TzCache folder: '/home/runner/.cache/py-yfinance' reason: [Errno 17] File exists: '/home/runner/.cache/py-yfinance'. TzCache will not be used. Tip: You can direct cache to use a different location with 'set_tz_cache_location(mylocation)'
-ERROR yfinance: $RAIN-USD: possibly delisted; no timezone found
-ERROR yfinance: HTTP Error 404: {"quoteSummary":{"result":null,"error":{"code":"Not Found","description":"Quote not found for symbol: FIGR_HELOC-USD"}}}
-ERROR yfinance: $FIGR_HELOC-USD: possibly delisted; no timezone found
 ERROR yfinance: $HYPE-USD: possibly delisted; no timezone found
+ERROR yfinance: $RAIN-USD: possibly delisted; no timezone found
 ERROR yfinance: $CC-USD: possibly delisted; no timezone found
+ERROR yfinance: $FIGR_HELOC-USD: possibly delisted; no timezone found
 ERROR yfinance: 
 4 Failed downloads:
-ERROR yfinance: ['RAIN-USD', 'FIGR_HELOC-USD', 'HYPE-USD', 'CC-USD']: possibly delisted; no timezone found
+ERROR yfinance: ['HYPE-USD', 'RAIN-USD', 'CC-USD', 'FIGR_HELOC-USD']: possibly delisted; no timezone found
 WARNING swing_engine.data: yahoo SHIB-USD: dropped 217 row(s) with a missing or non-positive price
 ERROR yfinance: $HYPE-USD: possibly delisted; no timezone found
 ERROR yfinance: $RAIN-USD: possibly delisted; no timezone found
