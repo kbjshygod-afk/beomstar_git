@@ -108,7 +108,7 @@ def render(summaries: list[dict]) -> str:
             lines.append(f"  audit flags:       {s['audit']}")
         x = s.get("xcheck")
         if x:
-            lines.append(f"  KRX cross-check:   {x['status']} ({x.get('checked') or '-'})"
+            lines.append(f"  cross-check:       {x['status']} ({x.get('checked') or '-'})"
                          + (f" mismatched {x['mismatched_symbols']}" if x.get("mismatched_symbols") else "")
                          + (f" index_match={x['index_match']}" if x.get("index_match") is not None else "")
                          + (f" error={x['error']}" if x.get("error") else ""))
