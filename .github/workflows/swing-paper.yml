@@ -92,6 +92,8 @@ jobs:
           BRANCH: ${{ steps.m.outputs.branch }}
           TRIES: ${{ steps.m.outputs.tries }}
           WAIT: ${{ steps.m.outputs.wait }}
+          # Yahoo vs KRX cross-check of Korean bars (swing_engine/xcheck.py); unset = no check
+          KRX_API_KEY: ${{ secrets.KRX_API_KEY }}
         run: |
           status=0
           for market in ${{ steps.m.outputs.markets }}; do
