@@ -488,7 +488,7 @@ def cross_check(market: str, frames: dict, bench: pd.DataFrame, as_of, root: Pat
     key = krx.api_key()
     dm = data_market(market)
     if dm == "CRYPTO":
-        pass                                          # Binance public API, no key needed
+        pass                                          # Coinbase/Kraken public APIs, no key needed
     elif key is None or dm not in krx.STOCK_SERVICE:
         return None
     try:
@@ -498,7 +498,7 @@ def cross_check(market: str, frames: dict, bench: pd.DataFrame, as_of, root: Pat
             rec = xcheck.run(dm, frames, bench, pd.Timestamp(as_of), key, cache_dir)
     except Exception as e:                            # noqa: BLE001 - a cross-check must never stop the ledger
         log.warning("%s: KRX cross-check failed: %s", market, e)
-        return {"market": dm, "as_of": _day(as_of), "source": "Binance" if dm == "CRYPTO" else "KRX Open API", "status": "error",
+        return {"market": dm, "as_of": _day(as_of), "source": xcheck.CRYPTO_SOURCE if dm == "CRYPTO" else "KRX Open API", "status": "error",
                 "checked": None, "index": None, "symbols": None, "error": str(e)}
     rec["market"] = market
     if rec["checked"]:

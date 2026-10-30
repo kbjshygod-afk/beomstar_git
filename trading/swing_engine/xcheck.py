@@ -99,30 +99,32 @@ def run(market: str, frames: dict, bench: pd.DataFrame, as_of: pd.Timestamp, key
     return rec
 
 
-# Binance quotes USDT on one venue; Yahoo is a USD composite. 1% on the close is a sanity bound
-# (a wrong bar, a stale day), not a tick-level check; volume is not comparable between them.
+# One venue's USD price vs Yahoo's USD composite across venues: 1% on the close is a sanity
+# bound (a wrong bar, a stale day), not a tick-level check; volume is not comparable.
 CRYPTO_TOLERANCE = {"close": 0.01}
+CRYPTO_SOURCE = "Coinbase/Kraken"
 
 
 def run_crypto(frames: dict, bench: pd.DataFrame, as_of: pd.Timestamp, cache_dir=None) -> dict:
-    """The cross-check record for the crypto ledger against Binance (checklist 4). Yahoo's crypto
-    as_of is the last complete UTC day and Binance has that kline at once, so as_of itself is
-    compared. Coins without a Binance USDT pair are listed as missing. Never raises."""
+    """The cross-check record for the crypto ledger against Coinbase, then Kraken (checklist 4).
+    Yahoo's crypto as_of is the last complete UTC day and the venues have that candle at once, so
+    as_of itself is compared. Coins on neither venue are listed as missing. Never raises."""
     from . import exchange
-    rec = {"market": "CRYPTO", "as_of": as_of.strftime("%Y-%m-%d"), "source": "Binance",
+    rec = {"market": "CRYPTO", "as_of": as_of.strftime("%Y-%m-%d"), "source": CRYPTO_SOURCE,
            "status": "not_published", "checked": None, "index": None, "symbols": None, "error": None}
     syms = sorted(frames)
     try:
-        ex = exchange.binance_bars_on(syms, as_of.to_pydatetime(), cache_dir)
-        bidx = exchange.binance_bar("BTCUSDT", as_of.to_pydatetime())
+        ex = exchange.bars_on(syms, as_of.to_pydatetime(), cache_dir)
+        _, bidx = exchange.venue_bar("BTC-USD", as_of.to_pydatetime())
     except exchange.ExchangeError as e:
         rec.update(status="error", error=str(e))
-        log.warning("Binance cross-check %s: %s", rec["as_of"], e)
+        log.warning("crypto cross-check %s: %s", rec["as_of"], e)
         return rec
     if len(ex) == 0:
         return rec
     sym = compare_bars(bars_on(frames, as_of), ex, as_of, CRYPTO_TOLERANCE, ("close",))
     sym["missing"] = sorted(set(sym["missing"]) | set(ex.attrs.get("unlisted", [])))
+    sym["venues"] = {v: int(n) for v, n in ex["venue"].value_counts().items()} if "venue" in ex else {}
     rec["checked"] = rec["as_of"]
     rec["symbols"] = sym
     if bidx is not None and as_of in bench.index:
@@ -138,8 +140,9 @@ def summary_line(rec: dict | None) -> str:
     """One Korean line for report.md and the signal alert."""
     if not rec:
         return "- 데이터 대조: 없음 (KRX 키 미설정)"
-    src = "Binance" if rec.get("source") == "Binance" else "KRX"
-    bench_word = "BTC" if src == "Binance" else "지수"
+    crypto = rec.get("market") == "CRYPTO"
+    src = rec.get("source", "KRX") if crypto else "KRX"
+    bench_word = "BTC" if crypto else "지수"
     if rec["status"] == "error":
         return f"- 데이터 대조 ({src}): 실패 — {rec['error']}"
     if rec["status"] == "not_published":
@@ -152,10 +155,10 @@ def summary_line(rec: dict | None) -> str:
                f"{bench_word} 불일치 Yahoo {idx['yahoo_close']:,.2f} vs {src} {idx['krx_close']:,.2f}" if idx
                else f"{bench_word} 비교 불가")
     missing = s.get("missing", [])
-    line = (f"- 데이터 대조 ({src}, {rec['checked']} 봉" + (", 종가 ±1%" if src == "Binance" else "") + "): "
+    line = (f"- 데이터 대조 ({src}, {rec['checked']} 봉" + (", 종가 ±1%" if crypto else "") + "): "
             f"종목 {s['compared']}개 비교, 불일치 {n_bad}개"
             f"{', ' + src + '에 없음 ' + str(len(missing)) + '개 (' + ', '.join(missing) + ')' if missing else ''} · {idx_txt}")
-    fmt = "{:,.4g}" if src == "Binance" else "{:,.0f}"
+    fmt = "{:,.4g}" if crypto else "{:,.0f}"
     for m in s["mismatches"][:8]:
         line += (f"\n  - {m['symbol']} {m['field']}: Yahoo {fmt.format(m['yahoo'])} vs {src} {fmt.format(m['krx'])}"
                  f" ({m['diff_pct']:+.2f}%)")
