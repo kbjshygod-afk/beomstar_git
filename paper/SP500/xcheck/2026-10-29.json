@@ -1,0 +1,45 @@
+{
+ "market": "SP500",
+ "as_of": "2026-10-29",
+ "source": "Tiingo",
+ "status": "mismatch",
+ "checked": "2026-10-29",
+ "index": null,
+ "symbols": {
+  "date": "2026-10-29",
+  "compared": 27,
+  "missing": [],
+  "mismatches": [
+   {
+    "symbol": "AMD",
+    "field": "volume",
+    "yahoo": 16584000.0,
+    "krx": 16873264.0,
+    "diff_pct": 1.714
+   }
+  ],
+  "unlisted": [],
+  "sampled": 27,
+  "focus": [
+   "AMGN",
+   "BIIB",
+   "CRL",
+   "EBAY",
+   "ELV",
+   "EXPD",
+   "GWW",
+   "HUM",
+   "IFF",
+   "KDP",
+   "LLY",
+   "MA",
+   "MO",
+   "TRV",
+   "VEEV",
+   "WSM",
+   "WST"
+  ]
+ },
+ "error": null,
+ "calls": 27
+}
