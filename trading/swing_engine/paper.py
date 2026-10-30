@@ -487,13 +487,18 @@ def cross_check(market: str, frames: dict, bench: pd.DataFrame, as_of, root: Pat
     touches signals or trades."""
     key = krx.api_key()
     dm = data_market(market)
-    if key is None or dm not in krx.STOCK_SERVICE:
+    if dm == "CRYPTO":
+        pass                                          # Binance public API, no key needed
+    elif key is None or dm not in krx.STOCK_SERVICE:
         return None
     try:
-        rec = xcheck.run(dm, frames, bench, pd.Timestamp(as_of), key, cache_dir)
+        if dm == "CRYPTO":
+            rec = xcheck.run_crypto(frames, bench, pd.Timestamp(as_of), cache_dir)
+        else:
+            rec = xcheck.run(dm, frames, bench, pd.Timestamp(as_of), key, cache_dir)
     except Exception as e:                            # noqa: BLE001 - a cross-check must never stop the ledger
         log.warning("%s: KRX cross-check failed: %s", market, e)
-        return {"market": dm, "as_of": _day(as_of), "source": "KRX Open API", "status": "error",
+        return {"market": dm, "as_of": _day(as_of), "source": "Binance" if dm == "CRYPTO" else "KRX Open API", "status": "error",
                 "checked": None, "index": None, "symbols": None, "error": str(e)}
     rec["market"] = market
     if rec["checked"]:
@@ -503,7 +508,7 @@ def cross_check(market: str, frames: dict, bench: pd.DataFrame, as_of, root: Pat
             p.parent.mkdir(exist_ok=True)
             p.write_text(body)
     if rec["status"] == "mismatch":
-        log.warning("%s: Yahoo and KRX differ on %s: %s", market, rec["checked"],
+        log.warning("%s: Yahoo and %s differ on %s: %s", market, rec["source"], rec["checked"],
                     [(m["symbol"], m["field"], m["diff_pct"]) for m in rec["symbols"]["mismatches"][:5]])
     return rec
 

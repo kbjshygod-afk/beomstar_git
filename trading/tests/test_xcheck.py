@@ -43,7 +43,7 @@ def test_compare_flags_only_differences_over_tolerance():
     y = pd.DataFrame({"close": [36250.0, 10000.0], "volume": [1000.0, 2000.0]}, index=["A.KQ", "B.KQ"])
     ex = pd.DataFrame({"close": [36250.0, 10000.0], "volume": [1005.0, 2100.0]}, index=["A.KQ", "C.KQ"])
     r = xcheck.compare_bars(y, ex, pd.Timestamp("2026-10-28"))
-    assert r["compared"] == 1 and r["missing_in_krx"] == ["B.KQ"]
+    assert r["compared"] == 1 and r["missing"] == ["B.KQ"]
     assert r["mismatches"] == []                               # 0.5% volume is within 1%
     ex.loc["A.KQ", "volume"] = 1022                            # 2.2%: the 10-06 kind of revision
     r = xcheck.compare_bars(y, ex, pd.Timestamp("2026-10-28"))
