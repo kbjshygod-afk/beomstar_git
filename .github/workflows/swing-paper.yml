@@ -109,7 +109,8 @@ jobs:
                 --cache-dir .cache --push-branch "$BRANCH" -v || rc=$?
               if [ "$rc" -eq 75 ] && [ "$market" != "CRYPTO" ] && [ "$attempt" -lt "$TRIES" ]; then
                 echo "::warning::$market data not ready (attempt $attempt/$TRIES), retrying in ${WAIT}s"
-                rm -rf .cache                     # refetch instead of reusing the incomplete download
+                # refetch Yahoo instead of reusing the incomplete download; KIS bars and token stay
+                find .cache -mindepth 1 -maxdepth 1 ! -name kis -exec rm -rf {} + 2>/dev/null || true
                 sleep "$WAIT"; attempt=$((attempt + 1)); continue
               fi
               break

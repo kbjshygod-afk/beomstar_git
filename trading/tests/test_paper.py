@@ -384,3 +384,65 @@ def test_audit_compares_with_the_revision_traded_before_the_open(tmp_path, ledge
     trades = pd.read_csv(root / "trades.csv")
     filled = set() if trades.empty or "symbol" not in trades else set(trades.loc[trades["entry_date"] == d1s, "symbol"])
     assert sym not in held | filled                    # rev1 dropped it, and rev1 is what was traded
+
+
+def _kis_rec(n_bad, compared=150, field="close"):
+    mm = [{"symbol": f"{i:06d}.KQ", "field": field, "yahoo": 101.0, "krx": 100.0, "diff_pct": 1.0} for i in range(n_bad)]
+    return {"market": "KOSDAQ", "as_of": "2026-10-30", "source": "KIS", "status": "mismatch" if mm else "ok",
+            "checked": "2026-10-30", "index": {"yahoo_close": 1.0, "krx_close": 1.0, "match": True},
+            "symbols": {"date": "2026-10-30", "compared": compared, "missing": [], "mismatches": mm}, "error": None}
+
+
+def test_kis_guard_holds_back_provisional_korean_bars(monkeypatch):
+    # 2026-10-30 (Fri) 18:03 KST: 148/150 KOSDAQ closes differed from KIS; the next open is Mon 00:00 UTC
+    as_of = pd.Timestamp("2026-10-30")
+    monkeypatch.setattr(P, "kis_record", lambda *a, **k: _kis_rec(148))
+    ok, why, rec = P.kis_guard("KOSDAQ", {}, None, as_of, datetime(2026, 10, 30, 9, 3, tzinfo=timezone.utc), None)
+    assert ok is False and "148/150" in why and rec["guard"]["blocked"] is True and rec["guard"]["late"] is False
+    # within GUARD_GIVE_UP_HOURS of the open the run goes ahead, flagged
+    ok, why, rec = P.kis_guard("KOSDAQ", {}, None, as_of, datetime(2026, 11, 1, 19, 0, tzinfo=timezone.utc), None)
+    assert ok is True and why and rec["guard"] == {"close_mismatched": 148, "compared": 150, "share_pct": 98.7,
+                                                   "blocked": False, "late": True}
+    # a few mismatches (ordinary tick-level differences) do not hold anything back
+    monkeypatch.setattr(P, "kis_record", lambda *a, **k: _kis_rec(4))
+    ok, why, rec = P.kis_guard("KOSDAQ", {}, None, as_of, datetime(2026, 10, 30, 9, 3, tzinfo=timezone.utc), None)
+    assert ok is True and why == "" and rec["guard"]["blocked"] is False
+    # volume-only differences are not the guard's business (Yahoo revises volume routinely)
+    monkeypatch.setattr(P, "kis_record", lambda *a, **k: _kis_rec(148, field="volume"))
+    ok, why, rec = P.kis_guard("KOSDAQ", {}, None, as_of, datetime(2026, 10, 30, 9, 3, tzinfo=timezone.utc), None)
+    assert ok is True and rec["guard"]["close_mismatched"] == 0
+    s = P._xcheck_summary(rec)
+    assert s["guard"]["compared"] == 150 and s["status"] == "mismatch"
+
+
+def test_kis_guard_is_skipped_when_kis_does_not_apply_or_answer(monkeypatch):
+    as_of, now = pd.Timestamp("2026-10-30"), datetime(2026, 10, 30, 9, 3, tzinfo=timezone.utc)
+    assert P.kis_guard("SP500", {}, None, as_of, now, None) == (True, "", None)          # not a Korean market
+    for rec in (None,
+                {**_kis_rec(0), "status": "error", "symbols": None, "error": "token: HTTP 500"},
+                {**_kis_rec(0), "status": "not_published", "symbols": None, "checked": None}):
+        monkeypatch.setattr(P, "kis_record", lambda *a, **k: rec)
+        ok, why, out = P.kis_guard("KOSDAQ", {}, None, as_of, now, None)
+        assert ok is True and why == "" and out is rec and (rec is None or "guard" not in rec)
+
+
+def test_guarded_run_commits_nothing_and_a_late_pass_is_flagged(tmp_path, ledger_repo, monkeypatch):
+    offline = tmp_path / "data"
+    offline.mkdir()
+    days = _write_market(offline)
+    day = days[-1]
+    monkeypatch.setattr(P, "kis_guard", lambda *a, **k: (False, "KIS와 종가가 다른 종목 148/150", _kis_rec(148)))
+    r = _run(offline, ledger_repo, _after_close(day), monkeypatch)
+    assert r["ready"] is False and "148/150" in r["reason"] and r["xcheck_kis"]["status"] == "mismatch"
+    assert not (ledger_repo / "paper" / "SP500" / "signals").exists()
+    assert subprocess.run(["git", "-C", str(ledger_repo), "log", "--oneline"], capture_output=True, text=True).stdout == ""
+    late = _kis_rec(148)
+    late["guard"] = {"close_mismatched": 148, "compared": 150, "share_pct": 98.7, "blocked": False, "late": True}
+    monkeypatch.setattr(P, "kis_guard", lambda *a, **k: (True, "late", late))
+    r = _run(offline, ledger_repo, _after_close(day) + pd.Timedelta(hours=6), monkeypatch)
+    assert r["started"] is True and r["xcheck_kis"]["guard"]["late"] is True
+    report = (ledger_repo / "paper" / "SP500" / "report.md").read_text()
+    assert "데이터 가드 해제" in report and "148/150" in report
+    latest = json.loads((ledger_repo / "paper" / "latest.json").read_text())
+    assert latest["markets"]["SP500"]["xcheck_kis"]["guard"]["late"] is True
+    assert (ledger_repo / "paper" / "SP500" / "xcheck" / "2026-10-30.kis.json").exists()

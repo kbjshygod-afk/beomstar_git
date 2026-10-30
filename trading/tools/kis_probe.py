@@ -65,6 +65,13 @@ def main(argv=None) -> int:
         bars = client.stock_bars(a.symbol, a.date, a.date)
         print(f"[stock {a.symbol}] rows {len(bars)}: {bars.to_dict('index') if len(bars) else 'no bar for that date'}")
         ok &= len(bars) > 0
+        # which venue does Yahoo's bar come from? KRX regular (J), NXT (NX) or both (UN)
+        for mrkt in ("NX", "UN"):
+            try:
+                b = client.stock_bars(a.symbol, a.date, a.date, mrkt=mrkt)
+                print(f"  venue {mrkt}: {b.to_dict('index') if len(b) else 'no bar'}")
+            except kis.KISError as e:
+                print(f"  venue {mrkt}: FAILED {e}")
         if len(bars) and a.cache_dir:
             suffix = ".KQ" if a.symbol.startswith(("0", "1", "2", "3", "4")) else ".KS"
             for suf in (".KQ", ".KS"):
