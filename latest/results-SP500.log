@@ -1,3 +1,6 @@
+ERROR yfinance: 
+1 Failed download:
+ERROR yfinance: ['GOOGL']: OperationalError('database is locked')
 INFO swing_engine.backtest: simulating proxy (503 symbols)
 INFO swing_engine.backtest: simulating percentile (503 symbols)
 [SP500 proxy] CAGR +15.7% vs 지수 +13.8% (초과 +1.9%p), MDD -23.6%, 거래 858
