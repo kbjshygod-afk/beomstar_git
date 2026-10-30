@@ -5,8 +5,6 @@
 - 시작일 2026-09-25 · 기준일(마지막 확정 봉) 2026-10-29 · RS 방식 percentile · 손절 -7% · 1회 리스크 0.75% · 비용 편도 0.2%
 - 레짐 (MA200): **ON** — ^NDX 종가 29,402.51 · 200일선 27,912.71
 - 데이터: 유니버스 101종목 중 100종목 로드 (실패 1)
-- 데이터 대조 (Tiingo, 2026-10-29 봉): 종목 13개 비교 (표본 13: 보유·대기 3 + 순환), 불일치 1개, Tiingo에 없음 87개 (AAPL, ABNB, ADBE, ADI, ADP, ADSK, AEP, ALAB, ALNY, AMAT, AMD, AMZN, APP, ARM, ASML, AVGO, AXON, BKNG, BKR, CCEP, DDOG, DXCM, EXC, FANG, FAST, FER, FTNT, GEHC, GILD, GOOG, GOOGL, HON, HONA, IDXX, INTC, INTU, ISRG, KLAC, LIN, LITE, LRCX, MAR, MCHP, MDLZ, MELI, META, MNST, MPWR, MRVL, MSFT, MSTR, MU, NBIS, NFLX, NVDA, NXPI, ODFL, ORLY, PANW, PAYX, PCAR, PDD, PEP, PLTR, PYPL, QCOM, REGN, RKLB, ROP, ROST, SBUX, SHOP, SNDK, SNPS, SPCX, STX, TER, TMUS, TRI, TSLA, TTWO, TXN, VRTX, WDAY, WDC, WMT, XEL) · 지수 비교 안 함
-  - CRWV volume: Yahoo 46,608,600 vs Tiingo 47,160,800 (+1.17%)
 
 ## 다음 시가 진입 (오늘 신호)
 
