@@ -1,4 +1,3 @@
-INFO yfinance: Failed to create TzCache, reason: Error creating TzCache folder: '/home/runner/.cache/py-yfinance' reason: [Errno 17] File exists: '/home/runner/.cache/py-yfinance'. TzCache will not be used. Tip: You can direct cache to use a different location with 'set_tz_cache_location(mylocation)'
 INFO swing_engine.backtest: simulating proxy (200 symbols)
 INFO swing_engine.backtest: simulating percentile (200 symbols)
 [KOSPI proxy] CAGR +16.8% vs 지수 +11.5% (초과 +5.3%p), MDD -33.4%, 거래 605
