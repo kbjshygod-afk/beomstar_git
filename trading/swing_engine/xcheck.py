@@ -170,12 +170,53 @@ def run_crypto(frames: dict, bench: pd.DataFrame, as_of: pd.Timestamp, cache_dir
     return rec
 
 
+TIINGO_SOURCE = "Tiingo"
+
+
+def run_tiingo(market: str, frames: dict, bench: pd.DataFrame, as_of: pd.Timestamp, tok: str, cache_dir=None,
+               focus=(), sample_n: int | None = None) -> dict:
+    """The cross-check record for a US market against Tiingo end-of-day bars (checklist 3.4):
+    as_of when Tiingo already has it, else the previous session. Only a sample of the universe is
+    compared (free-tier caps, see tiingo.py): `focus` (held and pending symbols) plus a rotating
+    slice. No index comparison (Tiingo serves no index on the free tier). Never raises."""
+    from . import tiingo
+    rec = {"market": market, "as_of": as_of.strftime("%Y-%m-%d"), "source": TIINGO_SOURCE,
+           "status": "not_published", "checked": None, "index": None, "symbols": None, "error": None, "calls": 0}
+    n = tiingo.SAMPLE if sample_n is None else sample_n
+    dates = [as_of]
+    prev = bench.index[bench.index < as_of]
+    if len(prev):
+        dates.append(prev[-1])
+    for d in dates:
+        syms = tiingo.sample(frames, d, n, focus)
+        try:
+            ex = tiingo.bars_on(market, syms, d, tok, cache_dir)
+        except tiingo.TiingoError as e:
+            rec.update(status="error", error=str(e))
+            log.warning("Tiingo cross-check %s %s: %s", market, d.date(), e)
+            return rec
+        rec["calls"] += ex.attrs.get("calls", 0)
+        if len(ex) == 0:
+            continue                                   # Tiingo has not published this date yet
+        mine = bars_on({k: v for k, v in frames.items() if k in syms}, d)      # only the sampled symbols
+        sym = compare_bars(mine, ex, d)
+        sym["unlisted"] = ex.attrs.get("unlisted", [])
+        sym["missing"] = sorted((set(sym["missing"]) | set(ex.attrs.get("missing", []))) - set(sym["unlisted"]))
+        sym["sampled"] = len(syms)
+        sym["focus"] = sorted(set(focus) & set(frames))
+        rec["checked"] = d.strftime("%Y-%m-%d")
+        rec["symbols"] = sym
+        rec["status"] = "mismatch" if sym["mismatches"] else "ok"
+        return rec
+    return rec
+
+
 def summary_line(rec: dict | None) -> str:
     """One Korean line for report.md and the signal alert."""
     if not rec:
         return "- 데이터 대조: 없음 (KRX 키 미설정)"
     crypto = rec.get("market") == "CRYPTO"
-    src = rec.get("source", "KRX") if (crypto or rec.get("source") == KIS_SOURCE) else "KRX"
+    src = rec.get("source", "KRX") if (crypto or rec.get("source") in (KIS_SOURCE, TIINGO_SOURCE)) else "KRX"
     bench_word = "BTC" if crypto else "지수"
     if rec["status"] == "error":
         return f"- 데이터 대조 ({src}): 실패 — {rec['error']}"
@@ -189,8 +230,10 @@ def summary_line(rec: dict | None) -> str:
                f"{bench_word} 불일치 Yahoo {idx['yahoo_close']:,.2f} vs {src} {idx['krx_close']:,.2f}" if idx
                else f"{bench_word} 비교 불가")
     missing = s.get("missing", [])
+    sampled = f" (표본 {s['sampled']}: 보유·대기 {len(s.get('focus', []))} + 순환)" if s.get("sampled") is not None else ""
+    idx_txt = idx_txt if src != TIINGO_SOURCE else "지수 비교 안 함"
     line = (f"- 데이터 대조 ({src}, {rec['checked']} 봉" + (", 종가 ±1%" if crypto else "") + "): "
-            f"종목 {s['compared']}개 비교, 불일치 {n_bad}개"
+            f"종목 {s['compared']}개 비교{sampled}, 불일치 {n_bad}개"
             f"{', ' + src + '에 없음 ' + str(len(missing)) + '개 (' + ', '.join(missing) + ')' if missing else ''} · {idx_txt}")
     fmt = "{:,.4g}" if crypto else "{:,.0f}"
     for m in s["mismatches"][:8]:
