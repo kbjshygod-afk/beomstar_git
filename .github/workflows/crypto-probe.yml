@@ -1,6 +1,6 @@
 # Crypto exchange probe (checklist 4.1-4.3). Manual only, no key: lists where each coin of the
-# paper universe trades (Binance USDT pair, Upbit markets), fetches one Binance daily bar per
-# coin and prints the Yahoo-vs-Binance close differences for coins the Yahoo cache holds.
+# paper universe trades (Coinbase USD, Kraken USD, Upbit markets), fetches one daily bar per
+# coin and prints the Yahoo-vs-venue close differences for coins the Yahoo cache holds.
 name: crypto-probe
 
 on:

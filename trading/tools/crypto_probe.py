@@ -1,11 +1,11 @@
 """Probe the crypto exchange public APIs (checklist 4.1-4.3): where each coin of the paper
-universe trades, one Binance daily bar per coin, and the Yahoo-vs-Binance close difference for
-the coins the Yahoo cache holds.
+universe trades, one daily bar per coin from Coinbase (USD) or Kraken (USD), and the Yahoo-vs-venue close
+difference for the coins the Yahoo cache holds.
 
     python tools/crypto_probe.py --date 2026-10-29 [--universe ../ledger/paper/CRYPTO/config.json] [--cache-dir .cache]
 
-No key is needed. Binance klines are UTC days like Yahoo's crypto bars; Upbit is listed for
-information only (KRW prices are not compared).
+No key is needed. Both venues' daily candles are UTC days like Yahoo's crypto bars (Binance
+refuses GitHub's US runners with HTTP 451, 2026-10-30); Upbit is listed for information only.
 """
 import argparse
 import csv
@@ -47,30 +47,32 @@ def main(argv=None) -> int:
     try:
         where = X.listing(syms, day)
     except X.ExchangeError as e:
-        print("Binance unreachable:", e)
+        print("venues unreachable:", e)
         return 1
-    missing = [s for s, w in where.items() if w["binance"] is None]
-    print(f"\nBinance USDT pair: {len(syms) - len(missing)}/{len(syms)} listed")
+    missing = [s for s, w in where.items() if w["coinbase"] is None and w["kraken"] is None]
+    n_cb = sum(1 for w in where.values() if w["coinbase"])
+    n_kr = sum(1 for w in where.values() if w["coinbase"] is None and w["kraken"])
+    print(f"\nlisted: Coinbase USD {n_cb}, Kraken-only USD {n_kr}, neither {len(missing)} / {len(syms)}")
     for s in missing:
-        print(f"  NOT on Binance: {s} · Upbit markets: {where[s]['upbit'] or 'none'}")
-    print("\nsample bars (Binance 1d, UTC) and Yahoo close from the cache:")
+        print(f"  NOT on Coinbase or Kraken: {s} · Upbit markets: {where[s]['upbit'] or 'none'}")
+    print("\nsample bars (UTC day) and Yahoo close from the cache:")
     worst = []
     for s in syms:
-        if where[s]["binance"] is None:
+        if s in missing:
             continue
-        bar = X.binance_bar(where[s]["binance"], day)
+        venue, bar = X.venue_bar(s, day)
         yc = yahoo_close(Path(a.cache_dir), s, a.date) if a.cache_dir else None
         diff = (bar["close"] / yc - 1) * 100 if (bar and yc) else None
         if diff is not None:
             worst.append((abs(diff), s, yc, bar["close"], diff))
         if s in ("BTC-USD", "ETH-USD") or (diff is not None and abs(diff) > 1):
-            print(f"  {s:14s} binance close {bar['close']:,.6g} vol {bar['volume']:,.0f}"
+            print(f"  {s:14s} {venue:8s} close {bar['close']:,.6g} vol {bar['volume']:,.0f}"
                   + (f" · yahoo {yc:,.6g} · diff {diff:+.2f}%" if diff is not None else " · yahoo: not in cache"))
     if worst:
         worst.sort(reverse=True)
         print(f"\ncompared {len(worst)} coins with the Yahoo cache · largest |diff| {worst[0][0]:.2f}% ({worst[0][1]})"
               f" · over 1%: {sum(1 for w in worst if w[0] > 1)}")
-    print("\nRESULT:", "ok" if not missing else f"{len(missing)} coins have no Binance pair (see above)")
+    print("\nRESULT:", "ok" if not missing else f"{len(missing)} coins trade on neither venue (see above)")
     return 0
 
 
