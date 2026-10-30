@@ -37,9 +37,10 @@ from zoneinfo import ZoneInfo
 import pandas as pd
 
 from . import data as D
+from . import krx, xcheck
 from .backtest import _jsonable, warmup_bars
 from .notes import DISCLAIMER, UNCONFIRMED_LINE
-from .params import COST_PCT, RISK_PCT, normalize_preset, resolve
+from .params import COST_PCT, RISK_PCT, data_market, normalize_preset, resolve
 from .portfolio import PortfolioConfig, prepare_frames, simulate
 from .status import status_label
 
@@ -480,7 +481,34 @@ def stale_positions(res, frames: dict, bench: pd.DataFrame, as_of) -> list[dict]
     return out
 
 
-def render_report(market, cfg, snap, perf, aud, res, params, stale=()) -> str:
+def cross_check(market: str, frames: dict, bench: pd.DataFrame, as_of, root: Path, cache_dir) -> dict | None:
+    """Yahoo vs KRX record for Korean markets when KRX_API_KEY is set (checklist 1.5), written to
+    root/xcheck/<checked date>.json when it changed. Observation only: never raises, never
+    touches signals or trades."""
+    key = krx.api_key()
+    dm = data_market(market)
+    if key is None or dm not in krx.STOCK_SERVICE:
+        return None
+    try:
+        rec = xcheck.run(dm, frames, bench, pd.Timestamp(as_of), key, cache_dir)
+    except Exception as e:                            # noqa: BLE001 - a cross-check must never stop the ledger
+        log.warning("%s: KRX cross-check failed: %s", market, e)
+        return {"market": dm, "as_of": _day(as_of), "source": "KRX Open API", "status": "error",
+                "checked": None, "index": None, "symbols": None, "error": str(e)}
+    rec["market"] = market
+    if rec["checked"]:
+        p = root / "xcheck" / f"{rec['checked']}.json"
+        body = json.dumps(_jsonable(rec), ensure_ascii=False, indent=1)
+        if not p.exists() or p.read_text() != body:
+            p.parent.mkdir(exist_ok=True)
+            p.write_text(body)
+    if rec["status"] == "mismatch":
+        log.warning("%s: Yahoo and KRX differ on %s: %s", market, rec["checked"],
+                    [(m["symbol"], m["field"], m["diff_pct"]) for m in rec["symbols"]["mismatches"][:5]])
+    return rec
+
+
+def render_report(market, cfg, snap, perf, aud, res, params, stale=(), xrec=None) -> str:
     name = MARKET_KO.get(market, market)
     rg = snap["regime"]
     L = [f"# 모의투자 일일 보고 — {name} ({snap['as_of']})", "",
@@ -493,7 +521,10 @@ def render_report(market, cfg, snap, perf, aud, res, params, stale=()) -> str:
          + (f" · 유니버스 중 200일선 위 {_f(rg['breadth_pct'], '{:.1f}')}% (기준 50%)"
             if rg.get("breadth_pct") is not None else ""),
          f"- 데이터: 유니버스 {snap['coverage']['requested']}종목 중 {snap['coverage']['loaded']}종목 로드"
-         f" (실패 {len(snap['coverage']['failed'])})", ""]
+         f" (실패 {len(snap['coverage']['failed'])})"]
+    if xrec is not None:
+        L.append(xcheck.summary_line(xrec))
+    L.append("")
     L += ["## 다음 시가 진입 (오늘 신호)", ""]
     if snap["entries_next_open"]:
         L += ["| 종목 | 신호 종가 | RS | 계획 수량 | 손절가 추정 (종가 기준) |", "|---|---|---|---|---|"]
@@ -684,7 +715,8 @@ def run(args) -> dict:
     stale = stale_positions(res, frames, bench, as_of)
     for st in stale:
         log.warning("%s: held %s has no bar on %s (last %s)", market, st["symbol"], _day(as_of), st["last_bar"])
-    report = render_report(market, cfg, snap, perf, aud, res, params, stale)
+    xrec = cross_check(market, frames, bench, as_of, root, args.cache_dir)
+    report = render_report(market, cfg, snap, perf, aud, res, params, stale, xrec)
     (root / "report.md").write_text(report)
 
     latest_p = ledger / "latest.json"
@@ -697,6 +729,10 @@ def run(args) -> dict:
         "positions": res.open_positions, "stale_positions": stale, "watchlist": snap["watchlist"],
         "performance": perf, "status_csv": f"{market}/status.csv",
         "audit": {k: aud[k] for k in ("days", "signal_files", "missing_days", "late", "uncommitted", "mismatched", "revised", "revised_after_open")},
+        "xcheck": None if xrec is None else {
+            "status": xrec["status"], "checked": xrec["checked"], "error": xrec["error"],
+            "mismatched_symbols": sorted({m["symbol"] for m in xrec["symbols"]["mismatches"]}) if xrec["symbols"] else [],
+            "index_match": xrec["index"]["match"] if xrec["index"] else None},
     })))
     # The schedule reruns every market every 2 hours; a rerun with nothing new leaves the file
     # (and the ledger branch) untouched.
@@ -708,7 +744,7 @@ def run(args) -> dict:
         commit_and_push(repo, f"{market} ledger {snap['as_of']}", args.push_branch)
     print(report)
     return {"started": True, "snapshot": snap, "signal_file": str(sig_path), "signal_state": sig_state,
-            "audit": aud, "performance": perf}
+            "audit": aud, "performance": perf, "xcheck": xrec}
 
 
 def build_parser() -> argparse.ArgumentParser:

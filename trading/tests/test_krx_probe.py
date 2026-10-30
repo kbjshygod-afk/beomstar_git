@@ -37,6 +37,28 @@ def test_fetch_sends_key_in_header_only(monkeypatch):
     assert seen["auth"] == "SECRET" and "SECRET" not in seen["url"]
 
 
+def test_fetch_query_form_puts_key_in_url_and_not_in_header(monkeypatch):
+    seen = {}
+
+    class R(io.BytesIO):
+        status = 200
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+    def fake_urlopen(req, timeout=0):
+        seen["url"], seen["auth"] = req.full_url, req.get_header("Auth_key")
+        return R(b'{"OutBlock_1": []}')
+
+    monkeypatch.setattr(K.urllib.request, "urlopen", fake_urlopen)
+    rows, note = K.fetch("KOSPI_INDEX", "20261029", "a b", auth="query")
+    assert rows == [] and "via query" not in note
+    assert seen["url"].endswith("?basDd=20261029&AUTH_KEY=a%20b") and seen["auth"] is None
+
+
 def test_fetch_reports_non_json_as_unapproved(monkeypatch):
     class R(io.BytesIO):
         status = 200

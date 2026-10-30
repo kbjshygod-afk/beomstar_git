@@ -48,6 +48,7 @@ def market_summary(market: str, latest: dict | None, audit: dict | None,
     s["positions"] = [p["symbol"] for p in latest.get("positions") or []]
     s["stale"] = [st.get("symbol", st) if isinstance(st, dict) else st
                   for st in latest.get("stale_positions") or []]
+    s["xcheck"] = latest.get("xcheck")                  # Yahoo vs KRX (Korean markets, when the key is set)
     if audit is None:
         s["problems"].append("audit.json not found")
         s["audit"] = {}
@@ -105,6 +106,12 @@ def render(summaries: list[dict]) -> str:
             lines.append(f"  STALE quotes:      {', '.join(map(str, s['stale']))}")
         if s["audit"]:
             lines.append(f"  audit flags:       {s['audit']}")
+        x = s.get("xcheck")
+        if x:
+            lines.append(f"  KRX cross-check:   {x['status']} ({x.get('checked') or '-'})"
+                         + (f" mismatched {x['mismatched_symbols']}" if x.get("mismatched_symbols") else "")
+                         + (f" index_match={x['index_match']}" if x.get("index_match") is not None else "")
+                         + (f" error={x['error']}" if x.get("error") else ""))
         for t in s["closed_recent"]:
             lines.append(f"  closed {t['exit_date']} {t['symbol']} {t['type']} {t['pnl_pct']:+.2f}%")
         for p in s["problems"]:

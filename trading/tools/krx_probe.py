@@ -17,6 +17,7 @@ import json
 import os
 import sys
 import urllib.error
+import urllib.parse
 import urllib.request
 from pathlib import Path
 
@@ -51,16 +52,23 @@ def short_code(isu_cd: str) -> str:
     return s[3:9] if len(s) == 12 and s.startswith("KR") else s
 
 
-def fetch(service: str, date: str, key: str, timeout: int = 30) -> tuple[list[dict] | None, str]:
-    """(rows, note). rows is None when the call failed; note explains either way."""
+def fetch(service: str, date: str, key: str, timeout: int = 30, auth: str = "header") -> tuple[list[dict] | None, str]:
+    """(rows, note). rows is None when the call failed; note explains either way.
+    auth="header" sends the key as the AUTH_KEY header (two public clients do); auth="query" puts
+    it in the query string (a third client does) - tried only when the header form is rejected."""
     path, _ = SERVICES[service]
-    req = urllib.request.Request(f"{BASE}/{path}?basDd={date}",
-                                 headers={"AUTH_KEY": key.strip(), "User-Agent": "beomstar-swing-probe/1"})
+    k = key.strip()
+    url = f"{BASE}/{path}?basDd={date}" + (f"&AUTH_KEY={urllib.parse.quote(k, safe='')}" if auth == "query" else "")
+    headers = {"User-Agent": "beomstar-swing-probe/1"}
+    if auth == "header":
+        headers["AUTH_KEY"] = k
+    req = urllib.request.Request(url, headers=headers)
     try:
         with urllib.request.urlopen(req, timeout=timeout) as r:
             status, body = r.status, r.read()
     except urllib.error.HTTPError as e:
-        return None, f"HTTP {e.code} ({'key rejected' if e.code == 401 else 'rate limit' if e.code == 429 else 'error'})"
+        what = {401: "key rejected or service not approved", 403: "forbidden", 429: "rate limit"}.get(e.code, "error")
+        return None, f"HTTP {e.code} ({what}) via {auth}"
     except (urllib.error.URLError, TimeoutError) as e:
         return None, f"network: {getattr(e, 'reason', e)}"
     try:
@@ -102,6 +110,9 @@ def main(argv=None) -> int:
     print(f"KRX probe · basDd={a.date} · key length {len(key.strip())} (value never printed)")
     for name, (path, desc) in SERVICES.items():
         rows, note = fetch(name, a.date, key)
+        if rows is None and note.startswith("HTTP 401"):
+            rows, note2 = fetch(name, a.date, key, auth="query")
+            note = f"{note}; then {note2}" if rows is None else f"{note2} (header form was rejected: {note})"
         if rows is None:
             print(f"\n[{name}] {desc} · {path} · FAILED · {note}")
             ok = False
