@@ -1,0 +1,3 @@
+ERROR yfinance: 
+1 Failed download:
+ERROR yfinance: ['ALL']: OperationalError('database is locked')
