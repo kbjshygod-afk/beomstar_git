@@ -12,7 +12,7 @@
  "symbols": {
   "date": "2026-10-29",
   "compared": 200,
-  "missing_in_krx": [],
+  "missing": [],
   "mismatches": []
  },
  "error": null
