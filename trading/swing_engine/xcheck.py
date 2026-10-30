@@ -99,6 +99,40 @@ def run(market: str, frames: dict, bench: pd.DataFrame, as_of: pd.Timestamp, key
     return rec
 
 
+KIS_SOURCE = "KIS"
+
+
+def run_kis(market: str, frames: dict, bench: pd.DataFrame, as_of: pd.Timestamp, cred: dict, cache_dir=None) -> dict:
+    """The cross-check record against Korea Investment & Securities for the signal day itself
+    (checklist 2.4): KIS serves the day's bar after the close, which KRX cannot (T-1). Same
+    tolerances as KRX (exchange figures). Never raises."""
+    from . import kis
+    rec = {"market": market, "as_of": as_of.strftime("%Y-%m-%d"), "source": KIS_SOURCE,
+           "status": "not_published", "checked": None, "index": None, "symbols": None, "error": None}
+    try:
+        client = kis.Client(cred, cache_dir)
+        ex = kis.bars_on(client, market, sorted(frames), as_of, cache_dir)
+        idx = kis.index_bar(client, market, as_of)
+        rec["calls"] = client.calls
+    except kis.KISError as e:
+        rec.update(status="error", error=str(e))
+        log.warning("KIS cross-check %s %s: %s", market, rec["as_of"], e)
+        return rec
+    if len(ex) == 0:
+        return rec
+    sym = compare_bars(bars_on(frames, as_of), ex, as_of)
+    sym["missing"] = sorted(set(sym["missing"]) | set(ex.attrs.get("missing", [])))
+    rec["checked"] = rec["as_of"]
+    rec["symbols"] = sym
+    if idx is not None and as_of in bench.index:
+        yc = float(bench.loc[as_of, "close"])
+        r = _rel(yc, idx["close"])
+        rec["index"] = {"yahoo_close": yc, "krx_close": idx["close"], "match": r is not None and r <= TOLERANCE["close"]}
+    bad = bool(sym["mismatches"]) or (rec["index"] is not None and not rec["index"]["match"])
+    rec["status"] = "mismatch" if bad else "ok"
+    return rec
+
+
 # One venue's USD price vs Yahoo's USD composite across venues: 1% on the close is a sanity
 # bound (a wrong bar, a stale day), not a tick-level check; volume is not comparable.
 CRYPTO_TOLERANCE = {"close": 0.01}
@@ -141,7 +175,7 @@ def summary_line(rec: dict | None) -> str:
     if not rec:
         return "- 데이터 대조: 없음 (KRX 키 미설정)"
     crypto = rec.get("market") == "CRYPTO"
-    src = rec.get("source", "KRX") if crypto else "KRX"
+    src = rec.get("source", "KRX") if (crypto or rec.get("source") == KIS_SOURCE) else "KRX"
     bench_word = "BTC" if crypto else "지수"
     if rec["status"] == "error":
         return f"- 데이터 대조 ({src}): 실패 — {rec['error']}"

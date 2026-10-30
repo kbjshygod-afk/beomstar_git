@@ -37,7 +37,7 @@ from zoneinfo import ZoneInfo
 import pandas as pd
 
 from . import data as D
-from . import krx, xcheck
+from . import kis, krx, xcheck
 from .backtest import _jsonable, warmup_bars
 from .notes import DISCLAIMER, UNCONFIRMED_LINE
 from .params import COST_PCT, RISK_PCT, data_market, normalize_preset, resolve
@@ -500,9 +500,14 @@ def cross_check(market: str, frames: dict, bench: pd.DataFrame, as_of, root: Pat
         log.warning("%s: KRX cross-check failed: %s", market, e)
         return {"market": dm, "as_of": _day(as_of), "source": xcheck.CRYPTO_SOURCE if dm == "CRYPTO" else "KRX Open API", "status": "error",
                 "checked": None, "index": None, "symbols": None, "error": str(e)}
+    return _store_xcheck(market, root, rec, "")
+
+
+def _store_xcheck(market: str, root: Path, rec: dict, suffix: str) -> dict:
+    """Write root/xcheck/<checked>.<suffix>json when it changed and log a mismatch."""
     rec["market"] = market
     if rec["checked"]:
-        p = root / "xcheck" / f"{rec['checked']}.json"
+        p = root / "xcheck" / f"{rec['checked']}{suffix}.json"
         body = json.dumps(_jsonable(rec), ensure_ascii=False, indent=1)
         if not p.exists() or p.read_text() != body:
             p.parent.mkdir(exist_ok=True)
@@ -513,7 +518,36 @@ def cross_check(market: str, frames: dict, bench: pd.DataFrame, as_of, root: Pat
     return rec
 
 
-def render_report(market, cfg, snap, perf, aud, res, params, stale=(), xrec=None) -> str:
+def cross_check_kis(market: str, frames: dict, bench: pd.DataFrame, as_of, root: Path, cache_dir) -> dict | None:
+    """Yahoo vs KIS record for the signal day of a Korean market when KIS_APP_KEY/SECRET are set
+    (checklist 2.4), written to root/xcheck/<date>.kis.json. Observation only."""
+    dm = data_market(market)
+    if dm not in kis.INDEX_CODE:
+        return None
+    try:
+        cred = kis.credentials()
+    except kis.KISError as e:
+        log.warning("%s: %s", market, e)
+        return None
+    if cred is None:
+        return None
+    try:
+        rec = xcheck.run_kis(dm, frames, bench, pd.Timestamp(as_of), cred, cache_dir)
+    except Exception as e:                            # noqa: BLE001 - a cross-check must never stop the ledger
+        log.warning("%s: KIS cross-check failed: %s", market, e)
+        rec = {"market": dm, "as_of": _day(as_of), "source": xcheck.KIS_SOURCE, "status": "error",
+               "checked": None, "index": None, "symbols": None, "error": str(e)}
+    return _store_xcheck(market, root, rec, ".kis")
+
+
+def _xcheck_summary(rec: dict | None) -> dict | None:
+    return None if rec is None else {
+        "source": rec.get("source"), "status": rec["status"], "checked": rec["checked"], "error": rec["error"],
+        "mismatched_symbols": sorted({m["symbol"] for m in rec["symbols"]["mismatches"]}) if rec["symbols"] else [],
+        "index_match": rec["index"]["match"] if rec["index"] else None}
+
+
+def render_report(market, cfg, snap, perf, aud, res, params, stale=(), xrec=None, xrec_kis=None) -> str:
     name = MARKET_KO.get(market, market)
     rg = snap["regime"]
     L = [f"# 모의투자 일일 보고 — {name} ({snap['as_of']})", "",
@@ -527,8 +561,9 @@ def render_report(market, cfg, snap, perf, aud, res, params, stale=(), xrec=None
             if rg.get("breadth_pct") is not None else ""),
          f"- 데이터: 유니버스 {snap['coverage']['requested']}종목 중 {snap['coverage']['loaded']}종목 로드"
          f" (실패 {len(snap['coverage']['failed'])})"]
-    if xrec is not None:
-        L.append(xcheck.summary_line(xrec))
+    for r in (xrec, xrec_kis):
+        if r is not None:
+            L.append(xcheck.summary_line(r))
     L.append("")
     L += ["## 다음 시가 진입 (오늘 신호)", ""]
     if snap["entries_next_open"]:
@@ -721,7 +756,8 @@ def run(args) -> dict:
     for st in stale:
         log.warning("%s: held %s has no bar on %s (last %s)", market, st["symbol"], _day(as_of), st["last_bar"])
     xrec = cross_check(market, frames, bench, as_of, root, args.cache_dir)
-    report = render_report(market, cfg, snap, perf, aud, res, params, stale, xrec)
+    xrec_kis = cross_check_kis(market, frames, bench, as_of, root, args.cache_dir)
+    report = render_report(market, cfg, snap, perf, aud, res, params, stale, xrec, xrec_kis)
     (root / "report.md").write_text(report)
 
     latest_p = ledger / "latest.json"
@@ -734,10 +770,7 @@ def run(args) -> dict:
         "positions": res.open_positions, "stale_positions": stale, "watchlist": snap["watchlist"],
         "performance": perf, "status_csv": f"{market}/status.csv",
         "audit": {k: aud[k] for k in ("days", "signal_files", "missing_days", "late", "uncommitted", "mismatched", "revised", "revised_after_open")},
-        "xcheck": None if xrec is None else {
-            "status": xrec["status"], "checked": xrec["checked"], "error": xrec["error"],
-            "mismatched_symbols": sorted({m["symbol"] for m in xrec["symbols"]["mismatches"]}) if xrec["symbols"] else [],
-            "index_match": xrec["index"]["match"] if xrec["index"] else None},
+        "xcheck": _xcheck_summary(xrec), "xcheck_kis": _xcheck_summary(xrec_kis),
     })))
     # The schedule reruns every market every 2 hours; a rerun with nothing new leaves the file
     # (and the ledger branch) untouched.
@@ -749,7 +782,7 @@ def run(args) -> dict:
         commit_and_push(repo, f"{market} ledger {snap['as_of']}", args.push_branch)
     print(report)
     return {"started": True, "snapshot": snap, "signal_file": str(sig_path), "signal_state": sig_state,
-            "audit": aud, "performance": perf, "xcheck": xrec}
+            "audit": aud, "performance": perf, "xcheck": xrec, "xcheck_kis": xrec_kis}
 
 
 def build_parser() -> argparse.ArgumentParser:
