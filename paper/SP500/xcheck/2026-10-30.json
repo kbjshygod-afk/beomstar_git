@@ -1,0 +1,82 @@
+{
+ "market": "SP500",
+ "as_of": "2026-10-30",
+ "source": "Tiingo",
+ "status": "mismatch",
+ "checked": "2026-10-30",
+ "index": null,
+ "symbols": {
+  "date": "2026-10-30",
+  "compared": 29,
+  "missing": [],
+  "mismatches": [
+   {
+    "symbol": "AMGN",
+    "field": "volume",
+    "yahoo": 3290355.0,
+    "krx": 3185106.0,
+    "diff_pct": 3.199
+   },
+   {
+    "symbol": "CVX",
+    "field": "volume",
+    "yahoo": 11009664.0,
+    "krx": 10867744.0,
+    "diff_pct": 1.289
+   },
+   {
+    "symbol": "CSX",
+    "field": "open",
+    "yahoo": 52.24000168,
+    "krx": 52.31,
+    "diff_pct": 0.134
+   },
+   {
+    "symbol": "GPN",
+    "field": "high",
+    "yahoo": 100.9800034,
+    "krx": 101.32,
+    "diff_pct": 0.336
+   },
+   {
+    "symbol": "IFF",
+    "field": "volume",
+    "yahoo": 2717373.0,
+    "krx": 2654130.0,
+    "diff_pct": 2.327
+   },
+   {
+    "symbol": "GWW",
+    "field": "volume",
+    "yahoo": 236487.0,
+    "krx": 230970.0,
+    "diff_pct": 2.333
+   }
+  ],
+  "unlisted": [],
+  "sampled": 29,
+  "focus": [
+   "ABBV",
+   "AMGN",
+   "BIIB",
+   "CRL",
+   "EBAY",
+   "ELV",
+   "EXPD",
+   "GPN",
+   "GWW",
+   "HUM",
+   "IFF",
+   "KDP",
+   "LLY",
+   "MO",
+   "TRV",
+   "VEEV",
+   "VRTX",
+   "WSM",
+   "XOM"
+  ]
+ },
+ "error": null,
+ "calls": 29
+}
