@@ -54,3 +54,18 @@ def test_env_file_credentials(tmp_path, monkeypatch):
     cred = kis_ws.env_file_credentials(str(p))
     assert cred == {"key": "abc", "secret": "s3cret", "env": "vps"}
     assert kis_ws.WS_URL[cred["env"]].endswith(":31000")
+
+
+def test_stop_watcher_fires_near_then_hit_once_each():
+    w = kis_ws.StopWatcher({"096530": 30000.0, "425420": None}, near_pct=2.0)
+    assert w.check("096530", 31000.0) == []                                # +3.3%: nothing
+    near = w.check("096530", 30500.0)
+    assert [e["level"] for e in near] == ["near"] and near[0]["distance_pct"] == 1.67
+    assert w.check("096530", 30400.0) == []                                # near already fired
+    hit = w.check("096530", 29900.0)
+    assert [e["level"] for e in hit] == ["hit"] and hit[0]["distance_pct"] == -0.33
+    assert w.check("096530", 29000.0) == [] and w.check("425420", 1.0) == [] and w.check("000000", 1.0) == []
+    # a drop straight through both lines fires both at once
+    w2 = kis_ws.StopWatcher({"A": 100.0})
+    assert [e["level"] for e in w2.check("A", 95.0)] == ["near", "hit"]
+    assert "손절가 30,000까지 +1.67%" in kis_ws.alert_text(near[0]) and "지금 주문하지 않습니다" in kis_ws.alert_text(hit[0])

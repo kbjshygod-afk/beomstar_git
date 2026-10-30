@@ -178,3 +178,40 @@ def env_file_credentials(path: str) -> dict | None:
                 k, v = ln.split("=", 1)
                 os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
     return credentials()
+
+
+# -- stop-proximity alert (checklist 2.6) ---------------------------------------------------------
+# The rule is unchanged: a stop is filled at the next open after a close below it (or the stop
+# itself, whichever is lower, in the ledger). The alert only tells the owner during the session
+# that a held symbol is trading near or under its stop, once per symbol and level per day.
+NEAR_PCT = 2.0              # "near" = within this many percent above the stop price
+
+
+@dataclass
+class StopWatcher:
+    stops: dict                          # code -> stop price (None = no stop known)
+    near_pct: float = NEAR_PCT
+    fired: set = field(default_factory=set)
+
+    def check(self, code: str, price: float | None) -> list[dict]:
+        """Events for this tick: level 'near' (price <= stop * (1 + near_pct/100)) and/or 'hit'
+        (price <= stop). Each level fires once per code for the life of the watcher (one session)."""
+        stop = self.stops.get(code)
+        if not stop or price is None:
+            return []
+        out = []
+        for level, limit in (("near", stop * (1 + self.near_pct / 100)), ("hit", stop)):
+            if price <= limit and (code, level) not in self.fired:
+                self.fired.add((code, level))
+                out.append({"code": code, "level": level, "price": price, "stop": stop,
+                            "distance_pct": round((price / stop - 1) * 100, 2)})
+        return out
+
+
+def alert_text(ev: dict, name: str | None = None) -> str:
+    label = f"{ev['code']}" + (f" {name}" if name else "")
+    if ev["level"] == "hit":
+        return (f"🔴 {label}: 현재가 {ev['price']:,.0f} ≤ 손절가 {ev['stop']:,.0f} ({ev['distance_pct']:+.2f}%). "
+                "룰대로면 오늘 종가가 손절가 아래로 끝날 때 다음 시가에 청산됩니다. 지금 주문하지 않습니다.")
+    return (f"🟠 {label}: 현재가 {ev['price']:,.0f}, 손절가 {ev['stop']:,.0f}까지 {ev['distance_pct']:+.2f}%. "
+            "손절 근접 (장중 알림, 체결 아님)")
