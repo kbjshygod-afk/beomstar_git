@@ -1,4 +1,7 @@
 INFO yfinance: Failed to create TzCache, reason: Error creating TzCache folder: '/home/runner/.cache/py-yfinance' reason: [Errno 17] File exists: '/home/runner/.cache/py-yfinance'. TzCache will not be used. Tip: You can direct cache to use a different location with 'set_tz_cache_location(mylocation)'
+ERROR yfinance: 
+1 Failed download:
+ERROR yfinance: ['AMP']: OperationalError('database is locked')
 INFO swing_engine.backtest: simulating proxy (503 symbols)
 INFO swing_engine.backtest: simulating percentile (503 symbols)
 [SP500 proxy] CAGR +15.7% vs 지수 +13.8% (초과 +1.9%p), MDD -23.6%, 거래 858
