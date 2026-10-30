@@ -113,7 +113,9 @@ def render(summaries: list[dict]) -> str:
             lines.append(f"  cross-check {str(x.get('source') or 'KRX')[:7]:7s} {x['status']} ({x.get('checked') or '-'})"
                          + (f" mismatched {x['mismatched_symbols']}" if x.get("mismatched_symbols") else "")
                          + (f" index_match={x['index_match']}" if x.get("index_match") is not None else "")
-                         + (f" error={x['error']}" if x.get("error") else ""))
+                         + (f" error={x['error']}" if x.get("error") else "")
+                         + (f" guard={'late' if x['guard'].get('late') else 'blocked' if x['guard'].get('blocked') else 'ok'}"
+                            f" ({x['guard'].get('close_mismatched')}/{x['guard'].get('compared')} close)" if x.get("guard") else ""))
         for t in s["closed_recent"]:
             lines.append(f"  closed {t['exit_date']} {t['symbol']} {t['type']} {t['pnl_pct']:+.2f}%")
         for p in s["problems"]:
