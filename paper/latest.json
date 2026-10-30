@@ -400,14 +400,14 @@
    "xcheck": null
   },
   "NDX100": {
-   "as_of": "2026-10-26",
+   "as_of": "2026-10-29",
    "start_date": "2026-09-25",
    "regime": {
     "benchmark": "^NDX",
     "mode": "MA200",
-    "close": 29273.4004,
-    "ma200": 27854.8498,
-    "ma20": 30173.3595,
+    "close": 29402.5098,
+    "ma200": 27912.706,
+    "ma20": 30054.2454,
     "on": true
    },
    "entries_next_open": [],
@@ -421,24 +421,10 @@
      "entry_price": 437.8900146,
      "qty": 24086.34911346862,
      "stop_price": 407.23771357799995,
-     "last_close": 444.6300049,
-     "exit_ma": 417.848399652,
-     "unrealized_pnl": 119828.38880858757,
-     "price_pnl_pct": 1.539197075812937,
-     "exit_pending": false
-    },
-    {
-     "symbol": "ADP",
-     "signal_date": "2026-10-22",
-     "exit_signal_date": null,
-     "entry_date": "2026-10-23",
-     "entry_price": 306.9899902,
-     "qty": 34020.16767493123,
-     "stop_price": 285.50069088600003,
-     "last_close": 301.1199951,
-     "exit_ma": 275.922799082,
-     "unrealized_pnl": -241074.22488243878,
-     "price_pnl_pct": -1.9121128660174902,
+     "last_close": 460.730011,
+     "exit_ma": 419.318200066,
+     "unrealized_pnl": 506843.1757268552,
+     "price_pnl_pct": 5.2159208108145005,
      "exit_pending": false
     },
     {
@@ -449,10 +435,10 @@
      "entry_price": 35.31999969,
      "qty": 297703.06687467825,
      "stop_price": 32.8475997117,
-     "last_close": 34.99000168,
-     "exit_ma": 32.098800011,
-     "unrealized_pnl": -140104.42571916617,
-     "price_pnl_pct": -0.9343092097858552,
+     "last_close": 35.29999924,
+     "exit_ma": 32.3579999926,
+     "unrealized_pnl": -48001.77583217062,
+     "price_pnl_pct": -0.0566264161255603,
      "exit_pending": false
     },
     {
@@ -463,47 +449,39 @@
      "entry_price": 51.56000137,
      "qty": 202751.5170602284,
      "stop_price": 47.9508012741,
-     "last_close": 51.31000137,
-     "exit_ma": 48.739600068,
-     "unrealized_pnl": -92401.97749610618,
-     "price_pnl_pct": -0.48487198091011763,
+     "last_close": 52.24000168,
+     "exit_ma": 48.8394000252,
+     "unrealized_pnl": 95779.87827543728,
+     "price_pnl_pct": 1.3188523893167492,
      "exit_pending": false
     }
    ],
    "stale_positions": [],
    "watchlist": [
     {
-     "symbol": "FANG",
-     "label": "1순위 · 임박 (피벗 1% 이내)",
-     "close": 207.13,
-     "pivot": 207.17,
-     "to_pivot_pct": 0.02,
-     "rs": 72.45
-    },
-    {
      "symbol": "AAPL",
-     "label": "2순위 · 근접 (피벗 3% 이내)",
-     "close": 343.91,
+     "label": "1순위 · 임박 (피벗 1% 이내)",
+     "close": 348.91,
      "pivot": 351.73,
-     "to_pivot_pct": 2.27,
-     "rs": 70.41
+     "to_pivot_pct": 0.81,
+     "rs": 78.57
     }
    ],
    "performance": {
-    "equity": 97302310.0,
-    "return_pct": -2.7,
-    "bench_return_pct": -4.36,
-    "mdd_pct": -3.72,
-    "closed_trades": 3,
+    "equity": 97420150.0,
+    "return_pct": -2.58,
+    "bench_return_pct": -3.94,
+    "mdd_pct": -3.75,
+    "closed_trades": 4,
     "win_rate_pct": 0.0,
     "avg_win_pct": null,
-    "avg_loss_pct": -7.62,
-    "open_positions": 4
+    "avg_loss_pct": -7.55,
+    "open_positions": 3
    },
    "status_csv": "NDX100/status.csv",
    "audit": {
-    "days": 22,
-    "signal_files": 8,
+    "days": 25,
+    "signal_files": 9,
     "missing_days": [
      "2026-09-30",
      "2026-10-02",
@@ -518,7 +496,9 @@
      "2026-10-19",
      "2026-10-20",
      "2026-10-21",
-     "2026-10-23"
+     "2026-10-23",
+     "2026-10-27",
+     "2026-10-28"
     ],
     "late": [
      "2026-10-01"
@@ -527,7 +507,8 @@
     "mismatched": [],
     "revised": [],
     "revised_after_open": []
-   }
+   },
+   "xcheck": null
   },
   "KOSPI": {
    "as_of": "2026-10-27",
@@ -786,7 +767,7 @@
    }
   }
  },
- "updated_at": "2026-10-30T09:33:21Z",
+ "updated_at": "2026-10-30T09:34:23Z",
  "disclaimer": "기계적 룰 출력이며 투자 자문이 아닙니다. 매수·매도 결정은 소유자 본인이 합니다.",
  "unconfirmed": "미확인 추정값(스캐너 원본 코드 미확인): 피벗=직전 20봉 최고가(당일 제외) · 거래량 평균=직전 50일(당일 제외) · RS=지수 대비 가중 1년 수익률 ≥ 0%p(스캐너는 유니버스 백분위 ≥ 70) · 52주 고저=종가 기준 · 200일선 상승=22봉 전 대비 · 수축비=10/40일 평균 TR · 비용=편도 0.2%"
 }
