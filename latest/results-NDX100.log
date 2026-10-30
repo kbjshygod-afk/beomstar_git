@@ -1,3 +1,6 @@
+ERROR yfinance: 
+1 Failed download:
+ERROR yfinance: ['KLAC']: OperationalError('database is locked')
 INFO swing_engine.backtest: simulating proxy (101 symbols)
 INFO swing_engine.backtest: simulating percentile (101 symbols)
 [NDX100 proxy] CAGR +24.0% vs 지수 +19.9% (초과 +4.1%p), MDD -33.9%, 거래 478
