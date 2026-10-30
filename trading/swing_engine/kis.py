@@ -163,10 +163,11 @@ class Client:
             return data
         raise KISError(f"{tr_id}: rate limited twice")
 
-    def stock_bars(self, code: str, start: str, end: str) -> pd.DataFrame:
+    def stock_bars(self, code: str, start: str, end: str, mrkt: str = "J") -> pd.DataFrame:
         """Unadjusted daily bars of one 6-digit code between start and end (YYYYMMDD, max 100 rows),
-        indexed by date, columns open/high/low/close/volume."""
-        data = self._get(STOCK_PATH, STOCK_TR, {"FID_COND_MRKT_DIV_CODE": "J", "FID_INPUT_ISCD": code,
+        indexed by date, columns open/high/low/close/volume. `mrkt`: J = KRX regular session,
+        NX = NXT (the alternative venue, 08:00-20:00 KST), UN = both combined."""
+        data = self._get(STOCK_PATH, STOCK_TR, {"FID_COND_MRKT_DIV_CODE": mrkt, "FID_INPUT_ISCD": code,
                                                "FID_INPUT_DATE_1": start, "FID_INPUT_DATE_2": end,
                                                "FID_PERIOD_DIV_CODE": "D", "FID_ORG_ADJ_PRC": "1"})
         return _frame(data.get("output2") or [], STOCK_COLS)
