@@ -1,0 +1,39 @@
+{
+ "market": "SP500",
+ "as_of": "2026-10-30",
+ "source": "Tiingo",
+ "status": "ok",
+ "checked": "2026-10-30",
+ "index": null,
+ "symbols": {
+  "date": "2026-10-30",
+  "compared": 29,
+  "missing": [],
+  "mismatches": [],
+  "unlisted": [],
+  "sampled": 29,
+  "focus": [
+   "ABBV",
+   "AMGN",
+   "BIIB",
+   "CRL",
+   "EBAY",
+   "ELV",
+   "EXPD",
+   "GPN",
+   "GWW",
+   "HUM",
+   "IFF",
+   "KDP",
+   "LLY",
+   "MO",
+   "TRV",
+   "VEEV",
+   "VRTX",
+   "WSM",
+   "XOM"
+  ]
+ },
+ "error": null,
+ "calls": 29
+}
