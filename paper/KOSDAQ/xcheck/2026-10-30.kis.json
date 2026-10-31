@@ -612,9 +612,9 @@
    {
     "symbol": "323280.KQ",
     "field": "low",
-    "yahoo": 49150.0,
+    "yahoo": 49050.0,
     "krx": 49000.0,
-    "diff_pct": 0.305
+    "diff_pct": 0.102
    },
    {
     "symbol": "323280.KQ",
@@ -772,13 +772,6 @@
    },
    {
     "symbol": "252990.KQ",
-    "field": "low",
-    "yahoo": 15130.0,
-    "krx": 14940.0,
-    "diff_pct": 1.256
-   },
-   {
-    "symbol": "252990.KQ",
     "field": "close",
     "yahoo": 15790.0,
     "krx": 15290.0,
@@ -930,13 +923,6 @@
     "yahoo": 49400.0,
     "krx": 51000.0,
     "diff_pct": 3.137
-   },
-   {
-    "symbol": "099320.KQ",
-    "field": "high",
-    "yahoo": 58400.0,
-    "krx": 58600.0,
-    "diff_pct": 0.341
    },
    {
     "symbol": "099320.KQ",
@@ -1473,5 +1459,13 @@
   ]
  },
  "error": null,
- "calls": 1
+ "calls": 1,
+ "guard": {
+  "close_mismatched": 148,
+  "compared": 150,
+  "share_pct": 98.7,
+  "blocked": false,
+  "late": false,
+  "enforced": false
+ }
 }
