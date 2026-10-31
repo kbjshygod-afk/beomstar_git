@@ -37,9 +37,10 @@ from zoneinfo import ZoneInfo
 import pandas as pd
 
 from . import data as D
+from . import kis, krx, tiingo, xcheck
 from .backtest import _jsonable, warmup_bars
 from .notes import DISCLAIMER, UNCONFIRMED_LINE
-from .params import COST_PCT, RISK_PCT, normalize_preset, resolve
+from .params import COST_PCT, RISK_PCT, data_market, normalize_preset, resolve
 from .portfolio import PortfolioConfig, prepare_frames, simulate
 from .status import status_label
 
@@ -297,24 +298,65 @@ def _signal_sets(snap: dict) -> tuple[set, set]:
     return ({e["symbol"] for e in snap.get("entries_next_open", [])}, set(snap.get("exits_next_open", [])))
 
 
-def write_signal_file(sig_dir: Path, snap: dict, now: datetime) -> tuple[Path, str]:
-    """Write signals/<as_of>.json once. A rerun with the same signals keeps the original file;
-    different signals go to <as_of>.revN.json and are reported as a revision."""
+def _rev_no(p: Path) -> int:
+    """0 for signals/<date>.json, N for signals/<date>.revN.json."""
+    stem = p.name[: -len(".json")]
+    return int(stem.split(".rev", 1)[1]) if ".rev" in stem else 0
+
+
+def latest_signal_file(sig_dir: Path, as_of: str) -> Path | None:
+    files = [p for p in sig_dir.glob(f"{as_of}*.json") if p.name[:10] == as_of]
+    return max(files, key=_rev_no) if files else None
+
+
+def write_signal_file(sig_dir: Path, snap: dict, now: datetime,
+                      deadline: datetime | None = None) -> tuple[Path, str]:
+    """Write signals/<as_of>.json once. A rerun whose signals match the latest file for that date
+    writes nothing; different signals before `deadline` (the next open) go to <as_of>.revN.json
+    and are reported as a revision. After the open the trades are done, so a difference (a data
+    provider revising the bar later) writes no file; the audit records it instead."""
     sig_dir.mkdir(parents=True, exist_ok=True)
     body = dict(snap, generated_at=_iso(now))
     p = sig_dir / f"{snap['as_of']}.json"
     if not p.exists():
         p.write_text(json.dumps(_jsonable(body), ensure_ascii=False, indent=1))
         return p, "new"
-    old = json.loads(p.read_text())
-    if _signal_sets(old) == _signal_sets(snap):
-        return p, "unchanged"
-    n = 1
-    while (sig_dir / f"{snap['as_of']}.rev{n}.json").exists():
-        n += 1
-    q = sig_dir / f"{snap['as_of']}.rev{n}.json"
+    latest = latest_signal_file(sig_dir, snap["as_of"])
+    if _signal_sets(json.loads(latest.read_text())) == _signal_sets(snap):
+        return latest, "unchanged"
+    if deadline is not None and now > deadline:
+        return latest, "differs after the open"
+    q = sig_dir / f"{snap['as_of']}.rev{_rev_no(latest) + 1}.json"
     q.write_text(json.dumps(_jsonable(body), ensure_ascii=False, indent=1))
     return q, "revised"
+
+
+def executed_signals(market: str, root: Path, repo: Path | None, now: datetime) -> dict:
+    """{date: {"entries", "exits"}} the paper trader acted on: for every date whose next open has
+    passed, the latest signal file (original or revision) committed before that open. The ledger
+    replays these instead of signals recomputed from today's data (PortfolioConfig.signal_override):
+    on 2026-10-07 Yahoo raised the 10-06 KOSDAQ volumes during the next session, and the
+    recomputation added an entry (327260.KQ, volume 1.38x -> 1.41x) nobody could have known
+    before that open."""
+    if repo is None:
+        return {}
+    best: dict[str, tuple[int, Path]] = {}
+    for p in (root / "signals").glob("*.json"):
+        d = p.name[:10]
+        deadline = next_open_deadline(market, d)
+        if deadline > now:
+            continue                                  # not traded yet
+        t = first_commit_time(repo, p)
+        if t is None or t > deadline:
+            continue                                  # committed too late to act on
+        n = _rev_no(p)
+        if d not in best or n > best[d][0]:
+            best[d] = (n, p)
+    out = {}
+    for d, (_, p) in best.items():
+        e, x = _signal_sets(json.loads(p.read_text()))
+        out[d] = {"entries": e, "exits": x}
+    return out
 
 
 def recomputed_sets(res, as_of) -> dict:
@@ -342,20 +384,35 @@ def recomputed_sets(res, as_of) -> dict:
 def audit(market: str, root: Path, repo: Path | None, res, bench: pd.DataFrame, start_date, as_of) -> dict:
     sig_dir = root / "signals"
     rec = recomputed_sets(res, as_of)
-    days = [_day(d) for d in bench.index if pd.Timestamp(start_date) <= d <= pd.Timestamp(as_of)]
+    # on replayed dates: what today's data would signal given the holdings actually traded
+    for d, nat in (getattr(res, "natural", None) or {}).items():
+        rec["entries"][d], rec["exits"][d] = set(nat["entries"]), set(nat["exits"])
+    days =[_day(d) for d in bench.index if pd.Timestamp(start_date) <= d <= pd.Timestamp(as_of)]
     rows, missing = [], []
     for d in days:
         p = sig_dir / f"{d}.json"
         if not p.exists():
             missing.append(d)
             continue
-        snap = json.loads(p.read_text())
-        ce, cx = _signal_sets(snap)
-        re_, rx = rec["entries"].get(d, set()), rec["exits"].get(d, set())
         committed = first_commit_time(repo, p) if repo else None
         deadline = next_open_deadline(market, d)
-        revs = sorted(x.name for x in sig_dir.glob(f"{d}.rev*.json"))
+        revs = sorted((x.name for x in sig_dir.glob(f"{d}.rev*.json")), key=lambda n: _rev_no(sig_dir / n))
+        rev_times = {x: first_commit_time(repo, sig_dir / x) if repo is not None else None for x in revs}
+        # revisions committed after the open were never traded (written by engines before 2026-10-07)
+        late_revs = [x for x in revs if (t := rev_times[x]) is not None and t > deadline]
+        # compare with the file the ledger traded: the latest one committed before the open. A
+        # revision before the open (2026-10-22 SP500: the first run, 96 min after the close, missed
+        # MA; the 02:25 UTC rerun added it) is the signal that was acted on, not a mismatch.
+        traded = p.name
+        for x in revs:
+            if rev_times[x] is not None and rev_times[x] <= deadline:
+                traded = x
+        snap = json.loads((sig_dir / traded).read_text())
+        ce, cx = _signal_sets(snap)
+        re_, rx = rec["entries"].get(d, set()), rec["exits"].get(d, set())
         rows.append({"date": d, "committed_at": _iso(committed) if committed else None,
+                     "compared_file": traded,
+                     "revisions_after_open": late_revs,
                      "deadline": _iso(deadline),
                      "on_time": None if committed is None else committed <= deadline,
                      "entries_match": ce == re_, "exits_match": cx == rx,
@@ -367,7 +424,10 @@ def audit(market: str, root: Path, repo: Path | None, res, bench: pd.DataFrame, 
     return {"market": market, "start_date": _day(start_date), "as_of": _day(as_of),
             "days": len(days), "signal_files": len(rows), "missing_days": missing,
             "late": late, "uncommitted": [r["date"] for r in rows if r["committed_at"] is None],
-            "mismatched": mism, "revised": [r["date"] for r in rows if r["revisions"]], "rows": rows}
+            "mismatched": mism, "revised": [r["date"] for r in rows if r["revisions"]],
+            "revised_after_open": [r["date"] for r in rows
+                                   if r["revisions"] and len(r["revisions_after_open"]) == len(r["revisions"])],
+            "rows": rows}
 
 
 def performance(res, bench: pd.DataFrame, start_date, initial_equity: float) -> dict:
@@ -421,7 +481,139 @@ def stale_positions(res, frames: dict, bench: pd.DataFrame, as_of) -> list[dict]
     return out
 
 
-def render_report(market, cfg, snap, perf, aud, res, params, stale=()) -> str:
+def cross_check(market: str, frames: dict, bench: pd.DataFrame, as_of, root: Path, cache_dir, focus=()) -> dict | None:
+    """Yahoo vs the exchange/second source record, written to root/xcheck/<checked date>.json when
+    it changed. Korean markets: KRX when KRX_API_KEY is set (checklist 1.5). Crypto: Coinbase/Kraken
+    (checklist 4). US markets: Tiingo when TIINGO_TOKEN is set (checklist 3.4), a sample of the
+    universe plus `focus` (held and pending symbols). Observation only: never raises, never
+    touches signals or trades."""
+    dm = data_market(market)
+    key, tok = krx.api_key(), tiingo.token()
+    if dm == "CRYPTO":
+        src = xcheck.CRYPTO_SOURCE                    # public APIs, no key needed
+    elif dm in krx.STOCK_SERVICE and key is not None:
+        src = "KRX Open API"
+    elif dm in tiingo.MARKETS and tok is not None:
+        src = xcheck.TIINGO_SOURCE
+    else:
+        return None
+    try:
+        if dm == "CRYPTO":
+            rec = xcheck.run_crypto(frames, bench, pd.Timestamp(as_of), cache_dir)
+        elif src == xcheck.TIINGO_SOURCE:
+            rec = xcheck.run_tiingo(dm, frames, bench, pd.Timestamp(as_of), tok, cache_dir, focus)
+        else:
+            rec = xcheck.run(dm, frames, bench, pd.Timestamp(as_of), key, cache_dir)
+    except Exception as e:                            # noqa: BLE001 - a cross-check must never stop the ledger
+        log.warning("%s: %s cross-check failed: %s", market, src, e)
+        return {"market": dm, "as_of": _day(as_of), "source": src, "status": "error",
+                "checked": None, "index": None, "symbols": None, "error": str(e)}
+    return _store_xcheck(market, root, rec, "")
+
+
+def _store_xcheck(market: str, root: Path, rec: dict, suffix: str) -> dict:
+    """Write root/xcheck/<checked>.<suffix>json when it changed and log a mismatch."""
+    rec["market"] = market
+    if rec["checked"]:
+        p = root / "xcheck" / f"{rec['checked']}{suffix}.json"
+        body = json.dumps(_jsonable(rec), ensure_ascii=False, indent=1)
+        if not p.exists() or p.read_text() != body:
+            p.parent.mkdir(exist_ok=True)
+            p.write_text(body)
+    if rec["status"] == "mismatch":
+        log.warning("%s: Yahoo and %s differ on %s: %s", market, rec["source"], rec["checked"],
+                    [(m["symbol"], m["field"], m["diff_pct"]) for m in rec["symbols"]["mismatches"][:5]])
+    return rec
+
+
+def kis_record(market: str, frames: dict, bench: pd.DataFrame, as_of, cache_dir) -> dict | None:
+    """Yahoo vs KIS record for the signal day of a Korean market when KIS_APP_KEY/SECRET are set
+    (checklist 2.4); None when KIS does not apply. Not stored yet (see cross_check_kis). Never raises."""
+    dm = data_market(market)
+    if dm not in kis.INDEX_CODE:
+        return None
+    try:
+        cred = kis.credentials()
+    except kis.KISError as e:
+        log.warning("%s: %s", market, e)
+        return None
+    if cred is None:
+        return None
+    try:
+        return xcheck.run_kis(dm, frames, bench, pd.Timestamp(as_of), cred, cache_dir)
+    except Exception as e:                            # noqa: BLE001 - a cross-check must never stop the ledger
+        log.warning("%s: KIS cross-check failed: %s", market, e)
+        return {"market": dm, "as_of": _day(as_of), "source": xcheck.KIS_SOURCE, "status": "error",
+                "checked": None, "index": None, "symbols": None, "error": str(e)}
+
+
+def cross_check_kis(market: str, frames: dict, bench: pd.DataFrame, as_of, root: Path, cache_dir, rec=None) -> dict | None:
+    """kis_record written to root/xcheck/<date>.kis.json (observation only). Pass `rec` when the
+    guard already fetched it so KIS is called once per run."""
+    if rec is None:
+        rec = kis_record(market, frames, bench, as_of, cache_dir)
+    return None if rec is None else _store_xcheck(market, root, rec, ".kis")
+
+
+# Data guard (grade 1, no rule change): Yahoo's same-day Korean bars are provisional for hours
+# after the close. 2026-10-30 18:03 KST: 148 of 150 KOSDAQ closes differed from KIS (e.g. 086520
+# Yahoo 72,200 vs KRX 70,800, +1.9%); the index matched. Signals computed from such bars would be
+# revised later, so when many closes disagree with KIS the run waits for the next 2-hourly run,
+# until the next open is close enough that a late signal beats none.
+GUARD_MIN_SHARE = 0.05      # share of compared symbols whose close differs from KIS ...
+GUARD_MIN_SYMBOLS = 5       # ... and at least this many, before the run is held back
+GUARD_GIVE_UP_HOURS = 6     # within this many hours of the next open, proceed with a warning
+# 2026-10-31: the KRX T-1 check matched Yahoo's 10-30 bars 200/200 and 150/150 while the KIS paper
+# server (vps) had disagreed on 193/200 and 148/150 of the same bars: the paper server's stock
+# bars, not Yahoo's, were off. Blocking on them cost no signal (Friday's was committed before the
+# guard merged) but would have. The guard therefore only observes unless KIS_GUARD=1 is set.
+GUARD_ENV = "KIS_GUARD"
+
+
+def guard_enforced() -> bool:
+    return os.environ.get(GUARD_ENV, "0").strip() == "1"
+
+
+def kis_guard(market: str, frames: dict, bench: pd.DataFrame, as_of, now: datetime, cache_dir) -> tuple[bool, str, dict | None]:
+    """(ready, reason, kis record). Not ready when the share of symbols whose Yahoo close differs
+    from KIS reaches GUARD_MIN_SHARE (and GUARD_MIN_SYMBOLS). Skipped - ready - when KIS does not
+    apply, errs or has no bar yet; late in the session the run proceeds and the record says so."""
+    rec = kis_record(market, frames, bench, as_of, cache_dir)
+    if rec is None or not rec.get("symbols") or rec["status"] in ("error", "not_published"):
+        return True, "", rec
+    sym = rec["symbols"]
+    bad = sorted({m["symbol"] for m in sym["mismatches"] if m["field"] == "close"})
+    n = sym["compared"]
+    share = len(bad) / n if n else 0.0
+    guard = {"close_mismatched": len(bad), "compared": n, "share_pct": round(share * 100, 1), "blocked": False, "late": False,
+             "enforced": guard_enforced()}
+    rec["guard"] = guard
+    if len(bad) < GUARD_MIN_SYMBOLS or share < GUARD_MIN_SHARE:
+        return True, "", rec
+    why = (f"KIS와 종가가 다른 종목 {len(bad)}/{n} ({share:.0%}) — Yahoo의 {_day(as_of)} 봉이 아직 확정 전으로 보임"
+           f" (예: {', '.join(bad[:3])})")
+    if not guard["enforced"]:
+        log.warning("%s: %s; KIS guard is observing only (%s=1 enforces it)", market, why, GUARD_ENV)
+        return True, "", rec
+    deadline = next_open_deadline(market, as_of)
+    if now >= deadline - timedelta(hours=GUARD_GIVE_UP_HOURS):
+        guard["late"] = True
+        log.warning("%s: %s; the next open (%s) is within %dh, so the signals go out with a warning",
+                    market, why, _iso(deadline), GUARD_GIVE_UP_HOURS)
+        return True, why, rec
+    guard["blocked"] = True
+    return False, why, rec
+
+
+def _xcheck_summary(rec: dict | None) -> dict | None:
+    return None if rec is None else {
+        "source": rec.get("source"), "status": rec["status"], "checked": rec["checked"], "error": rec["error"],
+        "mismatched_symbols": sorted({m["symbol"] for m in rec["symbols"]["mismatches"]}) if rec["symbols"] else [],
+        "index_match": rec["index"]["match"] if rec["index"] else None,
+        **({"guard": rec["guard"]} if rec.get("guard") else {})}
+
+
+def render_report(market, cfg, snap, perf, aud, res, params, stale=(), xrec=None, xrec_kis=None) -> str:
     name = MARKET_KO.get(market, market)
     rg = snap["regime"]
     L = [f"# 모의투자 일일 보고 — {name} ({snap['as_of']})", "",
@@ -434,7 +626,15 @@ def render_report(market, cfg, snap, perf, aud, res, params, stale=()) -> str:
          + (f" · 유니버스 중 200일선 위 {_f(rg['breadth_pct'], '{:.1f}')}% (기준 50%)"
             if rg.get("breadth_pct") is not None else ""),
          f"- 데이터: 유니버스 {snap['coverage']['requested']}종목 중 {snap['coverage']['loaded']}종목 로드"
-         f" (실패 {len(snap['coverage']['failed'])})", ""]
+         f" (실패 {len(snap['coverage']['failed'])})"]
+    for r in (xrec, xrec_kis):
+        if r is not None:
+            L.append(xcheck.summary_line(r))
+    if xrec_kis and xrec_kis.get("guard", {}).get("late"):
+        g = xrec_kis["guard"]
+        L.append(f"- ⚠ **데이터 가드 해제**: KIS와 종가가 다른 종목 {g['close_mismatched']}/{g['compared']}개인데도 "
+                 f"다음 시가가 {GUARD_GIVE_UP_HOURS}시간 안이라 신호를 냈습니다. Yahoo 봉이 확정되면 신호가 바뀔 수 있습니다.")
+    L.append("")
     L += ["## 다음 시가 진입 (오늘 신호)", ""]
     if snap["entries_next_open"]:
         L += ["| 종목 | 신호 종가 | RS | 계획 수량 | 손절가 추정 (종가 기준) |", "|---|---|---|---|---|"]
@@ -470,7 +670,16 @@ def render_report(market, cfg, snap, perf, aud, res, params, stale=()) -> str:
           f"- 다음 시가 전 커밋: {on_time}/{aud['signal_files']} (늦음 {len(aud['late'])}, 미커밋 {len(aud['uncommitted'])})",
           f"- 재계산과 일치: {aud['signal_files'] - len(aud['mismatched'])}/{aud['signal_files']}"
           + (f" — 불일치 {', '.join(aud['mismatched'])}" if aud["mismatched"] else ""),
-          f"- 신호 수정본: {len(aud['revised'])}건" + (f" ({', '.join(aud['revised'])})" if aud["revised"] else ""), ""]
+          f"- 신호 수정본: {len(aud['revised'])}건" + (f" ({', '.join(aud['revised'])})" if aud["revised"] else "")
+          + (f" — 그중 {', '.join(aud['revised_after_open'])}은 다음 시가 이후에 쓰여 체결에 쓰이지 않음"
+             if aud.get("revised_after_open") else "")]
+    for r in aud.get("rows", []):
+        if r.get("date") in aud["mismatched"]:
+            diff = ([f"진입 +{s}" for s in r["entries_only_recomputed"]] + [f"진입 −{s}" for s in r["entries_only_committed"]]
+                    + [f"청산 +{s}" for s in r["exits_only_recomputed"]] + [f"청산 −{s}" for s in r["exits_only_committed"]])
+            L.append(f"  - {r['date']}: 지금 데이터로 다시 계산하면 {', '.join(diff)}. "
+                     "장부는 다음 시가 전에 커밋된 신호대로 체결합니다(커밋 뒤 데이터 수정 의심).")
+    L.append("")
     if snap["watchlist"]:
         L += ["## 관찰 (트렌드 템플릿 통과 · 레짐 ON · 피벗 3% 이내, RS 순)", "",
               "| 종목 | 상태 | 종가 | 피벗 | 피벗까지 |", "|---|---|---|---|---|"]
@@ -560,12 +769,16 @@ def run(args) -> dict:
     if ok and floor is not None and as_of < floor:
         ok, why = False, (f"{params['benchmark']} 마지막 확정 봉 {_day(as_of)}이 장부에 이미 있는 "
                           f"{_day(floor)}보다 이전 (Yahoo가 최근 봉을 빠뜨림)")
+    xrec_kis = None
+    if ok:
+        ok, why, xrec_kis = kis_guard(market, frames, bench, as_of, now, args.cache_dir)
     if not ok:
         msg = f"{market}: 데이터 미준비 — {why}. 아무것도 커밋하지 않고 종료합니다."
         log.warning(msg)
         print(msg)
         forget_cached_bars(args.cache_dir, list(cfg["universe"]) + [params["benchmark"]])
-        return {"started": cfg["start_date"] is not None, "ready": False, "as_of": _day(as_of), "reason": why}
+        return {"started": cfg["start_date"] is not None, "ready": False, "as_of": _day(as_of), "reason": why,
+                "xcheck_kis": xrec_kis}
     if cfg["start_date"] is None:
         # The paper period may only start with a signal file committed before the next open;
         # a first run that is already past that deadline (e.g. after a holiday) waits.
@@ -582,16 +795,23 @@ def run(args) -> dict:
     start_date = pd.Timestamp(cfg["start_date"])
     cov = {"requested": len(cfg["universe"]), "loaded": len(frames), "failed": failed}
 
+    # Dates whose next open has passed replay the signals committed before that open.
+    executed = executed_signals(market, root, repo, now)
     pcfg = PortfolioConfig(params=params, rs_mode=cfg["rs_mode"], initial_equity=cfg["initial_equity"],
-                           risk_pct=cfg["risk_pct"], cost_pct=cfg["cost_pct"], test_start=start_date, as_of=as_of)
+                           risk_pct=cfg["risk_pct"], cost_pct=cfg["cost_pct"], test_start=start_date, as_of=as_of,
+                           signal_override=executed or None)
     prepared = prepare_frames(frames, bench, pcfg)
     res = simulate(prepared, pcfg)
 
     # (3) signals first
     snap = build_snapshot(market, as_of, res, prepared, bench, params, cov)
-    sig_path, sig_state = write_signal_file(root / "signals", snap, now)
+    sig_path, sig_state = write_signal_file(root / "signals", snap, now, next_open_deadline(market, as_of))
     log.info("%s signals %s: %d entries, %d exits (%s)", market, snap["as_of"],
              len(snap["entries_next_open"]), len(snap["exits_next_open"]), sig_state)
+    if sig_state == "differs after the open":
+        log.warning("%s: the %s signals recomputed after the open differ from the committed ones; "
+                    "the ledger keeps the committed trades and the audit records the difference",
+                    market, snap["as_of"])
     if not args.no_commit:
         commit_and_push(repo, f"{market} signals {snap['as_of']} ({sig_state})", args.push_branch)
 
@@ -609,7 +829,10 @@ def run(args) -> dict:
     stale = stale_positions(res, frames, bench, as_of)
     for st in stale:
         log.warning("%s: held %s has no bar on %s (last %s)", market, st["symbol"], _day(as_of), st["last_bar"])
-    report = render_report(market, cfg, snap, perf, aud, res, params, stale)
+    focus = [p["symbol"] for p in res.open_positions] + [e["symbol"] for e in snap["entries_next_open"]]
+    xrec = cross_check(market, frames, bench, as_of, root, args.cache_dir, focus)
+    xrec_kis = cross_check_kis(market, frames, bench, as_of, root, args.cache_dir, rec=xrec_kis)
+    report = render_report(market, cfg, snap, perf, aud, res, params, stale, xrec, xrec_kis)
     (root / "report.md").write_text(report)
 
     latest_p = ledger / "latest.json"
@@ -621,7 +844,8 @@ def run(args) -> dict:
         "entries_next_open": snap["entries_next_open"], "exits_next_open": snap["exits_next_open"],
         "positions": res.open_positions, "stale_positions": stale, "watchlist": snap["watchlist"],
         "performance": perf, "status_csv": f"{market}/status.csv",
-        "audit": {k: aud[k] for k in ("days", "signal_files", "missing_days", "late", "uncommitted", "mismatched", "revised")},
+        "audit": {k: aud[k] for k in ("days", "signal_files", "missing_days", "late", "uncommitted", "mismatched", "revised", "revised_after_open")},
+        "xcheck": _xcheck_summary(xrec), "xcheck_kis": _xcheck_summary(xrec_kis),
     })))
     # The schedule reruns every market every 2 hours; a rerun with nothing new leaves the file
     # (and the ledger branch) untouched.
@@ -633,7 +857,7 @@ def run(args) -> dict:
         commit_and_push(repo, f"{market} ledger {snap['as_of']}", args.push_branch)
     print(report)
     return {"started": True, "snapshot": snap, "signal_file": str(sig_path), "signal_state": sig_state,
-            "audit": aud, "performance": perf}
+            "audit": aud, "performance": perf, "xcheck": xrec, "xcheck_kis": xrec_kis}
 
 
 def build_parser() -> argparse.ArgumentParser:

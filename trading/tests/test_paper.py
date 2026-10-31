@@ -279,3 +279,180 @@ def test_stale_positions_are_flagged():
     st = P.stale_positions(res, frames, bench, days[-1])
     assert st == [{"symbol": "HALT", "last_bar": "2024-06-25", "sessions_missing": 3},
                   {"symbol": "GONE", "last_bar": None, "sessions_missing": None}]
+
+
+def test_ledger_replays_committed_signals_after_a_data_revision(tmp_path, ledger_repo, monkeypatch):
+    """2026-10-07: Yahoo raised the 10-06 KOSDAQ volumes during the next session, so recomputing
+    10-06 added an entry nobody could have known before the open. The ledger must trade what was
+    committed before the open; the audit records the difference; no revision file is written
+    once the open has passed."""
+    offline = tmp_path / "data"
+    offline.mkdir()
+    days = _write_market(offline)
+    run_days = list(days[-15:])
+    d0 = sym = None
+    for i, day in enumerate(run_days[:-1]):
+        r = _run(offline, ledger_repo, _after_close(day), monkeypatch)
+        if r["snapshot"]["entries_next_open"]:
+            d0, d1, sym = day, run_days[i + 1], r["snapshot"]["entries_next_open"][0]["symbol"]
+            break
+    assert d0 is not None, "fixture should produce an entry signal"
+    d0s = d0.strftime("%Y-%m-%d")
+    # the provider revises d0's volume for that symbol after the open: the breakout loses its volume
+    f = offline / f"{sym}.csv"
+    df = pd.read_csv(f)
+    df.loc[df["Date"] == d0s, "Volume"] = 1.0
+    df.to_csv(f, index=False)
+    sig = ledger_repo / "paper" / "SP500" / "signals"
+    # during the next session (d1 bar not final yet): d0's open has passed, so d0 replays the
+    # committed signals - nothing to revise - while the audit already sees the difference
+    mid = datetime(d1.year, d1.month, d1.day, 15, 0, tzinfo=timezone.utc)
+    r = _run(offline, ledger_repo, mid, monkeypatch)
+    assert r["snapshot"]["as_of"] == d0s and r["signal_state"] == "unchanged"
+    assert sym in {e["symbol"] for e in r["snapshot"]["entries_next_open"]}
+    assert not list(sig.glob(f"{d0s}.rev*.json"))
+    assert d0s in r["audit"]["mismatched"]
+    # after d1's close: the committed entry was filled at d1's open
+    r = _run(offline, ledger_repo, _after_close(d1), monkeypatch)
+    root = ledger_repo / "paper" / "SP500"
+    trades = pd.read_csv(root / "trades.csv")
+    held = [p for p in json.loads((root / "positions.json").read_text()) if p["symbol"] == sym]
+    entered = held + ([] if trades.empty or "symbol" not in trades else
+                      trades[trades["symbol"] == sym].to_dict("records"))
+    assert any(e["entry_date"] == d1.strftime("%Y-%m-%d") for e in entered)
+    aud = r["audit"]
+    assert d0s in aud["mismatched"] and d0s not in aud["revised"] and aud["revised_after_open"] == []
+    row = next(x for x in aud["rows"] if x["date"] == d0s)
+    assert row["entries_only_committed"] == [sym] and row["on_time"]
+    assert f"진입 −{sym}" in (root / "report.md").read_text()
+
+
+def test_signal_file_revisions_compare_with_the_latest_and_stop_at_the_open(tmp_path):
+    sig = tmp_path / "signals"
+    snap = {"as_of": "2024-06-28", "entries_next_open": [{"symbol": "A"}], "exits_next_open": []}
+    other = dict(snap, entries_next_open=[{"symbol": "A"}, {"symbol": "B"}])
+    now = datetime(2024, 6, 28, 22, 0, tzinfo=timezone.utc)
+    deadline = datetime(2024, 7, 1, 13, 30, tzinfo=timezone.utc)
+    assert P.write_signal_file(sig, snap, now, deadline)[1] == "new"
+    p, state = P.write_signal_file(sig, other, now, deadline)
+    assert state == "revised" and p.name == "2024-06-28.rev1.json"
+    # the same revised signals again: compared with rev1, nothing new (was a new revN every run)
+    p, state = P.write_signal_file(sig, other, now, deadline)
+    assert state == "unchanged" and p.name == "2024-06-28.rev1.json"
+    assert P.write_signal_file(sig, snap, now, deadline)[0].name == "2024-06-28.rev2.json"
+    # after the open: nothing is written
+    after = datetime(2024, 7, 1, 15, 0, tzinfo=timezone.utc)
+    p, state = P.write_signal_file(sig, other, after, deadline)
+    assert state == "differs after the open" and p.name == "2024-06-28.rev2.json"
+    assert sorted(x.name for x in sig.glob("*.json")) == ["2024-06-28.json", "2024-06-28.rev1.json",
+                                                         "2024-06-28.rev2.json"]
+
+
+def test_audit_compares_with_the_revision_traded_before_the_open(tmp_path, ledger_repo, monkeypatch):
+    """2026-10-22 SP500: the first run after the close missed an entry (MA) that the 02:25 UTC
+    rerun, still before the open, added as rev1. The ledger trades rev1, so the audit compares
+    with rev1: a revision before the open is recorded as revised, not as a mismatch."""
+    offline = tmp_path / "data"
+    offline.mkdir()
+    days = _write_market(offline)
+    run_days = list(days[-15:])
+    d0 = sym = None
+    for i, day in enumerate(run_days[:-1]):
+        r = _run(offline, ledger_repo, _after_close(day), monkeypatch)
+        if r["snapshot"]["entries_next_open"]:
+            d0, d1, sym = day, run_days[i + 1], r["snapshot"]["entries_next_open"][0]["symbol"]
+            break
+    assert d0 is not None, "fixture should produce an entry signal"
+    d0s = d0.strftime("%Y-%m-%d")
+    # the provider revises d0's volume for that symbol before the next open
+    f = offline / f"{sym}.csv"
+    df = pd.read_csv(f)
+    df.loc[df["Date"] == d0s, "Volume"] = 1.0
+    df.to_csv(f, index=False)
+    before_open = datetime(d1.year, d1.month, d1.day, 2, 30, tzinfo=timezone.utc)
+    r = _run(offline, ledger_repo, before_open, monkeypatch)
+    assert r["signal_state"] == "revised"
+    assert sym not in {e["symbol"] for e in r["snapshot"]["entries_next_open"]}
+    r = _run(offline, ledger_repo, _after_close(d1), monkeypatch)
+    aud = r["audit"]
+    row = next(x for x in aud["rows"] if x["date"] == d0s)
+    assert row["compared_file"] == f"{d0s}.rev1.json"
+    assert d0s in aud["revised"] and d0s not in aud["mismatched"] and aud["revised_after_open"] == []
+    root = ledger_repo / "paper" / "SP500"
+    d1s = d1.strftime("%Y-%m-%d")
+    held = {p["symbol"] for p in json.loads((root / "positions.json").read_text()) if p["entry_date"] == d1s}
+    trades = pd.read_csv(root / "trades.csv")
+    filled = set() if trades.empty or "symbol" not in trades else set(trades.loc[trades["entry_date"] == d1s, "symbol"])
+    assert sym not in held | filled                    # rev1 dropped it, and rev1 is what was traded
+
+
+def _kis_rec(n_bad, compared=150, field="close"):
+    mm = [{"symbol": f"{i:06d}.KQ", "field": field, "yahoo": 101.0, "krx": 100.0, "diff_pct": 1.0} for i in range(n_bad)]
+    return {"market": "KOSDAQ", "as_of": "2026-10-30", "source": "KIS", "status": "mismatch" if mm else "ok",
+            "checked": "2026-10-30", "index": {"yahoo_close": 1.0, "krx_close": 1.0, "match": True},
+            "symbols": {"date": "2026-10-30", "compared": compared, "missing": [], "mismatches": mm}, "error": None}
+
+
+def test_kis_guard_observes_unless_enforced(monkeypatch):
+    # 2026-10-31: KRX agreed with Yahoo where the KIS paper server did not, so by default the guard only records
+    monkeypatch.delenv(P.GUARD_ENV, raising=False)
+    monkeypatch.setattr(P, "kis_record", lambda *a, **k: _kis_rec(148))
+    ok, why, rec = P.kis_guard("KOSDAQ", {}, None, pd.Timestamp("2026-10-30"), datetime(2026, 10, 30, 9, 3, tzinfo=timezone.utc), None)
+    assert ok is True and why == "" and rec["guard"]["enforced"] is False and rec["guard"]["blocked"] is False
+    assert rec["guard"]["close_mismatched"] == 148 and rec["status"] == "mismatch"
+
+
+def test_kis_guard_holds_back_provisional_korean_bars(monkeypatch):
+    # 2026-10-30 (Fri) 18:03 KST: 148/150 KOSDAQ closes differed from KIS; the next open is Mon 00:00 UTC
+    monkeypatch.setenv(P.GUARD_ENV, "1")
+    as_of = pd.Timestamp("2026-10-30")
+    monkeypatch.setattr(P, "kis_record", lambda *a, **k: _kis_rec(148))
+    ok, why, rec = P.kis_guard("KOSDAQ", {}, None, as_of, datetime(2026, 10, 30, 9, 3, tzinfo=timezone.utc), None)
+    assert ok is False and "148/150" in why and rec["guard"]["blocked"] is True and rec["guard"]["late"] is False
+    # within GUARD_GIVE_UP_HOURS of the open the run goes ahead, flagged
+    ok, why, rec = P.kis_guard("KOSDAQ", {}, None, as_of, datetime(2026, 11, 1, 19, 0, tzinfo=timezone.utc), None)
+    assert ok is True and why and rec["guard"] == {"close_mismatched": 148, "compared": 150, "share_pct": 98.7,
+                                                   "blocked": False, "late": True, "enforced": True}
+    # a few mismatches (ordinary tick-level differences) do not hold anything back
+    monkeypatch.setattr(P, "kis_record", lambda *a, **k: _kis_rec(4))
+    ok, why, rec = P.kis_guard("KOSDAQ", {}, None, as_of, datetime(2026, 10, 30, 9, 3, tzinfo=timezone.utc), None)
+    assert ok is True and why == "" and rec["guard"]["blocked"] is False
+    # volume-only differences are not the guard's business (Yahoo revises volume routinely)
+    monkeypatch.setattr(P, "kis_record", lambda *a, **k: _kis_rec(148, field="volume"))
+    ok, why, rec = P.kis_guard("KOSDAQ", {}, None, as_of, datetime(2026, 10, 30, 9, 3, tzinfo=timezone.utc), None)
+    assert ok is True and rec["guard"]["close_mismatched"] == 0
+    s = P._xcheck_summary(rec)
+    assert s["guard"]["compared"] == 150 and s["status"] == "mismatch"
+
+
+def test_kis_guard_is_skipped_when_kis_does_not_apply_or_answer(monkeypatch):
+    as_of, now = pd.Timestamp("2026-10-30"), datetime(2026, 10, 30, 9, 3, tzinfo=timezone.utc)
+    assert P.kis_guard("SP500", {}, None, as_of, now, None) == (True, "", None)          # not a Korean market
+    for rec in (None,
+                {**_kis_rec(0), "status": "error", "symbols": None, "error": "token: HTTP 500"},
+                {**_kis_rec(0), "status": "not_published", "symbols": None, "checked": None}):
+        monkeypatch.setattr(P, "kis_record", lambda *a, **k: rec)
+        ok, why, out = P.kis_guard("KOSDAQ", {}, None, as_of, now, None)
+        assert ok is True and why == "" and out is rec and (rec is None or "guard" not in rec)
+
+
+def test_guarded_run_commits_nothing_and_a_late_pass_is_flagged(tmp_path, ledger_repo, monkeypatch):
+    offline = tmp_path / "data"
+    offline.mkdir()
+    days = _write_market(offline)
+    day = days[-1]
+    monkeypatch.setattr(P, "kis_guard", lambda *a, **k: (False, "KIS와 종가가 다른 종목 148/150", _kis_rec(148)))
+    r = _run(offline, ledger_repo, _after_close(day), monkeypatch)
+    assert r["ready"] is False and "148/150" in r["reason"] and r["xcheck_kis"]["status"] == "mismatch"
+    assert not (ledger_repo / "paper" / "SP500" / "signals").exists()
+    assert subprocess.run(["git", "-C", str(ledger_repo), "log", "--oneline"], capture_output=True, text=True).stdout == ""
+    late = _kis_rec(148)
+    late["guard"] = {"close_mismatched": 148, "compared": 150, "share_pct": 98.7, "blocked": False, "late": True}
+    monkeypatch.setattr(P, "kis_guard", lambda *a, **k: (True, "late", late))
+    r = _run(offline, ledger_repo, _after_close(day) + pd.Timedelta(hours=6), monkeypatch)
+    assert r["started"] is True and r["xcheck_kis"]["guard"]["late"] is True
+    report = (ledger_repo / "paper" / "SP500" / "report.md").read_text()
+    assert "데이터 가드 해제" in report and "148/150" in report
+    latest = json.loads((ledger_repo / "paper" / "latest.json").read_text())
+    assert latest["markets"]["SP500"]["xcheck_kis"]["guard"]["late"] is True
+    assert (ledger_repo / "paper" / "SP500" / "xcheck" / "2026-10-30.kis.json").exists()

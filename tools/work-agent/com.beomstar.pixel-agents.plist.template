@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.beomstar.pixel-agents</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>__DIR__/pixel.sh</string>
+  </array>
+  <!-- every hour on the hour; pixel.sh exits unless it is a work slot and nothing serves the port -->
+  <key>StartCalendarInterval</key>
+  <array>
+    <dict><key>Minute</key><integer>0</integer></dict>
+  </array>
+  <key>RunAtLoad</key><true/>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key><string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:__HOME__/.local/bin</string>
+  </dict>
+  <key>StandardOutPath</key><string>__DIR__/state/pixel-launchd.out</string>
+  <key>StandardErrorPath</key><string>__DIR__/state/pixel-launchd.err</string>
+</dict>
+</plist>
