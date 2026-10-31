@@ -393,8 +393,18 @@ def _kis_rec(n_bad, compared=150, field="close"):
             "symbols": {"date": "2026-10-30", "compared": compared, "missing": [], "mismatches": mm}, "error": None}
 
 
+def test_kis_guard_observes_unless_enforced(monkeypatch):
+    # 2026-10-31: KRX agreed with Yahoo where the KIS paper server did not, so by default the guard only records
+    monkeypatch.delenv(P.GUARD_ENV, raising=False)
+    monkeypatch.setattr(P, "kis_record", lambda *a, **k: _kis_rec(148))
+    ok, why, rec = P.kis_guard("KOSDAQ", {}, None, pd.Timestamp("2026-10-30"), datetime(2026, 10, 30, 9, 3, tzinfo=timezone.utc), None)
+    assert ok is True and why == "" and rec["guard"]["enforced"] is False and rec["guard"]["blocked"] is False
+    assert rec["guard"]["close_mismatched"] == 148 and rec["status"] == "mismatch"
+
+
 def test_kis_guard_holds_back_provisional_korean_bars(monkeypatch):
     # 2026-10-30 (Fri) 18:03 KST: 148/150 KOSDAQ closes differed from KIS; the next open is Mon 00:00 UTC
+    monkeypatch.setenv(P.GUARD_ENV, "1")
     as_of = pd.Timestamp("2026-10-30")
     monkeypatch.setattr(P, "kis_record", lambda *a, **k: _kis_rec(148))
     ok, why, rec = P.kis_guard("KOSDAQ", {}, None, as_of, datetime(2026, 10, 30, 9, 3, tzinfo=timezone.utc), None)
@@ -402,7 +412,7 @@ def test_kis_guard_holds_back_provisional_korean_bars(monkeypatch):
     # within GUARD_GIVE_UP_HOURS of the open the run goes ahead, flagged
     ok, why, rec = P.kis_guard("KOSDAQ", {}, None, as_of, datetime(2026, 11, 1, 19, 0, tzinfo=timezone.utc), None)
     assert ok is True and why and rec["guard"] == {"close_mismatched": 148, "compared": 150, "share_pct": 98.7,
-                                                   "blocked": False, "late": True}
+                                                   "blocked": False, "late": True, "enforced": True}
     # a few mismatches (ordinary tick-level differences) do not hold anything back
     monkeypatch.setattr(P, "kis_record", lambda *a, **k: _kis_rec(4))
     ok, why, rec = P.kis_guard("KOSDAQ", {}, None, as_of, datetime(2026, 10, 30, 9, 3, tzinfo=timezone.utc), None)

@@ -99,6 +99,7 @@ jobs:
           KIS_APP_SECRET: ${{ secrets.KIS_APP_SECRET }}
           KIS_ENV: ${{ vars.KIS_ENV || 'vps' }}
           TIINGO_TOKEN: ${{ secrets.TIINGO_TOKEN }}
+          KIS_GUARD: ${{ vars.KIS_GUARD || '0' }}   # 1 = hold back Korean signals when KIS disagrees (off: KIS paper server data unreliable, 2026-10-31)
         run: |
           status=0
           for market in ${{ steps.m.outputs.markets }}; do

@@ -563,6 +563,15 @@ def cross_check_kis(market: str, frames: dict, bench: pd.DataFrame, as_of, root:
 GUARD_MIN_SHARE = 0.05      # share of compared symbols whose close differs from KIS ...
 GUARD_MIN_SYMBOLS = 5       # ... and at least this many, before the run is held back
 GUARD_GIVE_UP_HOURS = 6     # within this many hours of the next open, proceed with a warning
+# 2026-10-31: the KRX T-1 check matched Yahoo's 10-30 bars 200/200 and 150/150 while the KIS paper
+# server (vps) had disagreed on 193/200 and 148/150 of the same bars: the paper server's stock
+# bars, not Yahoo's, were off. Blocking on them cost no signal (Friday's was committed before the
+# guard merged) but would have. The guard therefore only observes unless KIS_GUARD=1 is set.
+GUARD_ENV = "KIS_GUARD"
+
+
+def guard_enforced() -> bool:
+    return os.environ.get(GUARD_ENV, "0").strip() == "1"
 
 
 def kis_guard(market: str, frames: dict, bench: pd.DataFrame, as_of, now: datetime, cache_dir) -> tuple[bool, str, dict | None]:
@@ -576,12 +585,16 @@ def kis_guard(market: str, frames: dict, bench: pd.DataFrame, as_of, now: dateti
     bad = sorted({m["symbol"] for m in sym["mismatches"] if m["field"] == "close"})
     n = sym["compared"]
     share = len(bad) / n if n else 0.0
-    guard = {"close_mismatched": len(bad), "compared": n, "share_pct": round(share * 100, 1), "blocked": False, "late": False}
+    guard = {"close_mismatched": len(bad), "compared": n, "share_pct": round(share * 100, 1), "blocked": False, "late": False,
+             "enforced": guard_enforced()}
     rec["guard"] = guard
     if len(bad) < GUARD_MIN_SYMBOLS or share < GUARD_MIN_SHARE:
         return True, "", rec
     why = (f"KIS와 종가가 다른 종목 {len(bad)}/{n} ({share:.0%}) — Yahoo의 {_day(as_of)} 봉이 아직 확정 전으로 보임"
            f" (예: {', '.join(bad[:3])})")
+    if not guard["enforced"]:
+        log.warning("%s: %s; KIS guard is observing only (%s=1 enforces it)", market, why, GUARD_ENV)
+        return True, "", rec
     deadline = next_open_deadline(market, as_of)
     if now >= deadline - timedelta(hours=GUARD_GIVE_UP_HOURS):
         guard["late"] = True
