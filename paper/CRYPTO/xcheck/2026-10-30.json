@@ -1,0 +1,41 @@
+{
+ "market": "CRYPTO",
+ "as_of": "2026-10-30",
+ "source": "Coinbase/Kraken",
+ "status": "mismatch",
+ "checked": "2026-10-30",
+ "index": {
+  "yahoo_close": 77198.21094,
+  "krx_close": 77180.42,
+  "match": true
+ },
+ "symbols": {
+  "date": "2026-10-30",
+  "compared": 23,
+  "missing": [
+   "GRAM-USD",
+   "LEO-USD"
+  ],
+  "mismatches": [
+   {
+    "symbol": "TRX-USD",
+    "field": "close",
+    "yahoo": 0.3276830018,
+    "krx": 0.335643,
+    "diff_pct": 2.372
+   },
+   {
+    "symbol": "SHIB-USD",
+    "field": "close",
+    "yahoo": 4.999999874e-06,
+    "krx": 4.79e-06,
+    "diff_pct": 4.2
+   }
+  ],
+  "venues": {
+   "coinbase": 20,
+   "kraken": 3
+  }
+ },
+ "error": null
+}
