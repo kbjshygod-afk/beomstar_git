@@ -13,44 +13,51 @@
    {
     "symbol": "AMGN",
     "field": "volume",
-    "yahoo": 3290355.0,
+    "yahoo": 3290400.0,
     "krx": 3185106.0,
-    "diff_pct": 3.199
+    "diff_pct": 3.2
    },
    {
-    "symbol": "TTWO",
-    "field": "open",
-    "yahoo": 192.3300018,
-    "krx": 192.1,
-    "diff_pct": 0.12
+    "symbol": "VRTX",
+    "field": "volume",
+    "yahoo": 3030000.0,
+    "krx": 2880797.0,
+    "diff_pct": 4.924
    },
    {
-    "symbol": "CSX",
-    "field": "open",
-    "yahoo": 52.24000168,
-    "krx": 52.31,
-    "diff_pct": 0.134
-   },
-   {
-    "symbol": "TER",
-    "field": "open",
-    "yahoo": 277.0499878,
-    "krx": 277.54,
-    "diff_pct": 0.177
+    "symbol": "TXN",
+    "field": "volume",
+    "yahoo": 12998300.0,
+    "krx": 12682125.0,
+    "diff_pct": 2.432
    },
    {
     "symbol": "WDC",
-    "field": "open",
-    "yahoo": 366.4400024,
-    "krx": 366.84,
-    "diff_pct": 0.109
+    "field": "volume",
+    "yahoo": 8968400.0,
+    "krx": 8844167.0,
+    "diff_pct": 1.385
    },
    {
     "symbol": "TMUS",
     "field": "volume",
-    "yahoo": 11483182.0,
+    "yahoo": 11495300.0,
     "krx": 11078114.0,
-    "diff_pct": 3.527
+    "diff_pct": 3.629
+   },
+   {
+    "symbol": "WDAY",
+    "field": "volume",
+    "yahoo": 2471000.0,
+    "krx": 2445624.0,
+    "diff_pct": 1.027
+   },
+   {
+    "symbol": "TRI",
+    "field": "volume",
+    "yahoo": 2403400.0,
+    "krx": 2377280.0,
+    "diff_pct": 1.087
    }
   ],
   "unlisted": [],
