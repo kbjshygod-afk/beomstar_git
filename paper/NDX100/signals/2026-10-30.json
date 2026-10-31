@@ -1,0 +1,45 @@
+{
+ "market": "NDX100",
+ "as_of": "2026-10-30",
+ "regime": {
+  "benchmark": "^NDX",
+  "mode": "MA200",
+  "close": 28384.8496,
+  "ma200": 27927.3006,
+  "ma20": 29933.0914,
+  "on": true
+ },
+ "entries_next_open": [
+  {
+   "symbol": "VRTX",
+   "signal_close": 558.88,
+   "rs": 82.65,
+   "desired_qty": 18721.894716,
+   "est_stop_from_close": 519.7584
+  }
+ ],
+ "exits_next_open": [],
+ "positions": [
+  "AMGN",
+  "CSX",
+  "KDP"
+ ],
+ "watchlist": [
+  {
+   "symbol": "AAPL",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 344.63,
+   "pivot": 351.73,
+   "to_pivot_pct": 2.06,
+   "rs": 79.59
+  }
+ ],
+ "coverage": {
+  "requested": 101,
+  "loaded": 100,
+  "failed": [
+   "WBD"
+  ]
+ },
+ "generated_at": "2026-10-31T05:08:08Z"
+}
