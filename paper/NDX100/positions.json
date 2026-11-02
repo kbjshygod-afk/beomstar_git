@@ -7,10 +7,10 @@
   "entry_price": 437.8900146,
   "qty": 24086.34911346862,
   "stop_price": 407.23771357799995,
-  "last_close": 466.0100098,
-  "exit_ma": 419.963800042,
-  "unrealized_pnl": 633764.7183535192,
-  "price_pnl_pct": 6.421702770657345,
+  "last_close": 465.4500122,
+  "exit_ma": 420.48620055400005,
+  "unrealized_pnl": 620303.3972526062,
+  "price_pnl_pct": 6.293817324237305,
   "exit_pending": false
  },
  {
@@ -21,10 +21,10 @@
   "entry_price": 35.31999969,
   "qty": 297703.06687467825,
   "stop_price": 32.8475997117,
-  "last_close": 35.84000015,
-  "exit_ma": 32.4415999986,
-  "unrealized_pnl": 112436.63133590482,
-  "price_pnl_pct": 1.4722549959342857,
+  "last_close": 36.81999969,
+  "exit_ma": 32.537199974,
+  "unrealized_pnl": 403602.00219249167,
+  "price_pnl_pct": 4.246885654488519,
   "exit_pending": false
  },
  {
@@ -35,10 +35,24 @@
   "entry_price": 51.56000137,
   "qty": 202751.5170602284,
   "stop_price": 47.9508012741,
-  "last_close": 51.99000168,
-  "exit_ma": 48.8598000344,
-  "unrealized_pnl": 45193.37476891093,
-  "price_pnl_pct": 0.8339804084066538,
+  "last_close": 51.61999893,
+  "exit_ma": 48.860400010000006,
+  "unrealized_pnl": -29675.206872288138,
+  "price_pnl_pct": 0.11636454306789279,
+  "exit_pending": false
+ },
+ {
+  "symbol": "VRTX",
+  "signal_date": "2026-10-30",
+  "exit_signal_date": null,
+  "entry_date": "2026-11-02",
+  "entry_price": 559.9299927,
+  "qty": 18721.89471550134,
+  "stop_price": 520.7348932109999,
+  "last_close": 553.1500244,
+  "exit_ma": 523.316403196,
+  "unrealized_pnl": -168611.78646718524,
+  "price_pnl_pct": -1.2108599982841972,
   "exit_pending": false
  }
 ]

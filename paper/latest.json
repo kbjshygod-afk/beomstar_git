@@ -383,25 +383,17 @@
    "xcheck_kis": null
   },
   "NDX100": {
-   "as_of": "2026-10-30",
+   "as_of": "2026-11-02",
    "start_date": "2026-09-25",
    "regime": {
     "benchmark": "^NDX",
     "mode": "MA200",
-    "close": 28384.8496,
-    "ma200": 27927.3006,
-    "ma20": 29933.0914,
+    "close": 27989.8203,
+    "ma200": 27939.5143,
+    "ma20": 29778.7604,
     "on": true
    },
-   "entries_next_open": [
-    {
-     "symbol": "VRTX",
-     "signal_close": 558.88,
-     "rs": 82.65,
-     "desired_qty": 18721.894716,
-     "est_stop_from_close": 519.7584
-    }
-   ],
+   "entries_next_open": [],
    "exits_next_open": [],
    "positions": [
     {
@@ -412,10 +404,10 @@
      "entry_price": 437.8900146,
      "qty": 24086.34911346862,
      "stop_price": 407.23771357799995,
-     "last_close": 466.0100098,
-     "exit_ma": 419.963800042,
-     "unrealized_pnl": 633764.7183535192,
-     "price_pnl_pct": 6.421702770657345,
+     "last_close": 465.4500122,
+     "exit_ma": 420.48620055400005,
+     "unrealized_pnl": 620303.3972526062,
+     "price_pnl_pct": 6.293817324237305,
      "exit_pending": false
     },
     {
@@ -426,10 +418,10 @@
      "entry_price": 35.31999969,
      "qty": 297703.06687467825,
      "stop_price": 32.8475997117,
-     "last_close": 35.84000015,
-     "exit_ma": 32.4415999986,
-     "unrealized_pnl": 112436.63133590482,
-     "price_pnl_pct": 1.4722549959342857,
+     "last_close": 36.81999969,
+     "exit_ma": 32.537199974,
+     "unrealized_pnl": 403602.00219249167,
+     "price_pnl_pct": 4.246885654488519,
      "exit_pending": false
     },
     {
@@ -440,39 +432,53 @@
      "entry_price": 51.56000137,
      "qty": 202751.5170602284,
      "stop_price": 47.9508012741,
-     "last_close": 51.99000168,
-     "exit_ma": 48.8598000344,
-     "unrealized_pnl": 45193.37476891093,
-     "price_pnl_pct": 0.8339804084066538,
+     "last_close": 51.61999893,
+     "exit_ma": 48.860400010000006,
+     "unrealized_pnl": -29675.206872288138,
+     "price_pnl_pct": 0.11636454306789279,
+     "exit_pending": false
+    },
+    {
+     "symbol": "VRTX",
+     "signal_date": "2026-10-30",
+     "exit_signal_date": null,
+     "entry_date": "2026-11-02",
+     "entry_price": 559.9299927,
+     "qty": 18721.89471550134,
+     "stop_price": 520.7348932109999,
+     "last_close": 553.1500244,
+     "exit_ma": 523.316403196,
+     "unrealized_pnl": -168611.78646718524,
+     "price_pnl_pct": -1.2108599982841972,
      "exit_pending": false
     }
    ],
    "stale_positions": [],
    "watchlist": [
     {
-     "symbol": "AAPL",
+     "symbol": "FAST",
      "label": "2순위 · 근접 (피벗 3% 이내)",
-     "close": 344.63,
-     "pivot": 351.73,
-     "to_pivot_pct": 2.06,
-     "rs": 79.59
+     "close": 52.55,
+     "pivot": 53.3,
+     "to_pivot_pct": 1.43,
+     "rs": 70.41
     }
    ],
    "performance": {
-    "equity": 97657398.0,
-    "return_pct": -2.34,
-    "bench_return_pct": -7.26,
+    "equity": 97712740.0,
+    "return_pct": -2.29,
+    "bench_return_pct": -8.55,
     "mdd_pct": -3.75,
     "closed_trades": 4,
     "win_rate_pct": 0.0,
     "avg_win_pct": null,
     "avg_loss_pct": -7.55,
-    "open_positions": 3
+    "open_positions": 4
    },
    "status_csv": "NDX100/status.csv",
    "audit": {
-    "days": 26,
-    "signal_files": 26,
+    "days": 27,
+    "signal_files": 27,
     "missing_days": [],
     "late": [],
     "uncommitted": [],
@@ -483,16 +489,11 @@
    "xcheck": {
     "source": "Tiingo",
     "status": "mismatch",
-    "checked": "2026-10-30",
+    "checked": "2026-11-02",
     "error": null,
     "mismatched_symbols": [
-     "AMGN",
-     "TMUS",
-     "TRI",
-     "TXN",
-     "VRTX",
-     "WDAY",
-     "WDC"
+     "CRWD",
+     "VRTX"
     ],
     "index_match": null
    },
@@ -1270,7 +1271,7 @@
    }
   }
  },
- "updated_at": "2026-11-02T23:30:53Z",
+ "updated_at": "2026-11-02T23:31:58Z",
  "disclaimer": "기계적 룰 출력이며 투자 자문이 아닙니다. 매수·매도 결정은 소유자 본인이 합니다.",
  "unconfirmed": "미확인 추정값(스캐너 원본 코드 미확인): 피벗=직전 20봉 최고가(당일 제외) · 거래량 평균=직전 50일(당일 제외) · RS=지수 대비 가중 1년 수익률 ≥ 0%p(스캐너는 유니버스 백분위 ≥ 70) · 52주 고저=종가 기준 · 200일선 상승=22봉 전 대비 · 수축비=10/40일 평균 TR · 비용=편도 0.2%"
 }

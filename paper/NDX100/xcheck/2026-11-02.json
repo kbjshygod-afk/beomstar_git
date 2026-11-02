@@ -1,0 +1,39 @@
+{
+ "market": "NDX100",
+ "as_of": "2026-11-02",
+ "source": "Tiingo",
+ "status": "mismatch",
+ "checked": "2026-11-02",
+ "index": null,
+ "symbols": {
+  "date": "2026-11-02",
+  "compared": 14,
+  "missing": [],
+  "mismatches": [
+   {
+    "symbol": "VRTX",
+    "field": "open",
+    "yahoo": 559.9299927,
+    "krx": 560.875,
+    "diff_pct": 0.168
+   },
+   {
+    "symbol": "CRWD",
+    "field": "open",
+    "yahoo": 253.3399963,
+    "krx": 253.0,
+    "diff_pct": 0.134
+   }
+  ],
+  "unlisted": [],
+  "sampled": 14,
+  "focus": [
+   "AMGN",
+   "CSX",
+   "KDP",
+   "VRTX"
+  ]
+ },
+ "error": null,
+ "calls": 14
+}
