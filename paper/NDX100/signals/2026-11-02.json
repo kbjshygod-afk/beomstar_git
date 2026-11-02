@@ -1,0 +1,38 @@
+{
+ "market": "NDX100",
+ "as_of": "2026-11-02",
+ "regime": {
+  "benchmark": "^NDX",
+  "mode": "MA200",
+  "close": 27989.8203,
+  "ma200": 27939.5143,
+  "ma20": 29778.7604,
+  "on": true
+ },
+ "entries_next_open": [],
+ "exits_next_open": [],
+ "positions": [
+  "AMGN",
+  "CSX",
+  "KDP",
+  "VRTX"
+ ],
+ "watchlist": [
+  {
+   "symbol": "FAST",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 52.55,
+   "pivot": 53.3,
+   "to_pivot_pct": 1.43,
+   "rs": 70.41
+  }
+ ],
+ "coverage": {
+  "requested": 101,
+  "loaded": 100,
+  "failed": [
+   "WBD"
+  ]
+ },
+ "generated_at": "2026-11-02T23:31:58Z"
+}
