@@ -824,14 +824,14 @@
    }
   },
   "KOSDAQ": {
-   "as_of": "2026-11-02",
+   "as_of": "2026-11-03",
    "start_date": "2026-09-29",
    "regime": {
     "benchmark": "^KQ11",
     "mode": "NONE",
-    "close": 734.36,
-    "ma200": 971.7002,
-    "ma20": 801.1655,
+    "close": 704.39,
+    "ma200": 970.4852,
+    "ma20": 791.7205,
     "on": true
    },
    "entries_next_open": [],
@@ -845,10 +845,10 @@
      "entry_price": 83500.0,
      "qty": 84.0,
      "stop_price": 75150.0,
-     "last_close": 82600.0,
-     "exit_ma": 59136.0,
-     "unrealized_pnl": -103504.79999999981,
-     "price_pnl_pct": -1.0778443113772407,
+     "last_close": 77600.0,
+     "exit_ma": 59929.0,
+     "unrealized_pnl": -522664.7999999998,
+     "price_pnl_pct": -7.065868263473051,
      "exit_pending": false
     },
     {
@@ -859,29 +859,20 @@
      "entry_price": 176000.0,
      "qty": 40.0,
      "stop_price": 158400.0,
-     "last_close": 176100.0,
-     "exit_ma": 139338.0,
-     "unrealized_pnl": -24168.0,
-     "price_pnl_pct": 0.05681818181817455,
+     "last_close": 175000.0,
+     "exit_ma": 140000.0,
+     "unrealized_pnl": -68080.0,
+     "price_pnl_pct": -0.5681818181818232,
      "exit_pending": false
     }
    ],
    "stale_positions": [],
-   "watchlist": [
-    {
-     "symbol": "053800.KQ",
-     "label": "2순위 · 근접 (피벗 3% 이내)",
-     "close": 116200.0,
-     "pivot": 119400.0,
-     "to_pivot_pct": 2.75,
-     "rs": 94.48
-    }
-   ],
+   "watchlist": [],
    "performance": {
-    "equity": 94515698.0,
-    "return_pct": -5.48,
-    "bench_return_pct": -13.58,
-    "mdd_pct": -5.95,
+    "equity": 94051698.0,
+    "return_pct": -5.95,
+    "bench_return_pct": -17.11,
+    "mdd_pct": -6.42,
     "closed_trades": 7,
     "win_rate_pct": 0.0,
     "avg_win_pct": null,
@@ -890,8 +881,8 @@
    },
    "status_csv": "KOSDAQ/status.csv",
    "audit": {
-    "days": 23,
-    "signal_files": 23,
+    "days": 24,
+    "signal_files": 24,
     "missing_days": [],
     "late": [],
     "uncommitted": [],
@@ -916,7 +907,7 @@
    "xcheck_kis": {
     "source": "KIS",
     "status": "mismatch",
-    "checked": "2026-11-02",
+    "checked": "2026-11-03",
     "error": null,
     "mismatched_symbols": [
      "000250.KQ",
@@ -930,7 +921,6 @@
      "023160.KQ",
      "028300.KQ",
      "030530.KQ",
-     "031330.KQ",
      "031980.KQ",
      "032190.KQ",
      "032500.KQ",
@@ -982,6 +972,7 @@
      "089970.KQ",
      "090360.KQ",
      "090710.KQ",
+     "093320.KQ",
      "095340.KQ",
      "095610.KQ",
      "096530.KQ",
@@ -1012,9 +1003,8 @@
      "178320.KQ",
      "183300.KQ",
      "189300.KQ",
-     "196170.KQ",
+     "195940.KQ",
      "204270.KQ",
-     "213420.KQ",
      "214150.KQ",
      "214370.KQ",
      "214450.KQ",
@@ -1033,8 +1023,6 @@
      "253450.KQ",
      "253590.KQ",
      "257720.KQ",
-     "263750.KQ",
-     "277810.KQ",
      "281740.KQ",
      "290650.KQ",
      "293490.KQ",
@@ -1060,8 +1048,6 @@
      "440110.KQ",
      "445680.KQ",
      "458870.KQ",
-     "466100.KQ",
-     "476060.KQ",
      "476830.KQ",
      "491000.KQ",
      "950160.KQ",
@@ -1069,9 +1055,9 @@
     ],
     "index_match": true,
     "guard": {
-     "close_mismatched": 128,
+     "close_mismatched": 136,
      "compared": 150,
-     "share_pct": 85.3,
+     "share_pct": 90.7,
      "blocked": false,
      "late": false,
      "enforced": false
@@ -1297,7 +1283,7 @@
    }
   }
  },
- "updated_at": "2026-11-03T09:06:29Z",
+ "updated_at": "2026-11-03T09:10:25Z",
  "disclaimer": "기계적 룰 출력이며 투자 자문이 아닙니다. 매수·매도 결정은 소유자 본인이 합니다.",
  "unconfirmed": "미확인 추정값(스캐너 원본 코드 미확인): 피벗=직전 20봉 최고가(당일 제외) · 거래량 평균=직전 50일(당일 제외) · RS=지수 대비 가중 1년 수익률 ≥ 0%p(스캐너는 유니버스 백분위 ≥ 70) · 52주 고저=종가 기준 · 200일선 상승=22봉 전 대비 · 수축비=10/40일 평균 TR · 비용=편도 0.2%"
 }
