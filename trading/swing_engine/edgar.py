@@ -62,10 +62,32 @@ def _get(url: str, timeout: float = 30) -> bytes:
                 raw = gzip.decompress(raw)
             return raw
     except urllib.error.HTTPError as e:
-        hint = f" (User-Agent has no contact address; set {UA_ENV}='project you@example.com')" if e.code == 403 and "@" not in ua else ""
-        raise EdgarError(f"EDGAR HTTP {e.code} for {url}{hint}") from None
+        raise EdgarError(f"EDGAR HTTP {e.code} for {url}{_http_error_hint(e, ua)}") from None
     except (urllib.error.URLError, TimeoutError, OSError) as e:
         raise EdgarError(f"EDGAR network {getattr(e, 'reason', e)}") from None
+
+
+BLOCKED_MARKERS = ("Undeclared Automated Tool", "Request Rate Threshold", "Access Denied")
+
+
+def _http_error_hint(e, ua: str) -> str:
+    """Why SEC said no: a User-Agent without a contact, or a network it refuses outright
+    (GitHub-hosted runners get 403 on every sec.gov host even with a proper User-Agent)."""
+    if e.code != 403:
+        return ""
+    if "@" not in ua:
+        return f" (User-Agent has no contact address; set {UA_ENV}='project you@example.com')"
+    try:
+        body = e.read()
+        if body[:2] == b"\x1f\x8b":
+            import gzip
+            body = gzip.decompress(body)
+        text = body.decode("utf-8", "replace")
+    except Exception:
+        text = ""
+    marker = next((m for m in BLOCKED_MARKERS if m in text), None)
+    where = f" ({marker})" if marker else ""
+    return f"{where}: SEC refuses this network; run tools/fundamentals_report.py from a home network (Mac)"
 
 
 def cik_for(ticker: str, cache_dir=None) -> tuple[int, str]:

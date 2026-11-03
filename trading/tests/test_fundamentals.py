@@ -111,3 +111,26 @@ def test_edgar_user_agent_from_env(monkeypatch):
     assert edgar.user_agent() == edgar.UA_DEFAULT
     monkeypatch.setenv(edgar.UA_ENV, " beomstar-swing a@b.c ")
     assert edgar.user_agent() == "beomstar-swing a@b.c"
+
+
+def test_edgar_403_hint_names_the_block(monkeypatch):
+    import gzip
+    import io
+    import urllib.error
+    from swing_engine import edgar
+
+    def raise_403(req, timeout=None):
+        body = gzip.compress(b"<html>Your Request Originates from an Undeclared Automated Tool</html>")
+        raise urllib.error.HTTPError(req.full_url, 403, "Forbidden", {}, io.BytesIO(body))
+
+    monkeypatch.setattr(edgar.urllib.request, "urlopen", raise_403)
+    monkeypatch.setenv(edgar.UA_ENV, "beomstar-swing a@b.c")
+    with pytest.raises(edgar.EdgarError) as ei:
+        edgar._get("https://www.sec.gov/files/company_tickers.json")
+    msg = str(ei.value)
+    assert "403" in msg and "Undeclared Automated Tool" in msg and "home network" in msg
+
+    monkeypatch.setenv(edgar.UA_ENV, "no-contact")
+    with pytest.raises(edgar.EdgarError) as ei:
+        edgar._get("https://www.sec.gov/files/company_tickers.json")
+    assert "no contact address" in str(ei.value)

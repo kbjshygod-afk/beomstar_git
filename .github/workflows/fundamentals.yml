@@ -1,5 +1,7 @@
 # Financial statements from the official filings APIs (DART for Korea, SEC EDGAR for the US).
 # Manual only. Reference material; nothing here touches the paper ledger or the rules.
+# SEC refuses GitHub-hosted runners (403 on every sec.gov host, 2026-11-03), so US symbols
+# only work from a home network: run trading/tools/fundamentals_report.py on the Mac.
 name: fundamentals
 
 on:
@@ -32,14 +34,6 @@ jobs:
           path: trading/.cache/dart
           key: fundamentals-dart-${{ github.run_id }}
           restore-keys: fundamentals-dart-
-      - name: SEC reachability probe (temporary)
-        env:
-          EDGAR_USER_AGENT: ${{ vars.EDGAR_USER_AGENT || format('beomstar-swing {0}@users.noreply.github.com', github.actor) }}
-        run: |
-          for u in https://www.sec.gov/files/company_tickers.json https://www.sec.gov/include/ticker.txt https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json https://data.sec.gov/submissions/CIK0000320193.json "https://efts.sec.gov/LATEST/search-index?q=apple&forms=10-K"; do
-            code=$(curl -sS -o body.txt -w '%{http_code}' -A "$EDGAR_USER_AGENT" -H 'Accept-Encoding: gzip, deflate' "$u" || echo ERR)
-            echo "$u -> $code ($(head -c 200 body.txt | tr '\n' ' '))"
-          done
       - name: Report
         working-directory: trading
         env:
