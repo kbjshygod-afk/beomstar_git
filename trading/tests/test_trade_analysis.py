@@ -72,8 +72,9 @@ def test_end_to_end_report(tmp_path):
     (root / "paper/SP500/trades.csv").write_text(
         "symbol,signal_date,signal_close,rs_at_signal,entry_date,entry_price,qty,desired_qty,partial,stop_price,entry_cost,cost_basis,exit_date,exit_price,exit_type,exit_cost,net_pnl,pnl_pct,price_pnl_pct,bars_held,days_held\n"
         f"ACME,{sig.date()},112.0,90.0,{ent.date()},113.0,10,10,False,101.7,1,1,{ex.date()},101.7,STOP,1,-100,-10.4,-10.0,9,13\n")
-    (root / "paper/SP500/positions.json").write_text(json.dumps([{"symbol": "ACME", "signal_date": str(d[100].date()), "signal_close": 100.0,
+    (root / "paper/SP500/positions.json").write_text(json.dumps([{"symbol": "ACME", "signal_date": str(d[100].date()),
                                                                  "entry_date": str(d[101].date()), "entry_price": 100.0, "stop_price": 90.0, "qty": 5}]))
+    (root / "paper/SP500/signals" / f"{d[100].date()}.json").write_text(json.dumps({"regime": {"on": True}, "entries_next_open": [{"symbol": "ACME", "signal_close": 98.0}]}))
     (root / "paper/SP500/signals" / f"{sig.date()}.json").write_text(json.dumps({"regime": {"on": True}}))
     (root / "paper/SP500/signals" / f"{sig.date()}.rev1.json").write_text(json.dumps({"regime": {"on": False}}))
     res = tmp_path / "results"; (res / "latest/results/SP500").mkdir(parents=True)
@@ -94,6 +95,7 @@ def test_end_to_end_report(tmp_path):
     assert closed["result_r"] == -1.0 and closed["mfe_r"] == pytest.approx(1.06, abs=0.01)
     assert closed["bars_to_stop"] == 9 and closed["entry_gap_pct"] == pytest.approx(0.89, abs=0.01)
     assert opened["exit_type"] == "OPEN" and opened["bars"] == 10 and opened["price_pnl_pct"] == 0.0
+    assert opened["entry_gap_pct"] == pytest.approx(2.04, abs=0.01)      # signal_close taken from the signal file
     s = m["summary"]
     assert s["closed"] == 1 and s["open"] == 1 and s["wins"] == 0 and s["reached_1r"] == 1 and s["losing_streak"] == 1
     assert m["reference"]["win_rate_pct"] == pytest.approx(22.2, abs=0.1) and m["reference"]["longest_losing_streak"] == 7

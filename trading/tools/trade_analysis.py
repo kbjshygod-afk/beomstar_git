@@ -86,18 +86,42 @@ def read_csv_rows(text: str | None) -> list[dict]:
     return rows
 
 
+def signal_close_at(src: Source, market: str, day: str, symbol: str) -> float | None:
+    """signal_close of `symbol` in the latest signal file for `day` (open positions lack it)."""
+    names = [n for n in src.listdir(f"paper/{market}/signals") if n.startswith(day)]
+    if not names:
+        return None
+    best = max(names, key=_rev)
+    try:
+        snap = json.loads(src.read(f"paper/{market}/signals/{best}") or "{}")
+    except ValueError:
+        return None
+    for e in snap.get("entries_next_open") or []:
+        if e.get("symbol") == symbol:
+            return e.get("signal_close")
+    return None
+
+
 def ledger_trades(src: Source, market: str) -> list[dict]:
     """Closed trades, then open positions as trades without an exit."""
     rows = [r for r in read_csv_rows(src.read(f"paper/{market}/trades.csv")) if r.get("exit_date")]
     pos = src.read(f"paper/{market}/positions.json")
     if pos:
         for p in json.loads(pos) or []:
+            sc = p.get("signal_close")
+            if sc is None and p.get("signal_date"):
+                sc = signal_close_at(src, market, p["signal_date"], p.get("symbol"))
             rows.append({"symbol": p.get("symbol"), "signal_date": p.get("signal_date"),
-                         "signal_close": p.get("signal_close"), "entry_date": p.get("entry_date"),
+                         "signal_close": sc, "entry_date": p.get("entry_date"),
                          "entry_price": p.get("entry_price"), "stop_price": p.get("stop_price"),
                          "qty": p.get("qty"), "exit_date": None, "exit_price": None, "exit_type": "OPEN",
                          "pnl_pct": None, "price_pnl_pct": None, "days_held": None})
     return rows
+
+
+def _rev(name: str) -> int:
+    m = re.search(r"\.rev(\d+)\.json$", name)
+    return int(m.group(1)) if m else 0
 
 
 def regime_at(src: Source, market: str, day: str) -> bool | None:
@@ -105,10 +129,7 @@ def regime_at(src: Source, market: str, day: str) -> bool | None:
     names = [n for n in src.listdir(f"paper/{market}/signals") if n.startswith(day)]
     if not names:
         return None
-    def rev(n):
-        m = re.search(r"\.rev(\d+)\.json$", n)
-        return int(m.group(1)) if m else 0
-    best = max(names, key=rev)
+    best = max(names, key=_rev)
     try:
         return (json.loads(src.read(f"paper/{market}/signals/{best}") or "{}").get("regime") or {}).get("on")
     except (ValueError, AttributeError):
