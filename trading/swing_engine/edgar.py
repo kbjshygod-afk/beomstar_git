@@ -11,6 +11,7 @@ derived as the year minus the first three quarters when it has no frame of its o
 from __future__ import annotations
 
 import json
+import os
 import re
 import urllib.error
 import urllib.request
@@ -18,7 +19,16 @@ from pathlib import Path
 
 from .fundamentals import Company
 
-UA = "beomstar-swing research (contact: repository owner via GitHub)"
+# SEC's edge rejects (403) any User-Agent without a contact address, so the project name
+# plus an e-mail is required: set EDGAR_USER_AGENT ("beomstar-swing you@example.com").
+UA_ENV = "EDGAR_USER_AGENT"
+UA_DEFAULT = "beomstar-swing research"
+
+
+def user_agent() -> str:
+    return os.environ.get(UA_ENV, "").strip() or UA_DEFAULT
+
+
 TICKERS_URL = "https://www.sec.gov/files/company_tickers.json"
 FACTS_URL = "https://data.sec.gov/api/xbrl/companyfacts/CIK{cik:010d}.json"
 # first concept with data wins
@@ -42,7 +52,8 @@ class EdgarError(Exception):
 
 
 def _get(url: str, timeout: float = 30) -> bytes:
-    req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept-Encoding": "gzip, deflate", "Host": url.split("/")[2]})
+    ua = user_agent()
+    req = urllib.request.Request(url, headers={"User-Agent": ua, "Accept-Encoding": "gzip, deflate", "Host": url.split("/")[2]})
     try:
         with urllib.request.urlopen(req, timeout=timeout) as r:
             raw = r.read()
@@ -51,9 +62,32 @@ def _get(url: str, timeout: float = 30) -> bytes:
                 raw = gzip.decompress(raw)
             return raw
     except urllib.error.HTTPError as e:
-        raise EdgarError(f"EDGAR HTTP {e.code} for {url}") from None
+        raise EdgarError(f"EDGAR HTTP {e.code} for {url}{_http_error_hint(e, ua)}") from None
     except (urllib.error.URLError, TimeoutError, OSError) as e:
         raise EdgarError(f"EDGAR network {getattr(e, 'reason', e)}") from None
+
+
+BLOCKED_MARKERS = ("Undeclared Automated Tool", "Request Rate Threshold", "Access Denied")
+
+
+def _http_error_hint(e, ua: str) -> str:
+    """Why SEC said no: a User-Agent without a contact, or a network it refuses outright
+    (GitHub-hosted runners get 403 on every sec.gov host even with a proper User-Agent)."""
+    if e.code != 403:
+        return ""
+    if "@" not in ua:
+        return f" (User-Agent has no contact address; set {UA_ENV}='project you@example.com')"
+    try:
+        body = e.read()
+        if body[:2] == b"\x1f\x8b":
+            import gzip
+            body = gzip.decompress(body)
+        text = body.decode("utf-8", "replace")
+    except Exception:
+        text = ""
+    marker = next((m for m in BLOCKED_MARKERS if m in text), None)
+    where = f" ({marker})" if marker else ""
+    return f"{where}: SEC refuses this network; run tools/fundamentals_report.py from a home network (Mac)"
 
 
 def cik_for(ticker: str, cache_dir=None) -> tuple[int, str]:

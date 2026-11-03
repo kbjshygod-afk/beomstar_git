@@ -1,5 +1,7 @@
 # Financial statements from the official filings APIs (DART for Korea, SEC EDGAR for the US).
 # Manual only. Reference material; nothing here touches the paper ledger or the rules.
+# SEC refuses GitHub-hosted runners (403 on every sec.gov host, 2026-11-03), so US symbols
+# only work from a home network: run trading/tools/fundamentals_report.py on the Mac.
 name: fundamentals
 
 on:
@@ -36,6 +38,9 @@ jobs:
         working-directory: trading
         env:
           DART_API_KEY: ${{ secrets.DART_API_KEY }}
+          # SEC requires a contact in the User-Agent. Repo variable EDGAR_USER_AGENT
+          # ("beomstar-swing you@example.com") wins; else the actor's GitHub noreply address.
+          EDGAR_USER_AGENT: ${{ vars.EDGAR_USER_AGENT || format('beomstar-swing {0}@users.noreply.github.com', github.actor) }}
         run: |
           python tools/fundamentals_report.py --symbols "${{ github.event.inputs.symbols }}" --years "${{ github.event.inputs.years }}" --out reports --cache-dir .cache | tee report.txt
           cat report.txt >> "$GITHUB_STEP_SUMMARY"
