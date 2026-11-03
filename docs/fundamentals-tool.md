@@ -5,7 +5,7 @@
 | 시장 | 출처 | 범위 | 필요한 것 |
 |---|---|---|---|
 | 한국 (6자리 코드, `.KS`/`.KQ`) | DART OpenAPI `fnlttSinglAcntAll` (연결재무제표 우선, 없으면 개별) | 분기·반기·3분기·사업보고서 → 8분기 + 5년 | 저장소 Secret `DART_API_KEY` (opendart.fss.or.kr 무료 발급, 하루 20,000회) |
-| 미국 (티커) | SEC EDGAR XBRL company facts | 10-Q/10-K 프레임 → 8분기 + 5년 | 없음 (User-Agent만) |
+| 미국 (티커) | SEC EDGAR XBRL company facts | 10-Q/10-K 프레임 → 8분기 + 5년 | 없음 (User-Agent에 연락처 필수 → `EDGAR_USER_AGENT`) |
 
 ## 실행
 - GitHub Actions → **fundamentals** → Run workflow → `symbols`에 `005930.KS,096530.KQ,AAPL` 처럼 입력. 결과는 실행 Summary에 바로 보이고, `fundamentals-<run id>` 아티팩트(md·json)로 30일 보관.
@@ -25,4 +25,5 @@
 ## 알려진 한계
 - 금융업(은행·보험·증권)은 매출·영업이익 계정이 달라 비어 있을 수 있다. 지주회사 연결 범위 변경, 회계연도가 12월이 아닌 기업(미국 일부)은 분기 라벨이 회계연도 기준으로 어긋날 수 있다.
 - 공시 직후(분기 마감 후 45일 안)에는 최신 분기가 아직 없다. "보고서 미공시"로 표기.
+- EDGAR는 User-Agent에 연락처(이메일)가 없으면 403으로 막는다. 워크플로는 저장소 변수 `EDGAR_USER_AGENT`(`beomstar-swing you@example.com`)를 쓰고, 없으면 실행자의 GitHub noreply 주소로 대신한다. 2026-11-03 첫 실행이 이 403으로 실패해 추가.
 - 밸류에이션의 종가는 Yahoo 마지막 종가이며, 실행 시점에 따라 하루 늦을 수 있다.

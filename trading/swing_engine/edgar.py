@@ -11,6 +11,7 @@ derived as the year minus the first three quarters when it has no frame of its o
 from __future__ import annotations
 
 import json
+import os
 import re
 import urllib.error
 import urllib.request
@@ -18,7 +19,16 @@ from pathlib import Path
 
 from .fundamentals import Company
 
-UA = "beomstar-swing research (contact: repository owner via GitHub)"
+# SEC's edge rejects (403) any User-Agent without a contact address, so the project name
+# plus an e-mail is required: set EDGAR_USER_AGENT ("beomstar-swing you@example.com").
+UA_ENV = "EDGAR_USER_AGENT"
+UA_DEFAULT = "beomstar-swing research"
+
+
+def user_agent() -> str:
+    return os.environ.get(UA_ENV, "").strip() or UA_DEFAULT
+
+
 TICKERS_URL = "https://www.sec.gov/files/company_tickers.json"
 FACTS_URL = "https://data.sec.gov/api/xbrl/companyfacts/CIK{cik:010d}.json"
 # first concept with data wins
@@ -42,7 +52,8 @@ class EdgarError(Exception):
 
 
 def _get(url: str, timeout: float = 30) -> bytes:
-    req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept-Encoding": "gzip, deflate", "Host": url.split("/")[2]})
+    ua = user_agent()
+    req = urllib.request.Request(url, headers={"User-Agent": ua, "Accept-Encoding": "gzip, deflate", "Host": url.split("/")[2]})
     try:
         with urllib.request.urlopen(req, timeout=timeout) as r:
             raw = r.read()
@@ -51,7 +62,8 @@ def _get(url: str, timeout: float = 30) -> bytes:
                 raw = gzip.decompress(raw)
             return raw
     except urllib.error.HTTPError as e:
-        raise EdgarError(f"EDGAR HTTP {e.code} for {url}") from None
+        hint = f" (User-Agent has no contact address; set {UA_ENV}='project you@example.com')" if e.code == 403 and "@" not in ua else ""
+        raise EdgarError(f"EDGAR HTTP {e.code} for {url}{hint}") from None
     except (urllib.error.URLError, TimeoutError, OSError) as e:
         raise EdgarError(f"EDGAR network {getattr(e, 'reason', e)}") from None
 

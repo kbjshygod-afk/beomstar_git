@@ -103,3 +103,11 @@ def test_dart_corp_codes_zip_and_missing_key(monkeypatch, tmp_path):
     assert dart.api_key() is None
     with pytest.raises(dart.DARTError):
         dart.parse_corp_codes(b'<?xml version="1.0"?><result><status>010</status><message>bad key</message></result>')
+
+
+def test_edgar_user_agent_from_env(monkeypatch):
+    from swing_engine import edgar
+    monkeypatch.delenv(edgar.UA_ENV, raising=False)
+    assert edgar.user_agent() == edgar.UA_DEFAULT
+    monkeypatch.setenv(edgar.UA_ENV, " beomstar-swing a@b.c ")
+    assert edgar.user_agent() == "beomstar-swing a@b.c"
