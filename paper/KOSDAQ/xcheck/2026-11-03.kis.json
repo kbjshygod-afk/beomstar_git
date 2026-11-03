@@ -1571,7 +1571,7 @@
   ]
  },
  "error": null,
- "calls": 186,
+ "calls": 1,
  "guard": {
   "close_mismatched": 136,
   "compared": 150,
