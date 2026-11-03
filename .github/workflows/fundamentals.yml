@@ -1,0 +1,46 @@
+# Financial statements from the official filings APIs (DART for Korea, SEC EDGAR for the US).
+# Manual only. Reference material; nothing here touches the paper ledger or the rules.
+name: fundamentals
+
+on:
+  workflow_dispatch:
+    inputs:
+      symbols:
+        description: 'Comma-separated symbols: 005930.KS, 096530.KQ, AAPL, BRK-B'
+        required: true
+      years:
+        description: 'Years of annual history'
+        default: '5'
+
+permissions:
+  contents: read
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: trading/requirements.txt
+      - run: pip install -r trading/requirements.txt
+      - uses: actions/cache@v4
+        with:
+          path: trading/.cache/dart
+          key: fundamentals-dart-${{ github.run_id }}
+          restore-keys: fundamentals-dart-
+      - name: Report
+        working-directory: trading
+        env:
+          DART_API_KEY: ${{ secrets.DART_API_KEY }}
+        run: |
+          python tools/fundamentals_report.py --symbols "${{ github.event.inputs.symbols }}" --years "${{ github.event.inputs.years }}" --out reports --cache-dir .cache | tee report.txt
+          cat report.txt >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fundamentals-${{ github.run_id }}
+          path: trading/reports/
+          retention-days: 30
