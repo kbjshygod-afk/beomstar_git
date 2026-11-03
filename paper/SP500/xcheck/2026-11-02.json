@@ -7,47 +7,54 @@
  "index": null,
  "symbols": {
   "date": "2026-11-02",
-  "compared": 25,
+  "compared": 26,
   "missing": [],
   "mismatches": [
    {
-    "symbol": "IDXX",
-    "field": "open",
-    "yahoo": 621.2199707,
-    "krx": 625.0,
-    "diff_pct": 0.605
+    "symbol": "ELV",
+    "field": "volume",
+    "yahoo": 2181500.0,
+    "krx": 2103802.0,
+    "diff_pct": 3.562
    },
    {
     "symbol": "IFF",
     "field": "volume",
-    "yahoo": 3224658.0,
+    "yahoo": 3224800.0,
     "krx": 3047045.0,
-    "diff_pct": 5.508
+    "diff_pct": 5.512
    },
    {
-    "symbol": "INTU",
-    "field": "open",
-    "yahoo": 339.269989,
-    "krx": 340.25,
-    "diff_pct": 0.288
+    "symbol": "KDP",
+    "field": "volume",
+    "yahoo": 32028700.0,
+    "krx": 31005590.0,
+    "diff_pct": 3.194
    },
    {
     "symbol": "LLY",
-    "field": "low",
-    "yahoo": 1387.099976,
-    "krx": 1382.02,
-    "diff_pct": 0.366
+    "field": "volume",
+    "yahoo": 3730600.0,
+    "krx": 3492695.0,
+    "diff_pct": 6.377
+   },
+   {
+    "symbol": "PLTR",
+    "field": "volume",
+    "yahoo": 36476600.0,
+    "krx": 37183894.0,
+    "diff_pct": 1.902
    },
    {
     "symbol": "GWW",
     "field": "volume",
-    "yahoo": 262985.0,
+    "yahoo": 263000.0,
     "krx": 258457.0,
-    "diff_pct": 1.722
+    "diff_pct": 1.727
    }
   ],
   "unlisted": [],
-  "sampled": 25,
+  "sampled": 26,
   "focus": [
    "AMGN",
    "BIIB",
@@ -60,6 +67,7 @@
    "HUM",
    "IFF",
    "KDP",
+   "KO",
    "LLY",
    "TRV",
    "VEEV",
@@ -67,5 +75,5 @@
   ]
  },
  "error": null,
- "calls": 0
+ "calls": 11
 }

@@ -9,7 +9,8 @@
  "uncommitted": [],
  "mismatched": [],
  "revised": [
-  "2026-10-22"
+  "2026-10-22",
+  "2026-11-02"
  ],
  "revised_after_open": [],
  "rows": [
@@ -408,7 +409,7 @@
   {
    "date": "2026-11-02",
    "committed_at": "2026-11-02T23:31:47Z",
-   "compared_file": "2026-11-02.json",
+   "compared_file": "2026-11-02.rev1.json",
    "revisions_after_open": [],
    "deadline": "2026-11-03T14:30:00Z",
    "on_time": true,
@@ -418,7 +419,9 @@
    "entries_only_recomputed": [],
    "exits_only_committed": [],
    "exits_only_recomputed": [],
-   "revisions": []
+   "revisions": [
+    "2026-11-02.rev1.json"
+   ]
   }
  ]
 }
