@@ -1,0 +1,38 @@
+{
+ "market": "NDX100",
+ "as_of": "2026-11-03",
+ "regime": {
+  "benchmark": "^NDX",
+  "mode": "MA200",
+  "close": 28180.2637,
+  "ma200": 27952.7693,
+  "ma20": 29626.5501,
+  "on": true
+ },
+ "entries_next_open": [],
+ "exits_next_open": [],
+ "positions": [
+  "AMGN",
+  "CSX",
+  "KDP",
+  "VRTX"
+ ],
+ "watchlist": [
+  {
+   "symbol": "MNST",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 47.18,
+   "pivot": 48.47,
+   "to_pivot_pct": 2.73,
+   "rs": 74.49
+  }
+ ],
+ "coverage": {
+  "requested": 101,
+  "loaded": 100,
+  "failed": [
+   "WBD"
+  ]
+ },
+ "generated_at": "2026-11-03T22:37:45Z"
+}
