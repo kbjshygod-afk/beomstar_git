@@ -385,14 +385,14 @@
    "xcheck_kis": null
   },
   "NDX100": {
-   "as_of": "2026-11-02",
+   "as_of": "2026-11-03",
    "start_date": "2026-09-25",
    "regime": {
     "benchmark": "^NDX",
     "mode": "MA200",
-    "close": 27989.8203,
-    "ma200": 27939.5143,
-    "ma20": 29778.7604,
+    "close": 28180.2637,
+    "ma200": 27952.7693,
+    "ma20": 29626.5501,
     "on": true
    },
    "entries_next_open": [],
@@ -406,10 +406,10 @@
      "entry_price": 437.8900146,
      "qty": 24086.34911346862,
      "stop_price": 407.23771357799995,
-     "last_close": 465.4500122,
-     "exit_ma": 420.48620055400005,
-     "unrealized_pnl": 620303.3972526062,
-     "price_pnl_pct": 6.293817324237305,
+     "last_close": 461.2600098,
+     "exit_ma": 420.834600824,
+     "unrealized_pnl": 519583.38038112037,
+     "price_pnl_pct": 5.336955495856155,
      "exit_pending": false
     },
     {
@@ -420,10 +420,10 @@
      "entry_price": 35.31999969,
      "qty": 297703.06687467825,
      "stop_price": 32.8475997117,
-     "last_close": 36.81999969,
-     "exit_ma": 32.537199974,
-     "unrealized_pnl": 403602.00219249167,
-     "price_pnl_pct": 4.246885654488519,
+     "last_close": 34.74000168,
+     "exit_ma": 32.5818000412,
+     "unrealized_pnl": -214381.3409043979,
+     "price_pnl_pct": -1.6421234855339417,
      "exit_pending": false
     },
     {
@@ -434,10 +434,10 @@
      "entry_price": 51.56000137,
      "qty": 202751.5170602284,
      "stop_price": 47.9508012741,
-     "last_close": 51.61999893,
-     "exit_ma": 48.860400010000006,
-     "unrealized_pnl": -29675.206872288138,
-     "price_pnl_pct": 0.11636454306789279,
+     "last_close": 50.72000122,
+     "exit_ma": 48.8460000618,
+     "unrealized_pnl": -211786.15612341277,
+     "price_pnl_pct": -1.629170146781167,
      "exit_pending": false
     },
     {
@@ -448,29 +448,29 @@
      "entry_price": 560.8800049,
      "qty": 18721.89471550134,
      "stop_price": 521.618404557,
-     "last_close": 553.1500244,
-     "exit_ma": 523.316403196,
-     "unrealized_pnl": -186433.38691080175,
-     "price_pnl_pct": -1.3781879247733553,
+     "last_close": 530.7600098,
+     "exit_ma": 522.979802854,
+     "unrealized_pnl": -604778.5159384981,
+     "price_pnl_pct": -5.370131728152816,
      "exit_pending": false
     }
    ],
    "stale_positions": [],
    "watchlist": [
     {
-     "symbol": "FAST",
+     "symbol": "MNST",
      "label": "2순위 · 근접 (피벗 3% 이내)",
-     "close": 52.55,
-     "pivot": 53.3,
-     "to_pivot_pct": 1.43,
-     "rs": 70.41
+     "close": 47.18,
+     "pivot": 48.47,
+     "to_pivot_pct": 2.73,
+     "rs": 74.49
     }
    ],
    "performance": {
-    "equity": 97694918.0,
-    "return_pct": -2.31,
-    "bench_return_pct": -8.55,
-    "mdd_pct": -3.75,
+    "equity": 96373115.0,
+    "return_pct": -3.63,
+    "bench_return_pct": -7.93,
+    "mdd_pct": -4.42,
     "closed_trades": 4,
     "win_rate_pct": 0.0,
     "avg_win_pct": null,
@@ -479,8 +479,8 @@
    },
    "status_csv": "NDX100/status.csv",
    "audit": {
-    "days": 27,
-    "signal_files": 27,
+    "days": 28,
+    "signal_files": 28,
     "missing_days": [],
     "late": [],
     "uncommitted": [],
@@ -491,17 +491,12 @@
    "xcheck": {
     "source": "Tiingo",
     "status": "mismatch",
-    "checked": "2026-11-02",
+    "checked": "2026-11-03",
     "error": null,
     "mismatched_symbols": [
-     "CMCSA",
-     "CRWV",
-     "CSCO",
-     "CSX",
-     "CTAS",
-     "DASH",
-     "KDP",
-     "VRTX"
+     "AMGN",
+     "FTNT",
+     "GOOG"
     ],
     "index_match": null
    },
@@ -1271,7 +1266,7 @@
    }
   }
  },
- "updated_at": "2026-11-03T22:36:33Z",
+ "updated_at": "2026-11-03T22:37:45Z",
  "disclaimer": "기계적 룰 출력이며 투자 자문이 아닙니다. 매수·매도 결정은 소유자 본인이 합니다.",
  "unconfirmed": "미확인 추정값(스캐너 원본 코드 미확인): 피벗=직전 20봉 최고가(당일 제외) · 거래량 평균=직전 50일(당일 제외) · RS=지수 대비 가중 1년 수익률 ≥ 0%p(스캐너는 유니버스 백분위 ≥ 70) · 52주 고저=종가 기준 · 200일선 상승=22봉 전 대비 · 수축비=10/40일 평균 TR · 비용=편도 0.2%"
 }
