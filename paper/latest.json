@@ -452,13 +452,13 @@
      "signal_date": "2026-10-30",
      "exit_signal_date": null,
      "entry_date": "2026-11-02",
-     "entry_price": 559.9299927,
+     "entry_price": 560.8800049,
      "qty": 18721.89471550134,
-     "stop_price": 520.7348932109999,
+     "stop_price": 521.618404557,
      "last_close": 553.1500244,
      "exit_ma": 523.316403196,
-     "unrealized_pnl": -168611.78646718524,
-     "price_pnl_pct": -1.2108599982841972,
+     "unrealized_pnl": -186433.38691080175,
+     "price_pnl_pct": -1.3781879247733553,
      "exit_pending": false
     }
    ],
@@ -474,8 +474,8 @@
     }
    ],
    "performance": {
-    "equity": 97712740.0,
-    "return_pct": -2.29,
+    "equity": 97694918.0,
+    "return_pct": -2.31,
     "bench_return_pct": -8.55,
     "mdd_pct": -3.75,
     "closed_trades": 4,
@@ -501,7 +501,13 @@
     "checked": "2026-11-02",
     "error": null,
     "mismatched_symbols": [
-     "CRWD",
+     "CMCSA",
+     "CRWV",
+     "CSCO",
+     "CSX",
+     "CTAS",
+     "DASH",
+     "KDP",
      "VRTX"
     ],
     "index_match": null
@@ -1280,7 +1286,7 @@
    }
   }
  },
- "updated_at": "2026-11-03T03:20:49Z",
+ "updated_at": "2026-11-03T03:21:42Z",
  "disclaimer": "기계적 룰 출력이며 투자 자문이 아닙니다. 매수·매도 결정은 소유자 본인이 합니다.",
  "unconfirmed": "미확인 추정값(스캐너 원본 코드 미확인): 피벗=직전 20봉 최고가(당일 제외) · 거래량 평균=직전 50일(당일 제외) · RS=지수 대비 가중 1년 수익률 ≥ 0%p(스캐너는 유니버스 백분위 ≥ 70) · 52주 고저=종가 기준 · 200일선 상승=22봉 전 대비 · 수축비=10/40일 평균 TR · 비용=편도 0.2%"
 }
