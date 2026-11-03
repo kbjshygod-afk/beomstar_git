@@ -1,0 +1,78 @@
+{
+ "market": "SP500",
+ "as_of": "2026-11-03",
+ "source": "Tiingo",
+ "status": "mismatch",
+ "checked": "2026-11-03",
+ "index": null,
+ "symbols": {
+  "date": "2026-11-03",
+  "compared": 25,
+  "missing": [],
+  "mismatches": [
+   {
+    "symbol": "AMGN",
+    "field": "volume",
+    "yahoo": 2351852.0,
+    "krx": 2324003.0,
+    "diff_pct": 1.184
+   },
+   {
+    "symbol": "CRL",
+    "field": "low",
+    "yahoo": 339.0,
+    "krx": 338.55,
+    "diff_pct": 0.133
+   },
+   {
+    "symbol": "ELV",
+    "field": "high",
+    "yahoo": 417.3850098,
+    "krx": 420.0,
+    "diff_pct": 0.623
+   },
+   {
+    "symbol": "HUM",
+    "field": "low",
+    "yahoo": 407.3599854,
+    "krx": 405.45,
+    "diff_pct": 0.469
+   },
+   {
+    "symbol": "IFF",
+    "field": "volume",
+    "yahoo": 2954278.0,
+    "krx": 2877415.0,
+    "diff_pct": 2.602
+   },
+   {
+    "symbol": "IQV",
+    "field": "volume",
+    "yahoo": 1321625.0,
+    "krx": 1230505.0,
+    "diff_pct": 6.895
+   }
+  ],
+  "unlisted": [],
+  "sampled": 25,
+  "focus": [
+   "AMGN",
+   "BIIB",
+   "CRL",
+   "EBAY",
+   "ELV",
+   "EXPD",
+   "GWW",
+   "HUM",
+   "IFF",
+   "KDP",
+   "LLY",
+   "TRV",
+   "VEEV",
+   "VRSN",
+   "WSM"
+  ]
+ },
+ "error": null,
+ "calls": 25
+}
