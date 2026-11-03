@@ -515,14 +515,14 @@
    "xcheck_kis": null
   },
   "CRYPTO": {
-   "as_of": "2026-11-01",
+   "as_of": "2026-11-02",
    "start_date": "2026-09-25",
    "regime": {
     "benchmark": "BTC-USD",
     "mode": "MA200",
-    "close": 78248.4531,
-    "ma200": 73148.8931,
-    "ma20": 80822.1453,
+    "close": 76677.2969,
+    "ma200": 73156.5189,
+    "ma20": 80501.2539,
     "on": true
    },
    "entries_next_open": [],
@@ -536,19 +536,19 @@
      "entry_price": 597.4818726,
      "qty": 12454.957245047199,
      "stop_price": 537.73368534,
-     "last_close": 599.2358398,
-     "exit_ma": 561.6089404339999,
-     "unrealized_pnl": -7964.54939944949,
-     "price_pnl_pct": 0.2935599020548407,
+     "last_close": 604.9031982,
+     "exit_ma": 563.344558108,
+     "unrealized_pnl": 62480.983751781285,
+     "price_pnl_pct": 1.2421005456961343,
      "exit_pending": false
     }
    ],
    "stale_positions": [],
    "watchlist": [],
    "performance": {
-    "equity": 99228445.0,
-    "return_pct": -0.77,
-    "bench_return_pct": -6.89,
+    "equity": 99299031.0,
+    "return_pct": -0.7,
+    "bench_return_pct": -8.76,
     "mdd_pct": -1.58,
     "closed_trades": 1,
     "win_rate_pct": 0.0,
@@ -558,8 +558,8 @@
    },
    "status_csv": "CRYPTO/status.csv",
    "audit": {
-    "days": 38,
-    "signal_files": 38,
+    "days": 39,
+    "signal_files": 39,
     "missing_days": [],
     "late": [],
     "uncommitted": [],
@@ -570,7 +570,7 @@
    "xcheck": {
     "source": "Coinbase/Kraken",
     "status": "mismatch",
-    "checked": "2026-11-01",
+    "checked": "2026-11-02",
     "error": null,
     "mismatched_symbols": [
      "SHIB-USD"
@@ -1292,7 +1292,7 @@
    }
   }
  },
- "updated_at": "2026-11-03T03:22:32Z",
+ "updated_at": "2026-11-03T07:06:43Z",
  "disclaimer": "기계적 룰 출력이며 투자 자문이 아닙니다. 매수·매도 결정은 소유자 본인이 합니다.",
  "unconfirmed": "미확인 추정값(스캐너 원본 코드 미확인): 피벗=직전 20봉 최고가(당일 제외) · 거래량 평균=직전 50일(당일 제외) · RS=지수 대비 가중 1년 수익률 ≥ 0%p(스캐너는 유니버스 백분위 ≥ 70) · 52주 고저=종가 기준 · 200일선 상승=22봉 전 대비 · 수축비=10/40일 평균 TR · 비용=편도 0.2%"
 }
