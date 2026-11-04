@@ -1,0 +1,98 @@
+{
+ "market": "SP500",
+ "as_of": "2026-11-04",
+ "source": "Tiingo",
+ "status": "mismatch",
+ "checked": "2026-11-04",
+ "index": null,
+ "symbols": {
+  "date": "2026-11-04",
+  "compared": 45,
+  "missing": [],
+  "mismatches": [
+   {
+    "symbol": "AIZ",
+    "field": "low",
+    "yahoo": 302.5549927,
+    "krx": 302.05,
+    "diff_pct": 0.167
+   },
+   {
+    "symbol": "COHR",
+    "field": "volume",
+    "yahoo": 11448809.0,
+    "krx": 10787303.0,
+    "diff_pct": 5.778
+   },
+   {
+    "symbol": "HUM",
+    "field": "low",
+    "yahoo": 404.980011,
+    "krx": 404.18,
+    "diff_pct": 0.198
+   },
+   {
+    "symbol": "ROST",
+    "field": "low",
+    "yahoo": 236.75,
+    "krx": 236.1075,
+    "diff_pct": 0.271
+   },
+   {
+    "symbol": "GWW",
+    "field": "low",
+    "yahoo": 1449.97998,
+    "krx": 1443.4,
+    "diff_pct": 0.454
+   },
+   {
+    "symbol": "WSM",
+    "field": "high",
+    "yahoo": 270.8349915,
+    "krx": 271.8898,
+    "diff_pct": 0.388
+   }
+  ],
+  "unlisted": [],
+  "sampled": 45,
+  "focus": [
+   "AIZ",
+   "AMGN",
+   "BAX",
+   "BDX",
+   "BIIB",
+   "CAH",
+   "CDW",
+   "CNC",
+   "CPAY",
+   "CRL",
+   "DAL",
+   "EBAY",
+   "ELV",
+   "EW",
+   "EXPD",
+   "GWW",
+   "HST",
+   "HUM",
+   "IFF",
+   "KDP",
+   "LLY",
+   "MA",
+   "MMM",
+   "MSFT",
+   "NDAQ",
+   "PRU",
+   "ROST",
+   "SWK",
+   "TRV",
+   "V",
+   "VEEV",
+   "VRSN",
+   "WELL",
+   "WSM",
+   "XYZ"
+  ]
+ },
+ "error": null,
+ "calls": 45
+}

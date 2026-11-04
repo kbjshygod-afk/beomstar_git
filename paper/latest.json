@@ -1,23 +1,163 @@
 {
  "markets": {
   "SP500": {
-   "as_of": "2026-11-03",
+   "as_of": "2026-11-04",
    "start_date": "2026-09-25",
    "regime": {
     "benchmark": "^GSPC",
     "mode": "MA200",
-    "close": 7568.9199,
-    "ma200": 7315.8864,
-    "ma20": 7705.7755,
+    "close": 7688.6201,
+    "ma200": 7320.3452,
+    "ma20": 7700.118,
     "on": true
    },
    "entries_next_open": [
     {
+     "symbol": "CNC",
+     "signal_close": 76.01,
+     "rs": 98.59,
+     "desired_qty": 99399.159861,
+     "est_stop_from_close": 68.409
+    },
+    {
+     "symbol": "SWK",
+     "signal_close": 118.33,
+     "rs": 96.18,
+     "desired_qty": 63849.659755,
+     "est_stop_from_close": 106.497
+    },
+    {
+     "symbol": "BDX",
+     "signal_close": 209.19,
+     "rs": 92.97,
+     "desired_qty": 36117.071882,
+     "est_stop_from_close": 188.271
+    },
+    {
+     "symbol": "CPAY",
+     "signal_close": 418.6,
+     "rs": 91.57,
+     "desired_qty": 18049.045016,
+     "est_stop_from_close": 376.74
+    },
+    {
+     "symbol": "HST",
+     "signal_close": 26.11,
+     "rs": 90.96,
+     "desired_qty": 289365.384039,
+     "est_stop_from_close": 23.499
+    },
+    {
+     "symbol": "V",
+     "signal_close": 436.57,
+     "rs": 88.96,
+     "desired_qty": 17306.114088,
+     "est_stop_from_close": 392.913
+    },
+    {
+     "symbol": "BAX",
+     "signal_close": 26.5,
+     "rs": 86.75,
+     "desired_qty": 285106.805802,
+     "est_stop_from_close": 23.85
+    },
+    {
+     "symbol": "CDW",
+     "signal_close": 168.75,
+     "rs": 86.55,
+     "desired_qty": 44772.328022,
+     "est_stop_from_close": 151.875
+    },
+    {
+     "symbol": "CAH",
+     "signal_close": 261.93,
+     "rs": 86.14,
+     "desired_qty": 28844.846197,
+     "est_stop_from_close": 235.737
+    },
+    {
+     "symbol": "XYZ",
+     "signal_close": 87.63,
+     "rs": 85.14,
+     "desired_qty": 86218.539209,
+     "est_stop_from_close": 78.867
+    },
+    {
+     "symbol": "MA",
+     "signal_close": 672.68,
+     "rs": 84.74,
+     "desired_qty": 11231.685847,
+     "est_stop_from_close": 605.412
+    },
+    {
+     "symbol": "AIZ",
+     "signal_close": 308.52,
+     "rs": 83.53,
+     "desired_qty": 24488.949252,
+     "est_stop_from_close": 277.668
+    },
+    {
+     "symbol": "NDAQ",
+     "signal_close": 109.7,
+     "rs": 81.33,
+     "desired_qty": 68872.65786,
+     "est_stop_from_close": 98.73
+    },
+    {
+     "symbol": "MSFT",
+     "signal_close": 555.8,
+     "rs": 78.71,
+     "desired_qty": 13593.613745,
+     "est_stop_from_close": 500.22
+    },
+    {
      "symbol": "VRSN",
-     "signal_close": 313.88,
-     "rs": 80.32,
-     "desired_qty": 23502.08331,
-     "est_stop_from_close": 282.492
+     "signal_close": 318.03,
+     "rs": 77.71,
+     "desired_qty": 23756.659379,
+     "est_stop_from_close": 286.227
+    },
+    {
+     "symbol": "WELL",
+     "signal_close": 247.99,
+     "rs": 77.51,
+     "desired_qty": 30466.269552,
+     "est_stop_from_close": 223.191
+    },
+    {
+     "symbol": "DAL",
+     "signal_close": 89.24,
+     "rs": 77.31,
+     "desired_qty": 84663.049473,
+     "est_stop_from_close": 80.316
+    },
+    {
+     "symbol": "EW",
+     "signal_close": 99.37,
+     "rs": 74.7,
+     "desired_qty": 76032.304968,
+     "est_stop_from_close": 89.433
+    },
+    {
+     "symbol": "MMM",
+     "signal_close": 193.95,
+     "rs": 73.9,
+     "desired_qty": 38955.042405,
+     "est_stop_from_close": 174.555
+    },
+    {
+     "symbol": "ROST",
+     "signal_close": 245.74,
+     "rs": 73.69,
+     "desired_qty": 30745.219275,
+     "est_stop_from_close": 221.166
+    },
+    {
+     "symbol": "PRU",
+     "signal_close": 126.63,
+     "rs": 72.09,
+     "desired_qty": 59664.617507,
+     "est_stop_from_close": 113.967
     }
    ],
    "exits_next_open": [],
@@ -30,10 +170,10 @@
      "entry_price": 434.5700073,
      "qty": 17321.004855846855,
      "stop_price": 391.11300657,
-     "last_close": 417.8699951,
-     "exit_ma": 402.28239990199995,
-     "unrealized_pnl": -318791.22725067846,
-     "price_pnl_pct": -3.8428819107323653,
+     "last_close": 417.4200134,
+     "exit_ma": 402.83660034,
+     "unrealized_pnl": -326569.7741909977,
+     "price_pnl_pct": -3.9464283341948847,
      "exit_pending": false
     },
     {
@@ -44,10 +184,10 @@
      "entry_price": 88.25,
      "qty": 83437.14284278991,
      "stop_price": 79.425,
-     "last_close": 92.18000031,
-     "exit_ma": 87.1740002438,
-     "unrealized_pnl": 297798.86981969886,
-     "price_pnl_pct": 4.453258141643057,
+     "last_close": 87.66999817,
+     "exit_ma": 87.18420013400001,
+     "unrealized_pnl": -77750.21957121603,
+     "price_pnl_pct": -0.6572258696883826,
      "exit_pending": false
     },
     {
@@ -58,10 +198,10 @@
      "entry_price": 428.8200073,
      "qty": 17304.667469142256,
      "stop_price": 385.93800656999997,
-     "last_close": 413.75,
-     "exit_ma": 411.04600097200006,
-     "unrealized_pnl": -289942.25267564505,
-     "price_pnl_pct": -3.5142966847293344,
+     "last_close": 434.1799927,
+     "exit_ma": 411.75220092399996,
+     "unrealized_pnl": 62884.908934718,
+     "price_pnl_pct": 1.249938274510165,
      "exit_pending": false
     },
     {
@@ -72,10 +212,10 @@
      "entry_price": 1339.939941,
      "qty": 5493.013899604515,
      "stop_price": 1205.9459469,
-     "last_close": 1397.97998,
-     "exit_ma": 1303.66740236,
-     "unrealized_pnl": 288735.8765964741,
-     "price_pnl_pct": 4.331540334314132,
+     "last_close": 1489.390015,
+     "exit_ma": 1307.4216015800002,
+     "unrealized_pnl": 789848.236229172,
+     "price_pnl_pct": 11.15349049812373,
      "exit_pending": false
     },
     {
@@ -86,10 +226,10 @@
      "entry_price": 319.9500122,
      "qty": 23309.928482928455,
      "stop_price": 287.95501098,
-     "last_close": 303.2099915,
-     "exit_ma": 286.134799198,
-     "unrealized_pnl": -419260.31555907894,
-     "price_pnl_pct": -5.232073780805435,
+     "last_close": 310.6300049,
+     "exit_ma": 287.41179932,
+     "unrealized_pnl": -246646.25382610038,
+     "price_pnl_pct": -2.9129573197747116,
      "exit_pending": false
     },
     {
@@ -100,10 +240,10 @@
      "entry_price": 199.7700043,
      "qty": 36733.3211190051,
      "stop_price": 179.79300387,
-     "last_close": 204.3099976,
-     "exit_ma": 192.333400886,
-     "unrealized_pnl": 137082.63083190937,
-     "price_pnl_pct": 2.2726101027570556,
+     "last_close": 197.6900024,
+     "exit_ma": 192.50620087199997,
+     "unrealized_pnl": -105605.42983698659,
+     "price_pnl_pct": -1.041198305665758,
      "exit_pending": false
     },
     {
@@ -114,10 +254,10 @@
      "entry_price": 437.8900146,
      "qty": 16811.52663459441,
      "stop_price": 394.10101313999996,
-     "last_close": 461.2600098,
-     "exit_ma": 420.834600824,
-     "unrealized_pnl": 362653.1275877496,
-     "price_pnl_pct": 5.336955495856155,
+     "last_close": 478.480011,
+     "exit_ma": 421.55940124,
+     "unrealized_pnl": 651568.6473916546,
+     "price_pnl_pct": 9.269450100861022,
      "exit_pending": false
     },
     {
@@ -128,10 +268,10 @@
      "entry_price": 1256.0,
      "qty": 5829.856722531004,
      "stop_price": 1130.4,
-     "last_close": 1409.380005,
-     "exit_ma": 1203.50159422,
-     "unrealized_pnl": 863105.8861705903,
-     "price_pnl_pct": 12.211783837579615,
+     "last_close": 1417.98999,
+     "exit_ma": 1207.18819334,
+     "unrealized_pnl": 913200.4751458662,
+     "price_pnl_pct": 12.897292197452238,
      "exit_pending": false
     },
     {
@@ -142,10 +282,10 @@
      "entry_price": 370.0,
      "qty": 19007.284918942456,
      "stop_price": 333.0,
-     "last_close": 395.4100037,
-     "exit_ma": 375.777602538,
-     "unrealized_pnl": 453878.4480770128,
-     "price_pnl_pct": 6.867568567567561,
+     "last_close": 409.25,
+     "exit_ma": 376.56940246399995,
+     "unrealized_pnl": 716413.0795223201,
+     "price_pnl_pct": 10.608108108108105,
      "exit_pending": false
     },
     {
@@ -156,10 +296,10 @@
      "entry_price": 252.0200043,
      "qty": 28951.739553947024,
      "stop_price": 226.81800387,
-     "last_close": 253.6999969,
-     "exit_ma": 237.20539947000006,
-     "unrealized_pnl": 19355.760683828965,
-     "price_pnl_pct": 0.6666108131639259,
+     "last_close": 270.0799866,
+     "exit_ma": 237.912199092,
+     "unrealized_pnl": 492636.49798318185,
+     "price_pnl_pct": 7.166090783214862,
      "exit_pending": false
     },
     {
@@ -170,10 +310,10 @@
      "entry_price": 123.9400024,
      "qty": 59366.25714249474,
      "stop_price": 111.54600216,
-     "last_close": 118.6200027,
-     "exit_ma": 111.39280029000001,
-     "unrealized_pnl": -344628.22945869714,
-     "price_pnl_pct": -4.292399222996945,
+     "last_close": 125.1500015,
+     "exit_ma": 111.77580032,
+     "unrealized_pnl": 42258.0352664832,
+     "price_pnl_pct": 0.9762780995395515,
      "exit_pending": false
     },
     {
@@ -184,10 +324,10 @@
      "entry_price": 34.40999985,
      "qty": 213478.84197954184,
      "stop_price": 30.968999865,
-     "last_close": 34.74000168,
-     "exit_ma": 32.5818000412,
-     "unrealized_pnl": 40924.284020513296,
-     "price_pnl_pct": 0.9590288620707543,
+     "last_close": 36.79000092,
+     "exit_ma": 32.6808000566,
+     "unrealized_pnl": 477680.4849070255,
+     "price_pnl_pct": 6.916597153080195,
      "exit_pending": false
     },
     {
@@ -198,10 +338,10 @@
      "entry_price": 242.0200043,
      "qty": 30083.193491035752,
      "stop_price": 217.81800387,
-     "last_close": 248.9299927,
-     "exit_ma": 228.33899932599996,
-     "unrealized_pnl": 178335.83054966386,
-     "price_pnl_pct": 2.855131095458785,
+     "last_close": 254.4600067,
+     "exit_ma": 229.01279937399994,
+     "unrealized_pnl": 344363.59075746033,
+     "price_pnl_pct": 5.140071968836013,
      "exit_pending": false
     },
     {
@@ -212,140 +352,140 @@
      "entry_price": 341.4299927,
      "qty": 3519.2543534161273,
      "stop_price": 307.28699343,
-     "last_close": 351.8699951,
-     "exit_ma": 303.84239929399996,
-     "unrealized_pnl": 31861.225895297714,
-     "price_pnl_pct": 3.057728560236117,
+     "last_close": 326.2900085,
+     "exit_ma": 304.415399172,
+     "unrealized_pnl": -57981.208348673536,
+     "price_pnl_pct": -4.434286537124132,
      "exit_pending": false
     }
    ],
    "stale_positions": [],
    "watchlist": [
     {
-     "symbol": "TMO",
+     "symbol": "FDS",
      "label": "2순위 · 근접 (피벗 3% 이내)",
-     "close": 698.34,
-     "pivot": 711.85,
-     "to_pivot_pct": 1.93,
-     "rs": 91.37
-    },
-    {
-     "symbol": "CPAY",
-     "label": "2순위 · 근접 (피벗 3% 이내)",
-     "close": 406.58,
-     "pivot": 416.3,
-     "to_pivot_pct": 2.39,
-     "rs": 90.96
-    },
-    {
-     "symbol": "BDX",
-     "label": "2순위 · 근접 (피벗 3% 이내)",
-     "close": 198.17,
-     "pivot": 200.47,
-     "to_pivot_pct": 1.16,
-     "rs": 90.36
-    },
-    {
-     "symbol": "HST",
-     "label": "2순위 · 근접 (피벗 3% 이내)",
-     "close": 25.78,
-     "pivot": 26.04,
+     "close": 342.19,
+     "pivot": 345.66,
      "to_pivot_pct": 1.01,
-     "rs": 88.96
+     "rs": 95.78
     },
     {
-     "symbol": "SWK",
+     "symbol": "MRK",
      "label": "2순위 · 근접 (피벗 3% 이내)",
-     "close": 104.62,
-     "pivot": 107.67,
-     "to_pivot_pct": 2.92,
-     "rs": 88.35
+     "close": 150.36,
+     "pivot": 154.02,
+     "to_pivot_pct": 2.43,
+     "rs": 94.78
+    },
+    {
+     "symbol": "VTRS",
+     "label": "2순위 · 근접 (피벗 3% 이내)",
+     "close": 19.22,
+     "pivot": 19.51,
+     "to_pivot_pct": 1.51,
+     "rs": 94.18
+    },
+    {
+     "symbol": "ABBV",
+     "label": "2순위 · 근접 (피벗 3% 이내)",
+     "close": 294.83,
+     "pivot": 298.74,
+     "to_pivot_pct": 1.33,
+     "rs": 93.17
+    },
+    {
+     "symbol": "LH",
+     "label": "1순위 · 임박 (피벗 1% 이내)",
+     "close": 367.79,
+     "pivot": 371.0,
+     "to_pivot_pct": 0.87,
+     "rs": 92.37
+    },
+    {
+     "symbol": "TMO",
+     "label": "1순위 · 임박 (피벗 1% 이내)",
+     "close": 706.16,
+     "pivot": 711.85,
+     "to_pivot_pct": 0.81,
+     "rs": 91.16
+    },
+    {
+     "symbol": "ABNB",
+     "label": "2순위 · 근접 (피벗 3% 이내)",
+     "close": 176.37,
+     "pivot": 179.13,
+     "to_pivot_pct": 1.56,
+     "rs": 90.56
+    },
+    {
+     "symbol": "DXCM",
+     "label": "1순위 · 임박 (피벗 1% 이내)",
+     "close": 88.48,
+     "pivot": 88.87,
+     "to_pivot_pct": 0.44,
+     "rs": 88.15
+    },
+    {
+     "symbol": "DGX",
+     "label": "1순위 · 임박 (피벗 1% 이내)",
+     "close": 255.68,
+     "pivot": 256.99,
+     "to_pivot_pct": 0.51,
+     "rs": 87.35
     },
     {
      "symbol": "MTD",
-     "label": "2순위 · 근접 (피벗 3% 이내)",
-     "close": 1698.04,
+     "label": "1순위 · 임박 (피벗 1% 이내)",
+     "close": 1723.24,
      "pivot": 1728.66,
-     "to_pivot_pct": 1.8,
-     "rs": 87.55
+     "to_pivot_pct": 0.31,
+     "rs": 85.74
     },
     {
-     "symbol": "URI",
+     "symbol": "ADP",
      "label": "2순위 · 근접 (피벗 3% 이내)",
-     "close": 1175.17,
-     "pivot": 1202.12,
-     "to_pivot_pct": 2.29,
-     "rs": 87.15
+     "close": 303.54,
+     "pivot": 309.4,
+     "to_pivot_pct": 1.93,
+     "rs": 84.94
     },
     {
-     "symbol": "V",
+     "symbol": "PM",
      "label": "2순위 · 근접 (피벗 3% 이내)",
-     "close": 420.42,
-     "pivot": 426.78,
-     "to_pivot_pct": 1.51,
-     "rs": 86.75
+     "close": 211.28,
+     "pivot": 214.35,
+     "to_pivot_pct": 1.45,
+     "rs": 83.33
     },
     {
-     "symbol": "BAX",
+     "symbol": "SJM",
      "label": "2순위 · 근접 (피벗 3% 이내)",
-     "close": 25.49,
-     "pivot": 26.1,
-     "to_pivot_pct": 2.39,
-     "rs": 85.54
-    },
-    {
-     "symbol": "KO",
-     "label": "2순위 · 근접 (피벗 3% 이내)",
-     "close": 94.8,
-     "pivot": 96.26,
-     "to_pivot_pct": 1.54,
-     "rs": 84.54
-    },
-    {
-     "symbol": "NDAQ",
-     "label": "2순위 · 근접 (피벗 3% 이내)",
-     "close": 106.97,
-     "pivot": 108.69,
-     "to_pivot_pct": 1.61,
-     "rs": 82.33
+     "close": 132.43,
+     "pivot": 134.0,
+     "to_pivot_pct": 1.19,
+     "rs": 82.73
     },
     {
      "symbol": "EG",
-     "label": "2순위 · 근접 (피벗 3% 이내)",
-     "close": 410.57,
-     "pivot": 420.59,
-     "to_pivot_pct": 2.44,
+     "label": "1순위 · 임박 (피벗 1% 이내)",
+     "close": 421.3,
+     "pivot": 421.52,
+     "to_pivot_pct": 0.05,
+     "rs": 82.33
+    },
+    {
+     "symbol": "KO",
+     "label": "1순위 · 임박 (피벗 1% 이내)",
+     "close": 95.8,
+     "pivot": 96.26,
+     "to_pivot_pct": 0.48,
      "rs": 81.73
-    },
-    {
-     "symbol": "MET",
-     "label": "2순위 · 근접 (피벗 3% 이내)",
-     "close": 100.67,
-     "pivot": 103.65,
-     "to_pivot_pct": 2.96,
-     "rs": 81.53
-    },
-    {
-     "symbol": "NDSN",
-     "label": "2순위 · 근접 (피벗 3% 이내)",
-     "close": 331.06,
-     "pivot": 338.18,
-     "to_pivot_pct": 2.15,
-     "rs": 81.33
-    },
-    {
-     "symbol": "MA",
-     "label": "2순위 · 근접 (피벗 3% 이내)",
-     "close": 647.18,
-     "pivot": 661.34,
-     "to_pivot_pct": 2.19,
-     "rs": 81.12
     }
    ],
    "performance": {
-    "equity": 98357787.0,
-    "return_pct": -1.64,
-    "bench_return_pct": -2.25,
+    "equity": 100737738.0,
+    "return_pct": 0.74,
+    "bench_return_pct": -0.71,
     "mdd_pct": -4.04,
     "closed_trades": 5,
     "win_rate_pct": 0.0,
@@ -355,8 +495,8 @@
    },
    "status_csv": "SP500/status.csv",
    "audit": {
-    "days": 28,
-    "signal_files": 28,
+    "days": 29,
+    "signal_files": 29,
     "missing_days": [],
     "late": [],
     "uncommitted": [],
@@ -370,15 +510,15 @@
    "xcheck": {
     "source": "Tiingo",
     "status": "mismatch",
-    "checked": "2026-11-03",
+    "checked": "2026-11-04",
     "error": null,
     "mismatched_symbols": [
-     "AMGN",
-     "CRL",
-     "IFF",
-     "IQV",
-     "LLY",
-     "VRSN"
+     "AIZ",
+     "COHR",
+     "GWW",
+     "HUM",
+     "ROST",
+     "WSM"
     ],
     "index_match": null
    },
@@ -1279,7 +1419,7 @@
    }
   }
  },
- "updated_at": "2026-11-04T13:53:01Z",
+ "updated_at": "2026-11-04T23:22:34Z",
  "disclaimer": "기계적 룰 출력이며 투자 자문이 아닙니다. 매수·매도 결정은 소유자 본인이 합니다.",
  "unconfirmed": "미확인 추정값(스캐너 원본 코드 미확인): 피벗=직전 20봉 최고가(당일 제외) · 거래량 평균=직전 50일(당일 제외) · RS=지수 대비 가중 1년 수익률 ≥ 0%p(스캐너는 유니버스 백분위 ≥ 70) · 52주 고저=종가 기준 · 200일선 상승=22봉 전 대비 · 수축비=10/40일 평균 TR · 비용=편도 0.2%"
 }
