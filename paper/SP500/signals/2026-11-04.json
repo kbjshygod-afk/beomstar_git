@@ -1,0 +1,308 @@
+{
+ "market": "SP500",
+ "as_of": "2026-11-04",
+ "regime": {
+  "benchmark": "^GSPC",
+  "mode": "MA200",
+  "close": 7688.6201,
+  "ma200": 7320.3452,
+  "ma20": 7700.118,
+  "on": true
+ },
+ "entries_next_open": [
+  {
+   "symbol": "CNC",
+   "signal_close": 76.01,
+   "rs": 98.59,
+   "desired_qty": 99399.159861,
+   "est_stop_from_close": 68.409
+  },
+  {
+   "symbol": "SWK",
+   "signal_close": 118.33,
+   "rs": 96.18,
+   "desired_qty": 63849.659755,
+   "est_stop_from_close": 106.497
+  },
+  {
+   "symbol": "BDX",
+   "signal_close": 209.19,
+   "rs": 92.97,
+   "desired_qty": 36117.071882,
+   "est_stop_from_close": 188.271
+  },
+  {
+   "symbol": "CPAY",
+   "signal_close": 418.6,
+   "rs": 91.57,
+   "desired_qty": 18049.045016,
+   "est_stop_from_close": 376.74
+  },
+  {
+   "symbol": "HST",
+   "signal_close": 26.11,
+   "rs": 90.96,
+   "desired_qty": 289365.384039,
+   "est_stop_from_close": 23.499
+  },
+  {
+   "symbol": "V",
+   "signal_close": 436.57,
+   "rs": 88.96,
+   "desired_qty": 17306.114088,
+   "est_stop_from_close": 392.913
+  },
+  {
+   "symbol": "BAX",
+   "signal_close": 26.5,
+   "rs": 86.75,
+   "desired_qty": 285106.805802,
+   "est_stop_from_close": 23.85
+  },
+  {
+   "symbol": "CDW",
+   "signal_close": 168.75,
+   "rs": 86.55,
+   "desired_qty": 44772.328022,
+   "est_stop_from_close": 151.875
+  },
+  {
+   "symbol": "CAH",
+   "signal_close": 261.93,
+   "rs": 86.14,
+   "desired_qty": 28844.846197,
+   "est_stop_from_close": 235.737
+  },
+  {
+   "symbol": "XYZ",
+   "signal_close": 87.63,
+   "rs": 85.14,
+   "desired_qty": 86218.539209,
+   "est_stop_from_close": 78.867
+  },
+  {
+   "symbol": "MA",
+   "signal_close": 672.68,
+   "rs": 84.74,
+   "desired_qty": 11231.685847,
+   "est_stop_from_close": 605.412
+  },
+  {
+   "symbol": "AIZ",
+   "signal_close": 308.52,
+   "rs": 83.53,
+   "desired_qty": 24488.949252,
+   "est_stop_from_close": 277.668
+  },
+  {
+   "symbol": "NDAQ",
+   "signal_close": 109.7,
+   "rs": 81.33,
+   "desired_qty": 68872.65786,
+   "est_stop_from_close": 98.73
+  },
+  {
+   "symbol": "MSFT",
+   "signal_close": 555.8,
+   "rs": 78.71,
+   "desired_qty": 13593.613745,
+   "est_stop_from_close": 500.22
+  },
+  {
+   "symbol": "VRSN",
+   "signal_close": 318.03,
+   "rs": 77.71,
+   "desired_qty": 23756.659379,
+   "est_stop_from_close": 286.227
+  },
+  {
+   "symbol": "WELL",
+   "signal_close": 247.99,
+   "rs": 77.51,
+   "desired_qty": 30466.269552,
+   "est_stop_from_close": 223.191
+  },
+  {
+   "symbol": "DAL",
+   "signal_close": 89.24,
+   "rs": 77.31,
+   "desired_qty": 84663.049473,
+   "est_stop_from_close": 80.316
+  },
+  {
+   "symbol": "EW",
+   "signal_close": 99.37,
+   "rs": 74.7,
+   "desired_qty": 76032.304968,
+   "est_stop_from_close": 89.433
+  },
+  {
+   "symbol": "MMM",
+   "signal_close": 193.95,
+   "rs": 73.9,
+   "desired_qty": 38955.042405,
+   "est_stop_from_close": 174.555
+  },
+  {
+   "symbol": "ROST",
+   "signal_close": 245.74,
+   "rs": 73.69,
+   "desired_qty": 30745.219275,
+   "est_stop_from_close": 221.166
+  },
+  {
+   "symbol": "PRU",
+   "signal_close": 126.63,
+   "rs": 72.09,
+   "desired_qty": 59664.617507,
+   "est_stop_from_close": 113.967
+  }
+ ],
+ "exits_next_open": [],
+ "positions": [
+  "AMGN",
+  "BIIB",
+  "CRL",
+  "EBAY",
+  "ELV",
+  "EXPD",
+  "GWW",
+  "HUM",
+  "IFF",
+  "KDP",
+  "LLY",
+  "TRV",
+  "VEEV",
+  "WSM"
+ ],
+ "watchlist": [
+  {
+   "symbol": "FDS",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 342.19,
+   "pivot": 345.66,
+   "to_pivot_pct": 1.01,
+   "rs": 95.78
+  },
+  {
+   "symbol": "MRK",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 150.36,
+   "pivot": 154.02,
+   "to_pivot_pct": 2.43,
+   "rs": 94.78
+  },
+  {
+   "symbol": "VTRS",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 19.22,
+   "pivot": 19.51,
+   "to_pivot_pct": 1.51,
+   "rs": 94.18
+  },
+  {
+   "symbol": "ABBV",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 294.83,
+   "pivot": 298.74,
+   "to_pivot_pct": 1.33,
+   "rs": 93.17
+  },
+  {
+   "symbol": "LH",
+   "label": "1순위 · 임박 (피벗 1% 이내)",
+   "close": 367.79,
+   "pivot": 371.0,
+   "to_pivot_pct": 0.87,
+   "rs": 92.37
+  },
+  {
+   "symbol": "TMO",
+   "label": "1순위 · 임박 (피벗 1% 이내)",
+   "close": 706.16,
+   "pivot": 711.85,
+   "to_pivot_pct": 0.81,
+   "rs": 91.16
+  },
+  {
+   "symbol": "ABNB",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 176.37,
+   "pivot": 179.13,
+   "to_pivot_pct": 1.56,
+   "rs": 90.56
+  },
+  {
+   "symbol": "DXCM",
+   "label": "1순위 · 임박 (피벗 1% 이내)",
+   "close": 88.48,
+   "pivot": 88.87,
+   "to_pivot_pct": 0.44,
+   "rs": 88.15
+  },
+  {
+   "symbol": "DGX",
+   "label": "1순위 · 임박 (피벗 1% 이내)",
+   "close": 255.68,
+   "pivot": 256.99,
+   "to_pivot_pct": 0.51,
+   "rs": 87.35
+  },
+  {
+   "symbol": "MTD",
+   "label": "1순위 · 임박 (피벗 1% 이내)",
+   "close": 1723.24,
+   "pivot": 1728.66,
+   "to_pivot_pct": 0.31,
+   "rs": 85.74
+  },
+  {
+   "symbol": "ADP",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 303.54,
+   "pivot": 309.4,
+   "to_pivot_pct": 1.93,
+   "rs": 84.94
+  },
+  {
+   "symbol": "PM",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 211.28,
+   "pivot": 214.35,
+   "to_pivot_pct": 1.45,
+   "rs": 83.33
+  },
+  {
+   "symbol": "SJM",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 132.43,
+   "pivot": 134.0,
+   "to_pivot_pct": 1.19,
+   "rs": 82.73
+  },
+  {
+   "symbol": "EG",
+   "label": "1순위 · 임박 (피벗 1% 이내)",
+   "close": 421.3,
+   "pivot": 421.52,
+   "to_pivot_pct": 0.05,
+   "rs": 82.33
+  },
+  {
+   "symbol": "KO",
+   "label": "1순위 · 임박 (피벗 1% 이내)",
+   "close": 95.8,
+   "pivot": 96.26,
+   "to_pivot_pct": 0.48,
+   "rs": 81.73
+  }
+ ],
+ "coverage": {
+  "requested": 503,
+  "loaded": 502,
+  "failed": [
+   "WBD"
+  ]
+ },
+ "generated_at": "2026-11-04T23:22:34Z"
+}
