@@ -13,23 +13,9 @@
    {
     "symbol": "AMGN",
     "field": "volume",
-    "yahoo": 2351852.0,
+    "yahoo": 2356300.0,
     "krx": 2324003.0,
-    "diff_pct": 1.184
-   },
-   {
-    "symbol": "FTNT",
-    "field": "low",
-    "yahoo": 127.0,
-    "krx": 126.865,
-    "diff_pct": 0.106
-   },
-   {
-    "symbol": "GOOG",
-    "field": "low",
-    "yahoo": 276.3200073,
-    "krx": 272.0,
-    "diff_pct": 1.563
+    "diff_pct": 1.371
    }
   ],
   "unlisted": [],
