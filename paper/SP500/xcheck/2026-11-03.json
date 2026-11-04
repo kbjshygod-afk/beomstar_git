@@ -13,44 +13,44 @@
    {
     "symbol": "AMGN",
     "field": "volume",
-    "yahoo": 2351852.0,
+    "yahoo": 2356300.0,
     "krx": 2324003.0,
-    "diff_pct": 1.184
+    "diff_pct": 1.371
    },
    {
     "symbol": "CRL",
-    "field": "low",
-    "yahoo": 339.0,
-    "krx": 338.55,
-    "diff_pct": 0.133
-   },
-   {
-    "symbol": "ELV",
-    "field": "high",
-    "yahoo": 417.3850098,
-    "krx": 420.0,
-    "diff_pct": 0.623
-   },
-   {
-    "symbol": "HUM",
-    "field": "low",
-    "yahoo": 407.3599854,
-    "krx": 405.45,
-    "diff_pct": 0.469
+    "field": "volume",
+    "yahoo": 1595800.0,
+    "krx": 1509140.0,
+    "diff_pct": 5.431
    },
    {
     "symbol": "IFF",
     "field": "volume",
-    "yahoo": 2954278.0,
+    "yahoo": 2955400.0,
     "krx": 2877415.0,
-    "diff_pct": 2.602
+    "diff_pct": 2.639
    },
    {
     "symbol": "IQV",
     "field": "volume",
-    "yahoo": 1321625.0,
+    "yahoo": 1321600.0,
     "krx": 1230505.0,
-    "diff_pct": 6.895
+    "diff_pct": 6.893
+   },
+   {
+    "symbol": "LLY",
+    "field": "volume",
+    "yahoo": 2762600.0,
+    "krx": 2700138.0,
+    "diff_pct": 2.261
+   },
+   {
+    "symbol": "VRSN",
+    "field": "volume",
+    "yahoo": 2748700.0,
+    "krx": 2707454.0,
+    "diff_pct": 1.501
    }
   ],
   "unlisted": [],

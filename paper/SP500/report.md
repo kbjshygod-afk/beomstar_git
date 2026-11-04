@@ -6,12 +6,12 @@
 - 레짐 (MA200): **ON** — ^GSPC 종가 7,568.92 · 200일선 7,315.89
 - 데이터: 유니버스 503종목 중 502종목 로드 (실패 1)
 - 데이터 대조 (Tiingo, 2026-11-03 봉): 종목 25개 비교 (표본 25: 보유·대기 15 + 순환), 불일치 6개 · 지수 비교 안 함
-  - AMGN volume: Yahoo 2,351,852 vs Tiingo 2,324,003 (+1.18%)
-  - CRL low: Yahoo 339 vs Tiingo 339 (+0.13%)
-  - ELV high: Yahoo 417 vs Tiingo 420 (+0.62%)
-  - HUM low: Yahoo 407 vs Tiingo 405 (+0.47%)
-  - IFF volume: Yahoo 2,954,278 vs Tiingo 2,877,415 (+2.60%)
-  - IQV volume: Yahoo 1,321,625 vs Tiingo 1,230,505 (+6.89%)
+  - AMGN volume: Yahoo 2,356,300 vs Tiingo 2,324,003 (+1.37%)
+  - CRL volume: Yahoo 1,595,800 vs Tiingo 1,509,140 (+5.43%)
+  - IFF volume: Yahoo 2,955,400 vs Tiingo 2,877,415 (+2.64%)
+  - IQV volume: Yahoo 1,321,600 vs Tiingo 1,230,505 (+6.89%)
+  - LLY volume: Yahoo 2,762,600 vs Tiingo 2,700,138 (+2.26%)
+  - VRSN volume: Yahoo 2,748,700 vs Tiingo 2,707,454 (+1.50%)
 
 ## 다음 시가 진입 (오늘 신호)
 
