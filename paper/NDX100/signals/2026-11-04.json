@@ -1,0 +1,85 @@
+{
+ "market": "NDX100",
+ "as_of": "2026-11-04",
+ "regime": {
+  "benchmark": "^NDX",
+  "mode": "MA200",
+  "close": 28437.166,
+  "ma200": 27970.0173,
+  "ma20": 29490.4042,
+  "on": true
+ },
+ "entries_next_open": [
+  {
+   "symbol": "MSFT",
+   "signal_close": 555.8,
+   "rs": 74.49,
+   "desired_qty": 18893.628909,
+   "est_stop_from_close": 516.894
+  },
+  {
+   "symbol": "ROST",
+   "signal_close": 245.74,
+   "rs": 71.43,
+   "desired_qty": 42732.475308,
+   "est_stop_from_close": 228.5382
+  }
+ ],
+ "exits_next_open": [],
+ "positions": [
+  "AMGN",
+  "CSX",
+  "KDP",
+  "VRTX"
+ ],
+ "watchlist": [
+  {
+   "symbol": "ABNB",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 176.37,
+   "pivot": 179.13,
+   "to_pivot_pct": 1.56,
+   "rs": 89.8
+  },
+  {
+   "symbol": "DXCM",
+   "label": "1순위 · 임박 (피벗 1% 이내)",
+   "close": 88.48,
+   "pivot": 88.87,
+   "to_pivot_pct": 0.44,
+   "rs": 84.69
+  },
+  {
+   "symbol": "ADP",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 303.54,
+   "pivot": 309.4,
+   "to_pivot_pct": 1.93,
+   "rs": 83.67
+  },
+  {
+   "symbol": "AAPL",
+   "label": "1순위 · 임박 (피벗 1% 이내)",
+   "close": 349.51,
+   "pivot": 351.73,
+   "to_pivot_pct": 0.64,
+   "rs": 77.55
+  },
+  {
+   "symbol": "CCEP",
+   "label": "1순위 · 임박 (피벗 1% 이내)",
+   "close": 115.84,
+   "pivot": 116.01,
+   "to_pivot_pct": 0.15,
+   "rs": 72.45
+  }
+ ],
+ "coverage": {
+  "requested": 101,
+  "loaded": 100,
+  "failed": [
+   "WBD"
+  ]
+ },
+ "generated_at": "2026-11-04T23:24:00Z"
+}
