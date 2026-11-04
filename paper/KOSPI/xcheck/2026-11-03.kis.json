@@ -127,6 +127,13 @@
     "diff_pct": 0.381
    },
    {
+    "symbol": "012450.KS",
+    "field": "close",
+    "yahoo": 740000.0,
+    "krx": 743000.0,
+    "diff_pct": 0.404
+   },
+   {
     "symbol": "034020.KS",
     "field": "volume",
     "yahoo": 2782762.0,
@@ -419,13 +426,6 @@
     "yahoo": 237500.0,
     "krx": 237000.0,
     "diff_pct": 0.211
-   },
-   {
-    "symbol": "012450.KS",
-    "field": "close",
-    "yahoo": 740000.0,
-    "krx": 743000.0,
-    "diff_pct": 0.404
    },
    {
     "symbol": "010140.KS",
