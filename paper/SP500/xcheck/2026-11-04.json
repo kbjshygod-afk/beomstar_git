@@ -11,46 +11,74 @@
   "missing": [],
   "mismatches": [
    {
-    "symbol": "AIZ",
-    "field": "low",
-    "yahoo": 302.5549927,
-    "krx": 302.05,
-    "diff_pct": 0.167
+    "symbol": "AMGN",
+    "field": "volume",
+    "yahoo": 4618500.0,
+    "krx": 4457293.0,
+    "diff_pct": 3.49
+   },
+   {
+    "symbol": "BIIB",
+    "field": "volume",
+    "yahoo": 1347800.0,
+    "krx": 1210711.0,
+    "diff_pct": 10.171
+   },
+   {
+    "symbol": "CAH",
+    "field": "volume",
+    "yahoo": 2456800.0,
+    "krx": 2420739.0,
+    "diff_pct": 1.468
+   },
+   {
+    "symbol": "CNC",
+    "field": "volume",
+    "yahoo": 15146500.0,
+    "krx": 14968383.0,
+    "diff_pct": 1.176
+   },
+   {
+    "symbol": "CMS",
+    "field": "volume",
+    "yahoo": 4646500.0,
+    "krx": 4503571.0,
+    "diff_pct": 3.076
    },
    {
     "symbol": "COHR",
     "field": "volume",
-    "yahoo": 11448809.0,
+    "yahoo": 11630800.0,
     "krx": 10787303.0,
-    "diff_pct": 5.778
+    "diff_pct": 7.252
    },
    {
-    "symbol": "HUM",
-    "field": "low",
-    "yahoo": 404.980011,
-    "krx": 404.18,
-    "diff_pct": 0.198
+    "symbol": "COP",
+    "field": "volume",
+    "yahoo": 11371700.0,
+    "krx": 11160074.0,
+    "diff_pct": 1.861
    },
    {
-    "symbol": "ROST",
-    "field": "low",
-    "yahoo": 236.75,
-    "krx": 236.1075,
-    "diff_pct": 0.271
+    "symbol": "EXPD",
+    "field": "volume",
+    "yahoo": 2575200.0,
+    "krx": 2523818.0,
+    "diff_pct": 1.995
+   },
+   {
+    "symbol": "HST",
+    "field": "volume",
+    "yahoo": 12452800.0,
+    "krx": 12015305.0,
+    "diff_pct": 3.513
    },
    {
     "symbol": "GWW",
-    "field": "low",
-    "yahoo": 1449.97998,
-    "krx": 1443.4,
-    "diff_pct": 0.454
-   },
-   {
-    "symbol": "WSM",
-    "field": "high",
-    "yahoo": 270.8349915,
-    "krx": 271.8898,
-    "diff_pct": 0.388
+    "field": "volume",
+    "yahoo": 596800.0,
+    "krx": 570182.0,
+    "diff_pct": 4.46
    }
   ],
   "unlisted": [],
