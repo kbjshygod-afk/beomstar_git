@@ -1,0 +1,81 @@
+{
+ "market": "SP500",
+ "as_of": "2026-11-05",
+ "source": "Tiingo",
+ "status": "mismatch",
+ "checked": "2026-11-05",
+ "index": null,
+ "symbols": {
+  "date": "2026-11-05",
+  "compared": 28,
+  "missing": [],
+  "mismatches": [
+   {
+    "symbol": "AMGN",
+    "field": "volume",
+    "yahoo": 4073505.0,
+    "krx": 4028522.0,
+    "diff_pct": 1.104
+   },
+   {
+    "symbol": "BIIB",
+    "field": "volume",
+    "yahoo": 1220443.0,
+    "krx": 1178796.0,
+    "diff_pct": 3.412
+   },
+   {
+    "symbol": "KDP",
+    "field": "volume",
+    "yahoo": 23142418.0,
+    "krx": 22793598.0,
+    "diff_pct": 1.507
+   },
+   {
+    "symbol": "PH",
+    "field": "high",
+    "yahoo": 975.0,
+    "krx": 976.14,
+    "diff_pct": 0.117
+   },
+   {
+    "symbol": "PGR",
+    "field": "volume",
+    "yahoo": 4532143.0,
+    "krx": 4485261.0,
+    "diff_pct": 1.034
+   },
+   {
+    "symbol": "PHM",
+    "field": "high",
+    "yahoo": 139.5700073,
+    "krx": 139.87,
+    "diff_pct": 0.214
+   }
+  ],
+  "unlisted": [],
+  "sampled": 28,
+  "focus": [
+   "AMGN",
+   "BDX",
+   "BIIB",
+   "CAH",
+   "CPAY",
+   "CRL",
+   "EBAY",
+   "ELV",
+   "EW",
+   "EXPD",
+   "GWW",
+   "HUM",
+   "IFF",
+   "KDP",
+   "LLY",
+   "TRV",
+   "VEEV",
+   "WSM"
+  ]
+ },
+ "error": null,
+ "calls": 28
+}
