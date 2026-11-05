@@ -409,32 +409,17 @@
    "xcheck_kis": null
   },
   "NDX100": {
-   "as_of": "2026-11-04",
+   "as_of": "2026-11-05",
    "start_date": "2026-09-25",
    "regime": {
     "benchmark": "^NDX",
     "mode": "MA200",
-    "close": 28437.1699,
-    "ma200": 27970.0173,
-    "ma20": 29490.4044,
-    "on": true
+    "close": 26629.8086,
+    "ma200": 27976.5334,
+    "ma20": 29285.6043,
+    "on": false
    },
-   "entries_next_open": [
-    {
-     "symbol": "MSFT",
-     "signal_close": 555.8,
-     "rs": 74.49,
-     "desired_qty": 18893.628909,
-     "est_stop_from_close": 516.894
-    },
-    {
-     "symbol": "ROST",
-     "signal_close": 245.74,
-     "rs": 71.43,
-     "desired_qty": 42732.475308,
-     "est_stop_from_close": 228.5382
-    }
-   ],
+   "entries_next_open": [],
    "exits_next_open": [],
    "positions": [
     {
@@ -445,10 +430,10 @@
      "entry_price": 437.8900146,
      "qty": 24086.34911346862,
      "stop_price": 407.23771357799995,
-     "last_close": 478.480011,
-     "exit_ma": 421.55940124,
-     "unrealized_pnl": 933520.807097394,
-     "price_pnl_pct": 9.269450100861022,
+     "last_close": 460.2799988,
+     "exit_ma": 421.95820129,
+     "unrealized_pnl": 496025.7030742429,
+     "price_pnl_pct": 5.113152493429807,
      "exit_pending": false
     },
     {
@@ -459,10 +444,10 @@
      "entry_price": 35.31999969,
      "qty": 297703.06687467825,
      "stop_price": 32.8475997117,
-     "last_close": 36.79000092,
-     "exit_ma": 32.6808000566,
-     "unrealized_pnl": 394689.1378126852,
-     "price_pnl_pct": 4.161951423844967,
+     "last_close": 36.88999939,
+     "exit_ma": 32.7744000628,
+     "unrealized_pnl": 424399.4493120555,
+     "price_pnl_pct": 4.445072802320849,
      "exit_pending": false
     },
     {
@@ -473,10 +458,10 @@
      "entry_price": 51.56000137,
      "qty": 202751.5170602284,
      "stop_price": 47.9508012741,
-     "last_close": 52.04999924,
-     "exit_ma": 48.8568000802,
-     "unrealized_pnl": 57333.64188620262,
-     "price_pnl_pct": 0.9503449514745244,
+     "last_close": 50.83000183,
+     "exit_ma": 48.8382001504,
+     "unrealized_pnl": -189527.97114947252,
+     "price_pnl_pct": -1.415825292093087,
      "exit_pending": false
     },
     {
@@ -487,71 +472,58 @@
      "entry_price": 560.8800049,
      "qty": 18721.89471550134,
      "stop_price": 521.618404557,
-     "last_close": 549.039978,
-     "exit_ma": 522.9036029020001,
-     "unrealized_pnl": -263227.34717547335,
-     "price_pnl_pct": -2.1109732556986005,
+     "last_close": 542.5,
+     "exit_ma": 522.8078033419999,
+     "unrealized_pnl": -385423.24517405406,
+     "price_pnl_pct": -3.2769941412472026,
+     "exit_pending": false
+    },
+    {
+     "symbol": "MSFT",
+     "signal_date": "2026-11-04",
+     "exit_signal_date": null,
+     "entry_date": "2026-11-05",
+     "entry_price": 554.9349976,
+     "qty": 18893.628909307216,
+     "stop_price": 516.089547768,
+     "last_close": 535.9299927,
+     "exit_ma": 516.134801024,
+     "unrealized_pnl": -400294.3066339325,
+     "price_pnl_pct": -3.424726316089899,
+     "exit_pending": false
+    },
+    {
+     "symbol": "ROST",
+     "signal_date": "2026-11-04",
+     "exit_signal_date": null,
+     "entry_date": "2026-11-05",
+     "entry_price": 249.3000031,
+     "qty": 42732.47530830173,
+     "stop_price": 231.84900288299997,
+     "last_close": 235.2299957,
+     "exit_ma": 230.873799134,
+     "unrealized_pnl": -642656.576227827,
+     "price_pnl_pct": -5.643805545544334,
      "exit_pending": false
     }
    ],
    "stale_positions": [],
-   "watchlist": [
-    {
-     "symbol": "ABNB",
-     "label": "2순위 · 근접 (피벗 3% 이내)",
-     "close": 176.37,
-     "pivot": 179.13,
-     "to_pivot_pct": 1.56,
-     "rs": 89.8
-    },
-    {
-     "symbol": "DXCM",
-     "label": "1순위 · 임박 (피벗 1% 이내)",
-     "close": 88.48,
-     "pivot": 88.87,
-     "to_pivot_pct": 0.44,
-     "rs": 84.69
-    },
-    {
-     "symbol": "ADP",
-     "label": "2순위 · 근접 (피벗 3% 이내)",
-     "close": 303.54,
-     "pivot": 309.4,
-     "to_pivot_pct": 1.93,
-     "rs": 83.67
-    },
-    {
-     "symbol": "AAPL",
-     "label": "1순위 · 임박 (피벗 1% 이내)",
-     "close": 349.51,
-     "pivot": 351.73,
-     "to_pivot_pct": 0.64,
-     "rs": 77.55
-    },
-    {
-     "symbol": "CCEP",
-     "label": "1순위 · 임박 (피벗 1% 이내)",
-     "close": 115.84,
-     "pivot": 116.01,
-     "to_pivot_pct": 0.15,
-     "rs": 72.45
-    }
-   ],
+   "watchlist": [],
    "performance": {
-    "equity": 98010068.0,
-    "return_pct": -1.99,
-    "bench_return_pct": -7.09,
-    "mdd_pct": -4.42,
+    "equity": 96229073.0,
+    "return_pct": -3.77,
+    "bench_return_pct": -13.0,
+    "mdd_pct": -4.56,
     "closed_trades": 4,
     "win_rate_pct": 0.0,
     "avg_win_pct": null,
     "avg_loss_pct": -7.55,
-    "open_positions": 4
+    "open_positions": 6
    },
    "status_csv": "NDX100/status.csv",
    "audit": {
-    "days": 29,
-    "signal_files": 29,
+    "days": 30,
+    "signal_files": 30,
     "missing_days": [],
     "late": [],
     "uncommitted": [],
@@ -562,14 +534,13 @@
    "xcheck": {
     "source": "Tiingo",
     "status": "mismatch",
-    "checked": "2026-11-04",
+    "checked": "2026-11-05",
     "error": null,
     "mismatched_symbols": [
      "AMGN",
-     "CSX",
-     "DXCM",
-     "EXC",
-     "VRTX"
+     "HON",
+     "INTC",
+     "KDP"
     ],
     "index_match": null
    },
@@ -1333,7 +1304,7 @@
    }
   }
  },
- "updated_at": "2026-11-05T23:38:47Z",
+ "updated_at": "2026-11-05T23:39:44Z",
  "disclaimer": "기계적 룰 출력이며 투자 자문이 아닙니다. 매수·매도 결정은 소유자 본인이 합니다.",
  "unconfirmed": "미확인 추정값(스캐너 원본 코드 미확인): 피벗=직전 20봉 최고가(당일 제외) · 거래량 평균=직전 50일(당일 제외) · RS=지수 대비 가중 1년 수익률 ≥ 0%p(스캐너는 유니버스 백분위 ≥ 70) · 52주 고저=종가 기준 · 200일선 상승=22봉 전 대비 · 수축비=10/40일 평균 TR · 비용=편도 0.2%"
 }

@@ -7,10 +7,10 @@
   "entry_price": 437.8900146,
   "qty": 24086.34911346862,
   "stop_price": 407.23771357799995,
-  "last_close": 478.480011,
-  "exit_ma": 421.55940124,
-  "unrealized_pnl": 933520.807097394,
-  "price_pnl_pct": 9.269450100861022,
+  "last_close": 460.2799988,
+  "exit_ma": 421.95820129,
+  "unrealized_pnl": 496025.7030742429,
+  "price_pnl_pct": 5.113152493429807,
   "exit_pending": false
  },
  {
@@ -21,10 +21,10 @@
   "entry_price": 35.31999969,
   "qty": 297703.06687467825,
   "stop_price": 32.8475997117,
-  "last_close": 36.79000092,
-  "exit_ma": 32.6808000566,
-  "unrealized_pnl": 394689.1378126852,
-  "price_pnl_pct": 4.161951423844967,
+  "last_close": 36.88999939,
+  "exit_ma": 32.7744000628,
+  "unrealized_pnl": 424399.4493120555,
+  "price_pnl_pct": 4.445072802320849,
   "exit_pending": false
  },
  {
@@ -35,10 +35,10 @@
   "entry_price": 51.56000137,
   "qty": 202751.5170602284,
   "stop_price": 47.9508012741,
-  "last_close": 52.04999924,
-  "exit_ma": 48.8568000802,
-  "unrealized_pnl": 57333.64188620262,
-  "price_pnl_pct": 0.9503449514745244,
+  "last_close": 50.83000183,
+  "exit_ma": 48.8382001504,
+  "unrealized_pnl": -189527.97114947252,
+  "price_pnl_pct": -1.415825292093087,
   "exit_pending": false
  },
  {
@@ -49,10 +49,38 @@
   "entry_price": 560.8800049,
   "qty": 18721.89471550134,
   "stop_price": 521.618404557,
-  "last_close": 549.039978,
-  "exit_ma": 522.9036029020001,
-  "unrealized_pnl": -263227.34717547335,
-  "price_pnl_pct": -2.1109732556986005,
+  "last_close": 542.5,
+  "exit_ma": 522.8078033419999,
+  "unrealized_pnl": -385423.24517405406,
+  "price_pnl_pct": -3.2769941412472026,
+  "exit_pending": false
+ },
+ {
+  "symbol": "MSFT",
+  "signal_date": "2026-11-04",
+  "exit_signal_date": null,
+  "entry_date": "2026-11-05",
+  "entry_price": 554.9349976,
+  "qty": 18893.628909307216,
+  "stop_price": 516.089547768,
+  "last_close": 535.9299927,
+  "exit_ma": 516.134801024,
+  "unrealized_pnl": -400294.3066339325,
+  "price_pnl_pct": -3.424726316089899,
+  "exit_pending": false
+ },
+ {
+  "symbol": "ROST",
+  "signal_date": "2026-11-04",
+  "exit_signal_date": null,
+  "entry_date": "2026-11-05",
+  "entry_price": 249.3000031,
+  "qty": 42732.47530830173,
+  "stop_price": 231.84900288299997,
+  "last_close": 235.2299957,
+  "exit_ma": 230.873799134,
+  "unrealized_pnl": -642656.576227827,
+  "price_pnl_pct": -5.643805545544334,
   "exit_pending": false
  }
 ]
