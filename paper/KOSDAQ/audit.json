@@ -1,9 +1,9 @@
 {
  "market": "KOSDAQ",
  "start_date": "2026-09-29",
- "as_of": "2026-11-04",
- "days": 25,
- "signal_files": 25,
+ "as_of": "2026-11-05",
+ "days": 26,
+ "signal_files": 26,
  "missing_days": [],
  "late": [
   "2026-11-04"
@@ -396,6 +396,21 @@
    "revisions_after_open": [],
    "deadline": "2026-11-05T00:00:00Z",
    "on_time": false,
+   "entries_match": true,
+   "exits_match": true,
+   "entries_only_committed": [],
+   "entries_only_recomputed": [],
+   "exits_only_committed": [],
+   "exits_only_recomputed": [],
+   "revisions": []
+  },
+  {
+   "date": "2026-11-05",
+   "committed_at": "2026-11-05T09:15:16Z",
+   "compared_file": "2026-11-05.json",
+   "revisions_after_open": [],
+   "deadline": "2026-11-06T00:00:00Z",
+   "on_time": true,
    "entries_match": true,
    "exits_match": true,
    "entries_only_committed": [],
