@@ -4,7 +4,7 @@
 Reader mode (any other prompt): prints {"type":"result",...} whose result is the file
 named by FAKE_READER_RESULT, like `claude -p --output-format json`. With --output-format
 stream-json it first prints one is:dm Slack lookup (tool_use + tool_result) so poll.sh's
-DM check passes; FAKE_READER_DM = ok | none | error changes that lookup. If FAKE_READER_PROBE
+DM check passes; FAKE_READER_DM = ok | none | error changes that lookup (a comma list = one per call). If FAKE_READER_PROBE
 names tools, each is first run through the --settings hook and the exit codes are logged.
 Writer mode (prompt starts with "Call the tool ", as slack_drafts.py / office.py send): runs
 the PreToolUse hook from the settings file on a simulated tool call and prints stream-json.
@@ -281,6 +281,11 @@ def reader():
         for name in os.environ.get("FAKE_READER_PROBE", "").split():
             probes[name] = run_hook(settings, name, {})[0]
     dm = os.environ.get("FAKE_READER_DM", "ok")   # ok | none | error  (the is:dm Slack lookup poll.sh step 5 verifies)
+    if "," in dm:  # a sequence, one per reader call (e.g. "none,ok": connectors not ready, then ready)
+        seq = dm.split(",")
+        done = sum(1 for c in (open(os.environ["FAKE_CALLS"]).read().splitlines() if os.path.exists(os.environ.get("FAKE_CALLS", "")) else [])
+                   if '"mode": "reader"' in c)
+        dm = seq[min(done, len(seq) - 1)]
     if arg_after("--output-format") == "stream-json" and dm != "none":
         emit({"type": "assistant", "session_id": "sess_fake_reader", "message": {"content": [{"type": "tool_use", "id": "toolu_fake_dm",
               "name": "mcp__claude_ai_Slack__slack_search_public_and_private",

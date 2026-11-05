@@ -58,7 +58,7 @@ class Base(unittest.TestCase):
                            "WORK_AGENT_DRAFT_TOOL": TOOL, "WORK_AGENT_CONFIG": os.path.join(self.tmp, "no-config.env")})
         for k in ("FAKE_WRITER", "FAKE_SLACK_MODE", "WORK_AGENT_DRAFT_DAILY_MAX", "WORK_AGENT_DRAFT_RUN_MAX",
                   "WORK_AGENT_DRAFT_TIMEOUT", "WORK_AGENT_SLACK_DRAFTS", "WORK_AGENT_ALLOWED_TOOLS",
-                  "WORK_AGENT_DISALLOWED_TOOLS", "FAKE_READER_PROBE", "FAKE_READER_DM", "WORK_AGENT_QUIET_CHANNELS"):
+                  "WORK_AGENT_DISALLOWED_TOOLS", "FAKE_READER_PROBE", "FAKE_READER_DM", "WORK_AGENT_QUIET_CHANNELS", "WORK_AGENT_READER_RETRY_WAIT"):
             os.environ.pop(k, None)
 
     def tearDown(self):
@@ -580,10 +580,30 @@ class PollTests(Base):
             self.state = os.environ["WORK_AGENT_STATE"]
             os.makedirs(self.state)
             os.environ["FAKE_READER_DM"] = mode
+            os.environ["WORK_AGENT_READER_RETRY_WAIT"] = "1"
             rc, log = self.poll([item()], "0")
             self.assertEqual(rc, 1, mode)
             self.assertIn("no successful Slack DM lookup", log, mode)
+            # no Slack tool at all = connectors not ready: retried once; a failed Slack call is not retried
+            self.assertEqual("retry: reader ran without any Slack tool" in log, mode == "none", mode)
             self.assertFalse(os.path.exists(os.path.join(self.state, "seen_ids.txt")), "a failed run must not mark items seen")
+
+    def test_reader_retried_once_when_connectors_were_not_ready(self):
+        os.environ["FAKE_READER_DM"] = "none,ok"
+        os.environ["WORK_AGENT_READER_RETRY_WAIT"] = "1"
+        rc, log = self.poll([item()], "0")
+        self.assertEqual(rc, 0, log)
+        self.assertIn("retry: reader ran without any Slack tool", log)
+        self.assertIn("ok: 1 new item(s)", log)
+        self.assertEqual([c["dm_lookup"] for c in self.fake_calls() if c["mode"] == "reader"], ["none", "ok"])
+
+    def test_reader_retry_can_be_turned_off(self):
+        os.environ["FAKE_READER_DM"] = "none,ok"
+        os.environ["WORK_AGENT_READER_RETRY_WAIT"] = "0"
+        rc, log = self.poll([item()], "0")
+        self.assertEqual(rc, 1, log)
+        self.assertNotIn("retry:", log)
+        self.assertEqual(len([c for c in self.fake_calls() if c["mode"] == "reader"]), 1)
 
     def test_quiet_channel_keyword_hits_are_bundled(self):
         os.environ["WORK_AGENT_QUIET_CHANNELS"] = "C0QUIET001, C0QUIET002"

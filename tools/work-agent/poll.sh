@@ -75,13 +75,23 @@ args=(-p "$PROMPT" --model "$MODEL" --output-format stream-json --verbose --max-
 # a guard setup failure (e.g. python3 broken after a macOS update) must reach the FAIL count and alerts below;
 # claude is not started without its guard
 DESK="$STATE/office/desks/secretary"; mkdir -p "$DESK"   # the reader's desk (Pixel Agents label "secretary")
+run_reader() { (cd "$DESK" && "$CLAUDE_BIN" "${args[@]}") > "$RAW" 2> "$STATE/last.err"; }
 if ! { printf '%s\n' $ALLOWED > "$STATE/reader_allow.txt" &&
        guard_settings "$STATE/reader_settings.json" "$STATE/reader_allow.txt" "$STATE/tool_guard.log"; } 2> "$STATE/last.err"; then
   rc=1
-elif ! (cd "$DESK" && "$CLAUDE_BIN" "${args[@]}") > "$RAW" 2> "$STATE/last.err"; then
+elif ! run_reader; then
   rc=1
 else
   rc=0
+  # claude.ai connectors finish connecting in the background after claude starts (Claude Code 2.1.31x): a run
+  # that never reached a Slack tool found them not ready yet. Retry once after a short wait (0 = never retry).
+  # A run that did call Slack but skipped the DM lookup is not retried: step 5 counts it as a failure.
+  WAIT="${WORK_AGENT_READER_RETRY_WAIT:-45}"
+  if [ "$WAIT" != "0" ] && ! grep -Eq '"name": ?"mcp__[^"]*[Ss]lack[^"]*__' "$RAW"; then
+    log "retry: reader ran without any Slack tool (connectors not ready); again in ${WAIT}s"
+    sleep "$WAIT"
+    run_reader || rc=1
+  fi
 fi
 # keep one transcript (= one Pixel Agents character) per desk
 python3 "$DIR/office.py" tidy "$(python3 -c 'import json,sys
