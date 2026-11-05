@@ -26,7 +26,15 @@ UA_DEFAULT = "beomstar-swing research"
 
 
 def user_agent() -> str:
-    return os.environ.get(UA_ENV, "").strip() or UA_DEFAULT
+    """EDGAR_USER_AGENT, or the default without a contact. HTTP headers are Latin-1, so a value
+    with other characters (2026-11-04: a Korean placeholder left in place of the e-mail) is
+    refused here with a clear message instead of failing inside urllib."""
+    ua = os.environ.get(UA_ENV, "").strip() or UA_DEFAULT
+    try:
+        ua.encode("latin-1")
+    except UnicodeEncodeError:
+        raise EdgarError(f"{UA_ENV} must be ASCII, e.g. 'beomstar-swing you@example.com' (got {ua!r})") from None
+    return ua
 
 
 TICKERS_URL = "https://www.sec.gov/files/company_tickers.json"

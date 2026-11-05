@@ -134,3 +134,10 @@ def test_edgar_403_hint_names_the_block(monkeypatch):
     with pytest.raises(edgar.EdgarError) as ei:
         edgar._get("https://www.sec.gov/files/company_tickers.json")
     assert "no contact address" in str(ei.value)
+
+
+def test_edgar_user_agent_rejects_non_ascii(monkeypatch):
+    from swing_engine import edgar
+    monkeypatch.setenv(edgar.UA_ENV, "beomstar-swing 대표님이메일@도메인")
+    with pytest.raises(edgar.EdgarError, match="ASCII"):
+        edgar.user_agent()

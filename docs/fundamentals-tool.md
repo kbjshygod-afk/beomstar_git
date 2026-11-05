@@ -12,7 +12,7 @@
 - 미국 종목(그리고 한국 종목도 가능): 맥 터미널에서
   ```bash
   cd ~/beomstar_git && git pull
-  export EDGAR_USER_AGENT="beomstar-swing you@example.com"   # SEC 규정: 프로젝트명 + 연락처
+  export EDGAR_USER_AGENT="beomstar-swing you@example.com"   # SEC 규정: 프로젝트명 + 영문 이메일(한글 불가)
   export DART_API_KEY=...                                     # 한국 종목을 같이 볼 때만
   python3 trading/tools/fundamentals_report.py --symbols AAPL,NVDA,BRK-B --out ~/beomstar_reports
   ```

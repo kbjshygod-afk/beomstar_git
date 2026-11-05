@@ -10,6 +10,8 @@ git clone https://github.com/kbjshygod-afk/beomstar_git.git ~/beomstar_git
 cd ~/beomstar_git
 
 # 2) 파이썬 가상환경 + 의존성 (python3 3.11 이상)
+#    맥 기본 python3가 3.9면(pandas==3.0.6 "No matching distribution" 오류) 먼저:
+#    brew install python@3.12 && $(brew --prefix)/bin/python3.12 -m venv ~/.venvs/beomstar
 python3 -m venv ~/.venvs/beomstar
 source ~/.venvs/beomstar/bin/activate
 pip install -r trading/requirements.txt websocket-client
