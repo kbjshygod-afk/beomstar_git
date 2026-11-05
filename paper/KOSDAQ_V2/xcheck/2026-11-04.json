@@ -1,0 +1,19 @@
+{
+ "market": "KOSDAQ_V2",
+ "as_of": "2026-11-04",
+ "source": "KRX Open API",
+ "status": "ok",
+ "checked": "2026-11-04",
+ "index": {
+  "yahoo_close": 714.9500122,
+  "krx_close": 714.95,
+  "match": true
+ },
+ "symbols": {
+  "date": "2026-11-04",
+  "compared": 150,
+  "missing": [],
+  "mismatches": []
+ },
+ "error": null
+}
