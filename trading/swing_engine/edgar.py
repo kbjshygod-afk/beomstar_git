@@ -188,9 +188,12 @@ def periods_from_facts(facts: dict) -> list[dict]:
     * The quarter a company never files a 10-Q for (its fiscal Q4) is derived as the fiscal
       year minus the three quarters that fall inside that year's start..end, and labelled by
       the calendar quarter its end aligns with.
+    * Cash flow is filed year-to-date, so SEC frames only the first quarter; the second and
+      third are YTD minus the previous YTD (same fiscal-year start).
     """
     flows: dict[str, dict] = {}
     bal: dict[str, dict] = {}
+    ytd: dict[tuple, dict] = {}            # (start, end) -> {fig: val}: every duration fact, framed or not
     for fig, concepts in CONCEPTS.items():
         for concept in concepts:
             rows = sorted(_series(facts, concept), key=lambda r: 0 if r.get("frame") else 1)
@@ -200,6 +203,8 @@ def periods_from_facts(facts: dict) -> list[dict]:
                 if fig in INSTANT:
                     bal.setdefault(r["end"], {}).setdefault(fig, float(r["val"]))
                     continue
+                if r.get("start") and fig in DERIVED:
+                    ytd.setdefault((r["start"], r["end"]), {}).setdefault(fig, float(r["val"]))
                 m = _FRAME.fullmatch(r.get("frame") or "")
                 if not m or m.group(3):
                     continue
@@ -218,6 +223,13 @@ def periods_from_facts(facts: dict) -> list[dict]:
                         key=lambda q: q["end"])
         if len(inside) != 3:
             continue
+        # cash flow (and anything else) a 10-Q reports only year-to-date: quarter = YTD − previous YTD
+        for i, q in enumerate(inside):
+            cur = ytd.get((fy["start"], q["end"]), {})
+            prev = ytd.get((fy["start"], inside[i - 1]["end"]), {}) if i else {}
+            for fig in DERIVED:
+                if q.get(fig) is None and cur.get(fig) is not None and (i == 0 or prev.get(fig) is not None):
+                    q[fig] = cur[fig] - (prev[fig] if i else 0.0)
         starts = [_date(q["start"]) for q in inside]
         ends = [_date(q["end"]) for q in inside]
         if (starts[0] - s).days > 20:
