@@ -5,7 +5,8 @@
 - 시작일 2026-09-25 · 기준일(마지막 확정 봉) 2026-11-04 · RS 방식 percentile · 손절 -7% · 1회 리스크 0.75% · 비용 편도 0.2%
 - 레짐 (MA200): **ON** — ^NDX 종가 28,437.17 · 200일선 27,970.02
 - 데이터: 유니버스 101종목 중 100종목 로드 (실패 1)
-- 데이터 대조 (Tiingo): 실패 — FANG: HTTP 429 {"detail":"Error: You have run over your hourly request allocation. Please upgrade at https://api.tiingo.com/pricing to have your limits increased."}
+- 데이터 대조 (Tiingo, 2026-11-04 봉): 종목 16개 비교 (표본 16: 보유·대기 6 + 순환), 불일치 1개 · 지수 비교 안 함
+  - ROST low: Yahoo 237 vs Tiingo 236 (+0.27%)
 
 ## 다음 시가 진입 (오늘 신호)
 

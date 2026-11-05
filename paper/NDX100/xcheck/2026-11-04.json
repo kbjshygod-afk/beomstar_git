@@ -1,0 +1,34 @@
+{
+ "market": "NDX100",
+ "as_of": "2026-11-04",
+ "source": "Tiingo",
+ "status": "mismatch",
+ "checked": "2026-11-04",
+ "index": null,
+ "symbols": {
+  "date": "2026-11-04",
+  "compared": 16,
+  "missing": [],
+  "mismatches": [
+   {
+    "symbol": "ROST",
+    "field": "low",
+    "yahoo": 236.75,
+    "krx": 236.1075,
+    "diff_pct": 0.271
+   }
+  ],
+  "unlisted": [],
+  "sampled": 16,
+  "focus": [
+   "AMGN",
+   "CSX",
+   "KDP",
+   "MSFT",
+   "ROST",
+   "VRTX"
+  ]
+ },
+ "error": null,
+ "calls": 16
+}
