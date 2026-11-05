@@ -15,6 +15,7 @@ import os
 import re
 import urllib.error
 import urllib.request
+from datetime import date, timedelta
 from pathlib import Path
 
 from .fundamentals import Company
@@ -134,63 +135,109 @@ def _series(facts: dict, concept: str) -> list[dict]:
     return next(iter(units.values()), [])
 
 
+_FRAME = re.compile(r"CY(\d{4})(?:Q([1-4]))?(I?)")
+DERIVED = ("revenue", "op_income", "net_income", "ocf")      # additive flows; EPS is not
+
+
+def _date(s) -> date | None:
+    try:
+        return date.fromisoformat(str(s)[:10])
+    except (TypeError, ValueError):
+        return None
+
+
+def _quarter_label(end: date) -> str:
+    """Calendar quarter a period end aligns with (a fiscal quarter ending Sep 27 is Q3; one
+    ending a few days into the next quarter, like Jan 2, is the previous Q4)."""
+    y, m = end.year, end.month
+    if end.day <= 7 and m % 3 == 1:
+        m -= 1
+        if m == 0:
+            m, y = 12, y - 1
+    return f"{y}Q{(m - 1) // 3 + 1}"
+
+
+def _balance_at(bal: dict[str, dict], end: str, fig: str):
+    """Balance of `fig` at `end`, or at the nearest reported instant within ten days."""
+    if end in bal and fig in bal[end]:
+        return bal[end][fig]
+    e = _date(end)
+    if e is None:
+        return None
+    best = None
+    for k, v in bal.items():
+        if fig not in v:
+            continue
+        d = _date(k)
+        if d is None:
+            continue
+        gap = abs((d - e).days)
+        if gap <= 10 and (best is None or gap < best[0]):
+            best = (gap, v[fig])
+    return best[1] if best else None
+
+
 def periods_from_facts(facts: dict) -> list[dict]:
-    """Quarterly and annual periods keyed by XBRL frame."""
-    q: dict[str, dict] = {}
-    y: dict[str, dict] = {}
+    """Quarterly and annual periods keyed by XBRL frame.
+
+    * Flows: concepts are merged per period in CONCEPTS order, so a company that reports
+      Revenues for some years and RevenueFromContractWithCustomer... for others (Apple) still
+      gets every period.
+    * Balances: taken at the period's end date, whatever frame SEC gave the instant, so a
+      September fiscal year-end reads its own balance sheet, not December's.
+    * The quarter a company never files a 10-Q for (its fiscal Q4) is derived as the fiscal
+      year minus the three quarters that fall inside that year's start..end, and labelled by
+      the calendar quarter its end aligns with.
+    """
+    flows: dict[str, dict] = {}
+    bal: dict[str, dict] = {}
     for fig, concepts in CONCEPTS.items():
         for concept in concepts:
-            rows = _series(facts, concept)
-            if not rows:
-                continue
-            used = False
+            rows = sorted(_series(facts, concept), key=lambda r: 0 if r.get("frame") else 1)
             for r in rows:
-                fr = r.get("frame")
-                if not fr:
+                if r.get("val") is None or not r.get("end"):
                     continue
-                m = re.fullmatch(r"CY(\d{4})(?:Q([1-4]))?(I?)", fr)
-                if not m:
-                    continue
-                year, qn, inst = m.group(1), m.group(2), m.group(3)
                 if fig in INSTANT:
-                    if not inst or not qn:
-                        continue
-                    key = f"{year}Q{qn}"
-                    q.setdefault(key, {"label": key, "kind": "Q", "end": r["end"]})
-                    q[key].setdefault(fig, float(r["val"]))
-                    used = True
-                    # the year's balance sheet is the Q4 (or fiscal year-end) balance
-                else:
-                    if inst:
-                        continue
-                    if qn:
-                        key = f"{year}Q{qn}"
-                        q.setdefault(key, {"label": key, "kind": "Q", "end": r["end"]})
-                        q[key].setdefault(fig, float(r["val"]))
-                    else:
-                        key = f"FY{year}"
-                        y.setdefault(key, {"label": key, "kind": "FY", "end": r["end"]})
-                        y[key].setdefault(fig, float(r["val"]))
-                    used = True
-            if used:
-                break
-    # derive a missing Q4 flow as FY - (Q1+Q2+Q3) of the same calendar year
-    for key, fy in y.items():
-        year = key[2:]
-        q4 = f"{year}Q4"
-        for fig in ("revenue", "op_income", "net_income", "ocf"):
-            if fy.get(fig) is None:
+                    bal.setdefault(r["end"], {}).setdefault(fig, float(r["val"]))
+                    continue
+                m = _FRAME.fullmatch(r.get("frame") or "")
+                if not m or m.group(3):
+                    continue
+                year, qn = m.group(1), m.group(2)
+                key = f"{year}Q{qn}" if qn else f"FY{year}"
+                p = flows.setdefault(key, {"label": key, "kind": "Q" if qn else "FY",
+                                           "start": r.get("start"), "end": r["end"]})
+                p.setdefault(fig, float(r["val"]))
+    # the fiscal fourth quarter: year minus the three quarters inside it
+    for fy in [p for p in list(flows.values()) if p["kind"] == "FY"]:
+        s, e = _date(fy.get("start")), _date(fy["end"])
+        if s is None or e is None:
+            continue
+        inside = sorted((q for q in flows.values() if q["kind"] == "Q" and _date(q.get("start")) is not None
+                         and _date(q["start"]) >= s - timedelta(days=7) and _date(q["end"]) <= e + timedelta(days=7)),
+                        key=lambda q: q["end"])
+        if len(inside) != 3:
+            continue
+        starts = [_date(q["start"]) for q in inside]
+        ends = [_date(q["end"]) for q in inside]
+        if (starts[0] - s).days > 20:
+            gap = (s, starts[0] - timedelta(days=1))
+        elif (e - ends[-1]).days > 20:
+            gap = (ends[-1] + timedelta(days=1), e)
+        else:
+            gap = next(((ends[i] + timedelta(days=1), starts[i + 1] - timedelta(days=1))
+                        for i in range(2) if (starts[i + 1] - ends[i]).days > 20), None)
+            if gap is None:
                 continue
-            parts = [q.get(f"{year}Q{i}", {}).get(fig) for i in (1, 2, 3)]
-            if q.get(q4, {}).get(fig) is None and all(p is not None for p in parts):
-                q.setdefault(q4, {"label": q4, "kind": "Q", "end": fy["end"]})
-                q[q4][fig] = fy[fig] - sum(parts)
-        # the year's balances are the Q4 balances
-        for fig in INSTANT:
-            if fy.get(fig) is None and q.get(q4, {}).get(fig) is not None:
-                fy[fig] = q[q4][fig]
-    out = list(q.values()) + list(y.values())
+        key = _quarter_label(gap[1])
+        p = flows.setdefault(key, {"label": key, "kind": "Q", "start": gap[0].isoformat(), "end": gap[1].isoformat()})
+        for fig in DERIVED:
+            if p.get(fig) is None and fy.get(fig) is not None and all(q.get(fig) is not None for q in inside):
+                p[fig] = fy[fig] - sum(q[fig] for q in inside)
+    out = list(flows.values())
     for p in out:
+        for fig in INSTANT:
+            p[fig] = _balance_at(bal, p["end"], fig)
         for fig in CONCEPTS:
             p.setdefault(fig, None)
     return sorted(out, key=lambda p: (p["end"], p["kind"]))
@@ -208,5 +255,5 @@ def company(ticker: str, cache_dir=None, price: float | None = None) -> Company:
     facts = company_facts(cik, cache_dir)
     c = Company(symbol=ticker.upper(), name=title, source="SEC EDGAR", currency="USD",
                 periods=periods_from_facts(facts), price=price, shares=shares_outstanding(facts))
-    c.notes.append(f"EDGAR CIK {cik:010d} · us-gaap 개념: 매출 {'/'.join(CONCEPTS['revenue'][:2])} 등 첫 번째로 값이 있는 개념 사용 · 4분기 = 연간 − 1~3분기")
+    c.notes.append(f"EDGAR CIK {cik:010d} · us-gaap 개념: 매출 {'/'.join(CONCEPTS['revenue'][:2])} 등을 분기마다 순서대로 채움 · 잔액은 각 기간 말일 기준 · 4분기 = 회계연도 − 그 안의 3분기")
     return c

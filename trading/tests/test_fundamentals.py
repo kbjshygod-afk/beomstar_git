@@ -12,7 +12,9 @@ def _facts():
     def flow(concept, vals, unit="USD"):
         rows = []
         for (frame, end, v) in vals:
-            rows.append({"start": "x", "end": end, "val": v, "fy": int(end[:4]), "fp": "Q", "form": "10-Q", "frame": frame})
+            y, q = frame[2:6], frame[7:8]
+            start = f"{y}-{int(q) * 3 - 2:02d}-01" if q and q.isdigit() else f"{y}-01-01"
+            rows.append({"start": start, "end": end, "val": v, "fy": int(end[:4]), "fp": "Q", "form": "10-Q", "frame": frame})
         return {"units": {unit: rows}}
     gaap = {
         "Revenues": flow("Revenues", [("CY2025Q1", "2025-03-31", 100), ("CY2025Q2", "2025-06-30", 110), ("CY2025Q3", "2025-09-30", 120),
@@ -42,6 +44,36 @@ def test_edgar_periods_derive_q4_and_year_balances():
     r = F.ratios(ps)
     assert round(r["op_margin_ttm_pct"], 2) == round((12 + 17 + 16 + 18) / 540 * 100, 2)
     assert r["revenue_yoy_pct"] == pytest.approx((150 / 110 - 1) * 100) and r["debt_ratio_pct"] == 100.0
+
+
+def test_edgar_september_fiscal_year_and_concept_merge():
+    """Apple-like: fiscal year ends late September, Revenues only in old years, the newer
+    concept carries the recent quarters; the 10-K balance sheet is the fiscal year-end one."""
+    def rows(vals, unit="USD"):
+        return {"units": {unit: [{"start": s, "end": e, "val": v, "frame": f} for (f, s, e, v) in vals]}}
+    gaap = {
+        "Revenues": rows([("CY2018", "2017-10-01", "2018-09-29", 265.0)]),
+        "RevenueFromContractWithCustomerExcludingAssessedTax": rows([
+            ("CY2024Q4", "2024-09-29", "2024-12-28", 124.0), ("CY2025Q1", "2024-12-29", "2025-03-29", 95.0),
+            ("CY2025Q2", "2025-03-30", "2025-06-28", 94.0), ("CY2025", "2024-09-29", "2025-09-27", 416.0),
+            ("CY2025Q4", "2025-09-28", "2025-12-27", 140.0)]),
+        "OperatingIncomeLoss": rows([
+            ("CY2024Q4", "2024-09-29", "2024-12-28", 42.8), ("CY2025Q1", "2024-12-29", "2025-03-29", 29.6),
+            ("CY2025Q2", "2025-03-30", "2025-06-28", 28.2), ("CY2025", "2024-09-29", "2025-09-27", 133.0)]),
+        "StockholdersEquity": rows([("CY2024Q4I", None, "2024-12-28", 66.8), ("CY2025Q3I", None, "2025-09-27", 73.7),
+                                    ("CY2025Q4I", None, "2025-12-27", 88.2)]),
+        "Assets": rows([("CY2025Q3I", None, "2025-09-27", 359.0)]),
+    }
+    ps = edgar.periods_from_facts({"facts": {"us-gaap": gaap}})
+    by = {p["label"]: p for p in ps}
+    assert by["2025Q1"]["revenue"] == 95.0 and by["FY2018"]["revenue"] == 265.0        # concepts merged
+    q4 = by["2025Q3"]                                                                  # fiscal Q4 derived
+    assert q4["start"] == "2025-06-29" and q4["end"] == "2025-09-27"
+    assert q4["revenue"] == pytest.approx(416.0 - 124.0 - 95.0 - 94.0)
+    assert q4["op_income"] == pytest.approx(133.0 - 42.8 - 29.6 - 28.2)
+    assert q4["equity"] == 73.7 and by["FY2025"]["equity"] == 73.7 and by["FY2025"]["assets"] == 359.0
+    assert by["2025Q4"]["equity"] == 88.2 and by["2025Q4"]["revenue"] == 140.0
+    assert edgar._quarter_label(edgar.date(2026, 1, 2)) == "2025Q4"
 
 
 def test_edgar_cik_lookup_and_company(monkeypatch, tmp_path):
