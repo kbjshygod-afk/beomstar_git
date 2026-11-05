@@ -16,7 +16,7 @@
   "mismatches": []
  },
  "error": null,
- "calls": 160,
+ "calls": 1,
  "guard": {
   "close_mismatched": 0,
   "compared": 150,
