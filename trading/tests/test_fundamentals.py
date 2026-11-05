@@ -60,6 +60,9 @@ def test_edgar_september_fiscal_year_and_concept_merge():
         "OperatingIncomeLoss": rows([
             ("CY2024Q4", "2024-09-29", "2024-12-28", 42.8), ("CY2025Q1", "2024-12-29", "2025-03-29", 29.6),
             ("CY2025Q2", "2025-03-30", "2025-06-28", 28.2), ("CY2025", "2024-09-29", "2025-09-27", 133.0)]),
+        "NetCashProvidedByUsedInOperatingActivities": rows([
+            ("CY2024Q4", "2024-09-29", "2024-12-28", 29.9), (None, "2024-09-29", "2025-03-29", 54.0),
+            (None, "2024-09-29", "2025-06-28", 81.8), ("CY2025", "2024-09-29", "2025-09-27", 111.5)]),
         "StockholdersEquity": rows([("CY2024Q4I", None, "2024-12-28", 66.8), ("CY2025Q3I", None, "2025-09-27", 73.7),
                                     ("CY2025Q4I", None, "2025-12-27", 88.2)]),
         "Assets": rows([("CY2025Q3I", None, "2025-09-27", 359.0)]),
@@ -72,6 +75,8 @@ def test_edgar_september_fiscal_year_and_concept_merge():
     assert q4["revenue"] == pytest.approx(416.0 - 124.0 - 95.0 - 94.0)
     assert q4["op_income"] == pytest.approx(133.0 - 42.8 - 29.6 - 28.2)
     assert q4["equity"] == 73.7 and by["FY2025"]["equity"] == 73.7 and by["FY2025"]["assets"] == 359.0
+    assert by["2025Q1"]["ocf"] == pytest.approx(54.0 - 29.9) and by["2025Q2"]["ocf"] == pytest.approx(81.8 - 54.0)
+    assert q4["ocf"] == pytest.approx(111.5 - 81.8)                                   # YTD-differenced quarters feed the Q4
     assert by["2025Q4"]["equity"] == 88.2 and by["2025Q4"]["revenue"] == 140.0
     assert edgar._quarter_label(edgar.date(2026, 1, 2)) == "2025Q4"
 
