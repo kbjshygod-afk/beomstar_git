@@ -1949,7 +1949,7 @@
   ]
  },
  "error": null,
- "calls": 246,
+ "calls": 1,
  "guard": {
   "close_mismatched": 173,
   "compared": 200,
