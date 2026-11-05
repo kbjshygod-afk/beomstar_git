@@ -11,11 +11,39 @@
   "missing": [],
   "mismatches": [
    {
-    "symbol": "ROST",
-    "field": "low",
-    "yahoo": 236.75,
-    "krx": 236.1075,
-    "diff_pct": 0.271
+    "symbol": "AMGN",
+    "field": "volume",
+    "yahoo": 4618500.0,
+    "krx": 4457293.0,
+    "diff_pct": 3.49
+   },
+   {
+    "symbol": "VRTX",
+    "field": "volume",
+    "yahoo": 1832400.0,
+    "krx": 1810265.0,
+    "diff_pct": 1.208
+   },
+   {
+    "symbol": "CSX",
+    "field": "volume",
+    "yahoo": 15637500.0,
+    "krx": 15474094.0,
+    "diff_pct": 1.045
+   },
+   {
+    "symbol": "EXC",
+    "field": "volume",
+    "yahoo": 12750000.0,
+    "krx": 12555135.0,
+    "diff_pct": 1.528
+   },
+   {
+    "symbol": "DXCM",
+    "field": "volume",
+    "yahoo": 5248300.0,
+    "krx": 4821412.0,
+    "diff_pct": 8.134
    }
   ],
   "unlisted": [],
