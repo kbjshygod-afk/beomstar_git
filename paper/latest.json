@@ -688,14 +688,14 @@
    "xcheck_kis": null
   },
   "CRYPTO": {
-   "as_of": "2026-11-03",
+   "as_of": "2026-11-04",
    "start_date": "2026-09-25",
    "regime": {
     "benchmark": "BTC-USD",
     "mode": "MA200",
-    "close": 77345.0469,
-    "ma200": 73157.6098,
-    "ma20": 80290.3816,
+    "close": 80405.2891,
+    "ma200": 73181.0052,
+    "ma20": 80203.573,
     "on": true
    },
    "entries_next_open": [],
@@ -709,19 +709,19 @@
      "entry_price": 597.4818726,
      "qty": 12454.957245047199,
      "stop_price": 537.73368534,
-     "last_close": 630.4266968,
-     "exit_ma": 565.6953076200001,
-     "unrealized_pnl": 379739.2793911882,
-     "price_pnl_pct": 5.513945394968611,
+     "last_close": 641.5993042,
+     "exit_ma": 568.409703372,
+     "unrealized_pnl": 518615.318178921,
+     "price_pnl_pct": 7.383894578762495,
      "exit_pending": false
     }
    ],
    "stale_positions": [],
    "watchlist": [],
    "performance": {
-    "equity": 99616926.0,
-    "return_pct": -0.38,
-    "bench_return_pct": -7.96,
+    "equity": 99756080.0,
+    "return_pct": -0.24,
+    "bench_return_pct": -4.32,
     "mdd_pct": -1.58,
     "closed_trades": 1,
     "win_rate_pct": 0.0,
@@ -731,8 +731,8 @@
    },
    "status_csv": "CRYPTO/status.csv",
    "audit": {
-    "days": 40,
-    "signal_files": 40,
+    "days": 41,
+    "signal_files": 41,
     "missing_days": [],
     "late": [],
     "uncommitted": [],
@@ -743,7 +743,7 @@
    "xcheck": {
     "source": "Coinbase/Kraken",
     "status": "mismatch",
-    "checked": "2026-11-03",
+    "checked": "2026-11-04",
     "error": null,
     "mismatched_symbols": [
      "SHIB-USD"
@@ -1183,7 +1183,7 @@
    }
   }
  },
- "updated_at": "2026-11-05T03:27:46Z",
+ "updated_at": "2026-11-05T07:08:16Z",
  "disclaimer": "기계적 룰 출력이며 투자 자문이 아닙니다. 매수·매도 결정은 소유자 본인이 합니다.",
  "unconfirmed": "미확인 추정값(스캐너 원본 코드 미확인): 피벗=직전 20봉 최고가(당일 제외) · 거래량 평균=직전 50일(당일 제외) · RS=지수 대비 가중 1년 수익률 ≥ 0%p(스캐너는 유니버스 백분위 ≥ 70) · 52주 고저=종가 기준 · 200일선 상승=22봉 전 대비 · 수축비=10/40일 평균 TR · 비용=편도 0.2%"
 }
