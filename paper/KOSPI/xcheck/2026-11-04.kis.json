@@ -24,9 +24,9 @@
    {
     "symbol": "005930.KS",
     "field": "volume",
-    "yahoo": 22602720.0,
+    "yahoo": 22248738.0,
     "krx": 21253506.0,
-    "diff_pct": 5.969
+    "diff_pct": 4.473
    },
    {
     "symbol": "000660.KS",
@@ -38,16 +38,16 @@
    {
     "symbol": "000660.KS",
     "field": "volume",
-    "yahoo": 4606819.0,
+    "yahoo": 4591188.0,
     "krx": 4422708.0,
-    "diff_pct": 3.996
+    "diff_pct": 3.67
    },
    {
     "symbol": "402340.KS",
     "field": "volume",
-    "yahoo": 821813.0,
+    "yahoo": 900605.0,
     "krx": 793143.0,
-    "diff_pct": 3.489
+    "diff_pct": 11.932
    },
    {
     "symbol": "009150.KS",
@@ -59,9 +59,9 @@
    {
     "symbol": "009150.KS",
     "field": "volume",
-    "yahoo": 844616.0,
+    "yahoo": 873467.0,
     "krx": 820907.0,
-    "diff_pct": 2.807
+    "diff_pct": 6.017
    },
    {
     "symbol": "373220.KS",
@@ -69,6 +69,13 @@
     "yahoo": 355000.0,
     "krx": 354000.0,
     "diff_pct": 0.282
+   },
+   {
+    "symbol": "373220.KS",
+    "field": "volume",
+    "yahoo": 1104914.0,
+    "krx": 1085582.0,
+    "diff_pct": 1.75
    },
    {
     "symbol": "005380.KS",
@@ -80,9 +87,9 @@
    {
     "symbol": "005380.KS",
     "field": "volume",
-    "yahoo": 685676.0,
+    "yahoo": 663328.0,
     "krx": 640075.0,
-    "diff_pct": 6.651
+    "diff_pct": 3.506
    },
    {
     "symbol": "207940.KS",
@@ -90,6 +97,13 @@
     "yahoo": 1495000.0,
     "krx": 1488000.0,
     "diff_pct": 0.468
+   },
+   {
+    "symbol": "207940.KS",
+    "field": "volume",
+    "yahoo": 73415.0,
+    "krx": 71928.0,
+    "diff_pct": 2.025
    },
    {
     "symbol": "105560.KS",
@@ -101,9 +115,16 @@
    {
     "symbol": "105560.KS",
     "field": "volume",
-    "yahoo": 891424.0,
+    "yahoo": 904694.0,
     "krx": 778885.0,
-    "diff_pct": 12.625
+    "diff_pct": 13.906
+   },
+   {
+    "symbol": "028260.KS",
+    "field": "volume",
+    "yahoo": 380799.0,
+    "krx": 371754.0,
+    "diff_pct": 2.375
    },
    {
     "symbol": "032830.KS",
@@ -111,6 +132,13 @@
     "yahoo": 260000.0,
     "krx": 259000.0,
     "diff_pct": 0.385
+   },
+   {
+    "symbol": "032830.KS",
+    "field": "volume",
+    "yahoo": 200839.0,
+    "krx": 194977.0,
+    "diff_pct": 2.919
    },
    {
     "symbol": "012450.KS",
@@ -122,9 +150,9 @@
    {
     "symbol": "012450.KS",
     "field": "volume",
-    "yahoo": 173896.0,
+    "yahoo": 163664.0,
     "krx": 161042.0,
-    "diff_pct": 7.392
+    "diff_pct": 1.602
    },
    {
     "symbol": "034020.KS",
@@ -136,9 +164,9 @@
    {
     "symbol": "034020.KS",
     "field": "volume",
-    "yahoo": 3183699.0,
+    "yahoo": 3146289.0,
     "krx": 3030856.0,
-    "diff_pct": 4.801
+    "diff_pct": 3.669
    },
    {
     "symbol": "055550.KS",
@@ -146,6 +174,13 @@
     "yahoo": 86300.0,
     "krx": 86200.0,
     "diff_pct": 0.116
+   },
+   {
+    "symbol": "055550.KS",
+    "field": "volume",
+    "yahoo": 832127.0,
+    "krx": 813764.0,
+    "diff_pct": 2.207
    },
    {
     "symbol": "329180.KS",
@@ -157,9 +192,9 @@
    {
     "symbol": "329180.KS",
     "field": "volume",
-    "yahoo": 391140.0,
+    "yahoo": 372946.0,
     "krx": 367766.0,
-    "diff_pct": 5.976
+    "diff_pct": 1.389
    },
    {
     "symbol": "000270.KS",
@@ -171,16 +206,16 @@
    {
     "symbol": "000270.KS",
     "field": "volume",
-    "yahoo": 1246404.0,
+    "yahoo": 1104281.0,
     "krx": 1075165.0,
-    "diff_pct": 13.739
+    "diff_pct": 2.637
    },
    {
     "symbol": "034730.KS",
     "field": "volume",
-    "yahoo": 220544.0,
+    "yahoo": 200441.0,
     "krx": 196337.0,
-    "diff_pct": 10.976
+    "diff_pct": 2.047
    },
    {
     "symbol": "006400.KS",
@@ -192,9 +227,9 @@
    {
     "symbol": "006400.KS",
     "field": "volume",
-    "yahoo": 1384846.0,
+    "yahoo": 1406450.0,
     "krx": 1349406.0,
-    "diff_pct": 2.559
+    "diff_pct": 4.056
    },
    {
     "symbol": "068270.KS",
@@ -213,9 +248,9 @@
    {
     "symbol": "068270.KS",
     "field": "volume",
-    "yahoo": 1115865.0,
+    "yahoo": 1091653.0,
     "krx": 1073189.0,
-    "diff_pct": 3.824
+    "diff_pct": 1.691
    },
    {
     "symbol": "086790.KS",
@@ -225,11 +260,18 @@
     "diff_pct": 0.171
    },
    {
+    "symbol": "086790.KS",
+    "field": "volume",
+    "yahoo": 521612.0,
+    "krx": 494902.0,
+    "diff_pct": 5.121
+   },
+   {
     "symbol": "066570.KS",
     "field": "volume",
-    "yahoo": 707964.0,
+    "yahoo": 697666.0,
     "krx": 668804.0,
-    "diff_pct": 5.531
+    "diff_pct": 4.137
    },
    {
     "symbol": "012330.KS",
@@ -241,9 +283,9 @@
    {
     "symbol": "012330.KS",
     "field": "volume",
-    "yahoo": 233730.0,
+    "yahoo": 227892.0,
     "krx": 218474.0,
-    "diff_pct": 6.527
+    "diff_pct": 4.133
    },
    {
     "symbol": "010120.KS",
@@ -255,9 +297,9 @@
    {
     "symbol": "010120.KS",
     "field": "volume",
-    "yahoo": 995745.0,
+    "yahoo": 974848.0,
     "krx": 936836.0,
-    "diff_pct": 5.916
+    "diff_pct": 3.899
    },
    {
     "symbol": "035420.KS",
@@ -267,11 +309,25 @@
     "diff_pct": 0.234
    },
    {
+    "symbol": "035420.KS",
+    "field": "volume",
+    "yahoo": 672239.0,
+    "krx": 641544.0,
+    "diff_pct": 4.566
+   },
+   {
+    "symbol": "000810.KS",
+    "field": "volume",
+    "yahoo": 75957.0,
+    "krx": 74420.0,
+    "diff_pct": 2.024
+   },
+   {
     "symbol": "298040.KS",
     "field": "volume",
-    "yahoo": 85689.0,
+    "yahoo": 84705.0,
     "krx": 82345.0,
-    "diff_pct": 3.902
+    "diff_pct": 2.786
    },
    {
     "symbol": "316140.KS",
@@ -283,9 +339,9 @@
    {
     "symbol": "316140.KS",
     "field": "volume",
-    "yahoo": 1584952.0,
+    "yahoo": 1389765.0,
     "krx": 1342739.0,
-    "diff_pct": 15.282
+    "diff_pct": 3.384
    },
    {
     "symbol": "267260.KS",
@@ -293,6 +349,13 @@
     "yahoo": 438500.0,
     "krx": 437000.0,
     "diff_pct": 0.342
+   },
+   {
+    "symbol": "267260.KS",
+    "field": "volume",
+    "yahoo": 250274.0,
+    "krx": 246169.0,
+    "diff_pct": 1.64
    },
    {
     "symbol": "096770.KS",
@@ -304,9 +367,9 @@
    {
     "symbol": "096770.KS",
     "field": "volume",
-    "yahoo": 791724.0,
+    "yahoo": 774194.0,
     "krx": 755102.0,
-    "diff_pct": 4.626
+    "diff_pct": 2.466
    },
    {
     "symbol": "005490.KS",
@@ -318,9 +381,9 @@
    {
     "symbol": "005490.KS",
     "field": "volume",
-    "yahoo": 344566.0,
+    "yahoo": 332108.0,
     "krx": 323126.0,
-    "diff_pct": 6.222
+    "diff_pct": 2.705
    },
    {
     "symbol": "000150.KS",
@@ -332,9 +395,9 @@
    {
     "symbol": "000150.KS",
     "field": "volume",
-    "yahoo": 83167.0,
+    "yahoo": 82596.0,
     "krx": 79595.0,
-    "diff_pct": 4.295
+    "diff_pct": 3.633
    },
    {
     "symbol": "042660.KS",
@@ -346,9 +409,9 @@
    {
     "symbol": "042660.KS",
     "field": "volume",
-    "yahoo": 1308165.0,
+    "yahoo": 1324175.0,
     "krx": 1270294.0,
-    "diff_pct": 2.895
+    "diff_pct": 4.069
    },
    {
     "symbol": "009540.KS",
@@ -360,9 +423,9 @@
    {
     "symbol": "009540.KS",
     "field": "volume",
-    "yahoo": 271416.0,
+    "yahoo": 253932.0,
     "krx": 247293.0,
-    "diff_pct": 8.888
+    "diff_pct": 2.614
    },
    {
     "symbol": "010130.KS",
@@ -381,9 +444,9 @@
    {
     "symbol": "010130.KS",
     "field": "volume",
-    "yahoo": 11309.0,
+    "yahoo": 12167.0,
     "krx": 10981.0,
-    "diff_pct": 2.9
+    "diff_pct": 9.748
    },
    {
     "symbol": "042700.KS",
@@ -395,9 +458,9 @@
    {
     "symbol": "042700.KS",
     "field": "volume",
-    "yahoo": 774772.0,
+    "yahoo": 790336.0,
     "krx": 761024.0,
-    "diff_pct": 1.774
+    "diff_pct": 3.709
    },
    {
     "symbol": "138040.KS",
@@ -416,9 +479,9 @@
    {
     "symbol": "011200.KS",
     "field": "volume",
-    "yahoo": 1228988.0,
+    "yahoo": 1089353.0,
     "krx": 1044240.0,
-    "diff_pct": 15.033
+    "diff_pct": 4.141
    },
    {
     "symbol": "015760.KS",
@@ -430,9 +493,9 @@
    {
     "symbol": "015760.KS",
     "field": "volume",
-    "yahoo": 2521044.0,
+    "yahoo": 2529484.0,
     "krx": 2479291.0,
-    "diff_pct": 1.656
+    "diff_pct": 1.984
    },
    {
     "symbol": "017670.KS",
@@ -451,9 +514,9 @@
    {
     "symbol": "017670.KS",
     "field": "volume",
-    "yahoo": 862816.0,
+    "yahoo": 845845.0,
     "krx": 800021.0,
-    "diff_pct": 7.278
+    "diff_pct": 5.418
    },
    {
     "symbol": "033780.KS",
@@ -461,6 +524,13 @@
     "yahoo": 192000.0,
     "krx": 192500.0,
     "diff_pct": 0.26
+   },
+   {
+    "symbol": "033780.KS",
+    "field": "volume",
+    "yahoo": 276420.0,
+    "krx": 271876.0,
+    "diff_pct": 1.644
    },
    {
     "symbol": "051910.KS",
@@ -472,16 +542,16 @@
    {
     "symbol": "051910.KS",
     "field": "volume",
-    "yahoo": 326167.0,
+    "yahoo": 302531.0,
     "krx": 297139.0,
-    "diff_pct": 8.9
+    "diff_pct": 1.782
    },
    {
     "symbol": "010140.KS",
     "field": "volume",
-    "yahoo": 5094321.0,
+    "yahoo": 4946405.0,
     "krx": 4778247.0,
-    "diff_pct": 6.204
+    "diff_pct": 3.4
    },
    {
     "symbol": "010950.KS",
@@ -493,9 +563,9 @@
    {
     "symbol": "010950.KS",
     "field": "volume",
-    "yahoo": 298296.0,
+    "yahoo": 292032.0,
     "krx": 277831.0,
-    "diff_pct": 6.861
+    "diff_pct": 4.863
    },
    {
     "symbol": "006800.KS",
@@ -507,9 +577,9 @@
    {
     "symbol": "006800.KS",
     "field": "volume",
-    "yahoo": 1042429.0,
+    "yahoo": 977692.0,
     "krx": 941700.0,
-    "diff_pct": 9.663
+    "diff_pct": 3.681
    },
    {
     "symbol": "018260.KS",
@@ -521,9 +591,9 @@
    {
     "symbol": "018260.KS",
     "field": "volume",
-    "yahoo": 126521.0,
+    "yahoo": 115382.0,
     "krx": 111589.0,
-    "diff_pct": 11.802
+    "diff_pct": 3.287
    },
    {
     "symbol": "003550.KS",
@@ -535,9 +605,23 @@
    {
     "symbol": "003550.KS",
     "field": "volume",
-    "yahoo": 219683.0,
+    "yahoo": 192527.0,
     "krx": 186402.0,
-    "diff_pct": 15.15
+    "diff_pct": 3.181
+   },
+   {
+    "symbol": "024110.KS",
+    "field": "volume",
+    "yahoo": 571661.0,
+    "krx": 545163.0,
+    "diff_pct": 4.635
+   },
+   {
+    "symbol": "267250.KS",
+    "field": "volume",
+    "yahoo": 162530.0,
+    "krx": 157203.0,
+    "diff_pct": 3.278
    },
    {
     "symbol": "003670.KS",
@@ -549,9 +633,9 @@
    {
     "symbol": "003670.KS",
     "field": "volume",
-    "yahoo": 752781.0,
+    "yahoo": 754318.0,
     "krx": 734743.0,
-    "diff_pct": 2.396
+    "diff_pct": 2.595
    },
    {
     "symbol": "079550.KS",
@@ -563,9 +647,9 @@
    {
     "symbol": "079550.KS",
     "field": "volume",
-    "yahoo": 110461.0,
+    "yahoo": 108456.0,
     "krx": 106779.0,
-    "diff_pct": 3.333
+    "diff_pct": 1.546
    },
    {
     "symbol": "035720.KS",
@@ -577,9 +661,9 @@
    {
     "symbol": "035720.KS",
     "field": "volume",
-    "yahoo": 1614448.0,
+    "yahoo": 1596444.0,
     "krx": 1484820.0,
-    "diff_pct": 8.029
+    "diff_pct": 6.992
    },
    {
     "symbol": "086280.KS",
@@ -589,11 +673,25 @@
     "diff_pct": 0.743
    },
    {
+    "symbol": "086280.KS",
+    "field": "volume",
+    "yahoo": 110851.0,
+    "krx": 102456.0,
+    "diff_pct": 7.573
+   },
+   {
     "symbol": "272210.KS",
     "field": "close",
     "yahoo": 62400.0,
     "krx": 62100.0,
     "diff_pct": 0.481
+   },
+   {
+    "symbol": "272210.KS",
+    "field": "volume",
+    "yahoo": 679678.0,
+    "krx": 667695.0,
+    "diff_pct": 1.763
    },
    {
     "symbol": "278470.KS",
@@ -603,11 +701,32 @@
     "diff_pct": 0.591
    },
    {
+    "symbol": "278470.KS",
+    "field": "volume",
+    "yahoo": 403658.0,
+    "krx": 399012.0,
+    "diff_pct": 1.151
+   },
+   {
     "symbol": "000720.KS",
     "field": "close",
     "yahoo": 87700.0,
     "krx": 87500.0,
     "diff_pct": 0.228
+   },
+   {
+    "symbol": "000720.KS",
+    "field": "volume",
+    "yahoo": 593092.0,
+    "krx": 572758.0,
+    "diff_pct": 3.428
+   },
+   {
+    "symbol": "030200.KS",
+    "field": "volume",
+    "yahoo": 525507.0,
+    "krx": 512965.0,
+    "diff_pct": 2.387
    },
    {
     "symbol": "011070.KS",
@@ -619,9 +738,9 @@
    {
     "symbol": "011070.KS",
     "field": "volume",
-    "yahoo": 187407.0,
+    "yahoo": 177160.0,
     "krx": 172483.0,
-    "diff_pct": 7.963
+    "diff_pct": 2.64
    },
    {
     "symbol": "064350.KS",
@@ -633,9 +752,9 @@
    {
     "symbol": "064350.KS",
     "field": "volume",
-    "yahoo": 778913.0,
+    "yahoo": 867170.0,
     "krx": 747481.0,
-    "diff_pct": 4.035
+    "diff_pct": 13.802
    },
    {
     "symbol": "047810.KS",
@@ -647,9 +766,9 @@
    {
     "symbol": "047810.KS",
     "field": "volume",
-    "yahoo": 881740.0,
+    "yahoo": 858419.0,
     "krx": 848707.0,
-    "diff_pct": 3.746
+    "diff_pct": 1.131
    },
    {
     "symbol": "005830.KS",
@@ -668,9 +787,9 @@
    {
     "symbol": "003490.KS",
     "field": "volume",
-    "yahoo": 2818293.0,
+    "yahoo": 2839048.0,
     "krx": 2725318.0,
-    "diff_pct": 3.299
+    "diff_pct": 4.006
    },
    {
     "symbol": "443060.KS",
@@ -678,6 +797,13 @@
     "yahoo": 170500.0,
     "krx": 169900.0,
     "diff_pct": 0.352
+   },
+   {
+    "symbol": "443060.KS",
+    "field": "volume",
+    "yahoo": 67944.0,
+    "krx": 66487.0,
+    "diff_pct": 2.144
    },
    {
     "symbol": "071050.KS",
@@ -689,9 +815,9 @@
    {
     "symbol": "071050.KS",
     "field": "volume",
-    "yahoo": 119069.0,
+    "yahoo": 112522.0,
     "krx": 109907.0,
-    "diff_pct": 7.695
+    "diff_pct": 2.324
    },
    {
     "symbol": "307950.KS",
@@ -701,11 +827,25 @@
     "diff_pct": 0.337
    },
    {
+    "symbol": "307950.KS",
+    "field": "volume",
+    "yahoo": 64150.0,
+    "krx": 61250.0,
+    "diff_pct": 4.521
+   },
+   {
     "symbol": "078930.KS",
     "field": "close",
     "yahoo": 78900.0,
     "krx": 79000.0,
     "diff_pct": 0.127
+   },
+   {
+    "symbol": "078930.KS",
+    "field": "volume",
+    "yahoo": 301346.0,
+    "krx": 297655.0,
+    "diff_pct": 1.225
    },
    {
     "symbol": "006260.KS",
@@ -717,9 +857,9 @@
    {
     "symbol": "006260.KS",
     "field": "volume",
-    "yahoo": 113988.0,
+    "yahoo": 113646.0,
     "krx": 109899.0,
-    "diff_pct": 3.587
+    "diff_pct": 3.297
    },
    {
     "symbol": "047050.KS",
@@ -727,6 +867,13 @@
     "yahoo": 52200.0,
     "krx": 51900.0,
     "diff_pct": 0.575
+   },
+   {
+    "symbol": "047050.KS",
+    "field": "volume",
+    "yahoo": 333942.0,
+    "krx": 327165.0,
+    "diff_pct": 2.029
    },
    {
     "symbol": "028050.KS",
@@ -738,9 +885,9 @@
    {
     "symbol": "028050.KS",
     "field": "volume",
-    "yahoo": 3848562.0,
+    "yahoo": 4173981.0,
     "krx": 3764964.0,
-    "diff_pct": 2.172
+    "diff_pct": 9.799
    },
    {
     "symbol": "005940.KS",
@@ -752,9 +899,9 @@
    {
     "symbol": "005940.KS",
     "field": "volume",
-    "yahoo": 397937.0,
+    "yahoo": 368701.0,
     "krx": 359339.0,
-    "diff_pct": 9.7
+    "diff_pct": 2.539
    },
    {
     "symbol": "323410.KS",
@@ -764,11 +911,25 @@
     "diff_pct": 0.744
    },
    {
+    "symbol": "323410.KS",
+    "field": "volume",
+    "yahoo": 869410.0,
+    "krx": 848589.0,
+    "diff_pct": 2.395
+   },
+   {
     "symbol": "000500.KS",
     "field": "close",
     "yahoo": 242500.0,
     "krx": 240500.0,
     "diff_pct": 0.825
+   },
+   {
+    "symbol": "000500.KS",
+    "field": "volume",
+    "yahoo": 164964.0,
+    "krx": 158919.0,
+    "diff_pct": 3.664
    },
    {
     "symbol": "180640.KS",
@@ -778,11 +939,25 @@
     "diff_pct": 3.69
    },
    {
+    "symbol": "180640.KS",
+    "field": "volume",
+    "yahoo": 2291472.0,
+    "krx": 1995914.0,
+    "diff_pct": 12.898
+   },
+   {
     "symbol": "003230.KS",
     "field": "close",
     "yahoo": 1189000.0,
     "krx": 1184000.0,
     "diff_pct": 0.421
+   },
+   {
+    "symbol": "003230.KS",
+    "field": "volume",
+    "yahoo": 31393.0,
+    "krx": 30742.0,
+    "diff_pct": 2.074
    },
    {
     "symbol": "259960.KS",
@@ -794,9 +969,9 @@
    {
     "symbol": "259960.KS",
     "field": "volume",
-    "yahoo": 245875.0,
+    "yahoo": 228062.0,
     "krx": 225329.0,
-    "diff_pct": 8.356
+    "diff_pct": 1.198
    },
    {
     "symbol": "007660.KS",
@@ -806,11 +981,25 @@
     "diff_pct": 0.124
    },
    {
+    "symbol": "007660.KS",
+    "field": "volume",
+    "yahoo": 760526.0,
+    "krx": 728264.0,
+    "diff_pct": 4.242
+   },
+   {
     "symbol": "090430.KS",
     "field": "close",
     "yahoo": 127700.0,
     "krx": 127300.0,
     "diff_pct": 0.313
+   },
+   {
+    "symbol": "090430.KS",
+    "field": "volume",
+    "yahoo": 237604.0,
+    "krx": 231439.0,
+    "diff_pct": 2.595
    },
    {
     "symbol": "0126Z0.KS",
@@ -822,9 +1011,9 @@
    {
     "symbol": "0126Z0.KS",
     "field": "volume",
-    "yahoo": 34622.0,
+    "yahoo": 34038.0,
     "krx": 32999.0,
-    "diff_pct": 4.688
+    "diff_pct": 3.052
    },
    {
     "symbol": "016360.KS",
@@ -834,11 +1023,32 @@
     "diff_pct": 0.504
    },
    {
+    "symbol": "016360.KS",
+    "field": "volume",
+    "yahoo": 218779.0,
+    "krx": 213521.0,
+    "diff_pct": 2.403
+   },
+   {
+    "symbol": "047040.KS",
+    "field": "volume",
+    "yahoo": 5321311.0,
+    "krx": 4954189.0,
+    "diff_pct": 6.899
+   },
+   {
     "symbol": "161390.KS",
     "field": "close",
     "yahoo": 57000.0,
     "krx": 56800.0,
     "diff_pct": 0.351
+   },
+   {
+    "symbol": "161390.KS",
+    "field": "volume",
+    "yahoo": 250678.0,
+    "krx": 246182.0,
+    "diff_pct": 1.794
    },
    {
     "symbol": "021240.KS",
@@ -848,11 +1058,25 @@
     "diff_pct": 0.193
    },
    {
+    "symbol": "021240.KS",
+    "field": "volume",
+    "yahoo": 238654.0,
+    "krx": 209918.0,
+    "diff_pct": 12.041
+   },
+   {
+    "symbol": "039490.KS",
+    "field": "volume",
+    "yahoo": 144330.0,
+    "krx": 141847.0,
+    "diff_pct": 1.72
+   },
+   {
     "symbol": "000880.KS",
     "field": "volume",
-    "yahoo": 103973.0,
+    "yahoo": 101141.0,
     "krx": 98824.0,
-    "diff_pct": 4.952
+    "diff_pct": 2.291
    },
    {
     "symbol": "352820.KS",
@@ -864,9 +1088,9 @@
    {
     "symbol": "352820.KS",
     "field": "volume",
-    "yahoo": 873652.0,
+    "yahoo": 880881.0,
     "krx": 860813.0,
-    "diff_pct": 1.47
+    "diff_pct": 2.278
    },
    {
     "symbol": "064400.KS",
@@ -878,9 +1102,9 @@
    {
     "symbol": "064400.KS",
     "field": "volume",
-    "yahoo": 845308.0,
+    "yahoo": 868651.0,
     "krx": 822353.0,
-    "diff_pct": 2.716
+    "diff_pct": 5.33
    },
    {
     "symbol": "128940.KS",
@@ -888,6 +1112,13 @@
     "yahoo": 423500.0,
     "krx": 420500.0,
     "diff_pct": 0.708
+   },
+   {
+    "symbol": "128940.KS",
+    "field": "volume",
+    "yahoo": 91824.0,
+    "krx": 89743.0,
+    "diff_pct": 2.266
    },
    {
     "symbol": "009830.KS",
@@ -906,9 +1137,9 @@
    {
     "symbol": "009830.KS",
     "field": "volume",
-    "yahoo": 23882065.0,
+    "yahoo": 26322673.0,
     "krx": 24321073.0,
-    "diff_pct": 1.805
+    "diff_pct": 7.604
    },
    {
     "symbol": "062040.KS",
@@ -920,9 +1151,9 @@
    {
     "symbol": "062040.KS",
     "field": "volume",
-    "yahoo": 301974.0,
+    "yahoo": 302881.0,
     "krx": 291139.0,
-    "diff_pct": 3.588
+    "diff_pct": 3.877
    },
    {
     "symbol": "032640.KS",
@@ -932,18 +1163,18 @@
     "diff_pct": 0.838
    },
    {
-    "symbol": "032640.KS",
-    "field": "volume",
-    "yahoo": 3645789.0,
-    "krx": 3491415.0,
-    "diff_pct": 4.234
-   },
-   {
     "symbol": "267270.KS",
     "field": "close",
     "yahoo": 82500.0,
     "krx": 82400.0,
     "diff_pct": 0.121
+   },
+   {
+    "symbol": "267270.KS",
+    "field": "volume",
+    "yahoo": 182315.0,
+    "krx": 176080.0,
+    "diff_pct": 3.42
    },
    {
     "symbol": "001440.KS",
@@ -955,9 +1186,9 @@
    {
     "symbol": "001440.KS",
     "field": "volume",
-    "yahoo": 2098286.0,
+    "yahoo": 2069051.0,
     "krx": 1967992.0,
-    "diff_pct": 6.21
+    "diff_pct": 4.884
    },
    {
     "symbol": "326030.KS",
@@ -967,11 +1198,25 @@
     "diff_pct": 0.616
    },
    {
+    "symbol": "326030.KS",
+    "field": "volume",
+    "yahoo": 310036.0,
+    "krx": 300694.0,
+    "diff_pct": 3.013
+   },
+   {
     "symbol": "353200.KS",
     "field": "close",
     "yahoo": 99500.0,
     "krx": 99900.0,
     "diff_pct": 0.4
+   },
+   {
+    "symbol": "353200.KS",
+    "field": "volume",
+    "yahoo": 2264059.0,
+    "krx": 2116622.0,
+    "diff_pct": 6.512
    },
    {
     "symbol": "000990.KS",
@@ -983,9 +1228,9 @@
    {
     "symbol": "000990.KS",
     "field": "volume",
-    "yahoo": 565797.0,
+    "yahoo": 567402.0,
     "krx": 548178.0,
-    "diff_pct": 3.114
+    "diff_pct": 3.388
    },
    {
     "symbol": "175330.KS",
@@ -995,11 +1240,25 @@
     "diff_pct": 0.194
    },
    {
+    "symbol": "175330.KS",
+    "field": "volume",
+    "yahoo": 291365.0,
+    "krx": 283664.0,
+    "diff_pct": 2.643
+   },
+   {
     "symbol": "241560.KS",
     "field": "close",
     "yahoo": 49350.0,
     "krx": 49400.0,
     "diff_pct": 0.101
+   },
+   {
+    "symbol": "241560.KS",
+    "field": "volume",
+    "yahoo": 183729.0,
+    "krx": 135457.0,
+    "diff_pct": 26.273
    },
    {
     "symbol": "377300.KS",
@@ -1011,9 +1270,9 @@
    {
     "symbol": "377300.KS",
     "field": "volume",
-    "yahoo": 301003.0,
+    "yahoo": 306786.0,
     "krx": 290024.0,
-    "diff_pct": 3.647
+    "diff_pct": 5.464
    },
    {
     "symbol": "000100.KS",
@@ -1025,9 +1284,9 @@
    {
     "symbol": "000100.KS",
     "field": "volume",
-    "yahoo": 318368.0,
+    "yahoo": 304801.0,
     "krx": 294228.0,
-    "diff_pct": 7.582
+    "diff_pct": 3.469
    },
    {
     "symbol": "052690.KS",
@@ -1039,9 +1298,9 @@
    {
     "symbol": "052690.KS",
     "field": "volume",
-    "yahoo": 183126.0,
+    "yahoo": 182960.0,
     "krx": 175552.0,
-    "diff_pct": 4.136
+    "diff_pct": 4.049
    },
    {
     "symbol": "029780.KS",
@@ -1053,9 +1312,16 @@
    {
     "symbol": "029780.KS",
     "field": "volume",
-    "yahoo": 112102.0,
+    "yahoo": 109368.0,
     "krx": 105320.0,
-    "diff_pct": 6.05
+    "diff_pct": 3.701
+   },
+   {
+    "symbol": "138930.KS",
+    "field": "volume",
+    "yahoo": 2047407.0,
+    "krx": 1994040.0,
+    "diff_pct": 2.607
    },
    {
     "symbol": "088350.KS",
@@ -1063,6 +1329,13 @@
     "yahoo": 4080.0,
     "krx": 4075.0,
     "diff_pct": 0.123
+   },
+   {
+    "symbol": "088350.KS",
+    "field": "volume",
+    "yahoo": 2398999.0,
+    "krx": 2263379.0,
+    "diff_pct": 5.653
    },
    {
     "symbol": "454910.KS",
@@ -1074,16 +1347,9 @@
    {
     "symbol": "454910.KS",
     "field": "volume",
-    "yahoo": 305702.0,
+    "yahoo": 316785.0,
     "krx": 300431.0,
-    "diff_pct": 1.724
-   },
-   {
-    "symbol": "036570.KS",
-    "field": "low",
-    "yahoo": 191100.0,
-    "krx": 190700.0,
-    "diff_pct": 0.209
+    "diff_pct": 5.162
    },
    {
     "symbol": "036570.KS",
@@ -1095,9 +1361,9 @@
    {
     "symbol": "036570.KS",
     "field": "volume",
-    "yahoo": 79102.0,
+    "yahoo": 77227.0,
     "krx": 75062.0,
-    "diff_pct": 5.107
+    "diff_pct": 2.803
    },
    {
     "symbol": "066970.KS",
@@ -1109,9 +1375,9 @@
    {
     "symbol": "066970.KS",
     "field": "volume",
-    "yahoo": 937973.0,
+    "yahoo": 950624.0,
     "krx": 927193.0,
-    "diff_pct": 1.149
+    "diff_pct": 2.465
    },
    {
     "symbol": "011790.KS",
@@ -1123,9 +1389,9 @@
    {
     "symbol": "011790.KS",
     "field": "volume",
-    "yahoo": 201971.0,
+    "yahoo": 201554.0,
     "krx": 195631.0,
-    "diff_pct": 3.139
+    "diff_pct": 2.939
    },
    {
     "symbol": "051900.KS",
@@ -1135,11 +1401,25 @@
     "diff_pct": 0.431
    },
    {
+    "symbol": "051900.KS",
+    "field": "volume",
+    "yahoo": 181437.0,
+    "krx": 178102.0,
+    "diff_pct": 1.838
+   },
+   {
     "symbol": "271560.KS",
     "field": "close",
     "yahoo": 115600.0,
     "krx": 115800.0,
     "diff_pct": 0.173
+   },
+   {
+    "symbol": "271560.KS",
+    "field": "volume",
+    "yahoo": 103205.0,
+    "krx": 101110.0,
+    "diff_pct": 2.03
    },
    {
     "symbol": "004020.KS",
@@ -1151,16 +1431,16 @@
    {
     "symbol": "004020.KS",
     "field": "volume",
-    "yahoo": 491459.0,
+    "yahoo": 481808.0,
     "krx": 470505.0,
-    "diff_pct": 4.264
+    "diff_pct": 2.346
    },
    {
     "symbol": "034220.KS",
     "field": "volume",
-    "yahoo": 2012735.0,
+    "yahoo": 1901313.0,
     "krx": 1802219.0,
-    "diff_pct": 10.459
+    "diff_pct": 5.212
    },
    {
     "symbol": "002380.KS",
@@ -1170,11 +1450,11 @@
     "diff_pct": 0.122
    },
    {
-    "symbol": "001450.KS",
+    "symbol": "002380.KS",
     "field": "volume",
-    "yahoo": 288033.0,
-    "krx": 279826.0,
-    "diff_pct": 2.849
+    "yahoo": 26923.0,
+    "krx": 26199.0,
+    "diff_pct": 2.689
    },
    {
     "symbol": "082740.KS",
@@ -1186,9 +1466,9 @@
    {
     "symbol": "082740.KS",
     "field": "volume",
-    "yahoo": 669001.0,
+    "yahoo": 686938.0,
     "krx": 661129.0,
-    "diff_pct": 1.177
+    "diff_pct": 3.757
    },
    {
     "symbol": "103590.KS",
@@ -1196,6 +1476,13 @@
     "yahoo": 55000.0,
     "krx": 54900.0,
     "diff_pct": 0.182
+   },
+   {
+    "symbol": "103590.KS",
+    "field": "volume",
+    "yahoo": 174139.0,
+    "krx": 163561.0,
+    "diff_pct": 6.074
    },
    {
     "symbol": "010060.KS",
@@ -1214,9 +1501,9 @@
    {
     "symbol": "010060.KS",
     "field": "volume",
-    "yahoo": 1036847.0,
+    "yahoo": 1105966.0,
     "krx": 1051843.0,
-    "diff_pct": 1.426
+    "diff_pct": 4.894
    },
    {
     "symbol": "001040.KS",
@@ -1224,6 +1511,13 @@
     "yahoo": 114300.0,
     "krx": 114100.0,
     "diff_pct": 0.175
+   },
+   {
+    "symbol": "001040.KS",
+    "field": "volume",
+    "yahoo": 77146.0,
+    "krx": 76100.0,
+    "diff_pct": 1.356
    },
    {
     "symbol": "008930.KS",
@@ -1235,9 +1529,9 @@
    {
     "symbol": "008930.KS",
     "field": "volume",
-    "yahoo": 312326.0,
+    "yahoo": 315908.0,
     "krx": 307981.0,
-    "diff_pct": 1.391
+    "diff_pct": 2.509
    },
    {
     "symbol": "161890.KS",
@@ -1245,6 +1539,13 @@
     "yahoo": 112900.0,
     "krx": 112700.0,
     "diff_pct": 0.177
+   },
+   {
+    "symbol": "161890.KS",
+    "field": "volume",
+    "yahoo": 138511.0,
+    "krx": 135965.0,
+    "diff_pct": 1.838
    },
    {
     "symbol": "018880.KS",
@@ -1263,9 +1564,9 @@
    {
     "symbol": "018880.KS",
     "field": "volume",
-    "yahoo": 3893154.0,
+    "yahoo": 4027483.0,
     "krx": 3800199.0,
-    "diff_pct": 2.388
+    "diff_pct": 5.643
    },
    {
     "symbol": "036460.KS",
@@ -1275,6 +1576,13 @@
     "diff_pct": 0.396
    },
    {
+    "symbol": "036460.KS",
+    "field": "volume",
+    "yahoo": 176411.0,
+    "krx": 170121.0,
+    "diff_pct": 3.566
+   },
+   {
     "symbol": "004170.KS",
     "field": "close",
     "yahoo": 262000.0,
@@ -1282,11 +1590,25 @@
     "diff_pct": 0.573
    },
    {
+    "symbol": "012750.KS",
+    "field": "volume",
+    "yahoo": 77222.0,
+    "krx": 75937.0,
+    "diff_pct": 1.664
+   },
+   {
     "symbol": "375500.KS",
     "field": "close",
     "yahoo": 53100.0,
     "krx": 53500.0,
     "diff_pct": 0.748
+   },
+   {
+    "symbol": "375500.KS",
+    "field": "volume",
+    "yahoo": 356927.0,
+    "krx": 346007.0,
+    "diff_pct": 3.059
    },
    {
     "symbol": "336260.KS",
@@ -1298,9 +1620,9 @@
    {
     "symbol": "336260.KS",
     "field": "volume",
-    "yahoo": 680075.0,
+    "yahoo": 709118.0,
     "krx": 652586.0,
-    "diff_pct": 4.042
+    "diff_pct": 7.972
    },
    {
     "symbol": "192820.KS",
@@ -1310,6 +1632,13 @@
     "diff_pct": 0.606
    },
    {
+    "symbol": "192820.KS",
+    "field": "volume",
+    "yahoo": 53701.0,
+    "krx": 52660.0,
+    "diff_pct": 1.939
+   },
+   {
     "symbol": "111770.KS",
     "field": "close",
     "yahoo": 67500.0,
@@ -1317,11 +1646,25 @@
     "diff_pct": 0.593
    },
    {
+    "symbol": "111770.KS",
+    "field": "volume",
+    "yahoo": 98289.0,
+    "krx": 97160.0,
+    "diff_pct": 1.149
+   },
+   {
     "symbol": "035250.KS",
     "field": "close",
     "yahoo": 14300.0,
     "krx": 14250.0,
     "diff_pct": 0.35
+   },
+   {
+    "symbol": "035250.KS",
+    "field": "volume",
+    "yahoo": 284674.0,
+    "krx": 276421.0,
+    "diff_pct": 2.899
    },
    {
     "symbol": "022100.KS",
@@ -1333,9 +1676,9 @@
    {
     "symbol": "022100.KS",
     "field": "volume",
-    "yahoo": 585988.0,
+    "yahoo": 585011.0,
     "krx": 566639.0,
-    "diff_pct": 3.302
+    "diff_pct": 3.14
    },
    {
     "symbol": "028670.KS",
@@ -1347,9 +1690,9 @@
    {
     "symbol": "028670.KS",
     "field": "volume",
-    "yahoo": 2617779.0,
+    "yahoo": 2645568.0,
     "krx": 2552309.0,
-    "diff_pct": 2.501
+    "diff_pct": 3.525
    },
    {
     "symbol": "006360.KS",
@@ -1357,6 +1700,13 @@
     "yahoo": 28700.0,
     "krx": 28550.0,
     "diff_pct": 0.523
+   },
+   {
+    "symbol": "006360.KS",
+    "field": "volume",
+    "yahoo": 1094661.0,
+    "krx": 1054663.0,
+    "diff_pct": 3.654
    },
    {
     "symbol": "011780.KS",
@@ -1368,9 +1718,9 @@
    {
     "symbol": "011780.KS",
     "field": "volume",
-    "yahoo": 59017.0,
+    "yahoo": 52151.0,
     "krx": 51153.0,
-    "diff_pct": 13.325
+    "diff_pct": 1.914
    },
    {
     "symbol": "023530.KS",
@@ -1378,6 +1728,13 @@
     "yahoo": 91500.0,
     "krx": 91000.0,
     "diff_pct": 0.546
+   },
+   {
+    "symbol": "023530.KS",
+    "field": "volume",
+    "yahoo": 68548.0,
+    "krx": 67563.0,
+    "diff_pct": 1.437
    },
    {
     "symbol": "031210.KS",
@@ -1394,11 +1751,25 @@
     "diff_pct": 0.291
    },
    {
+    "symbol": "017800.KS",
+    "field": "volume",
+    "yahoo": 114607.0,
+    "krx": 111958.0,
+    "diff_pct": 2.311
+   },
+   {
     "symbol": "251270.KS",
     "field": "close",
     "yahoo": 34200.0,
     "krx": 34100.0,
     "diff_pct": 0.292
+   },
+   {
+    "symbol": "251270.KS",
+    "field": "volume",
+    "yahoo": 160831.0,
+    "krx": 155341.0,
+    "diff_pct": 3.414
    },
    {
     "symbol": "139130.KS",
@@ -1408,11 +1779,25 @@
     "diff_pct": 0.129
    },
    {
+    "symbol": "139130.KS",
+    "field": "volume",
+    "yahoo": 527040.0,
+    "krx": 519943.0,
+    "diff_pct": 1.347
+   },
+   {
     "symbol": "302440.KS",
     "field": "close",
     "yahoo": 34500.0,
     "krx": 34350.0,
     "diff_pct": 0.435
+   },
+   {
+    "symbol": "302440.KS",
+    "field": "volume",
+    "yahoo": 101138.0,
+    "krx": 98617.0,
+    "diff_pct": 2.493
    },
    {
     "symbol": "007340.KS",
@@ -1422,11 +1807,25 @@
     "diff_pct": 0.505
    },
    {
+    "symbol": "007340.KS",
+    "field": "volume",
+    "yahoo": 73399.0,
+    "krx": 71798.0,
+    "diff_pct": 2.181
+   },
+   {
     "symbol": "097950.KS",
     "field": "close",
     "yahoo": 177000.0,
     "krx": 176400.0,
     "diff_pct": 0.339
+   },
+   {
+    "symbol": "097950.KS",
+    "field": "volume",
+    "yahoo": 44232.0,
+    "krx": 43618.0,
+    "diff_pct": 1.388
    },
    {
     "symbol": "085620.KS",
@@ -1443,6 +1842,13 @@
     "diff_pct": 0.359
    },
    {
+    "symbol": "085620.KS",
+    "field": "volume",
+    "yahoo": 57533.0,
+    "krx": 55993.0,
+    "diff_pct": 2.677
+   },
+   {
     "symbol": "383220.KS",
     "field": "close",
     "yahoo": 62600.0,
@@ -1450,18 +1856,18 @@
     "diff_pct": 0.319
    },
    {
+    "symbol": "383220.KS",
+    "field": "volume",
+    "yahoo": 33020.0,
+    "krx": 32167.0,
+    "diff_pct": 2.583
+   },
+   {
     "symbol": "003690.KS",
     "field": "close",
     "yahoo": 13950.0,
     "krx": 13980.0,
     "diff_pct": 0.215
-   },
-   {
-    "symbol": "003690.KS",
-    "field": "volume",
-    "yahoo": 231621.0,
-    "krx": 228333.0,
-    "diff_pct": 1.42
    },
    {
     "symbol": "011170.KS",
@@ -1473,9 +1879,9 @@
    {
     "symbol": "011170.KS",
     "field": "volume",
-    "yahoo": 111965.0,
+    "yahoo": 110604.0,
     "krx": 108031.0,
-    "diff_pct": 3.514
+    "diff_pct": 2.326
    },
    {
     "symbol": "014680.KS",
@@ -1485,11 +1891,25 @@
     "diff_pct": 0.48
    },
    {
+    "symbol": "014680.KS",
+    "field": "volume",
+    "yahoo": 33059.0,
+    "krx": 32599.0,
+    "diff_pct": 1.391
+   },
+   {
     "symbol": "026960.KS",
     "field": "close",
     "yahoo": 27900.0,
     "krx": 27850.0,
     "diff_pct": 0.179
+   },
+   {
+    "symbol": "026960.KS",
+    "field": "volume",
+    "yahoo": 52588.0,
+    "krx": 50626.0,
+    "diff_pct": 3.731
    },
    {
     "symbol": "450080.KS",
@@ -1508,9 +1928,9 @@
    {
     "symbol": "450080.KS",
     "field": "volume",
-    "yahoo": 528433.0,
+    "yahoo": 540596.0,
     "krx": 510957.0,
-    "diff_pct": 3.307
+    "diff_pct": 5.483
    },
    {
     "symbol": "009420.KS",
@@ -1522,9 +1942,9 @@
    {
     "symbol": "009420.KS",
     "field": "volume",
-    "yahoo": 237895.0,
+    "yahoo": 240772.0,
     "krx": 234926.0,
-    "diff_pct": 1.248
+    "diff_pct": 2.428
    },
    {
     "symbol": "004990.KS",
@@ -1532,6 +1952,13 @@
     "yahoo": 22300.0,
     "krx": 22250.0,
     "diff_pct": 0.224
+   },
+   {
+    "symbol": "004990.KS",
+    "field": "volume",
+    "yahoo": 89067.0,
+    "krx": 86457.0,
+    "diff_pct": 2.93
    },
    {
     "symbol": "489790.KS",
@@ -1543,9 +1970,9 @@
    {
     "symbol": "489790.KS",
     "field": "volume",
-    "yahoo": 393919.0,
+    "yahoo": 407968.0,
     "krx": 388782.0,
-    "diff_pct": 1.304
+    "diff_pct": 4.703
    },
    {
     "symbol": "004370.KS",
@@ -1557,9 +1984,16 @@
    {
     "symbol": "004370.KS",
     "field": "volume",
-    "yahoo": 12297.0,
+    "yahoo": 12199.0,
     "krx": 12056.0,
-    "diff_pct": 1.96
+    "diff_pct": 1.172
+   },
+   {
+    "symbol": "000240.KS",
+    "field": "volume",
+    "yahoo": 47273.0,
+    "krx": 45660.0,
+    "diff_pct": 3.412
    },
    {
     "symbol": "282330.KS",
@@ -1576,6 +2010,13 @@
     "diff_pct": 0.539
    },
    {
+    "symbol": "483650.KS",
+    "field": "volume",
+    "yahoo": 83623.0,
+    "krx": 82580.0,
+    "diff_pct": 1.247
+   },
+   {
     "symbol": "001720.KS",
     "field": "close",
     "yahoo": 117900.0,
@@ -1590,11 +2031,25 @@
     "diff_pct": 0.521
    },
    {
+    "symbol": "005850.KS",
+    "field": "volume",
+    "yahoo": 99128.0,
+    "krx": 96672.0,
+    "diff_pct": 2.478
+   },
+   {
     "symbol": "018670.KS",
     "field": "close",
     "yahoo": 236500.0,
     "krx": 235000.0,
     "diff_pct": 0.634
+   },
+   {
+    "symbol": "018670.KS",
+    "field": "volume",
+    "yahoo": 8940.0,
+    "krx": 8634.0,
+    "diff_pct": 3.423
    },
    {
     "symbol": "279570.KS",
@@ -1604,6 +2059,13 @@
     "diff_pct": 0.391
    },
    {
+    "symbol": "279570.KS",
+    "field": "volume",
+    "yahoo": 543712.0,
+    "krx": 521105.0,
+    "diff_pct": 4.158
+   },
+   {
     "symbol": "103140.KS",
     "field": "close",
     "yahoo": 56800.0,
@@ -1611,11 +2073,32 @@
     "diff_pct": 0.525
    },
    {
+    "symbol": "103140.KS",
+    "field": "volume",
+    "yahoo": 154481.0,
+    "krx": 148060.0,
+    "diff_pct": 4.156
+   },
+   {
     "symbol": "204320.KS",
     "field": "close",
     "yahoo": 34250.0,
     "krx": 34050.0,
     "diff_pct": 0.584
+   },
+   {
+    "symbol": "204320.KS",
+    "field": "volume",
+    "yahoo": 387030.0,
+    "krx": 369785.0,
+    "diff_pct": 4.456
+   },
+   {
+    "symbol": "009970.KS",
+    "field": "volume",
+    "yahoo": 7276.0,
+    "krx": 7077.0,
+    "diff_pct": 2.735
    },
    {
     "symbol": "112610.KS",
@@ -1632,11 +2115,25 @@
     "diff_pct": 0.672
    },
    {
+    "symbol": "112610.KS",
+    "field": "volume",
+    "yahoo": 2646044.0,
+    "krx": 2537203.0,
+    "diff_pct": 4.113
+   },
+   {
     "symbol": "020150.KS",
     "field": "close",
     "yahoo": 41100.0,
     "krx": 40600.0,
     "diff_pct": 1.217
+   },
+   {
+    "symbol": "020150.KS",
+    "field": "volume",
+    "yahoo": 733499.0,
+    "krx": 718903.0,
+    "diff_pct": 1.99
    },
    {
     "symbol": "069960.KS",
@@ -1646,11 +2143,25 @@
     "diff_pct": 0.124
    },
    {
+    "symbol": "069960.KS",
+    "field": "volume",
+    "yahoo": 111752.0,
+    "krx": 110361.0,
+    "diff_pct": 1.245
+   },
+   {
     "symbol": "051600.KS",
     "field": "close",
     "yahoo": 42300.0,
     "krx": 42150.0,
     "diff_pct": 0.355
+   },
+   {
+    "symbol": "051600.KS",
+    "field": "volume",
+    "yahoo": 101807.0,
+    "krx": 99576.0,
+    "diff_pct": 2.191
    },
    {
     "symbol": "030000.KS",
@@ -1667,6 +2178,13 @@
     "diff_pct": 0.951
    },
    {
+    "symbol": "002790.KS",
+    "field": "volume",
+    "yahoo": 111708.0,
+    "krx": 110273.0,
+    "diff_pct": 1.285
+   },
+   {
     "symbol": "081660.KS",
     "field": "close",
     "yahoo": 37700.0,
@@ -1681,11 +2199,25 @@
     "diff_pct": 0.541
    },
    {
+    "symbol": "139480.KS",
+    "field": "volume",
+    "yahoo": 104729.0,
+    "krx": 101948.0,
+    "diff_pct": 2.655
+   },
+   {
     "symbol": "229640.KS",
     "field": "close",
     "yahoo": 47000.0,
     "krx": 46650.0,
     "diff_pct": 0.745
+   },
+   {
+    "symbol": "229640.KS",
+    "field": "volume",
+    "yahoo": 155824.0,
+    "krx": 147831.0,
+    "diff_pct": 5.13
    },
    {
     "symbol": "457190.KS",
@@ -1695,11 +2227,11 @@
     "diff_pct": 0.808
    },
    {
-    "symbol": "007070.KS",
+    "symbol": "457190.KS",
     "field": "volume",
-    "yahoo": 347182.0,
-    "krx": 340254.0,
-    "diff_pct": 1.995
+    "yahoo": 366886.0,
+    "krx": 349022.0,
+    "diff_pct": 4.869
    },
    {
     "symbol": "073240.KS",
@@ -1709,11 +2241,25 @@
     "diff_pct": 0.571
    },
    {
+    "symbol": "073240.KS",
+    "field": "volume",
+    "yahoo": 796751.0,
+    "krx": 740844.0,
+    "diff_pct": 7.017
+   },
+   {
     "symbol": "462870.KS",
     "field": "close",
     "yahoo": 29850.0,
     "krx": 29400.0,
     "diff_pct": 1.508
+   },
+   {
+    "symbol": "462870.KS",
+    "field": "volume",
+    "yahoo": 58164.0,
+    "krx": 55308.0,
+    "diff_pct": 4.91
    },
    {
     "symbol": "181710.KS",
@@ -1737,6 +2283,13 @@
     "diff_pct": 0.269
    },
    {
+    "symbol": "439260.KS",
+    "field": "volume",
+    "yahoo": 50066.0,
+    "krx": 48122.0,
+    "diff_pct": 3.883
+   },
+   {
     "symbol": "475150.KS",
     "field": "high",
     "yahoo": 39500.0,
@@ -1753,9 +2306,9 @@
    {
     "symbol": "475150.KS",
     "field": "volume",
-    "yahoo": 1787611.0,
+    "yahoo": 2184805.0,
     "krx": 1950014.0,
-    "diff_pct": 8.328
+    "diff_pct": 10.747
    },
    {
     "symbol": "020560.KS",
@@ -1767,9 +2320,9 @@
    {
     "symbol": "020560.KS",
     "field": "volume",
-    "yahoo": 64317.0,
+    "yahoo": 65629.0,
     "krx": 63505.0,
-    "diff_pct": 1.262
+    "diff_pct": 3.236
    },
    {
     "symbol": "281820.KS",
@@ -1781,9 +2334,9 @@
    {
     "symbol": "281820.KS",
     "field": "volume",
-    "yahoo": 374979.0,
+    "yahoo": 388556.0,
     "krx": 369929.0,
-    "diff_pct": 1.347
+    "diff_pct": 4.794
    },
    {
     "symbol": "023590.KS",
@@ -1800,6 +2353,13 @@
     "diff_pct": 2.201
    },
    {
+    "symbol": "023590.KS",
+    "field": "volume",
+    "yahoo": 61016.0,
+    "krx": 60166.0,
+    "diff_pct": 1.393
+   },
+   {
     "symbol": "071970.KS",
     "field": "close",
     "yahoo": 40000.0,
@@ -1809,9 +2369,9 @@
    {
     "symbol": "071970.KS",
     "field": "volume",
-    "yahoo": 205298.0,
+    "yahoo": 204085.0,
     "krx": 198975.0,
-    "diff_pct": 3.08
+    "diff_pct": 2.504
    },
    {
     "symbol": "120110.KS",
@@ -1819,6 +2379,13 @@
     "yahoo": 41000.0,
     "krx": 40600.0,
     "diff_pct": 0.976
+   },
+   {
+    "symbol": "120110.KS",
+    "field": "volume",
+    "yahoo": 99678.0,
+    "krx": 96709.0,
+    "diff_pct": 2.979
    },
    {
     "symbol": "395400.KS",
@@ -1835,11 +2402,25 @@
     "diff_pct": 0.294
    },
    {
+    "symbol": "000120.KS",
+    "field": "volume",
+    "yahoo": 26436.0,
+    "krx": 25863.0,
+    "diff_pct": 2.167
+   },
+   {
     "symbol": "001430.KS",
     "field": "close",
     "yahoo": 29150.0,
     "krx": 29050.0,
     "diff_pct": 0.343
+   },
+   {
+    "symbol": "001430.KS",
+    "field": "volume",
+    "yahoo": 125236.0,
+    "krx": 122326.0,
+    "diff_pct": 2.324
    },
    {
     "symbol": "008770.KS",
@@ -1851,9 +2432,9 @@
    {
     "symbol": "008770.KS",
     "field": "volume",
-    "yahoo": 110254.0,
+    "yahoo": 111514.0,
     "krx": 107767.0,
-    "diff_pct": 2.256
+    "diff_pct": 3.36
    },
    {
     "symbol": "294870.KS",
@@ -1863,11 +2444,25 @@
     "diff_pct": 0.198
    },
    {
+    "symbol": "294870.KS",
+    "field": "volume",
+    "yahoo": 163295.0,
+    "krx": 161470.0,
+    "diff_pct": 1.118
+   },
+   {
     "symbol": "007810.KS",
     "field": "close",
     "yahoo": 77600.0,
     "krx": 77400.0,
     "diff_pct": 0.258
+   },
+   {
+    "symbol": "007810.KS",
+    "field": "volume",
+    "yahoo": 1377520.0,
+    "krx": 1323495.0,
+    "diff_pct": 3.922
    },
    {
     "symbol": "001120.KS",
@@ -1877,11 +2472,25 @@
     "diff_pct": 0.608
    },
    {
+    "symbol": "001120.KS",
+    "field": "volume",
+    "yahoo": 113321.0,
+    "krx": 112174.0,
+    "diff_pct": 1.012
+   },
+   {
     "symbol": "006040.KS",
     "field": "close",
     "yahoo": 34450.0,
     "krx": 33950.0,
     "diff_pct": 1.451
+   },
+   {
+    "symbol": "006040.KS",
+    "field": "volume",
+    "yahoo": 25249.0,
+    "krx": 24808.0,
+    "diff_pct": 1.747
    },
    {
     "symbol": "001820.KS",
@@ -1891,18 +2500,18 @@
     "diff_pct": 0.304
    },
    {
+    "symbol": "001820.KS",
+    "field": "volume",
+    "yahoo": 236221.0,
+    "krx": 219422.0,
+    "diff_pct": 7.112
+   },
+   {
     "symbol": "012630.KS",
     "field": "close",
     "yahoo": 21600.0,
     "krx": 21400.0,
     "diff_pct": 0.926
-   },
-   {
-    "symbol": "012630.KS",
-    "field": "volume",
-    "yahoo": 72139.0,
-    "krx": 71054.0,
-    "diff_pct": 1.504
    },
    {
     "symbol": "093370.KS",
@@ -1919,6 +2528,13 @@
     "diff_pct": 0.41
    },
    {
+    "symbol": "093370.KS",
+    "field": "volume",
+    "yahoo": 1473498.0,
+    "krx": 1380627.0,
+    "diff_pct": 6.303
+   },
+   {
     "symbol": "006280.KS",
     "field": "close",
     "yahoo": 138600.0,
@@ -1928,9 +2544,9 @@
    {
     "symbol": "006280.KS",
     "field": "volume",
-    "yahoo": 44684.0,
+    "yahoo": 43949.0,
     "krx": 43189.0,
-    "diff_pct": 3.346
+    "diff_pct": 1.729
    },
    {
     "symbol": "011210.KS",
@@ -1942,9 +2558,9 @@
    {
     "symbol": "011210.KS",
     "field": "volume",
-    "yahoo": 119248.0,
+    "yahoo": 116707.0,
     "krx": 115254.0,
-    "diff_pct": 3.349
+    "diff_pct": 1.245
    },
    {
     "symbol": "361610.KS",
@@ -1952,6 +2568,13 @@
     "yahoo": 14320.0,
     "krx": 14240.0,
     "diff_pct": 0.559
+   },
+   {
+    "symbol": "361610.KS",
+    "field": "volume",
+    "yahoo": 205124.0,
+    "krx": 195205.0,
+    "diff_pct": 4.836
    },
    {
     "symbol": "005070.KS",
@@ -1963,9 +2586,9 @@
    {
     "symbol": "005070.KS",
     "field": "volume",
-    "yahoo": 167034.0,
+    "yahoo": 170247.0,
     "krx": 163982.0,
-    "diff_pct": 1.827
+    "diff_pct": 3.68
    }
   ]
  },
