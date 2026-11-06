@@ -1,5 +1,6 @@
 """KIS Open API client and cross-check (checklist 2.4): token caching, headers, parsing, limits."""
 import json
+from datetime import datetime
 import urllib.error
 
 import pandas as pd
@@ -133,3 +134,19 @@ def test_run_kis_compares_the_signal_day(monkeypatch):
     line = xcheck.summary_line(rec)
     assert line.startswith("- 데이터 대조 (KIS, 2026-10-30 봉)") and "096530.KQ volume" in line and "지수 일치" in line
     json.dumps(rec)
+
+
+def test_bars_on_does_not_cache_an_unsettled_day(tmp_path):
+    """A same-day KIS bar still follows NXT after hours; it must be refetched the next day."""
+    calls = []
+    class FakeClient:
+        calls = 0
+        def stock_bars(self, code, start, end):
+            calls.append(code)
+            d = pd.Timestamp(start)
+            return pd.DataFrame({"open": [1.0], "high": [1.0], "low": [1.0], "close": [67700.0], "volume": [5.0]}, index=[d])
+    today = pd.Timestamp(datetime.now(kis.KST).date())
+    kis.bars_on(FakeClient(), "KOSDAQ", ["086520.KQ"], today, tmp_path)
+    kis.bars_on(FakeClient(), "KOSDAQ", ["086520.KQ"], today, tmp_path)
+    assert calls == ["086520", "086520"]                                   # fetched twice, never cached
+    assert not (tmp_path / "kis" / f"KOSDAQ_{today.strftime('%Y%m%d')}.json").exists()

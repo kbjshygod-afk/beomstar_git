@@ -456,3 +456,17 @@ def test_guarded_run_commits_nothing_and_a_late_pass_is_flagged(tmp_path, ledger
     latest = json.loads((ledger_repo / "paper" / "latest.json").read_text())
     assert latest["markets"]["SP500"]["xcheck_kis"]["guard"]["late"] is True
     assert (ledger_repo / "paper" / "SP500" / "xcheck" / "2026-10-30.kis.json").exists()
+
+
+def test_cross_check_kis_compares_the_previous_day(monkeypatch, tmp_path):
+    """The stored KIS record is for T-1 (settled); the same-day guard verdict rides along."""
+    seen = []
+    def fake(market, frames, bench, as_of, cache_dir):
+        seen.append(pd.Timestamp(as_of).strftime("%Y-%m-%d"))
+        return {**_kis_rec(0), "checked": pd.Timestamp(as_of).strftime("%Y-%m-%d"), "status": "ok"}
+    monkeypatch.setattr(P, "kis_record", fake)
+    bench = pd.DataFrame({"close": [1.0, 2.0]}, index=pd.to_datetime(["2026-11-05", "2026-11-06"]))
+    guard_rec = {**_kis_rec(148), "guard": {"blocked": False, "late": False, "enforced": False}}
+    out = P.cross_check_kis("KOSDAQ", {}, bench, bench.index[-1], tmp_path, None, rec=guard_rec)
+    assert seen == ["2026-11-05"] and out["checked"] == "2026-11-05" and out["guard"]["enforced"] is False
+    assert (tmp_path / "xcheck" / "2026-11-05.kis.json").exists()

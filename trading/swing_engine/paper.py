@@ -548,11 +548,23 @@ def kis_record(market: str, frames: dict, bench: pd.DataFrame, as_of, cache_dir)
 
 
 def cross_check_kis(market: str, frames: dict, bench: pd.DataFrame, as_of, root: Path, cache_dir, rec=None) -> dict | None:
-    """kis_record written to root/xcheck/<date>.kis.json (observation only). Pass `rec` when the
-    guard already fetched it so KIS is called once per run."""
-    if rec is None:
-        rec = kis_record(market, frames, bench, as_of, cache_dir)
-    return None if rec is None else _store_xcheck(market, root, rec, ".kis")
+    """Yahoo vs KIS on the previous trading day's bar, written to root/xcheck/<T-1>.kis.json
+    (observation only). KIS's bar for the current day keeps following the NXT after-hours price
+    through the evening and settles to the KRX close by the next day (2026-11-06: 086520 KIS read
+    70,800 on 10-30 at 18:03 KST and 72,200 a week later, equal to KRX and Yahoo; 11-05 71,200 in
+    the evening, 71,100 the next day, volume equal too), so the same-day comparison could not
+    agree. `rec` is the guard's same-day record: its guard verdict is carried over, and it is
+    stored as before when there is no previous bar or KIS gives no T-1 record."""
+    t1 = None
+    if bench is not None and len(bench) >= 2:
+        t1 = kis_record(market, frames, bench.iloc[:-1], bench.index[-2], cache_dir)
+    if t1 is None or t1.get("status") == "error" and rec is not None:
+        if rec is None:
+            rec = kis_record(market, frames, bench, as_of, cache_dir)
+        return None if rec is None else _store_xcheck(market, root, rec, ".kis")
+    if rec is not None and rec.get("guard"):
+        t1["guard"] = rec["guard"]
+    return _store_xcheck(market, root, t1, ".kis")
 
 
 # Data guard (grade 1, no rule change): Yahoo's same-day Korean bars are provisional for hours
@@ -563,10 +575,11 @@ def cross_check_kis(market: str, frames: dict, bench: pd.DataFrame, as_of, root:
 GUARD_MIN_SHARE = 0.05      # share of compared symbols whose close differs from KIS ...
 GUARD_MIN_SYMBOLS = 5       # ... and at least this many, before the run is held back
 GUARD_GIVE_UP_HOURS = 6     # within this many hours of the next open, proceed with a warning
-# 2026-10-31: the KRX T-1 check matched Yahoo's 10-30 bars 200/200 and 150/150 while the KIS paper
-# server (vps) had disagreed on 193/200 and 148/150 of the same bars: the paper server's stock
-# bars, not Yahoo's, were off. Blocking on them cost no signal (Friday's was committed before the
-# guard merged) but would have. The guard therefore only observes unless KIS_GUARD=1 is set.
+# 2026-10-31: the KRX T-1 check matched Yahoo's 10-30 bars 200/200 and 150/150 while KIS had
+# disagreed on 193/200 and 148/150 of the same bars that evening. 2026-11-06 found why: KIS's
+# same-day bar follows the NXT after-hours price until it settles the next day (cross_check_kis),
+# so the evening comparison measures NXT drift, not a bad Yahoo bar. The guard only observes
+# unless KIS_GUARD=1 is set and should not be enforced on the same-day bar.
 GUARD_ENV = "KIS_GUARD"
 
 
