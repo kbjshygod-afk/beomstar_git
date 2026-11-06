@@ -178,3 +178,20 @@ def test_cli_posts_new_files_to_the_issue_and_latest_on_request(ledger, monkeypa
     monkeypatch.setattr(t, "post_slack", lambda url, text: sent.append((url, text)))
     assert t.main(["--ledger", str(repo / "paper"), "--market", "KOSDAQ", "--since", first]) == 0
     assert len(sent) == 2 and sent[0][0] == "https://hooks.example/x" and sent[0][1].startswith("*코스닥")
+
+
+def test_data_line_names_the_source_and_the_cross_checks():
+    t = _tool()
+    cov = {"requested": 150, "loaded": 149, "failed": ["000001.KQ"]}
+    assert t.data_line(cov, None) == "데이터 출처 Yahoo 149/150 · 대조 없음"
+    entry = {"xcheck": {"source": "KRX Open API", "status": "ok", "checked": "2026-10-29", "error": None,
+                        "mismatched_symbols": [], "index_match": True},
+             "xcheck_kis": {"source": "KIS", "status": "mismatch", "checked": "2026-10-30", "error": None,
+                            "mismatched_symbols": ["086520.KQ", "036930.KQ"], "index_match": True,
+                            "guard": {"close_mismatched": 2, "compared": 150, "blocked": False, "late": True}}}
+    assert t.data_line(cov, entry) == "데이터 출처 Yahoo 149/150 · 대조 KRX(10-29 봉) 일치 · KIS(10-30 봉) 불일치 2 (가드 해제)"
+    err = {"xcheck": {"source": "KIS", "status": "error", "checked": None, "error": "token: HTTP 403"},
+           "xcheck_kis": {"source": "KRX Open API", "status": "not_published", "checked": None}}
+    assert t.data_line(cov, err) == "데이터 출처 Yahoo 149/150 · 대조 KIS 실패 · KRX 봉 미공개"
+    msg = t.render(SIGNAL, {**ENTRY, **entry}, "github")
+    assert "데이터 출처 Yahoo 149/150 · 대조 KRX(10-29 봉) 일치" in msg

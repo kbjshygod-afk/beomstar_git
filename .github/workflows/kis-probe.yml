@@ -1,0 +1,49 @@
+# KIS Open API probe (checklist 2.4). Manual only. Gets a token with the KIS_APP_KEY / KIS_APP_SECRET
+# repository secrets, reads one stock's bar and both index bars for a date, and observes the
+# per-second limit. Nothing is committed; the key and token are never echoed.
+name: kis-probe
+
+on:
+  workflow_dispatch:
+    inputs:
+      date:
+        description: 'KRX trading day, YYYYMMDD (today after 15:30 KST works)'
+        required: true
+      symbol:
+        description: '6-digit code'
+        default: '096530'
+      burst:
+        description: 'Back-to-back calls to observe the per-second limit (0 = skip)'
+        default: '5'
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: trading/requirements.txt
+      - run: pip install -r trading/requirements.txt
+      - uses: actions/cache/restore@v4
+        with:
+          path: trading/.cache
+          key: swing-paper-data-none
+          restore-keys: swing-paper-data-
+      - name: Probe
+        working-directory: trading
+        env:
+          KIS_APP_KEY: ${{ secrets.KIS_APP_KEY }}
+          KIS_APP_SECRET: ${{ secrets.KIS_APP_SECRET }}
+          KIS_ENV: ${{ vars.KIS_ENV || 'vps' }}
+        run: |
+          if [ -z "$KIS_APP_KEY" ] || [ -z "$KIS_APP_SECRET" ]; then echo "::error::KIS_APP_KEY / KIS_APP_SECRET secrets are not set"; exit 2; fi
+          python tools/kis_probe.py --date "${{ github.event.inputs.date }}" --symbol "${{ github.event.inputs.symbol }}" \
+            --burst "${{ github.event.inputs.burst }}" --cache-dir .cache | tee probe.txt
+          { echo '```'; cat probe.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
