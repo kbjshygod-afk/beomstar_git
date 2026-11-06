@@ -1,9 +1,9 @@
 {
  "market": "KOSPI",
  "start_date": "2026-09-23",
- "as_of": "2026-10-30",
- "days": 24,
- "signal_files": 10,
+ "as_of": "2026-11-05",
+ "days": 28,
+ "signal_files": 11,
  "missing_days": [
   "2026-10-02",
   "2026-10-06",
@@ -18,13 +18,17 @@
   "2026-10-22",
   "2026-10-26",
   "2026-10-28",
-  "2026-10-29"
+  "2026-10-29",
+  "2026-11-02",
+  "2026-11-03",
+  "2026-11-04"
  ],
  "late": [
   "2026-09-23",
   "2026-09-28",
   "2026-10-01",
-  "2026-10-08"
+  "2026-10-08",
+  "2026-11-05"
  ],
  "uncommitted": [],
  "mismatched": [],
@@ -173,6 +177,21 @@
    "revisions_after_open": [],
    "deadline": "2026-11-02T00:00:00Z",
    "on_time": true,
+   "entries_match": true,
+   "exits_match": true,
+   "entries_only_committed": [],
+   "entries_only_recomputed": [],
+   "exits_only_committed": [],
+   "exits_only_recomputed": [],
+   "revisions": []
+  },
+  {
+   "date": "2026-11-05",
+   "committed_at": "2026-11-06T15:47:58Z",
+   "compared_file": "2026-11-05.json",
+   "revisions_after_open": [],
+   "deadline": "2026-11-06T00:00:00Z",
+   "on_time": false,
    "entries_match": true,
    "exits_match": true,
    "entries_only_committed": [],
