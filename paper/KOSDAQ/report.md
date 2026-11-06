@@ -9,16 +9,7 @@
   - 033790.KQ open: Yahoo 8,350 vs KRX 0 (+100.00%)
   - 033790.KQ high: Yahoo 8,350 vs KRX 0 (+100.00%)
   - 033790.KQ low: Yahoo 8,350 vs KRX 0 (+100.00%)
-- 데이터 대조 (KIS, 2026-11-06 봉): 종목 150개 비교, 불일치 148개 · 지수 일치
-  - 196170.KQ volume: Yahoo 445,810 vs KIS 441,344 (+1.00%)
-  - 086520.KQ close: Yahoo 66,200 vs KIS 67,700 (+2.22%)
-  - 086520.KQ volume: Yahoo 1,188,857 vs KIS 1,172,764 (+1.35%)
-  - 247540.KQ high: Yahoo 87,100 vs KIS 88,000 (+1.02%)
-  - 247540.KQ close: Yahoo 83,100 vs KIS 84,200 (+1.31%)
-  - 247540.KQ volume: Yahoo 699,450 vs KIS 685,331 (+2.02%)
-  - 036930.KQ close: Yahoo 132,800 vs KIS 137,800 (+3.63%)
-  - 036930.KQ volume: Yahoo 1,467,209 vs KIS 1,515,658 (+3.20%)
-  - … 외 240건 (xcheck/2026-11-06.json)
+- 데이터 대조 (KIS, 2026-11-05 봉): 종목 150개 비교, 불일치 0개 · 지수 일치
 
 ## 다음 시가 진입 (오늘 신호)
 
