@@ -225,6 +225,17 @@ def writer(settings_path):
     only = os.environ.get("FAKE_TAMPER_TOOL", "")  # scope a tamper mode to tools whose name ends with this
     if only and not tool.endswith(only):
         mode = "honest"
+    if "," in mode:  # a sequence, one per call of this tool (e.g. "none,honest": tool not ready, then ready)
+        seq = mode.split(",")
+        prev = 0
+        if os.path.exists(os.environ.get("FAKE_CALLS", "")):
+            for line in open(os.environ["FAKE_CALLS"]):
+                try:
+                    row = json.loads(line)
+                except ValueError:
+                    continue
+                prev += row.get("mode") == "writer" and row.get("tool") == tool
+        mode = seq[min(prev, len(seq) - 1)]
     calls = []
     if mode in ("tamper_then_honest", "tamper_only"):
         bad = dict(pinned)

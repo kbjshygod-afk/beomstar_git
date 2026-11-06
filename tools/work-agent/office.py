@@ -46,6 +46,7 @@ import re
 import shlex
 import subprocess
 import sys
+import time
 
 DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, DIR)
@@ -102,6 +103,7 @@ class Cfg(object):
         self.prefix = env("WORK_AGENT_MCP_PREFIX", "mcp__claude_ai_")
         self.model = env("WORK_AGENT_OFFICE_MODEL", "haiku")
         self.timeout = int(env("WORK_AGENT_OFFICE_TIMEOUT", "150"))
+        self.call_retry_wait = int(env("WORK_AGENT_CALL_RETRY_WAIT", "30"))  # -1 = never retry a pinned call
         self.staff_timeout = int(env("WORK_AGENT_STAFF_TIMEOUT", "600"))
         self.daily_exec_max = int(env("WORK_AGENT_EXEC_DAILY_MAX", "10"))
         self.ttl_hours = int(env("WORK_AGENT_PROPOSAL_TTL_HOURS", "48"))
@@ -247,6 +249,21 @@ def pinned_call(cfg, tool, tool_input, label, hint=None):
         args += ["--permission-mode", "bypassPermissions"]
     args += ["--disallowedTools"] + disallowed_for(cfg, tool)
     out_path = os.path.join(cdir, "out.jsonl")
+    r = _run_pinned(cfg, args, cdir, out_path, tool, hint, tool_input)
+    # claude.ai connectors (and the artifact database) finish connecting in the background after claude starts
+    # (Claude Code 2.1.31x): a run that made no tool call at all found the tool not ready yet. Nothing ran, so one
+    # retry after a short wait is safe. A run that called something (blocked or not) is never retried.
+    if r.get("attempted") == 0 and r["status"] == "nocall" and cfg.call_retry_wait >= 0:
+        log(cfg, "재시도: %s 도구가 아직 준비되지 않음(호출 0건), %d초 뒤 1회 더" % (label, cfg.call_retry_wait), board=False)
+        time.sleep(cfg.call_retry_wait)
+        if os.path.exists(once):
+            os.remove(once)
+        r = _run_pinned(cfg, args, cdir, out_path, tool, hint, tool_input)
+    r.pop("attempted", None)
+    return r
+
+
+def _run_pinned(cfg, args, cdir, out_path, tool, hint, tool_input):
     timed_out = False
     try:
         # cwd = the "runner" desk, so Pixel Agents shows these errands as one 사무 보조 character
@@ -293,7 +310,8 @@ def pinned_call(cfg, tool, tool_input, label, hint=None):
         return {"status": "timeout", "text": "시간 초과", "path": out_path}
     if unanswered:
         return {"status": "unknown", "text": "호출은 허용됐으나 응답 없이 끝남", "path": out_path}
-    return {"status": "blocked_only" if blocked else "nocall", "text": "핀 고정 호출이 실행되지 않음(차단 %d건)" % blocked, "path": out_path}
+    return {"status": "blocked_only" if blocked else "nocall", "text": "핀 고정 호출이 실행되지 않음(차단 %d건)" % blocked, "path": out_path,
+            "attempted": len([u for u in uses if u[1] != "ToolSearch"])}
 
 
 # ---------------------------------------------------------------- proposals

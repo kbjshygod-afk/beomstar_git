@@ -70,7 +70,8 @@ class Base(unittest.TestCase):
             if k.startswith("WORK_AGENT_") or k.startswith("FAKE_"):
                 del os.environ[k]
         os.environ.update({"WORK_AGENT_STATE": self.state, "CLAUDE_BIN": FAKE, "FAKE_CALLS": self.calls, "FAKE_DB": self.db,
-                           "WORK_AGENT_BOARD_URL": BOARD, "WORK_AGENT_NOW": NOW, "WORK_AGENT_CONFIG": os.path.join(self.tmp, "none.env")})
+                           "WORK_AGENT_BOARD_URL": BOARD, "WORK_AGENT_NOW": NOW, "WORK_AGENT_CONFIG": os.path.join(self.tmp, "none.env"),
+                           "WORK_AGENT_CALL_RETRY_WAIT": "0"})
         os.makedirs(self.state)
 
     def tearDown(self):
@@ -322,6 +323,28 @@ class CycleTests(Base):
         self.approve(b)
         rc, out, _ = self.cycle()
         self.assertIn("executed=1", out, "the day's budget was not burnt by the failed attempt")
+
+    def test_pinned_call_retried_once_when_tool_not_ready(self):
+        """the first claude run makes no tool call (connector not connected yet): one retry runs the pinned call"""
+        self.propose(proposal())
+        pid = self.pids()[0]
+        self.cycle()
+        self.approve(pid)
+        rc, out, _ = self.cycle(FAKE_WRITER="none,honest", FAKE_TAMPER_TOOL="__create_event")
+        self.assertIn("executed=1 failed=0", out)
+        self.assertIn("재시도: exec-" + pid, rd(os.path.join(self.state, "office", "office.log")))
+        cal_runs = [c for c in self.fake_calls() if c.get("mode") == "writer" and c.get("tool") == CAL]
+        self.assertEqual([c["ran"] for c in cal_runs], [[], [CAL]])
+
+    def test_pinned_call_not_retried_when_retry_off(self):
+        os.environ["WORK_AGENT_CALL_RETRY_WAIT"] = "-1"
+        self.propose(proposal())
+        pid = self.pids()[0]
+        self.cycle()
+        self.approve(pid)
+        rc, out, _ = self.cycle(FAKE_WRITER="none,honest", FAKE_TAMPER_TOOL="__create_event")
+        self.assertIn("executed=0 failed=1", out)
+        self.assertEqual(len([c for c in self.fake_calls() if c.get("mode") == "writer" and c.get("tool") == CAL]), 1)
 
     def test_stop_defers_and_resumes(self):
         self.propose(proposal())
