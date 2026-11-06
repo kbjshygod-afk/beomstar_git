@@ -18,6 +18,7 @@
   ```
   결과: `~/beomstar_reports/<symbol>.md`·`.json`. 요약 페이지를 대화에 붙여 주면 해석을 돕는다.
 - SEC는 GitHub 호스티드 러너(Azure IP)를 `www.sec.gov`·`data.sec.gov`·`efts.sec.gov` 모두 403으로 거부한다(2026-11-03 확인, 올바른 User-Agent로도 동일). Actions에서 미국 티커를 넣으면 "SEC refuses this network"로 실패한다.
+- **2026-11-06부터 Claude 작업 환경("beom")에 `www.sec.gov`·`data.sec.gov`를 열어, 미국 종목은 Claude가 대화 중에 직접 뽑는다.** 대표님은 종목만 부르면 된다. 맥 명령은 예비 경로.
 
 ## 요약 1장에 들어가는 것
 - TTM(최근 4분기): 매출·영업이익·순이익·영업현금흐름, 영업이익률·순이익률, ROE(평균 자본), 부채비율·자기자본비율, 매출/매출채권·매출/재고 회전(원가 미공개라 매출 기준), 영업현금흐름/순이익(이익의 질).
