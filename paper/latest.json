@@ -418,9 +418,9 @@
    "regime": {
     "benchmark": "^NDX",
     "mode": "MA200",
-    "close": 26629.8086,
-    "ma200": 27976.5334,
-    "ma20": 29285.6043,
+    "close": 26629.8105,
+    "ma200": 27976.5335,
+    "ma20": 29285.6044,
     "on": false
    },
    "entries_next_open": [],
@@ -487,13 +487,13 @@
      "signal_date": "2026-11-04",
      "exit_signal_date": null,
      "entry_date": "2026-11-05",
-     "entry_price": 554.9349976,
+     "entry_price": 554.9400024,
      "qty": 18893.628909307216,
-     "stop_price": 516.089547768,
+     "stop_price": 516.094202232,
      "last_close": 535.9299927,
      "exit_ma": 516.134801024,
-     "unrealized_pnl": -400294.3066339325,
-     "price_pnl_pct": -3.424726316089899,
+     "unrealized_pnl": -400389.05458556674,
+     "price_pnl_pct": -3.4255972930020806,
      "exit_pending": false
     },
     {
@@ -514,7 +514,7 @@
    "stale_positions": [],
    "watchlist": [],
    "performance": {
-    "equity": 96229073.0,
+    "equity": 96228979.0,
     "return_pct": -3.77,
     "bench_return_pct": -13.0,
     "mdd_pct": -4.56,
@@ -542,9 +542,16 @@
     "error": null,
     "mismatched_symbols": [
      "AMGN",
+     "CSX",
      "HON",
+     "HONA",
      "INTC",
-     "KDP"
+     "INTU",
+     "ISRG",
+     "KDP",
+     "LIN",
+     "MSFT",
+     "VRTX"
     ],
     "index_match": null
    },
@@ -1329,7 +1336,7 @@
    }
   }
  },
- "updated_at": "2026-11-06T13:54:00Z",
+ "updated_at": "2026-11-06T13:55:01Z",
  "disclaimer": "기계적 룰 출력이며 투자 자문이 아닙니다. 매수·매도 결정은 소유자 본인이 합니다.",
  "unconfirmed": "미확인 추정값(스캐너 원본 코드 미확인): 피벗=직전 20봉 최고가(당일 제외) · 거래량 평균=직전 50일(당일 제외) · RS=지수 대비 가중 1년 수익률 ≥ 0%p(스캐너는 유니버스 백분위 ≥ 70) · 52주 고저=종가 기준 · 200일선 상승=22봉 전 대비 · 수축비=10/40일 평균 TR · 비용=편도 0.2%"
 }

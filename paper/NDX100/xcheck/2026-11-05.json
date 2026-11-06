@@ -13,30 +13,79 @@
    {
     "symbol": "AMGN",
     "field": "volume",
-    "yahoo": 4073505.0,
+    "yahoo": 4105800.0,
     "krx": 4028522.0,
-    "diff_pct": 1.104
+    "diff_pct": 1.882
    },
    {
     "symbol": "INTC",
-    "field": "low",
-    "yahoo": 51.70999908,
-    "krx": 51.51,
-    "diff_pct": 0.387
+    "field": "volume",
+    "yahoo": 267415600.0,
+    "krx": 264377709.0,
+    "diff_pct": 1.136
+   },
+   {
+    "symbol": "MSFT",
+    "field": "volume",
+    "yahoo": 42355300.0,
+    "krx": 41514438.0,
+    "diff_pct": 1.985
+   },
+   {
+    "symbol": "VRTX",
+    "field": "volume",
+    "yahoo": 2482700.0,
+    "krx": 2443657.0,
+    "diff_pct": 1.573
+   },
+   {
+    "symbol": "INTU",
+    "field": "volume",
+    "yahoo": 4301400.0,
+    "krx": 4196477.0,
+    "diff_pct": 2.439
+   },
+   {
+    "symbol": "ISRG",
+    "field": "volume",
+    "yahoo": 4696400.0,
+    "krx": 4645621.0,
+    "diff_pct": 1.081
+   },
+   {
+    "symbol": "CSX",
+    "field": "volume",
+    "yahoo": 21155200.0,
+    "krx": 19767871.0,
+    "diff_pct": 6.558
    },
    {
     "symbol": "HON",
-    "field": "high",
-    "yahoo": 228.7550049,
-    "krx": 229.11,
-    "diff_pct": 0.155
+    "field": "volume",
+    "yahoo": 3352900.0,
+    "krx": 3210656.0,
+    "diff_pct": 4.242
    },
    {
     "symbol": "KDP",
     "field": "volume",
-    "yahoo": 23142418.0,
+    "yahoo": 23222500.0,
     "krx": 22793598.0,
-    "diff_pct": 1.507
+    "diff_pct": 1.847
+   },
+   {
+    "symbol": "LIN",
+    "field": "volume",
+    "yahoo": 3532500.0,
+    "krx": 3484111.0,
+    "diff_pct": 1.37
+   },
+   {
+    "symbol": "HONA",
+    "field": "volume",
+    "yahoo": 3722600.0,
+    "krx": 3659621.0,
+    "diff_pct": 1.692
    }
   ],
   "unlisted": [],
