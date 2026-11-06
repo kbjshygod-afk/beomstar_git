@@ -209,6 +209,24 @@ def periods_from_facts(facts: dict) -> list[dict]:
                 p = flows.setdefault(key, {"label": key, "kind": "Q" if qn else "FY",
                                            "start": r.get("start"), "end": r["end"]})
                 p.setdefault(fig, float(r["val"]))
+    # quarters still missing a flow (the current fiscal year has no 10-K yet): YTD to the
+    # quarter's end minus the YTD to the day before its start, both from the same start
+    for q in sorted((p for p in flows.values() if p["kind"] == "Q"), key=lambda p: p["end"]):
+        qs = _date(q.get("start"))
+        if qs is None:
+            continue
+        for fig in DERIVED:
+            if q.get(fig) is not None:
+                continue
+            for (ys, ye), vals in ytd.items():
+                d0 = _date(ys)
+                if ye != q["end"] or fig not in vals or d0 is None or d0 >= qs - timedelta(days=20):
+                    continue
+                prev = next((v[fig] for (ps, pe), v in ytd.items() if ps == ys and fig in v
+                             and _date(pe) is not None and 0 <= (qs - _date(pe)).days <= 7), None)
+                if prev is not None:
+                    q[fig] = vals[fig] - prev
+                    break
     # the fiscal fourth quarter: year minus the three quarters inside it
     for fy in [p for p in list(flows.values()) if p["kind"] == "FY"]:
         s, e = _date(fy.get("start")), _date(fy["end"])

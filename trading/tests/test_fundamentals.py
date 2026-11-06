@@ -193,3 +193,14 @@ def test_edgar_user_agent_rejects_non_ascii(monkeypatch):
     monkeypatch.setenv(edgar.UA_ENV, "beomstar-swing 대표님이메일@도메인")
     with pytest.raises(edgar.EdgarError, match="ASCII"):
         edgar.user_agent()
+
+
+def test_edgar_current_fiscal_year_quarter_from_ytd():
+    """NVIDIA-like current year: Q1 framed, Q2 only as a 6-month YTD fact, no 10-K yet."""
+    def rows(vals):
+        return {"units": {"USD": [{"start": s, "end": e, "val": v, "frame": f} for (f, s, e, v) in vals]}}
+    gaap = {"Revenues": rows([("CY2026Q1", "2026-01-26", "2026-04-26", 81.6), ("CY2026Q2", "2026-04-27", "2026-07-26", 96.2)]),
+            "NetCashProvidedByUsedInOperatingActivities": rows([("CY2026Q1", "2026-01-26", "2026-04-26", 50.3),
+                                                                (None, "2026-01-26", "2026-07-26", 88.0)])}
+    by = {p["label"]: p for p in edgar.periods_from_facts({"facts": {"us-gaap": gaap}})}
+    assert by["2026Q2"]["ocf"] == pytest.approx(88.0 - 50.3) and by["2026Q1"]["ocf"] == 50.3
