@@ -13,7 +13,7 @@ on:
     - cron: '20 22 2 * *'
   push:
     branches: ['claude/**']
-    paths: ['trading/tools/trade_analysis.py', '.github/workflows/trade-analysis.yml']
+    paths: ['trading/tools/trade_analysis.py', 'trading/tools/paper_verdict.py', '.github/workflows/trade-analysis.yml']
 
 permissions:
   contents: read
@@ -44,6 +44,11 @@ jobs:
           python tools/trade_analysis.py --repo .. --markets "${{ github.event.inputs.markets || 'SP500,NDX100,KOSPI,KOSDAQ,KOSDAQ_V2,CRYPTO' }}" \
             --cache-dir .cache --out reports/trade_analysis | tee analysis.txt
           cat reports/trade_analysis.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Verdict (criteria A-D)
+        working-directory: trading
+        run: |
+          python tools/paper_verdict.py --repo .. --out reports/paper_verdict > /dev/null
+          cat reports/paper_verdict.md >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
         with:
           name: trade-analysis-${{ github.run_id }}
