@@ -4,7 +4,8 @@
         [--ledger-ref origin/paper-trading] [--results-ref origin/swing-results] [--markets ...]
     python tools/paper_verdict.py --ledger-dir PAPER_DIR --results-dir RESULTS_DIR ...   (tests)
 
-A  integrity  every signal file committed before the next open (audit `late`, `uncommitted`);
+A  integrity  every signal file committed before the next open (audit `late`, `uncommitted`),
+              except the excused late days whose file is empty (plan, 11-06 decision);
               recomputed vs committed mismatches other than the explained days (plan, 10-22 decision)
 B  operation  missing days <= 2; symbols without data <= 5% on every signal file
 C  rules      exits only by stop or the 50-day line (no target sells); no loss beyond the stop
@@ -53,6 +54,10 @@ ALLOWED_EXITS = {"STOP", "EXIT_MA"}
 # Days whose recomputed/committed difference is explained by a provider's later revision
 # (plan, A item, owner decision 2026-10-22).
 EXPLAINED_MISMATCH = {"KOSDAQ": {"2026-10-06"}, "KOSDAQ_V2": {"2026-10-06"}}
+# Late commits excused by the owner (plan, A item, decision 2026-11-06): the provider had no bar
+# before the next open, the late file holds no entries and no exits (checked here against the
+# ledger, not assumed), and the cause was fixed (#60).
+EXPLAINED_LATE = {"KOSDAQ": {"2026-11-04"}, "KOSDAQ_V2": {"2026-11-04"}}
 MAX_MISSING_DAYS = 2
 MAX_FAIL_SHARE = 0.05
 REGIME_BANDS = [(-999, -15, "< -15%"), (-15, -5, "-15 ~ -5%"), (-5, 0, "-5 ~ 0%"), (0, 5, "0 ~ 5%"), (5, 999, "> 5%")]
@@ -69,13 +74,34 @@ def _f(x):
         return None
 
 
-def check_a(audit: dict, market: str) -> dict:
-    late = list(audit.get("late") or [])
+def check_a(audit: dict, market: str, empty_days: set | None = None) -> dict:
+    """`empty_days`: signal dates whose committed file holds no entries and no exits; an excused
+    late day counts only when it is one of them."""
+    excused = EXPLAINED_LATE.get(market, set()) & (empty_days or set())
+    late = [d for d in audit.get("late") or [] if d not in excused]
     unc = list(audit.get("uncommitted") or [])
     explained = EXPLAINED_MISMATCH.get(market, set())
     mism = [d for d in audit.get("mismatched") or [] if d not in explained]
     issues = [f"늦은 커밋 {d}" for d in late] + [f"미커밋 {d}" for d in unc] + [f"설명 안 된 불일치 {d}" for d in mism]
-    return {"pass": not issues, "issues": issues, "explained": sorted(set(audit.get("mismatched") or []) & explained)}
+    expl = sorted(set(audit.get("mismatched") or []) & explained) + [f"{d}(늦은 커밋, 신호 0건)" for d in sorted(set(audit.get("late") or []) & excused)]
+    return {"pass": not issues, "issues": issues, "explained": expl}
+
+
+def empty_signal_days(src: "Source", market: str, days) -> set:
+    """Dates among `days` whose newest signal file has no entries and no exits."""
+    out = set()
+    names = src.listdir(f"paper/{market}/signals")
+    for d in days:
+        files = sorted(n for n in names if n.startswith(d) and n.endswith(".json"))
+        if not files:
+            continue
+        try:
+            snap = json.loads(src.read(f"paper/{market}/signals/{files[-1]}") or "{}")
+        except ValueError:
+            continue
+        if not snap.get("entries_next_open") and not snap.get("exits_next_open"):
+            out.add(d)
+    return out
 
 
 def check_b(audit: dict, coverages: list[dict]) -> dict:
@@ -183,7 +209,8 @@ def evaluate(market: str, ledger: Source, results: Source, latest: dict) -> dict
     audit = json.loads(ledger.read(f"paper/{market}/audit.json") or "{}")
     trades = _rows(ledger.read(f"paper/{market}/trades.csv"))
     stats = equity_stats(_rows(ledger.read(f"paper/{market}/equity.csv")))
-    a, b, c = check_a(audit, market), check_b(audit, coverages(ledger, market)), check_c(trades, market)
+    empty = empty_signal_days(ledger, market, EXPLAINED_LATE.get(market, set()))
+    a, b, c = check_a(audit, market, empty), check_b(audit, coverages(ledger, market)), check_c(trades, market)
     d = check_d(stats, trades, market)
     bt_market = "KOSDAQ" if market == "KOSDAQ_V2" else market
     reg = regime_reference(results.read(f"latest/results/{bt_market}/signals.csv"), regime_now(latest, market))

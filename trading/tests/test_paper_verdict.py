@@ -10,6 +10,11 @@ def test_a_excludes_only_the_explained_days():
     assert a["issues"] == ["늦은 커밋 2026-11-04", "설명 안 된 불일치 2026-10-20"]
     assert V.check_a({"mismatched": ["2026-10-06"]}, "KOSDAQ")["pass"]
     assert not V.check_a({"mismatched": ["2026-10-06"]}, "SP500")["pass"]
+    # 11-04 late commit is excused only when its file was empty (checked, not assumed)
+    ok = V.check_a({"late": ["2026-11-04"], "mismatched": ["2026-10-06"]}, "KOSDAQ", {"2026-11-04"})
+    assert ok["pass"] and ok["explained"] == ["2026-10-06", "2026-11-04(늦은 커밋, 신호 0건)"]
+    assert not V.check_a({"late": ["2026-11-04"]}, "KOSDAQ", set())["pass"]
+    assert not V.check_a({"late": ["2026-11-04"]}, "SP500", {"2026-11-04"})["pass"]
 
 
 def test_b_and_c():
@@ -51,12 +56,14 @@ def test_regime_reference_and_end_to_end(tmp_path):
     (led / "KOSDAQ" / "trades.csv").write_text("symbol,exit_date,exit_type,pnl_pct,price_pnl_pct,exit_price,stop_price\nX,2026-10-10,STOP,-10.4,-10.0,90,90\n")
     (led / "KOSDAQ" / "equity.csv").write_text("date,equity\n2026-09-29,100\n2026-10-10,99\n")
     (led / "KOSDAQ" / "signals" / "2026-11-06.json").write_text(json.dumps({"coverage": {"requested": 150, "failed": []}}))
+    (led / "KOSDAQ" / "signals" / "2026-11-04.json").write_text(json.dumps({"entries_next_open": [], "exits_next_open": [],
+                                                                         "coverage": {"requested": 150, "failed": []}}))
     res = tmp_path / "results" / "latest" / "results" / "KOSDAQ"
     res.mkdir(parents=True)
     (res / "signals.csv").write_text(sig)
     stem = tmp_path / "out" / "v"
     assert V.main(["--ledger-dir", str(led), "--results-dir", str(tmp_path / "results"), "--markets", "KOSDAQ", "--out", str(stem)]) == 0
     row = json.loads(stem.with_suffix(".json").read_text())["markets"][0]
-    assert row["verdict"] == "중간(2/60일): A 실패 → 원인 수정 후 새 기간" and row["regime"]["dist_now_pct"] == -34.0
+    assert row["verdict"] == "중간(2/60일): 현재까지 기준 충족" and row["regime"]["dist_now_pct"] == -34.0
     text = stem.with_suffix(".md").read_text()
-    assert "| 코스닥 | 2/60 | **실패** |" in text and "비교할 과거가 없음" in text
+    assert "| 코스닥 | 2/60 | 통과 |" in text and "비교할 과거가 없음" in text and "2026-11-04(늦은 커밋, 신호 0건)" in text
