@@ -1,0 +1,30 @@
+{
+ "market": "NDX100",
+ "as_of": "2026-11-06",
+ "regime": {
+  "benchmark": "^NDX",
+  "mode": "MA200",
+  "close": 26989.9922,
+  "ma200": 27983.8917,
+  "ma20": 29090.9465,
+  "on": false
+ },
+ "entries_next_open": [],
+ "exits_next_open": [],
+ "positions": [
+  "AMGN",
+  "CSX",
+  "KDP",
+  "MSFT",
+  "VRTX"
+ ],
+ "watchlist": [],
+ "coverage": {
+  "requested": 101,
+  "loaded": 100,
+  "failed": [
+   "WBD"
+  ]
+ },
+ "generated_at": "2026-11-06T23:25:34Z"
+}
