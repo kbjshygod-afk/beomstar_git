@@ -29,8 +29,6 @@ AUDIT_FLAGS = ("late", "uncommitted", "mismatched", "revised", "revised_after_op
 # anything else that fails A, B or C is a PROBLEM (exit 1), so a new violation is never read past
 # as an ordinary audit flag again (2026-11-05: the KOSDAQ 11-04 late commit was).
 KNOWN_CRITERIA = {
-    ("KOSDAQ", "늦은 커밋 2026-11-04"): "11-06 보고, 해석 결정 대기",
-    ("KOSDAQ_V2", "늦은 커밋 2026-11-04"): "11-06 보고, 해석 결정 대기",
     ("CRYPTO", "B"): "11-06 보고: Yahoo에 없는 5종목, 다음 기간 유니버스 재구성",
 }
 MARKET_REQUIRED = ("as_of", "regime", "entries_next_open", "exits_next_open", "positions",
@@ -85,12 +83,13 @@ def market_summary(market: str, latest: dict | None, audit: dict | None,
     return s
 
 
-def criteria(market: str, audit: dict | None, trades_csv: str | None, coverages: list[dict]) -> dict:
+def criteria(market: str, audit: dict | None, trades_csv: str | None, coverages: list[dict],
+             empty_days: set | None = None) -> dict:
     """Judgment criteria A, B, C (paper_verdict) split into known and new failures."""
     if audit is None or market not in V.STOP_PCT:
         return {"new": [], "known": []}
     trades = list(csv.DictReader(io.StringIO(trades_csv or "")))
-    a, b, c = V.check_a(audit, market), V.check_b(audit, coverages), V.check_c(trades, market)
+    a, b, c = V.check_a(audit, market, empty_days or set()), V.check_b(audit, coverages), V.check_c(trades, market)
     new, known = [], []
     for item in a["issues"] + c["issues"]:
         (known if (market, item) in KNOWN_CRITERIA else new).append(item)
@@ -111,7 +110,7 @@ def collect(repo: Path, ref: str) -> list[dict]:
         audit = json.loads(aud) if aud else None
         trades = _show(repo, ref, f"paper/{m}/trades.csv")
         s = market_summary(m, markets[m], audit, trades, _show(repo, ref, f"paper/{m}/equity.csv"))
-        cr = criteria(m, audit, trades, V.coverages(src, m))
+        cr = criteria(m, audit, trades, V.coverages(src, m), V.empty_signal_days(src, m, V.EXPLAINED_LATE.get(m, set())))
         s["criteria_known"] = cr["known"]
         s["problems"] += [f"판정 기준 위반(새로 발생): {x}" for x in cr["new"]]
         out.append(s)
