@@ -56,9 +56,15 @@ jobs:
           args=(--minutes "$MINUTES" --venue "$VENUE" --out ../kis_ws_out --env-file /dev/null --repo ..)
           [ -n "$SYMBOLS" ] && args+=(--symbols "$SYMBOLS")
           [ "$ALERT" = "true" ] || args+=(--no-alert)
-          set -o pipefail
-          python tools/kis_ws_probe.py "${args[@]}" 2>&1 | tee probe.txt
-          { echo '```'; grep -E "^RESULT|^KIS WebSocket|SUBSCRIBE|APPROVAL|reconnect" probe.txt | head -40; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          rc=0
+          python tools/kis_ws_probe.py "${args[@]}" > probe.txt 2>&1 || rc=$?
+          cat probe.txt
+          { echo '```'; grep -E "^RESULT|^KIS WebSocket|SUBSCRIBE|approval|APPROVAL|reconnect" probe.txt | head -40; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          # Outside the session (push smoke runs) no trades arrive; a working connection is the pass.
+          if [ "$rc" -ne 0 ] && [ "${{ github.event_name }}" = "push" ] && grep -q "SUBSCRIBE SUCCESS" probe.txt; then
+            echo "smoke run: approval and subscription ok, no trades outside the session"; rc=0
+          fi
+          exit $rc
       - uses: actions/upload-artifact@v4
         if: always()
         with:
