@@ -28,6 +28,8 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from datetime import datetime, timedelta, timezone
+
+KST = timezone(timedelta(hours=9))
 from pathlib import Path
 
 import pandas as pd
@@ -193,15 +195,19 @@ def _frame(rows: list[dict], cols: dict) -> pd.DataFrame:
 def bars_on(client: Client, market: str, symbols, date: pd.Timestamp, cache_dir=None) -> pd.DataFrame:
     """One row per Yahoo symbol ('096530.KQ') with that date's KIS bar; symbols KIS has no bar for
     on that date are left out and listed in df.attrs['missing']. Cached per market and date once
-    complete, so the 2-hourly reruns do not repeat the calls."""
+    the date has settled (the next KST day), so the 2-hourly reruns do not repeat the calls."""
     ds = date.strftime("%Y%m%d")
     p = Path(cache_dir) / "kis" / f"{market}_{ds}.json" if cache_dir else None
+    # A day's bar is final only from the next KST day (it follows NXT after hours until then), so
+    # only a fetch made after that is cached; older cache files without the flag are refetched.
+    settled = date.date() < datetime.now(KST).date()
     if p is not None and p.exists():
         cached = json.loads(p.read_text())
-        df = pd.DataFrame.from_dict(cached["rows"], orient="index", columns=list(STOCK_COLS.values()))
-        df.index.name = "symbol"
-        df.attrs["missing"] = cached["missing"]
-        return df
+        if cached.get("settled"):
+            df = pd.DataFrame.from_dict(cached["rows"], orient="index", columns=list(STOCK_COLS.values()))
+            df.index.name = "symbol"
+            df.attrs["missing"] = cached["missing"]
+            return df
     rows, missing = {}, []
     for y in symbols:
         code = y.split(".")[0]
@@ -210,9 +216,9 @@ def bars_on(client: Client, market: str, symbols, date: pd.Timestamp, cache_dir=
             rows[y] = {c: (None if pd.isna(v) else float(v)) for c, v in bars.loc[date].items()}
         else:
             missing.append(y)
-    if p is not None:
+    if p is not None and settled:
         p.parent.mkdir(parents=True, exist_ok=True)
-        p.write_text(json.dumps({"rows": rows, "missing": missing}))
+        p.write_text(json.dumps({"rows": rows, "missing": missing, "settled": True}))
     df = pd.DataFrame.from_dict(rows, orient="index", columns=list(STOCK_COLS.values()))
     df.index.name = "symbol"
     df.attrs["missing"] = missing
