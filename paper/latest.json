@@ -874,16 +874,16 @@
    "xcheck_kis": null
   },
   "KOSDAQ_V2": {
-   "as_of": "2026-10-30",
+   "as_of": "2026-11-05",
    "start_date": "2026-10-07",
    "regime": {
     "benchmark": "^KQ11",
     "mode": "BREADTH50",
-    "close": 724.38,
-    "ma200": 972.8083,
-    "ma20": 809.162,
+    "close": 678.41,
+    "ma200": 967.9921,
+    "ma20": 770.471,
     "on": false,
-    "breadth_pct": 17.4
+    "breadth_pct": 12.1
    },
    "entries_next_open": [],
    "exits_next_open": [],
@@ -893,7 +893,7 @@
    "performance": {
     "equity": 100000000.0,
     "return_pct": 0.0,
-    "bench_return_pct": -19.37,
+    "bench_return_pct": -24.49,
     "mdd_pct": 0.0,
     "closed_trades": 0,
     "win_rate_pct": null,
@@ -903,8 +903,8 @@
    },
    "status_csv": "KOSDAQ_V2/status.csv",
    "audit": {
-    "days": 17,
-    "signal_files": 5,
+    "days": 21,
+    "signal_files": 6,
     "missing_days": [
      "2026-10-12",
      "2026-10-13",
@@ -917,10 +917,14 @@
      "2026-10-22",
      "2026-10-26",
      "2026-10-28",
-     "2026-10-29"
+     "2026-10-29",
+     "2026-11-02",
+     "2026-11-03",
+     "2026-11-04"
     ],
     "late": [
-     "2026-10-08"
+     "2026-10-08",
+     "2026-11-05"
     ],
     "uncommitted": [],
     "mismatched": [],
@@ -929,23 +933,33 @@
    },
    "xcheck": {
     "source": "KRX Open API",
-    "status": "ok",
-    "checked": "2026-10-30",
+    "status": "mismatch",
+    "checked": "2026-11-05",
     "error": null,
-    "mismatched_symbols": [],
+    "mismatched_symbols": [
+     "033790.KQ"
+    ],
     "index_match": true
    },
    "xcheck_kis": {
     "source": "KIS",
-    "status": "error",
-    "checked": null,
-    "error": "FHKUP03500100: HTTP 500 {\"rt_cd\":\"1\",\"msg_cd\":\"EGW00316\",\"msg1\":\"조회 처리 중 오류 발생하였습니다. 재 조회 수행 부탁드립니다.\"}",
+    "status": "ok",
+    "checked": "2026-11-04",
+    "error": null,
     "mismatched_symbols": [],
-    "index_match": null
+    "index_match": true,
+    "guard": {
+     "close_mismatched": 0,
+     "compared": 146,
+     "share_pct": 0.0,
+     "blocked": false,
+     "late": false,
+     "enforced": false
+    }
    }
   }
  },
- "updated_at": "2026-11-06T15:50:16Z",
+ "updated_at": "2026-11-06T15:53:55Z",
  "disclaimer": "기계적 룰 출력이며 투자 자문이 아닙니다. 매수·매도 결정은 소유자 본인이 합니다.",
  "unconfirmed": "미확인 추정값(스캐너 원본 코드 미확인): 피벗=직전 20봉 최고가(당일 제외) · 거래량 평균=직전 50일(당일 제외) · RS=지수 대비 가중 1년 수익률 ≥ 0%p(스캐너는 유니버스 백분위 ≥ 70) · 52주 고저=종가 기준 · 200일선 상승=22봉 전 대비 · 수축비=10/40일 평균 TR · 비용=편도 0.2%"
 }
