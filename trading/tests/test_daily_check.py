@@ -46,3 +46,15 @@ def test_stale_positions_are_listed():
                           {}, None, None)
     assert s["stale"] == ["123456.KQ"]
     assert "STALE quotes:      123456.KQ" in dc.render([s])
+
+
+def test_new_criteria_failures_are_problems_known_ones_are_not():
+    from tools import daily_check as DC
+    audit = {"late": ["2026-11-04"], "mismatched": [], "uncommitted": []}
+    cr = DC.criteria("KOSDAQ", audit, "", [{"requested": 150, "failed": []}])
+    assert cr == {"new": [], "known": ["늦은 커밋 2026-11-04"]}
+    cr = DC.criteria("KOSDAQ", {"late": ["2026-11-20"]}, "", [])
+    assert cr["new"] == ["늦은 커밋 2026-11-20"]
+    cr = DC.criteria("SP500", {}, "symbol,exit_type,price_pnl_pct,exit_price,stop_price\nX,TARGET,5,10,8\n", [{"requested": 100, "failed": ["a"] * 6}])
+    assert cr["new"] == ["X 청산 유형 TARGET", "데이터 실패 최대 6.0% > 5%"]
+    assert DC.criteria("CRYPTO", {}, "", [{"requested": 30, "failed": ["a"] * 5}])["known"] == ["데이터 실패 최대 16.7% > 5%"]

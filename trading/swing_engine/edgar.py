@@ -146,15 +146,11 @@ def _date(s) -> date | None:
         return None
 
 
-def _quarter_label(end: date) -> str:
-    """Calendar quarter a period end aligns with (a fiscal quarter ending Sep 27 is Q3; one
-    ending a few days into the next quarter, like Jan 2, is the previous Q4)."""
-    y, m = end.year, end.month
-    if end.day <= 7 and m % 3 == 1:
-        m -= 1
-        if m == 0:
-            m, y = 12, y - 1
-    return f"{y}Q{(m - 1) // 3 + 1}"
+def _quarter_label(start: date, end: date) -> str:
+    """Calendar quarter holding most of the period, as SEC frames do: the quarter of its
+    midpoint (Apple Jun 29 - Sep 27 -> Q3; NVIDIA Oct 27 - Jan 25 -> Q4 of the earlier year)."""
+    mid = start + (end - start) / 2
+    return f"{mid.year}Q{(mid.month - 1) // 3 + 1}"
 
 
 def _balance_at(bal: dict[str, dict], end: str, fig: str):
@@ -241,7 +237,9 @@ def periods_from_facts(facts: dict) -> list[dict]:
                         for i in range(2) if (starts[i + 1] - ends[i]).days > 20), None)
             if gap is None:
                 continue
-        key = _quarter_label(gap[1])
+        key = _quarter_label(gap[0], gap[1])
+        if key in flows and any(flows[key].get(f) is not None for f in DERIVED):
+            continue                                     # a filed quarter already holds that label
         p = flows.setdefault(key, {"label": key, "kind": "Q", "start": gap[0].isoformat(), "end": gap[1].isoformat()})
         for fig in DERIVED:
             if p.get(fig) is None and fy.get(fig) is not None and all(q.get(fig) is not None for q in inside):

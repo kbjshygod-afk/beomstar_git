@@ -9,6 +9,8 @@ in the last few days and the equity return. The fields are the ones the engine w
 (`paper/latest.json`, `paper/<market>/audit.json`, `trades.csv`, `equity.csv`); a field it
 cannot find is reported as missing instead of being read as empty, so a renamed key shows up
 as a problem rather than as "0 signals" (2026-10-16 check read the wrong keys).
+Judgment criteria A-C (tools/paper_verdict.py) are checked too: a failure not in KNOWN_CRITERIA
+is a PROBLEM and the exit code is 1.
 """
 import argparse
 import csv
@@ -18,7 +20,19 @@ import subprocess
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import paper_verdict as V  # noqa: E402
+from trade_analysis import Source  # noqa: E402
+
 AUDIT_FLAGS = ("late", "uncommitted", "mismatched", "revised", "revised_after_open", "missing_days")
+# Judgment-criteria failures already reported to the owner. Listed here they print as "known";
+# anything else that fails A, B or C is a PROBLEM (exit 1), so a new violation is never read past
+# as an ordinary audit flag again (2026-11-05: the KOSDAQ 11-04 late commit was).
+KNOWN_CRITERIA = {
+    ("KOSDAQ", "늦은 커밋 2026-11-04"): "11-06 보고, 해석 결정 대기",
+    ("KOSDAQ_V2", "늦은 커밋 2026-11-04"): "11-06 보고, 해석 결정 대기",
+    ("CRYPTO", "B"): "11-06 보고: Yahoo에 없는 5종목, 다음 기간 유니버스 재구성",
+}
 MARKET_REQUIRED = ("as_of", "regime", "entries_next_open", "exits_next_open", "positions",
                    "stale_positions")
 
@@ -71,17 +85,36 @@ def market_summary(market: str, latest: dict | None, audit: dict | None,
     return s
 
 
+def criteria(market: str, audit: dict | None, trades_csv: str | None, coverages: list[dict]) -> dict:
+    """Judgment criteria A, B, C (paper_verdict) split into known and new failures."""
+    if audit is None or market not in V.STOP_PCT:
+        return {"new": [], "known": []}
+    trades = list(csv.DictReader(io.StringIO(trades_csv or "")))
+    a, b, c = V.check_a(audit, market), V.check_b(audit, coverages), V.check_c(trades, market)
+    new, known = [], []
+    for item in a["issues"] + c["issues"]:
+        (known if (market, item) in KNOWN_CRITERIA else new).append(item)
+    for item in b["issues"]:
+        (known if (market, "B") in KNOWN_CRITERIA else new).append(item)
+    return {"new": new, "known": known}
+
+
 def collect(repo: Path, ref: str) -> list[dict]:
     raw = _show(repo, ref, "paper/latest.json")
     if raw is None:
         raise SystemExit(f"{ref}:paper/latest.json not found")
     markets = json.loads(raw).get("markets", {})
+    src = Source(repo, ref)
     out = []
     for m in markets:
         aud = _show(repo, ref, f"paper/{m}/audit.json")
-        out.append(market_summary(m, markets[m], json.loads(aud) if aud else None,
-                                  _show(repo, ref, f"paper/{m}/trades.csv"),
-                                  _show(repo, ref, f"paper/{m}/equity.csv")))
+        audit = json.loads(aud) if aud else None
+        trades = _show(repo, ref, f"paper/{m}/trades.csv")
+        s = market_summary(m, markets[m], audit, trades, _show(repo, ref, f"paper/{m}/equity.csv"))
+        cr = criteria(m, audit, trades, V.coverages(src, m))
+        s["criteria_known"] = cr["known"]
+        s["problems"] += [f"판정 기준 위반(새로 발생): {x}" for x in cr["new"]]
+        out.append(s)
     return out
 
 
@@ -118,6 +151,8 @@ def render(summaries: list[dict]) -> str:
                             f" ({x['guard'].get('close_mismatched')}/{x['guard'].get('compared')} close)" if x.get("guard") else ""))
         for t in s["closed_recent"]:
             lines.append(f"  closed {t['exit_date']} {t['symbol']} {t['type']} {t['pnl_pct']:+.2f}%")
+        if s.get("criteria_known"):
+            lines.append(f"  criteria (known):  {'; '.join(s['criteria_known'])}")
         for p in s["problems"]:
             lines.append(f"  PROBLEM: {p}")
     return "\n".join(lines)

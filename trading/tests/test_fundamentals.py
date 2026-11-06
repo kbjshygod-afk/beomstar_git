@@ -78,7 +78,22 @@ def test_edgar_september_fiscal_year_and_concept_merge():
     assert by["2025Q1"]["ocf"] == pytest.approx(54.0 - 29.9) and by["2025Q2"]["ocf"] == pytest.approx(81.8 - 54.0)
     assert q4["ocf"] == pytest.approx(111.5 - 81.8)                                   # YTD-differenced quarters feed the Q4
     assert by["2025Q4"]["equity"] == 88.2 and by["2025Q4"]["revenue"] == 140.0
-    assert edgar._quarter_label(edgar.date(2026, 1, 2)) == "2025Q4"
+    assert edgar._quarter_label(edgar.date(2025, 9, 28), edgar.date(2026, 1, 2)) == "2025Q4"
+
+
+def test_edgar_january_fiscal_year_labels_the_fourth_quarter_q4():
+    """NVIDIA-like: fiscal year Jan 27 2025 - Jan 25 2026; SEC frames its quarters CY2025Q1..Q3.
+    The derived Oct 27 - Jan 25 quarter is CY2025Q4, not 2026Q1 (which the next year's Q1 uses)."""
+    def rows(vals):
+        return {"units": {"USD": [{"start": s, "end": e, "val": v, "frame": f} for (f, s, e, v) in vals]}}
+    gaap = {"Revenues": rows([
+        ("CY2025Q1", "2025-01-27", "2025-04-27", 44.0), ("CY2025Q2", "2025-04-28", "2025-07-27", 46.7),
+        ("CY2025Q3", "2025-07-28", "2025-10-26", 57.0), ("CY2025", "2025-01-27", "2026-01-25", 210.0),
+        ("CY2026Q1", "2026-01-26", "2026-04-26", 70.0)])}
+    by = {p["label"]: p for p in edgar.periods_from_facts({"facts": {"us-gaap": gaap}})}
+    assert by["2025Q4"]["revenue"] == pytest.approx(210.0 - 44.0 - 46.7 - 57.0)
+    assert by["2025Q4"]["start"] == "2025-10-27" and by["2026Q1"]["revenue"] == 70.0
+    assert edgar._quarter_label(edgar.date(2025, 10, 27), edgar.date(2026, 1, 25)) == "2025Q4"
 
 
 def test_edgar_cik_lookup_and_company(monkeypatch, tmp_path):
