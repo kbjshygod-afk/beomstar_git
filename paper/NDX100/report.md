@@ -5,11 +5,14 @@
 - 시작일 2026-09-25 · 기준일(마지막 확정 봉) 2026-11-06 · RS 방식 percentile · 손절 -7% · 1회 리스크 0.75% · 비용 편도 0.2%
 - 레짐 (MA200): **OFF** — ^NDX 종가 26,989.99 · 200일선 27,983.89
 - 데이터: 유니버스 101종목 중 100종목 로드 (실패 1)
-- 데이터 대조 (Tiingo, 2026-11-06 봉): 종목 15개 비교 (표본 15: 보유·대기 5 + 순환), 불일치 4개 · 지수 비교 안 함
-  - AAPL volume: Yahoo 43,750,861 vs Tiingo 42,865,012 (+2.02%)
-  - AMGN volume: Yahoo 2,578,799 vs Tiingo 2,512,395 (+2.58%)
-  - XEL low: Yahoo 78 vs Tiingo 78 (+0.24%)
-  - WDC volume: Yahoo 12,092,388 vs Tiingo 11,935,167 (+1.30%)
+- 데이터 대조 (Tiingo, 2026-11-06 봉): 종목 15개 비교 (표본 15: 보유·대기 5 + 순환), 불일치 7개 · 지수 비교 안 함
+  - AAPL volume: Yahoo 44,676,300 vs Tiingo 42,865,012 (+4.05%)
+  - AMGN volume: Yahoo 2,579,400 vs Tiingo 2,512,395 (+2.60%)
+  - MSFT volume: Yahoo 26,938,400 vs Tiingo 26,181,338 (+2.81%)
+  - ADP volume: Yahoo 2,401,900 vs Tiingo 2,350,266 (+2.15%)
+  - CSX volume: Yahoo 15,095,200 vs Tiingo 13,726,757 (+9.06%)
+  - WDC volume: Yahoo 12,103,500 vs Tiingo 11,935,167 (+1.39%)
+  - ABNB volume: Yahoo 12,748,100 vs Tiingo 12,078,811 (+5.25%)
 
 ## 다음 시가 진입 (오늘 신호)
 
