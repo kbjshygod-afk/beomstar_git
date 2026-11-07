@@ -11,39 +11,60 @@
   "missing": [],
   "mismatches": [
    {
+    "symbol": "ABNB",
+    "field": "volume",
+    "yahoo": 12748100.0,
+    "krx": 12078811.0,
+    "diff_pct": 5.25
+   },
+   {
     "symbol": "LNT",
     "field": "volume",
-    "yahoo": 3382799.0,
+    "yahoo": 3384100.0,
     "krx": 3332096.0,
-    "diff_pct": 1.499
+    "diff_pct": 1.537
    },
    {
     "symbol": "AMGN",
     "field": "volume",
-    "yahoo": 2578799.0,
+    "yahoo": 2579400.0,
     "krx": 2512395.0,
-    "diff_pct": 2.575
+    "diff_pct": 2.598
    },
    {
     "symbol": "BDX",
     "field": "volume",
-    "yahoo": 2172540.0,
+    "yahoo": 2172600.0,
     "krx": 2118164.0,
-    "diff_pct": 2.503
+    "diff_pct": 2.506
    },
    {
     "symbol": "CRL",
     "field": "volume",
-    "yahoo": 1063621.0,
+    "yahoo": 1063700.0,
     "krx": 982915.0,
-    "diff_pct": 7.588
+    "diff_pct": 7.595
    },
    {
-    "symbol": "LII",
-    "field": "high",
-    "yahoo": 344.5450134,
-    "krx": 346.92,
-    "diff_pct": 0.685
+    "symbol": "LLY",
+    "field": "volume",
+    "yahoo": 3803200.0,
+    "krx": 3572900.0,
+    "diff_pct": 6.055
+   },
+   {
+    "symbol": "LULU",
+    "field": "volume",
+    "yahoo": 1916800.0,
+    "krx": 1887053.0,
+    "diff_pct": 1.552
+   },
+   {
+    "symbol": "VEEV",
+    "field": "volume",
+    "yahoo": 1746400.0,
+    "krx": 1503998.0,
+    "diff_pct": 13.88
    }
   ],
   "unlisted": [],
@@ -67,5 +88,5 @@
   ]
  },
  "error": null,
- "calls": 25
+ "calls": 0
 }
