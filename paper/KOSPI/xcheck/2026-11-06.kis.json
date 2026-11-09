@@ -1461,9 +1461,9 @@
  "error": null,
  "calls": 1,
  "guard": {
-  "close_mismatched": 186,
+  "close_mismatched": 184,
   "compared": 200,
-  "share_pct": 93.0,
+  "share_pct": 92.0,
   "blocked": false,
   "late": false,
   "enforced": false
