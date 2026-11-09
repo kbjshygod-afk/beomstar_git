@@ -1,0 +1,189 @@
+{
+ "market": "SP500",
+ "as_of": "2026-11-09",
+ "regime": {
+  "benchmark": "^GSPC",
+  "mode": "MA200",
+  "close": 7549.9399,
+  "ma200": 7328.2249,
+  "ma20": 7644.9375,
+  "on": true
+ },
+ "entries_next_open": [
+  {
+   "symbol": "VTRS",
+   "signal_close": 20.49,
+   "rs": 96.79,
+   "desired_qty": 363004.285076,
+   "est_stop_from_close": 18.441
+  },
+  {
+   "symbol": "XYZ",
+   "signal_close": 88.56,
+   "rs": 89.56,
+   "desired_qty": 83987.781421,
+   "est_stop_from_close": 79.704
+  },
+  {
+   "symbol": "EW",
+   "signal_close": 104.71,
+   "rs": 88.96,
+   "desired_qty": 71033.881975,
+   "est_stop_from_close": 94.239
+  },
+  {
+   "symbol": "BEN",
+   "signal_close": 35.87,
+   "rs": 85.74,
+   "desired_qty": 207358.73821,
+   "est_stop_from_close": 32.283
+  }
+ ],
+ "exits_next_open": [],
+ "positions": [
+  "AMGN",
+  "BDX",
+  "BIIB",
+  "CPAY",
+  "CRL",
+  "EBAY",
+  "ELV",
+  "GWW",
+  "HUM",
+  "KDP",
+  "LLY",
+  "TRV",
+  "VEEV",
+  "WSM"
+ ],
+ "watchlist": [
+  {
+   "symbol": "TGT",
+   "label": "1순위 · 임박 (피벗 1% 이내)",
+   "close": 165.9,
+   "pivot": 166.49,
+   "to_pivot_pct": 0.36,
+   "rs": 96.18
+  },
+  {
+   "symbol": "IQV",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 278.84,
+   "pivot": 284.5,
+   "to_pivot_pct": 2.03,
+   "rs": 94.78
+  },
+  {
+   "symbol": "A",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 180.17,
+   "pivot": 182.99,
+   "to_pivot_pct": 1.57,
+   "rs": 94.58
+  },
+  {
+   "symbol": "LH",
+   "label": "1순위 · 임박 (피벗 1% 이내)",
+   "close": 371.83,
+   "pivot": 373.34,
+   "to_pivot_pct": 0.41,
+   "rs": 94.18
+  },
+  {
+   "symbol": "ABNB",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 190.29,
+   "pivot": 192.5,
+   "to_pivot_pct": 1.16,
+   "rs": 93.78
+  },
+  {
+   "symbol": "MTD",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 1762.28,
+   "pivot": 1806.58,
+   "to_pivot_pct": 2.51,
+   "rs": 93.37
+  },
+  {
+   "symbol": "WAT",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 476.7,
+   "pivot": 482.28,
+   "to_pivot_pct": 1.17,
+   "rs": 91.97
+  },
+  {
+   "symbol": "VLTO",
+   "label": "1순위 · 임박 (피벗 1% 이내)",
+   "close": 118.06,
+   "pivot": 119.025,
+   "to_pivot_pct": 0.82,
+   "rs": 89.16
+  },
+  {
+   "symbol": "ADP",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 302.06,
+   "pivot": 310.98,
+   "to_pivot_pct": 2.95,
+   "rs": 87.95
+  },
+  {
+   "symbol": "CBOE",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 352.78,
+   "pivot": 357.7,
+   "to_pivot_pct": 1.39,
+   "rs": 87.35
+  },
+  {
+   "symbol": "HLT",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 373.23,
+   "pivot": 381.34,
+   "to_pivot_pct": 2.17,
+   "rs": 87.15
+  },
+  {
+   "symbol": "SJM",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 133.26,
+   "pivot": 136.22,
+   "to_pivot_pct": 2.22,
+   "rs": 85.54
+  },
+  {
+   "symbol": "BAX",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 26.41,
+   "pivot": 27.09,
+   "to_pivot_pct": 2.57,
+   "rs": 84.94
+  },
+  {
+   "symbol": "AAPL",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 350.69,
+   "pivot": 355.38,
+   "to_pivot_pct": 1.34,
+   "rs": 84.54
+  },
+  {
+   "symbol": "KO",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 96.03,
+   "pivot": 97.39,
+   "to_pivot_pct": 1.42,
+   "rs": 84.14
+  }
+ ],
+ "coverage": {
+  "requested": 503,
+  "loaded": 502,
+  "failed": [
+   "WBD"
+  ]
+ },
+ "generated_at": "2026-11-09T22:42:57Z"
+}
