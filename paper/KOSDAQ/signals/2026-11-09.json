@@ -1,0 +1,24 @@
+{
+ "market": "KOSDAQ",
+ "as_of": "2026-11-09",
+ "regime": {
+  "benchmark": "^KQ11",
+  "mode": "NONE",
+  "close": 638.97,
+  "ma200": 964.9144,
+  "ma20": 747.56,
+  "on": true
+ },
+ "entries_next_open": [],
+ "exits_next_open": [],
+ "positions": [
+  "093320.KQ"
+ ],
+ "watchlist": [],
+ "coverage": {
+  "requested": 150,
+  "loaded": 150,
+  "failed": []
+ },
+ "generated_at": "2026-11-09T10:47:14Z"
+}
