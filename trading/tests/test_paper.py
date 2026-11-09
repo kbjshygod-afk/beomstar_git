@@ -9,6 +9,7 @@ import pandas as pd
 import pytest
 
 from swing_engine import data as D
+from swing_engine import kis
 from swing_engine import paper as P
 
 
@@ -461,12 +462,28 @@ def test_guarded_run_commits_nothing_and_a_late_pass_is_flagged(tmp_path, ledger
 def test_cross_check_kis_compares_the_previous_day(monkeypatch, tmp_path):
     """The stored KIS record is for T-1 (settled); the same-day guard verdict rides along."""
     seen = []
-    def fake(market, frames, bench, as_of, cache_dir):
-        seen.append(pd.Timestamp(as_of).strftime("%Y-%m-%d"))
+    def fake(market, frames, bench, as_of, cache_dir, settled=False):
+        seen.append((pd.Timestamp(as_of).strftime("%Y-%m-%d"), settled, len(bench)))
         return {**_kis_rec(0), "checked": pd.Timestamp(as_of).strftime("%Y-%m-%d"), "status": "ok"}
     monkeypatch.setattr(P, "kis_record", fake)
     bench = pd.DataFrame({"close": [1.0, 2.0]}, index=pd.to_datetime(["2026-11-05", "2026-11-06"]))
     guard_rec = {**_kis_rec(148), "guard": {"blocked": False, "late": False, "enforced": False}}
-    out = P.cross_check_kis("KOSDAQ", {}, bench, bench.index[-1], tmp_path, None, rec=guard_rec)
-    assert seen == ["2026-11-05"] and out["checked"] == "2026-11-05" and out["guard"]["enforced"] is False
+    after = datetime(2026, 11, 6, 20, 30, tzinfo=kis.KST)                     # 11-06 NXT closed: 11-05 is final
+    out = P.cross_check_kis("KOSDAQ", {}, bench, bench.index[-1], tmp_path, None, rec=guard_rec, now=after)
+    assert seen == [("2026-11-05", True, 1)] and out["checked"] == "2026-11-05" and out["guard"]["enforced"] is False
     assert (tmp_path / "xcheck" / "2026-11-05.kis.json").exists()
+
+
+def test_cross_check_kis_waits_for_the_next_days_nxt_close(monkeypatch, tmp_path):
+    """2026-11-09: in the afternoon and at the 18:00 signal run the 11-06 KIS bar was still the
+    KRX+NXT close, so the check falls back to 11-05 (T-2) until 20:00 KST, then moves to 11-06."""
+    seen = []
+    def fake(market, frames, bench, as_of, cache_dir, settled=False):
+        seen.append((pd.Timestamp(as_of).strftime("%Y-%m-%d"), settled, len(bench)))
+        return {**_kis_rec(0), "checked": pd.Timestamp(as_of).strftime("%Y-%m-%d"), "status": "ok"}
+    monkeypatch.setattr(P, "kis_record", fake)
+    bench = pd.DataFrame({"close": [1.0, 2.0, 3.0]}, index=pd.to_datetime(["2026-11-05", "2026-11-06", "2026-11-09"]))
+    P.cross_check_kis("KOSDAQ", {}, bench, bench.index[-1], tmp_path, None, now=datetime(2026, 11, 9, 18, 1, tzinfo=kis.KST))
+    P.cross_check_kis("KOSDAQ", {}, bench, bench.index[-1], tmp_path, None, now=datetime(2026, 11, 9, 20, 5, tzinfo=kis.KST))
+    assert seen == [("2026-11-05", True, 1), ("2026-11-06", True, 2)]
+    assert P.settled_kis_day(bench.iloc[:2], datetime(2026, 11, 6, 19, 0, tzinfo=kis.KST)) is None

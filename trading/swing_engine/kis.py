@@ -192,18 +192,33 @@ def _frame(rows: list[dict], cols: dict) -> pd.DataFrame:
     return df
 
 
-def bars_on(client: Client, market: str, symbols, date: pd.Timestamp, cache_dir=None) -> pd.DataFrame:
+SETTLE_HOUR_KST = 20      # the NXT session of the next trading day closes at 20:00 KST
+
+
+def settles_at(next_trading_day: pd.Timestamp) -> datetime:
+    """When KIS's daily bar for the trading day before `next_trading_day` is final.
+
+    Until KIS updates it during the next trading day, the KRX (J) daily bar of a day carries the
+    KRX+NXT combined close: on 2026-11-09 the 11-06 bar of 036930 read 137,400 (the UN venue's
+    close) when the ledger fetched it in the afternoon and 132,800 (KRX) at 19:32 KST; the 11-05 bar
+    already matched KRX at 18:56 KST on 11-06. It is taken as final once the next trading day's NXT
+    session has closed."""
+    d = pd.Timestamp(next_trading_day).date()
+    return datetime(d.year, d.month, d.day, SETTLE_HOUR_KST, tzinfo=KST)
+
+
+def bars_on(client: Client, market: str, symbols, date: pd.Timestamp, cache_dir=None, settled: bool = False) -> pd.DataFrame:
     """One row per Yahoo symbol ('096530.KQ') with that date's KIS bar; symbols KIS has no bar for
-    on that date are left out and listed in df.attrs['missing']. Cached per market and date once
-    the date has settled (the next KST day), so the 2-hourly reruns do not repeat the calls."""
+    on that date are left out and listed in df.attrs['missing']. Cached per market and date only
+    when the caller says the bar is final (`settled`, see `settles_at`), so the 2-hourly reruns do
+    not repeat the calls and an unsettled bar is never kept."""
     ds = date.strftime("%Y%m%d")
     p = Path(cache_dir) / "kis" / f"{market}_{ds}.json" if cache_dir else None
-    # A day's bar is final only from the next KST day (it follows NXT after hours until then), so
-    # only a fetch made after that is cached; older cache files without the flag are refetched.
-    settled = date.date() < datetime.now(KST).date()
     if p is not None and p.exists():
         cached = json.loads(p.read_text())
-        if cached.get("settled"):
+        # "final" replaces the old "settled" flag, which was set on the calendar day alone and so
+        # kept the combined close of a Friday bar fetched on Monday afternoon (2026-11-09).
+        if cached.get("final"):
             df = pd.DataFrame.from_dict(cached["rows"], orient="index", columns=list(STOCK_COLS.values()))
             df.index.name = "symbol"
             df.attrs["missing"] = cached["missing"]
@@ -218,7 +233,7 @@ def bars_on(client: Client, market: str, symbols, date: pd.Timestamp, cache_dir=
             missing.append(y)
     if p is not None and settled:
         p.parent.mkdir(parents=True, exist_ok=True)
-        p.write_text(json.dumps({"rows": rows, "missing": missing, "settled": True}))
+        p.write_text(json.dumps({"rows": rows, "missing": missing, "final": True}))
     df = pd.DataFrame.from_dict(rows, orient="index", columns=list(STOCK_COLS.values()))
     df.index.name = "symbol"
     df.attrs["missing"] = missing

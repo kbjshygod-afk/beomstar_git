@@ -102,16 +102,17 @@ def run(market: str, frames: dict, bench: pd.DataFrame, as_of: pd.Timestamp, key
 KIS_SOURCE = "KIS"
 
 
-def run_kis(market: str, frames: dict, bench: pd.DataFrame, as_of: pd.Timestamp, cred: dict, cache_dir=None) -> dict:
-    """The cross-check record against Korea Investment & Securities for the signal day itself
-    (checklist 2.4): KIS serves the day's bar after the close, which KRX cannot (T-1). Same
-    tolerances as KRX (exchange figures). Never raises."""
+def run_kis(market: str, frames: dict, bench: pd.DataFrame, as_of: pd.Timestamp, cred: dict, cache_dir=None,
+            settled: bool = False) -> dict:
+    """The cross-check record against Korea Investment & Securities (checklist 2.4). Same
+    tolerances as KRX (exchange figures); `settled` lets the day's KIS bars be cached (kis.bars_on).
+    Never raises."""
     from . import kis
     rec = {"market": market, "as_of": as_of.strftime("%Y-%m-%d"), "source": KIS_SOURCE,
            "status": "not_published", "checked": None, "index": None, "symbols": None, "error": None}
     try:
         client = kis.Client(cred, cache_dir)
-        ex = kis.bars_on(client, market, sorted(frames), as_of, cache_dir)
+        ex = kis.bars_on(client, market, sorted(frames), as_of, cache_dir, settled=settled)
         idx = kis.index_bar(client, market, as_of)
         rec["calls"] = client.calls
     except kis.KISError as e:
