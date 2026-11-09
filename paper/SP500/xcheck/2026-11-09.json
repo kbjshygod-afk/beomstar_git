@@ -1,0 +1,109 @@
+{
+ "market": "SP500",
+ "as_of": "2026-11-09",
+ "source": "Tiingo",
+ "status": "mismatch",
+ "checked": "2026-11-09",
+ "index": null,
+ "symbols": {
+  "date": "2026-11-09",
+  "compared": 28,
+  "missing": [],
+  "mismatches": [
+   {
+    "symbol": "AMGN",
+    "field": "high",
+    "yahoo": 466.0,
+    "krx": 466.54,
+    "diff_pct": 0.116
+   },
+   {
+    "symbol": "BIIB",
+    "field": "open",
+    "yahoo": 250.8800049,
+    "krx": 250.36,
+    "diff_pct": 0.207
+   },
+   {
+    "symbol": "CRL",
+    "field": "volume",
+    "yahoo": 943084.0,
+    "krx": 782592.0,
+    "diff_pct": 17.018
+   },
+   {
+    "symbol": "EW",
+    "field": "volume",
+    "yahoo": 6680323.0,
+    "krx": 6295742.0,
+    "diff_pct": 5.757
+   },
+   {
+    "symbol": "HUM",
+    "field": "volume",
+    "yahoo": 2450594.0,
+    "krx": 2238806.0,
+    "diff_pct": 8.642
+   },
+   {
+    "symbol": "KDP",
+    "field": "volume",
+    "yahoo": 15372523.0,
+    "krx": 15067404.0,
+    "diff_pct": 1.985
+   },
+   {
+    "symbol": "LLY",
+    "field": "volume",
+    "yahoo": 3809625.0,
+    "krx": 3759968.0,
+    "diff_pct": 1.303
+   },
+   {
+    "symbol": "ROP",
+    "field": "high",
+    "yahoo": 476.1700134,
+    "krx": 476.875,
+    "diff_pct": 0.148
+   },
+   {
+    "symbol": "ROST",
+    "field": "open",
+    "yahoo": 234.2250061,
+    "krx": 237.11,
+    "diff_pct": 1.217
+   },
+   {
+    "symbol": "SBUX",
+    "field": "open",
+    "yahoo": 106.5800018,
+    "krx": 106.31,
+    "diff_pct": 0.253
+   }
+  ],
+  "unlisted": [],
+  "sampled": 28,
+  "focus": [
+   "AMGN",
+   "BDX",
+   "BEN",
+   "BIIB",
+   "CPAY",
+   "CRL",
+   "EBAY",
+   "ELV",
+   "EW",
+   "GWW",
+   "HUM",
+   "KDP",
+   "LLY",
+   "TRV",
+   "VEEV",
+   "VTRS",
+   "WSM",
+   "XYZ"
+  ]
+ },
+ "error": null,
+ "calls": 28
+}
