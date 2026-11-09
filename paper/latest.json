@@ -830,16 +830,16 @@
    "xcheck_kis": null
   },
   "KOSDAQ_V2": {
-   "as_of": "2026-11-05",
+   "as_of": "2026-11-09",
    "start_date": "2026-10-07",
    "regime": {
     "benchmark": "^KQ11",
     "mode": "BREADTH50",
-    "close": 678.41,
-    "ma200": 967.9921,
-    "ma20": 770.471,
+    "close": 638.97,
+    "ma200": 964.9144,
+    "ma20": 747.56,
     "on": false,
-    "breadth_pct": 12.1
+    "breadth_pct": 9.4
    },
    "entries_next_open": [],
    "exits_next_open": [],
@@ -849,7 +849,7 @@
    "performance": {
     "equity": 100000000.0,
     "return_pct": 0.0,
-    "bench_return_pct": -24.49,
+    "bench_return_pct": -28.88,
     "mdd_pct": 0.0,
     "closed_trades": 0,
     "win_rate_pct": null,
@@ -859,8 +859,8 @@
    },
    "status_csv": "KOSDAQ_V2/status.csv",
    "audit": {
-    "days": 21,
-    "signal_files": 6,
+    "days": 23,
+    "signal_files": 7,
     "missing_days": [
      "2026-10-12",
      "2026-10-13",
@@ -876,7 +876,8 @@
      "2026-10-29",
      "2026-11-02",
      "2026-11-03",
-     "2026-11-04"
+     "2026-11-04",
+     "2026-11-06"
     ],
     "late": [
      "2026-10-08",
@@ -889,25 +890,23 @@
    },
    "xcheck": {
     "source": "KRX Open API",
-    "status": "mismatch",
-    "checked": "2026-11-05",
+    "status": "ok",
+    "checked": "2026-11-06",
     "error": null,
-    "mismatched_symbols": [
-     "033790.KQ"
-    ],
+    "mismatched_symbols": [],
     "index_match": true
    },
    "xcheck_kis": {
     "source": "KIS",
     "status": "ok",
-    "checked": "2026-11-04",
+    "checked": "2026-11-05",
     "error": null,
     "mismatched_symbols": [],
     "index_match": true,
     "guard": {
-     "close_mismatched": 0,
-     "compared": 146,
-     "share_pct": 0.0,
+     "close_mismatched": 137,
+     "compared": 150,
+     "share_pct": 91.3,
      "blocked": false,
      "late": false,
      "enforced": false
@@ -915,7 +914,7 @@
    }
   }
  },
- "updated_at": "2026-11-09T10:47:14Z",
+ "updated_at": "2026-11-09T10:51:14Z",
  "disclaimer": "기계적 룰 출력이며 투자 자문이 아닙니다. 매수·매도 결정은 소유자 본인이 합니다.",
  "unconfirmed": "미확인 추정값(스캐너 원본 코드 미확인): 피벗=직전 20봉 최고가(당일 제외) · 거래량 평균=직전 50일(당일 제외) · RS=지수 대비 가중 1년 수익률 ≥ 0%p(스캐너는 유니버스 백분위 ≥ 70) · 52주 고저=종가 기준 · 200일선 상승=22봉 전 대비 · 수축비=10/40일 평균 TR · 비용=편도 0.2%"
 }

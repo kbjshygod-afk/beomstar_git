@@ -1,0 +1,33 @@
+{
+ "market": "KOSDAQ_V2",
+ "as_of": "2026-11-05",
+ "source": "KIS",
+ "status": "ok",
+ "checked": "2026-11-05",
+ "index": {
+  "yahoo_close": 678.4099731,
+  "krx_close": 678.41,
+  "match": true
+ },
+ "symbols": {
+  "date": "2026-11-05",
+  "compared": 146,
+  "missing": [
+   "050890.KQ",
+   "092870.KQ",
+   "456160.KQ",
+   "490470.KQ"
+  ],
+  "mismatches": []
+ },
+ "error": null,
+ "calls": 1,
+ "guard": {
+  "close_mismatched": 137,
+  "compared": 150,
+  "share_pct": 91.3,
+  "blocked": false,
+  "late": false,
+  "enforced": false
+ }
+}
