@@ -1,0 +1,110 @@
+{
+ "market": "NDX100",
+ "as_of": "2026-11-10",
+ "source": "Tiingo",
+ "status": "mismatch",
+ "checked": "2026-11-10",
+ "index": null,
+ "symbols": {
+  "date": "2026-11-10",
+  "compared": 15,
+  "missing": [],
+  "mismatches": [
+   {
+    "symbol": "AMGN",
+    "field": "open",
+    "yahoo": 466.25,
+    "krx": 465.7,
+    "diff_pct": 0.118
+   },
+   {
+    "symbol": "AMGN",
+    "field": "volume",
+    "yahoo": 2138955.0,
+    "krx": 1919570.0,
+    "diff_pct": 10.257
+   },
+   {
+    "symbol": "INTC",
+    "field": "volume",
+    "yahoo": 100526592.0,
+    "krx": 98224304.0,
+    "diff_pct": 2.29
+   },
+   {
+    "symbol": "MSFT",
+    "field": "volume",
+    "yahoo": 26910016.0,
+    "krx": 25859081.0,
+    "diff_pct": 3.905
+   },
+   {
+    "symbol": "VRTX",
+    "field": "volume",
+    "yahoo": 1239246.0,
+    "krx": 940545.0,
+    "diff_pct": 24.103
+   },
+   {
+    "symbol": "GILD",
+    "field": "open",
+    "yahoo": 170.4400024,
+    "krx": 170.15,
+    "diff_pct": 0.17
+   },
+   {
+    "symbol": "GILD",
+    "field": "volume",
+    "yahoo": 4830415.0,
+    "krx": 4693906.0,
+    "diff_pct": 2.826
+   },
+   {
+    "symbol": "CSX",
+    "field": "volume",
+    "yahoo": 8227259.0,
+    "krx": 7881278.0,
+    "diff_pct": 4.205
+   },
+   {
+    "symbol": "HON",
+    "field": "volume",
+    "yahoo": 1686137.0,
+    "krx": 1550659.0,
+    "diff_pct": 8.035
+   },
+   {
+    "symbol": "FTNT",
+    "field": "volume",
+    "yahoo": 5598339.0,
+    "krx": 5349239.0,
+    "diff_pct": 4.45
+   },
+   {
+    "symbol": "HONA",
+    "field": "volume",
+    "yahoo": 2694202.0,
+    "krx": 2658574.0,
+    "diff_pct": 1.322
+   },
+   {
+    "symbol": "FER",
+    "field": "volume",
+    "yahoo": 2570146.0,
+    "krx": 2540716.0,
+    "diff_pct": 1.145
+   }
+  ],
+  "unlisted": [],
+  "sampled": 15,
+  "focus": [
+   "AMGN",
+   "CSX",
+   "KDP",
+   "MSFT",
+   "VRTX"
+  ]
+ },
+ "error": null,
+ "calls": 15
+}
