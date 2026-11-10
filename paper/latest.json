@@ -1092,16 +1092,16 @@
    }
   },
   "KOSDAQ_V2": {
-   "as_of": "2026-11-09",
+   "as_of": "2026-11-10",
    "start_date": "2026-10-02",
    "regime": {
     "benchmark": "^KQ11",
     "mode": "BREADTH50",
-    "close": 638.97,
-    "ma200": 964.9144,
-    "ma20": 747.56,
+    "close": 667.61,
+    "ma200": 963.5415,
+    "ma20": 739.089,
     "on": false,
-    "breadth_pct": 9.4
+    "breadth_pct": 11.4
    },
    "entries_next_open": [],
    "exits_next_open": [],
@@ -1111,7 +1111,7 @@
    "performance": {
     "equity": 98209054.0,
     "return_pct": -1.79,
-    "bench_return_pct": -28.47,
+    "bench_return_pct": -25.26,
     "mdd_pct": -1.79,
     "closed_trades": 2,
     "win_rate_pct": 0.0,
@@ -1121,8 +1121,8 @@
    },
    "status_csv": "KOSDAQ_V2/status.csv",
    "audit": {
-    "days": 25,
-    "signal_files": 25,
+    "days": 26,
+    "signal_files": 26,
     "missing_days": [],
     "late": [
      "2026-11-04"
@@ -1149,13 +1149,11 @@
    "xcheck_kis": {
     "source": "KIS",
     "status": "mismatch",
-    "checked": "2026-11-06",
+    "checked": "2026-11-09",
     "error": null,
     "mismatched_symbols": [
      "000250.KQ",
      "0009K0.KQ",
-     "003380.KQ",
-     "005290.KQ",
      "007390.KQ",
      "010170.KQ",
      "014620.KQ",
@@ -1214,6 +1212,7 @@
      "089970.KQ",
      "090360.KQ",
      "090710.KQ",
+     "093320.KQ",
      "095340.KQ",
      "095610.KQ",
      "096530.KQ",
@@ -1243,7 +1242,6 @@
      "171090.KQ",
      "178320.KQ",
      "183300.KQ",
-     "189300.KQ",
      "195940.KQ",
      "196170.KQ",
      "204270.KQ",
@@ -1291,7 +1289,7 @@
      "425420.KQ",
      "437730.KQ",
      "440110.KQ",
-     "445680.KQ",
+     "458870.KQ",
      "466100.KQ",
      "476060.KQ",
      "476830.KQ",
@@ -1301,9 +1299,9 @@
     ],
     "index_match": true,
     "guard": {
-     "close_mismatched": 142,
+     "close_mismatched": 124,
      "compared": 150,
-     "share_pct": 94.7,
+     "share_pct": 82.7,
      "blocked": false,
      "late": false,
      "enforced": false
@@ -1311,7 +1309,7 @@
    }
   }
  },
- "updated_at": "2026-11-10T08:31:00Z",
+ "updated_at": "2026-11-10T08:32:52Z",
  "disclaimer": "기계적 룰 출력이며 투자 자문이 아닙니다. 매수·매도 결정은 소유자 본인이 합니다.",
  "unconfirmed": "미확인 추정값(스캐너 원본 코드 미확인): 피벗=직전 20봉 최고가(당일 제외) · 거래량 평균=직전 50일(당일 제외) · RS=지수 대비 가중 1년 수익률 ≥ 0%p(스캐너는 유니버스 백분위 ≥ 70) · 52주 고저=종가 기준 · 200일선 상승=22봉 전 대비 · 수축비=10/40일 평균 TR · 비용=편도 0.2%"
 }
