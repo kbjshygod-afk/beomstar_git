@@ -11,74 +11,67 @@
   "missing": [],
   "mismatches": [
    {
-    "symbol": "AMGN",
-    "field": "high",
-    "yahoo": 466.0,
-    "krx": 466.54,
-    "diff_pct": 0.116
-   },
-   {
-    "symbol": "BIIB",
-    "field": "open",
-    "yahoo": 250.8800049,
-    "krx": 250.36,
-    "diff_pct": 0.207
-   },
-   {
     "symbol": "CRL",
     "field": "volume",
-    "yahoo": 943084.0,
+    "yahoo": 943100.0,
     "krx": 782592.0,
-    "diff_pct": 17.018
+    "diff_pct": 17.019
    },
    {
     "symbol": "EW",
     "field": "volume",
-    "yahoo": 6680323.0,
+    "yahoo": 6683100.0,
     "krx": 6295742.0,
-    "diff_pct": 5.757
+    "diff_pct": 5.796
    },
    {
     "symbol": "HUM",
     "field": "volume",
-    "yahoo": 2450594.0,
+    "yahoo": 2450900.0,
     "krx": 2238806.0,
-    "diff_pct": 8.642
+    "diff_pct": 8.654
    },
    {
     "symbol": "KDP",
     "field": "volume",
-    "yahoo": 15372523.0,
+    "yahoo": 15373800.0,
     "krx": 15067404.0,
-    "diff_pct": 1.985
+    "diff_pct": 1.993
    },
    {
     "symbol": "LLY",
     "field": "volume",
-    "yahoo": 3809625.0,
+    "yahoo": 4029800.0,
     "krx": 3759968.0,
-    "diff_pct": 1.303
+    "diff_pct": 6.696
    },
    {
-    "symbol": "ROP",
-    "field": "high",
-    "yahoo": 476.1700134,
-    "krx": 476.875,
-    "diff_pct": 0.148
+    "symbol": "SBAC",
+    "field": "volume",
+    "yahoo": 862400.0,
+    "krx": 839824.0,
+    "diff_pct": 2.618
    },
    {
-    "symbol": "ROST",
-    "field": "open",
-    "yahoo": 234.2250061,
-    "krx": 237.11,
-    "diff_pct": 1.217
+    "symbol": "TRV",
+    "field": "volume",
+    "yahoo": 1675800.0,
+    "krx": 1620793.0,
+    "diff_pct": 3.282
    },
    {
-    "symbol": "SBUX",
-    "field": "open",
-    "yahoo": 106.5800018,
-    "krx": 106.31,
-    "diff_pct": 0.253
+    "symbol": "VEEV",
+    "field": "volume",
+    "yahoo": 1232500.0,
+    "krx": 1207800.0,
+    "diff_pct": 2.004
+   },
+   {
+    "symbol": "GWW",
+    "field": "volume",
+    "yahoo": 606200.0,
+    "krx": 576832.0,
+    "diff_pct": 4.845
    }
   ],
   "unlisted": [],
