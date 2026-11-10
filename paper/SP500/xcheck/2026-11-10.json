@@ -1,0 +1,120 @@
+{
+ "market": "SP500",
+ "as_of": "2026-11-10",
+ "source": "Tiingo",
+ "status": "mismatch",
+ "checked": "2026-11-10",
+ "index": null,
+ "symbols": {
+  "date": "2026-11-10",
+  "compared": 25,
+  "missing": [],
+  "mismatches": [
+   {
+    "symbol": "AMGN",
+    "field": "open",
+    "yahoo": 466.25,
+    "krx": 465.7,
+    "diff_pct": 0.118
+   },
+   {
+    "symbol": "AMGN",
+    "field": "volume",
+    "yahoo": 2138955.0,
+    "krx": 1919570.0,
+    "diff_pct": 10.257
+   },
+   {
+    "symbol": "CRL",
+    "field": "volume",
+    "yahoo": 822000.0,
+    "krx": 772689.0,
+    "diff_pct": 5.999
+   },
+   {
+    "symbol": "EBAY",
+    "field": "open",
+    "yahoo": 121.3300018,
+    "krx": 121.025,
+    "diff_pct": 0.251
+   },
+   {
+    "symbol": "MTB",
+    "field": "volume",
+    "yahoo": 832657.0,
+    "krx": 775715.0,
+    "diff_pct": 6.839
+   },
+   {
+    "symbol": "MU",
+    "field": "volume",
+    "yahoo": 28264244.0,
+    "krx": 27503810.0,
+    "diff_pct": 2.69
+   },
+   {
+    "symbol": "MSI",
+    "field": "volume",
+    "yahoo": 1248995.0,
+    "krx": 1183161.0,
+    "diff_pct": 5.271
+   },
+   {
+    "symbol": "NDAQ",
+    "field": "volume",
+    "yahoo": 3087360.0,
+    "krx": 3043968.0,
+    "diff_pct": 1.405
+   },
+   {
+    "symbol": "NFLX",
+    "field": "volume",
+    "yahoo": 27258336.0,
+    "krx": 26821121.0,
+    "diff_pct": 1.604
+   },
+   {
+    "symbol": "VEEV",
+    "field": "volume",
+    "yahoo": 1053335.0,
+    "krx": 1025643.0,
+    "diff_pct": 2.629
+   },
+   {
+    "symbol": "GWW",
+    "field": "volume",
+    "yahoo": 316160.0,
+    "krx": 311480.0,
+    "diff_pct": 1.48
+   },
+   {
+    "symbol": "WSM",
+    "field": "volume",
+    "yahoo": 693599.0,
+    "krx": 670303.0,
+    "diff_pct": 3.359
+   }
+  ],
+  "unlisted": [],
+  "sampled": 25,
+  "focus": [
+   "AIZ",
+   "AMGN",
+   "BDX",
+   "BIIB",
+   "CPAY",
+   "CRL",
+   "EBAY",
+   "ELV",
+   "GWW",
+   "HUM",
+   "KDP",
+   "LLY",
+   "TRV",
+   "VEEV",
+   "WSM"
+  ]
+ },
+ "error": null,
+ "calls": 25
+}
