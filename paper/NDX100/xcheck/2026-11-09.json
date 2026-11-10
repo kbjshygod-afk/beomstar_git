@@ -11,74 +11,32 @@
   "missing": [],
   "mismatches": [
    {
-    "symbol": "AMGN",
-    "field": "high",
-    "yahoo": 466.0,
-    "krx": 466.54,
-    "diff_pct": 0.116
-   },
-   {
-    "symbol": "CTAS",
-    "field": "open",
-    "yahoo": 223.2299957,
-    "krx": 222.25,
-    "diff_pct": 0.439
-   },
-   {
-    "symbol": "FAST",
-    "field": "low",
-    "yahoo": 53.5,
-    "krx": 53.3,
-    "diff_pct": 0.374
-   },
-   {
-    "symbol": "EXC",
-    "field": "open",
-    "yahoo": 45.82500076,
-    "krx": 45.99,
-    "diff_pct": 0.359
-   },
-   {
     "symbol": "DXCM",
     "field": "volume",
-    "yahoo": 4098909.0,
+    "yahoo": 4098900.0,
     "krx": 4025220.0,
     "diff_pct": 1.798
    },
    {
     "symbol": "KDP",
     "field": "volume",
-    "yahoo": 15372523.0,
+    "yahoo": 15373800.0,
     "krx": 15067404.0,
-    "diff_pct": 1.985
+    "diff_pct": 1.993
    },
    {
     "symbol": "FANG",
-    "field": "open",
-    "yahoo": 175.8600006,
-    "krx": 176.14,
-    "diff_pct": 0.159
-   },
-   {
-    "symbol": "CRWD",
-    "field": "open",
-    "yahoo": 219.4750061,
-    "krx": 219.85,
-    "diff_pct": 0.171
-   },
-   {
-    "symbol": "DASH",
-    "field": "open",
-    "yahoo": 182.7799988,
-    "krx": 182.57,
-    "diff_pct": 0.115
+    "field": "volume",
+    "yahoo": 2881700.0,
+    "krx": 2790635.0,
+    "diff_pct": 3.16
    },
    {
     "symbol": "CRWV",
     "field": "volume",
-    "yahoo": 48309220.0,
+    "yahoo": 48637800.0,
     "krx": 47690073.0,
-    "diff_pct": 1.282
+    "diff_pct": 1.949
    }
   ],
   "unlisted": [],
