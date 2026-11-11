@@ -523,41 +523,43 @@
    "xcheck_kis": null
   },
   "CRYPTO": {
-   "as_of": "2026-11-09",
+   "as_of": "2026-11-10",
    "start_date": "2026-09-25",
    "regime": {
     "benchmark": "BTC-USD",
     "mode": "MA200",
-    "close": 75223.1484,
-    "ma200": 73154.4588,
-    "ma20": 78581.0398,
+    "close": 73720.1172,
+    "ma200": 73135.7828,
+    "ma20": 78066.4473,
     "on": true
    },
    "entries_next_open": [],
-   "exits_next_open": [],
+   "exits_next_open": [
+    "XMR-USD"
+   ],
    "positions": [
     {
      "symbol": "XMR-USD",
      "signal_date": "2026-10-18",
-     "exit_signal_date": null,
+     "exit_signal_date": "2026-11-10",
      "entry_date": "2026-10-19",
      "entry_price": 597.4818726,
      "qty": 12454.957245047199,
      "stop_price": 537.73368534,
-     "last_close": 582.3329468,
-     "exit_ma": 574.800489504,
-     "unrealized_pnl": -218068.30941279326,
-     "price_pnl_pct": -2.535461993864019,
-     "exit_pending": false
+     "last_close": 562.2810669,
+     "exit_ma": 574.257639162,
+     "unrealized_pnl": -467314.1256364379,
+     "price_pnl_pct": -5.891526975842842,
+     "exit_pending": true
     }
    ],
    "stale_positions": [],
    "watchlist": [],
    "performance": {
-    "equity": 99017920.0,
-    "return_pct": -0.98,
-    "bench_return_pct": -10.49,
-    "mdd_pct": -1.6,
+    "equity": 98768175.0,
+    "return_pct": -1.23,
+    "bench_return_pct": -12.27,
+    "mdd_pct": -1.85,
     "closed_trades": 1,
     "win_rate_pct": 0.0,
     "avg_win_pct": null,
@@ -566,8 +568,8 @@
    },
    "status_csv": "CRYPTO/status.csv",
    "audit": {
-    "days": 46,
-    "signal_files": 46,
+    "days": 47,
+    "signal_files": 47,
     "missing_days": [],
     "late": [],
     "uncommitted": [],
@@ -578,7 +580,7 @@
    "xcheck": {
     "source": "Coinbase/Kraken",
     "status": "mismatch",
-    "checked": "2026-11-09",
+    "checked": "2026-11-10",
     "error": null,
     "mismatched_symbols": [
      "SHIB-USD"
@@ -1292,7 +1294,7 @@
    }
   }
  },
- "updated_at": "2026-11-11T03:30:26Z",
+ "updated_at": "2026-11-11T07:30:06Z",
  "disclaimer": "기계적 룰 출력이며 투자 자문이 아닙니다. 매수·매도 결정은 소유자 본인이 합니다.",
  "unconfirmed": "미확인 추정값(스캐너 원본 코드 미확인): 피벗=직전 20봉 최고가(당일 제외) · 거래량 평균=직전 50일(당일 제외) · RS=지수 대비 가중 1년 수익률 ≥ 0%p(스캐너는 유니버스 백분위 ≥ 70) · 52주 고저=종가 기준 · 200일선 상승=22봉 전 대비 · 수축비=10/40일 평균 TR · 비용=편도 0.2%"
 }
