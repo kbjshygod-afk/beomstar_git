@@ -12,85 +12,99 @@
   "mismatches": [
    {
     "symbol": "AMGN",
-    "field": "open",
-    "yahoo": 466.25,
-    "krx": 465.7,
-    "diff_pct": 0.118
-   },
-   {
-    "symbol": "AMGN",
     "field": "volume",
-    "yahoo": 2138955.0,
+    "yahoo": 2138900.0,
     "krx": 1919570.0,
-    "diff_pct": 10.257
+    "diff_pct": 10.254
    },
    {
     "symbol": "CRL",
     "field": "volume",
-    "yahoo": 822000.0,
+    "yahoo": 822100.0,
     "krx": 772689.0,
-    "diff_pct": 5.999
+    "diff_pct": 6.01
    },
    {
-    "symbol": "EBAY",
-    "field": "open",
-    "yahoo": 121.3300018,
-    "krx": 121.025,
-    "diff_pct": 0.251
+    "symbol": "HUM",
+    "field": "volume",
+    "yahoo": 2108900.0,
+    "krx": 2078842.0,
+    "diff_pct": 1.425
+   },
+   {
+    "symbol": "LLY",
+    "field": "volume",
+    "yahoo": 3017000.0,
+    "krx": 2816663.0,
+    "diff_pct": 6.64
    },
    {
     "symbol": "MTB",
     "field": "volume",
-    "yahoo": 832657.0,
+    "yahoo": 854000.0,
     "krx": 775715.0,
-    "diff_pct": 6.839
+    "diff_pct": 9.167
+   },
+   {
+    "symbol": "MTD",
+    "field": "volume",
+    "yahoo": 153400.0,
+    "krx": 148484.0,
+    "diff_pct": 3.205
    },
    {
     "symbol": "MU",
     "field": "volume",
-    "yahoo": 28264244.0,
+    "yahoo": 28215100.0,
     "krx": 27503810.0,
-    "diff_pct": 2.69
+    "diff_pct": 2.521
    },
    {
     "symbol": "MSI",
     "field": "volume",
-    "yahoo": 1248995.0,
+    "yahoo": 1249000.0,
     "krx": 1183161.0,
     "diff_pct": 5.271
    },
    {
     "symbol": "NDAQ",
     "field": "volume",
-    "yahoo": 3087360.0,
+    "yahoo": 3087400.0,
     "krx": 3043968.0,
-    "diff_pct": 1.405
+    "diff_pct": 1.407
    },
    {
     "symbol": "NFLX",
     "field": "volume",
-    "yahoo": 27258336.0,
+    "yahoo": 27242800.0,
     "krx": 26821121.0,
-    "diff_pct": 1.604
+    "diff_pct": 1.548
+   },
+   {
+    "symbol": "TRV",
+    "field": "volume",
+    "yahoo": 1334200.0,
+    "krx": 1292127.0,
+    "diff_pct": 3.153
    },
    {
     "symbol": "VEEV",
     "field": "volume",
-    "yahoo": 1053335.0,
+    "yahoo": 1073400.0,
     "krx": 1025643.0,
-    "diff_pct": 2.629
+    "diff_pct": 4.449
    },
    {
     "symbol": "GWW",
     "field": "volume",
-    "yahoo": 316160.0,
+    "yahoo": 334000.0,
     "krx": 311480.0,
-    "diff_pct": 1.48
+    "diff_pct": 6.743
    },
    {
     "symbol": "WSM",
     "field": "volume",
-    "yahoo": 693599.0,
+    "yahoo": 693600.0,
     "krx": 670303.0,
     "diff_pct": 3.359
    }
@@ -116,5 +130,5 @@
   ]
  },
  "error": null,
- "calls": 25
+ "calls": 0
 }
