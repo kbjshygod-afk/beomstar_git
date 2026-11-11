@@ -1,0 +1,106 @@
+{
+ "market": "SP500",
+ "as_of": "2026-11-11",
+ "source": "Tiingo",
+ "status": "mismatch",
+ "checked": "2026-11-11",
+ "index": null,
+ "symbols": {
+  "date": "2026-11-11",
+  "compared": 25,
+  "missing": [],
+  "mismatches": [
+   {
+    "symbol": "CPAY",
+    "field": "volume",
+    "yahoo": 291672.0,
+    "krx": 288269.0,
+    "diff_pct": 1.167
+   },
+   {
+    "symbol": "EBAY",
+    "field": "open",
+    "yahoo": 123.25,
+    "krx": 122.73,
+    "diff_pct": 0.422
+   },
+   {
+    "symbol": "LLY",
+    "field": "volume",
+    "yahoo": 1865138.0,
+    "krx": 1845641.0,
+    "diff_pct": 1.045
+   },
+   {
+    "symbol": "NTAP",
+    "field": "low",
+    "yahoo": 181.8699951,
+    "krx": 181.63,
+    "diff_pct": 0.132
+   },
+   {
+    "symbol": "NSC",
+    "field": "volume",
+    "yahoo": 1213392.0,
+    "krx": 1200941.0,
+    "diff_pct": 1.026
+   },
+   {
+    "symbol": "NTRS",
+    "field": "volume",
+    "yahoo": 643107.0,
+    "krx": 635124.0,
+    "diff_pct": 1.241
+   },
+   {
+    "symbol": "NOC",
+    "field": "volume",
+    "yahoo": 640193.0,
+    "krx": 632603.0,
+    "diff_pct": 1.186
+   },
+   {
+    "symbol": "NUE",
+    "field": "volume",
+    "yahoo": 1456904.0,
+    "krx": 1387366.0,
+    "diff_pct": 4.773
+   },
+   {
+    "symbol": "NOW",
+    "field": "volume",
+    "yahoo": 14404875.0,
+    "krx": 14090044.0,
+    "diff_pct": 2.186
+   },
+   {
+    "symbol": "VTRS",
+    "field": "open",
+    "yahoo": 20.98999977,
+    "krx": 20.755,
+    "diff_pct": 1.12
+   }
+  ],
+  "unlisted": [],
+  "sampled": 25,
+  "focus": [
+   "AMGN",
+   "BDX",
+   "BIIB",
+   "CPAY",
+   "CRL",
+   "EBAY",
+   "ELV",
+   "GWW",
+   "HUM",
+   "KDP",
+   "LLY",
+   "TRV",
+   "VEEV",
+   "VTRS",
+   "WSM"
+  ]
+ },
+ "error": null,
+ "calls": 25
+}
