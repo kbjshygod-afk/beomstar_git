@@ -6,15 +6,15 @@
 - 레짐 (MA200): **OFF** — ^NDX 종가 27,740.79 · 200일선 28,005.54
 - 데이터: 유니버스 101종목 중 100종목 로드 (실패 1)
 - 데이터 대조 (Tiingo, 2026-11-10 봉): 종목 15개 비교 (표본 15: 보유·대기 5 + 순환), 불일치 10개 · 지수 비교 안 함
-  - AMGN open: Yahoo 466 vs Tiingo 466 (+0.12%)
-  - AMGN volume: Yahoo 2,138,955 vs Tiingo 1,919,570 (+10.26%)
-  - INTC volume: Yahoo 100,526,592 vs Tiingo 98,224,304 (+2.29%)
-  - MSFT volume: Yahoo 26,910,016 vs Tiingo 25,859,081 (+3.90%)
-  - VRTX volume: Yahoo 1,239,246 vs Tiingo 940,545 (+24.10%)
-  - GILD open: Yahoo 170 vs Tiingo 170 (+0.17%)
-  - GILD volume: Yahoo 4,830,415 vs Tiingo 4,693,906 (+2.83%)
-  - CSX volume: Yahoo 8,227,259 vs Tiingo 7,881,278 (+4.21%)
-  - … 외 4건 (xcheck/2026-11-10.json)
+  - AMGN volume: Yahoo 2,138,900 vs Tiingo 1,919,570 (+10.25%)
+  - INTC volume: Yahoo 100,389,700 vs Tiingo 98,224,304 (+2.16%)
+  - MSFT volume: Yahoo 26,902,100 vs Tiingo 25,859,081 (+3.88%)
+  - VRTX volume: Yahoo 1,239,300 vs Tiingo 940,545 (+24.11%)
+  - GILD volume: Yahoo 4,830,400 vs Tiingo 4,693,906 (+2.83%)
+  - CSX volume: Yahoo 8,227,300 vs Tiingo 7,881,278 (+4.21%)
+  - HON volume: Yahoo 1,686,100 vs Tiingo 1,550,659 (+8.03%)
+  - FTNT volume: Yahoo 5,598,200 vs Tiingo 5,349,239 (+4.45%)
+  - … 외 2건 (xcheck/2026-11-10.json)
 
 ## 다음 시가 진입 (오늘 신호)
 
