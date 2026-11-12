@@ -1,0 +1,73 @@
+# KIS real-time trades over WebSocket (checklist 2.5 / 2.6), run on GitHub Actions instead of the
+# owner's Mac. Listens only; there is no order code. Keys come from the KIS_APP_KEY /
+# KIS_APP_SECRET repository secrets and are never printed. Ticks, alerts and the summary are kept
+# as a run artifact; stop-proximity alerts go to the issue "한국장 손절 근접 알림".
+name: kis-ws
+
+on:
+  workflow_dispatch:
+    inputs:
+      minutes:
+        description: 'Minutes to listen (max 340; KRX session 09:00-15:30 KST)'
+        default: '60'
+      symbols:
+        description: 'Comma-separated 6-digit codes (empty = held Korean symbols in the ledger)'
+        default: ''
+      venue:
+        description: 'J = KRX, NX = NXT, UN = both'
+        default: 'J'
+      alert:
+        description: 'Stop-proximity alerts as issue comments (true/false)'
+        default: 'false'
+  push:
+    branches: ['claude/**']
+    paths: ['trading/tools/kis_ws_probe.py', 'trading/swing_engine/kis_ws.py', '.github/workflows/kis-ws.yml']
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  listen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    steps:
+      - uses: actions/checkout@v4
+      - run: git fetch --no-tags --depth=1 origin paper-trading
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: trading/requirements.txt
+      - run: pip install -r trading/requirements.txt websocket-client
+      - name: Listen
+        working-directory: trading
+        env:
+          KIS_APP_KEY: ${{ secrets.KIS_APP_KEY }}
+          KIS_APP_SECRET: ${{ secrets.KIS_APP_SECRET }}
+          KIS_ENV: ${{ vars.KIS_ENV || 'vps' }}
+          GH_TOKEN: ${{ github.token }}
+          MINUTES: ${{ github.event.inputs.minutes || '2' }}
+          SYMBOLS: ${{ github.event.inputs.symbols || '' }}
+          VENUE: ${{ github.event.inputs.venue || 'J' }}
+          ALERT: ${{ github.event.inputs.alert || 'false' }}
+        run: |
+          if [ -z "$KIS_APP_KEY" ] || [ -z "$KIS_APP_SECRET" ]; then echo "::error::KIS_APP_KEY / KIS_APP_SECRET secrets are not set"; exit 2; fi
+          args=(--minutes "$MINUTES" --venue "$VENUE" --out ../kis_ws_out --env-file /dev/null --repo ..)
+          [ -n "$SYMBOLS" ] && args+=(--symbols "$SYMBOLS")
+          [ "$ALERT" = "true" ] || args+=(--no-alert)
+          rc=0
+          python tools/kis_ws_probe.py "${args[@]}" > probe.txt 2>&1 || rc=$?
+          cat probe.txt
+          { echo '```'; grep -E "^RESULT|^KIS WebSocket|SUBSCRIBE|approval|APPROVAL|reconnect" probe.txt | head -40; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          # Outside the session (push smoke runs) no trades arrive; a working connection is the pass.
+          if [ "$rc" -ne 0 ] && [ "${{ github.event_name }}" = "push" ] && grep -q "SUBSCRIBE SUCCESS" probe.txt; then
+            echo "smoke run: approval and subscription ok, no trades outside the session"; rc=0
+          fi
+          exit $rc
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: kis-ws-${{ github.run_id }}
+          path: kis_ws_out/
+          retention-days: 30

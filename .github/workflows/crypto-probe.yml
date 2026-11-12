@@ -1,0 +1,44 @@
+# Crypto exchange probe (checklist 4.1-4.3). Manual only, no key: lists where each coin of the
+# paper universe trades (Coinbase USD, Kraken USD, Upbit markets), fetches one daily bar per
+# coin and prints the Yahoo-vs-venue close differences for coins the Yahoo cache holds.
+name: crypto-probe
+
+on:
+  workflow_dispatch:
+    inputs:
+      date:
+        description: 'UTC day to fetch, YYYY-MM-DD (yesterday or earlier)'
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: trading/requirements.txt
+      - run: pip install -r trading/requirements.txt
+      - uses: actions/cache/restore@v4
+        with:
+          path: trading/.cache
+          key: swing-paper-data-none
+          restore-keys: swing-paper-data-
+      - name: Ledger universe
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git fetch -q --depth=1 origin paper-trading
+          git show origin/paper-trading:paper/CRYPTO/config.json > universe.json
+      - name: Probe
+        working-directory: trading
+        run: |
+          python tools/crypto_probe.py --date "${{ github.event.inputs.date }}" \
+            --universe ../universe.json --cache-dir .cache | tee probe.txt
+          { echo '```'; cat probe.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"

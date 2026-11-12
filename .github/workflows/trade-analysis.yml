@@ -1,0 +1,56 @@
+# Trade autopsy of the paper ledgers (MFE/MAE, R multiples, backtest reference). Manual, plus
+# a run on the 2nd of each month ahead of the monthly review. Reference material only (grade 1):
+# nothing here touches the ledger branch or the rules.
+name: trade-analysis
+
+on:
+  workflow_dispatch:
+    inputs:
+      markets:
+        description: 'Comma-separated markets'
+        default: 'SP500,NDX100,KOSPI,KOSDAQ,KOSDAQ_V2,CRYPTO'
+  schedule:
+    - cron: '20 22 2 * *'
+  push:
+    branches: ['claude/**']
+    paths: ['trading/tools/trade_analysis.py', 'trading/tools/paper_verdict.py', '.github/workflows/trade-analysis.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - run: git fetch --no-tags --depth=1 origin paper-trading swing-results
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: trading/requirements.txt
+      - run: pip install -r trading/requirements.txt
+      - uses: actions/cache/restore@v4
+        with:
+          path: trading/.cache
+          key: swing-paper-data-none
+          restore-keys: swing-paper-data-
+      - name: Analyze
+        working-directory: trading
+        run: |
+          python tools/trade_analysis.py --repo .. --markets "${{ github.event.inputs.markets || 'SP500,NDX100,KOSPI,KOSDAQ,KOSDAQ_V2,CRYPTO' }}" \
+            --cache-dir .cache --out reports/trade_analysis | tee analysis.txt
+          cat reports/trade_analysis.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Verdict (criteria A-D)
+        working-directory: trading
+        run: |
+          python tools/paper_verdict.py --repo .. --out reports/paper_verdict > /dev/null
+          cat reports/paper_verdict.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: trade-analysis-${{ github.run_id }}
+          path: trading/reports/
+          retention-days: 90
