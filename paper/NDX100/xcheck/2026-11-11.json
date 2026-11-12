@@ -11,46 +11,74 @@
   "missing": [],
   "mismatches": [
    {
-    "symbol": "LRCX",
-    "field": "open",
-    "yahoo": 235.6499939,
-    "krx": 236.255,
-    "diff_pct": 0.256
+    "symbol": "AMGN",
+    "field": "volume",
+    "yahoo": 2004900.0,
+    "krx": 1882711.0,
+    "diff_pct": 6.095
    },
    {
-    "symbol": "INTU",
-    "field": "open",
-    "yahoo": 339.5249939,
-    "krx": 338.56,
-    "diff_pct": 0.284
+    "symbol": "KLAC",
+    "field": "volume",
+    "yahoo": 11157100.0,
+    "krx": 10956172.0,
+    "diff_pct": 1.801
+   },
+   {
+    "symbol": "LRCX",
+    "field": "volume",
+    "yahoo": 11117500.0,
+    "krx": 10934000.0,
+    "diff_pct": 1.651
+   },
+   {
+    "symbol": "MSFT",
+    "field": "volume",
+    "yahoo": 28990100.0,
+    "krx": 28500741.0,
+    "diff_pct": 1.688
+   },
+   {
+    "symbol": "VRTX",
+    "field": "volume",
+    "yahoo": 1078800.0,
+    "krx": 1025397.0,
+    "diff_pct": 4.95
+   },
+   {
+    "symbol": "MCHP",
+    "field": "volume",
+    "yahoo": 12764400.0,
+    "krx": 12552877.0,
+    "diff_pct": 1.657
    },
    {
     "symbol": "CSX",
     "field": "volume",
-    "yahoo": 7190340.0,
+    "yahoo": 7197900.0,
     "krx": 7095018.0,
-    "diff_pct": 1.326
+    "diff_pct": 1.429
    },
    {
     "symbol": "MDLZ",
     "field": "volume",
-    "yahoo": 5025547.0,
+    "yahoo": 5031600.0,
     "krx": 4814312.0,
-    "diff_pct": 4.203
-   },
-   {
-    "symbol": "LITE",
-    "field": "open",
-    "yahoo": 642.5961304,
-    "krx": 641.5,
-    "diff_pct": 0.171
+    "diff_pct": 4.318
    },
    {
     "symbol": "LITE",
     "field": "volume",
-    "yahoo": 6335839.0,
+    "yahoo": 6385200.0,
     "krx": 6215328.0,
-    "diff_pct": 1.902
+    "diff_pct": 2.66
+   },
+   {
+    "symbol": "MELI",
+    "field": "volume",
+    "yahoo": 610200.0,
+    "krx": 594947.0,
+    "diff_pct": 2.5
    }
   ],
   "unlisted": [],

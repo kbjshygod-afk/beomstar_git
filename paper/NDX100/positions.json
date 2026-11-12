@@ -63,10 +63,10 @@
   "entry_price": 554.9400024,
   "qty": 18893.628909307216,
   "stop_price": 516.094202232,
-  "last_close": 521.125,
-  "exit_ma": 518.19829956,
-  "unrealized_pnl": -679549.6525882091,
-  "price_pnl_pct": -6.0934519504373785,
+  "last_close": 521.1300049,
+  "exit_ma": 518.198399658,
+  "unrealized_pnl": -679455.2809863277,
+  "price_pnl_pct": -6.09255006915681,
   "exit_pending": false
  }
 ]
