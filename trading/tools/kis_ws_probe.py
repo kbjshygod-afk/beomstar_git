@@ -12,6 +12,9 @@ a comment on the GitHub issue "한국장 손절 근접 알림" — once per symb
 session, logged to <out>/alerts_<date>.jsonl. Needs `pip install websocket-client`. Listening
 only: no orders.
 Market hours: KRX 09:00-15:30 KST (venue J); NXT 08:00-20:00 (NX); UN = both.
+On GitHub Actions (kis-ws workflow, weekdays in two runs) --state-file carries the alerts already
+sent that KST day from the morning run to the afternoon run, and --none-ok makes "nothing held"
+a normal, successful run.
 """
 import argparse
 import json
@@ -24,7 +27,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from swing_engine import kis_ws  # noqa: E402
-from swing_engine.kis import KISError  # noqa: E402
+from swing_engine.kis import KST, KISError  # noqa: E402
 
 KR_MARKETS = ("KOSPI", "KOSDAQ", "KOSDAQ_V2")
 
@@ -46,11 +49,12 @@ def held_from_ledger(repo: Path, ref: str = "origin/paper-trading") -> dict:
 def deliver_alert(text: str, issue_title: str) -> None:
     """macOS notification; and a comment on the GitHub issue when `gh` is installed and logged in.
     Failures are printed, never raised: the listener keeps running."""
-    try:
-        subprocess.run(["osascript", "-e", f'display notification {json.dumps(text)} with title "스윙 손절 근접"'],
-                       capture_output=True, timeout=10)
-    except (OSError, subprocess.SubprocessError) as e:
-        print(f"  (notification failed: {e})")
+    if sys.platform == "darwin":
+        try:
+            subprocess.run(["osascript", "-e", f'display notification {json.dumps(text)} with title "스윙 손절 근접"'],
+                           capture_output=True, timeout=10)
+        except (OSError, subprocess.SubprocessError) as e:
+            print(f"  (notification failed: {e})")
     if not issue_title:
         return
     try:
@@ -74,6 +78,8 @@ def main(argv=None) -> int:
     ap.add_argument("--near-pct", type=float, default=kis_ws.NEAR_PCT, help="'near' = within this %% above the stop")
     ap.add_argument("--no-alert", action="store_true", help="record only, no notifications or issue comments")
     ap.add_argument("--github-issue", default="한국장 손절 근접 알림", help="issue title for alert comments ('' = none)")
+    ap.add_argument("--state-file", default=None, help="alerts already sent today (shared between runs of one day)")
+    ap.add_argument("--none-ok", action="store_true", help="exit 0 when the ledger holds no Korean symbol")
     a = ap.parse_args(argv)
     try:
         import websocket  # websocket-client
@@ -93,6 +99,9 @@ def main(argv=None) -> int:
     else:
         stops = held_from_ledger(Path(a.repo))
         if not stops:
+            if a.none_ok:
+                print("RESULT: no held Korean symbols in the ledger; nothing to watch")
+                return 0
             print("no held Korean symbols in the ledger; pass --symbols", file=sys.stderr)
             return 2
     codes = sorted(stops)[:kis_ws.MAX_SUBSCRIPTIONS]
@@ -106,10 +115,14 @@ def main(argv=None) -> int:
     print(f"approval key ok (length {len(key)})")
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
-    day = datetime.now().strftime("%Y-%m-%d")
+    day = datetime.now(KST).strftime("%Y-%m-%d")
     log = open(out / f"ticks_{day}.jsonl", "a", encoding="utf-8")
     rec = kis_ws.Recorder(stops=stops)
     watcher = kis_ws.StopWatcher(stops, a.near_pct)
+    if a.state_file:
+        watcher.fired = kis_ws.load_fired(a.state_file, day)
+        if watcher.fired:
+            print(f"already alerted today: {sorted(watcher.fired)}")
     alerts = open(out / f"alerts_{day}.jsonl", "a", encoding="utf-8")
     deadline = time.monotonic() + a.minutes * 60
     next_report = time.monotonic() + a.report_every
@@ -143,6 +156,8 @@ def main(argv=None) -> int:
                             print(f"[{datetime.now():%H:%M:%S}] ALERT {text_ev}")
                             if not a.no_alert:
                                 deliver_alert(text_ev, a.github_issue)
+                            if a.state_file:
+                                kis_ws.save_fired(a.state_file, day, watcher.fired)
                     log.flush()
                 elif kind == "other":
                     print(f"  ? {text[:120]}")

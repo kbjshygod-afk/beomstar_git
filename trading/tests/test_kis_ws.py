@@ -69,3 +69,31 @@ def test_stop_watcher_fires_near_then_hit_once_each():
     w2 = kis_ws.StopWatcher({"A": 100.0})
     assert [e["level"] for e in w2.check("A", 95.0)] == ["near", "hit"]
     assert "손절가 30,000까지 +1.67%" in kis_ws.alert_text(near[0]) and "지금 주문하지 않습니다" in kis_ws.alert_text(hit[0])
+
+
+def test_fired_state_carries_alerts_within_one_kst_day(tmp_path):
+    """The morning and afternoon Actions runs share the alerts sent that day (checklist 2.6)."""
+    f = tmp_path / "state" / "fired.json"
+    assert kis_ws.load_fired(f, "2026-11-13") == set()                    # missing file
+    kis_ws.save_fired(f, "2026-11-13", {("093320", "near")})
+    assert kis_ws.load_fired(f, "2026-11-13") == {("093320", "near")}
+    assert kis_ws.load_fired(f, "2026-11-14") == set()                    # a new day starts clean
+    f.write_text("not json")
+    assert kis_ws.load_fired(f, "2026-11-13") == set()
+    w = kis_ws.StopWatcher({"093320": 158400.0})
+    w.fired = {("093320", "near")}
+    assert [e["level"] for e in w.check("093320", 158000.0)] == ["hit"]   # 'near' already sent
+
+
+def test_probe_none_ok_exits_zero_when_nothing_is_held(monkeypatch, capsys):
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
+    import types
+    import kis_ws_probe as P
+    monkeypatch.setitem(sys.modules, "websocket", types.ModuleType("websocket"))   # not installed in CI
+    monkeypatch.setattr(P.kis_ws, "env_file_credentials", lambda path: {"key": "k" * 36, "secret": "s", "env": "prod"})
+    monkeypatch.setattr(P, "held_from_ledger", lambda repo: {})
+    assert P.main(["--none-ok", "--env-file", "/dev/null"]) == 0
+    assert "nothing to watch" in capsys.readouterr().out
+    assert P.main(["--env-file", "/dev/null"]) == 2
