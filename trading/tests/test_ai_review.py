@@ -47,18 +47,57 @@ def test_one_key_runs_one_reviewer_without_round_two():
     assert R.merge(res)["single"][0]["id"] == "F1"
 
 
-def test_no_keys_skips_and_a_failed_provider_is_reported(monkeypatch):
+def test_no_keys_skips_and_a_failed_provider_is_reported():
     assert R.render({}, R.merge({}), "#69", "abc").count("건너뛰었습니다") == 1
-    monkeypatch.setattr(R, "available_models", lambda p, k: ["gemini-x", "gemini-y"])
     def call(provider, model, system, prompt):
         if provider == "gemini":
-            raise R.ReviewError('HTTP 404: {"error": "models/m-g is not found"}')
+            raise R.ReviewError("exit 1: unknown model 'm-g'")
         return _answer([])
     res = R.review(CTX, "69", MODELS, {"openai": "k", "gemini": "k"}, call=call)
-    assert res["gemini"]["error"].startswith("HTTP 404") and res["gemini"]["models_available"] == ["gemini-x", "gemini-y"]
+    assert res["gemini"]["error"] == "exit 1: unknown model 'm-g'"
     assert res["openai"]["round2"] == {}                                           # no second opinion to read
     md = R.render(res, R.merge(res), "#69", "abc")
-    assert "`gemini-x`" in md and "GEMINI_REVIEW_MODEL" in md and "지적 사항 없음" in md
+    assert "unknown model" in md and "Antigravity CLI" in md and "지적 사항 없음" in md
+
+
+def test_cli_commands_are_read_only_and_never_skip_permissions(tmp_path):
+    out = tmp_path / "o.out"
+    codex = R.cli_command("openai", "m-o", "PROMPT", ".ai-review/openai_round1.md", out)
+    assert codex[:4] == ["codex", "exec", "--sandbox", "read-only"] and ["-m", "m-o"] == codex[-3:-1]
+    assert ".ai-review/openai_round1.md" in codex[-1] and "PROMPT" not in codex[-1]
+    agy = R.cli_command("gemini", "", "PROMPT", "x", out)
+    assert agy[:2] == ["agy", "-p"] and agy[2].endswith("PROMPT") and "Do not use any tools" in agy[2]
+    assert not any("dangerously" in a or "yolo" in a for a in codex + agy)
+    big = R.cli_command("gemini", "", "x" * 200_000, "x", out)[2]
+    assert len(big.encode()) <= R.MAX_ARG + 20 and big.endswith("[truncated]")
+
+
+def test_run_cli_passes_only_its_own_key_and_reports_failures(tmp_path, monkeypatch):
+    seen = {}
+    def fake_run(cmd, cwd, env, stdin, capture_output, text, timeout):
+        seen.update(cmd=cmd, env=env, cwd=cwd)
+        if cmd[0] == "codex":
+            Path(cmd[cmd.index("-o") + 1]).write_text('{"findings": []}')
+            return subprocess.CompletedProcess(cmd, 0, "log", "")
+        return subprocess.CompletedProcess(cmd, 2, "", "Error: model not found")
+    monkeypatch.setattr(R.subprocess, "run", fake_run)
+    monkeypatch.setenv("GEMINI_API_KEY", "g-secret")
+    assert R.run_cli("openai", "", "P", "o-key", tmp_path, "round1") == '{"findings": []}'
+    assert seen["env"]["CODEX_API_KEY"] == "o-key" and "GEMINI_API_KEY" not in seen["env"] and seen["cwd"] == tmp_path
+    assert (tmp_path / ".ai-review" / "openai_round1.md").read_text() == "P"
+    try:
+        R.run_cli("gemini", "", "P", "g-key", tmp_path, "round1")
+        raise AssertionError("expected ReviewError")
+    except R.ReviewError as e:
+        assert str(e).startswith("exit 2") and "model not found" in str(e)
+    def slow(*a, **k):
+        raise subprocess.TimeoutExpired("agy", 1)
+    monkeypatch.setattr(R.subprocess, "run", slow)
+    try:
+        R.run_cli("gemini", "", "P", "g-key", tmp_path, "round2", timeout=1)
+        raise AssertionError("expected ReviewError")
+    except R.ReviewError as e:
+        assert "timed out" in str(e)
 
 
 def test_parse_json_tolerates_fences_and_keeps_prose():

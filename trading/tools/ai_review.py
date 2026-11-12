@@ -1,20 +1,25 @@
-"""Cross-review of a pull request by two outside models (ChatGPT via the OpenAI API, Gemini via
-the Gemini API), read-only. Claude writes the code; these two only report.
+"""Cross-review of a pull request by two coding-agent CLIs, read-only: ChatGPT through the Codex
+CLI (`codex exec --sandbox read-only`) and Gemini through the Antigravity CLI (`agy -p`). Claude
+writes the code; these two only report.
 
-    OPENAI_API_KEY=... GEMINI_API_KEY=... python tools/ai_review.py --repo .. --base <sha> --head <sha> \
-        [--pr 69] [--out reports/ai_review] [--post]
+    CODEX_API_KEY=... GEMINI_API_KEY=... python tools/ai_review.py --repo .. --base <sha> --head <sha> \
+        [--pr 69] [--out reports/ai_review]
 
-Round 1: each model reviews the same diff on its own (OpenAI: code correctness and tests; Gemini:
-trading rules, data assumptions, docs vs code, gaps). Round 2: each reads the other's findings
-and answers agree / disagree / unsure, and adds anything both missed. The result is one Markdown
-report (consensus first, then disputed, then single-reviewer findings) written to --out and, with
---post, kept as one PR comment that is updated on each run. Both read docs/ai-review/brief.md
-(project rules) and docs/ai-review/lessons.md (accepted lessons) first.
+Codex runs in the checked-out repository inside its read-only sandbox, so besides the diff it can
+open any file and run read-only commands; its prompt is written to <repo>/.ai-review/ and it is
+told to read it. Antigravity has no read-only mode and is never given permission-skipping flags:
+its whole prompt (brief, lessons, diff) goes on the command line and it is told not to use tools,
+with a timeout in case it waits for an approval. Round 1: each reviews the same PR on its own
+(Codex: code correctness and tests; Gemini: trading rules, data assumptions, docs vs code, gaps).
+Round 2: each reads the other's findings and answers agree / disagree / unsure, and adds anything
+both missed. The result is one Markdown report (consensus first, then disputed, then single) at
+--out; the workflow posts it as one PR comment.
 
 A missing key skips that reviewer; with neither key the run writes a note and exits 0. Keys are
-read from the environment and never printed. Model ids come from OPENAI_REVIEW_MODEL /
-GEMINI_REVIEW_MODEL (repository variables); when a provider rejects the id, the report lists the
-ids that account can use, so the variable can be fixed without guessing.
+read from the environment and only passed to their own CLI; they are never printed. Model ids
+come from OPENAI_REVIEW_MODEL / GEMINI_REVIEW_MODEL (repository variables; empty = the CLI's
+default). A CLI failure is reported with the end of its output, so a wrong model id or a login
+problem shows up in the PR comment.
 """
 import argparse
 import json
@@ -22,14 +27,10 @@ import os
 import re
 import subprocess
 import sys
-import urllib.error
-import urllib.request
 from pathlib import Path
 
-DEFAULT_MODELS = {"openai": "gpt-5.6-sol", "gemini": "gemini-4-argon"}
-MAX_DIFF_CHARS = 120_000
-MAX_OUTPUT_TOKENS = 6000
-TIMEOUT = 300
+MAX_DIFF_CHARS = 100_000   # Antigravity gets the prompt as one argument (Linux limit 128 KiB)
+TIMEOUT = 900             # seconds per CLI call; agy has been seen to hang without a TTY
 MARKER = "<!-- ai-cross-review -->"
 SEVERITIES = ("blocker", "major", "minor", "nit")
 
@@ -41,6 +42,7 @@ ROLES = {
               "PR leave out (gaps).",
 }
 NAMES = {"openai": "ChatGPT", "gemini": "Gemini"}
+CLI_NAMES = {"openai": "Codex CLI", "gemini": "Antigravity CLI"}
 
 ROUND1 = """{brief}
 
@@ -86,63 +88,48 @@ class ReviewError(Exception):
     pass
 
 
-def _post_json(url: str, body: dict, headers: dict) -> dict:
-    req = urllib.request.Request(url, data=json.dumps(body).encode(), method="POST",
-                                 headers={"content-type": "application/json", **headers})
+KEY_ENV = {"openai": "CODEX_API_KEY", "gemini": "GEMINI_API_KEY"}
+MAX_ARG = 125_000
+POINTER = ("Read the file {path} in this repository and follow its instructions exactly. Do not modify, create "
+           "or delete files. Your final answer must be only the JSON object it asks for.")
+INLINE = "Do not use any tools or open any files; everything you need is below. Answer with the JSON only.\n\n"
+
+
+def cli_command(provider: str, model: str, prompt: str, prompt_file: str, out_file: Path) -> list[str]:
+    if provider == "openai":
+        cmd = ["codex", "exec", "--sandbox", "read-only", "--skip-git-repo-check", "-o", str(out_file)]
+        return cmd + (["-m", model] if model else []) + [POINTER.format(path=prompt_file)]
+    text = INLINE + prompt
+    if len(text.encode()) > MAX_ARG:
+        text = text.encode()[:MAX_ARG].decode("utf-8", "ignore") + "\n[truncated]"
+    return ["agy", "-p", text] + (["--model", model] if model else [])
+
+
+def run_cli(provider: str, model: str, prompt: str, key: str, repo: Path, tag: str, timeout: int = TIMEOUT) -> str:
+    """Run one CLI on one prompt and return its final answer. Raises ReviewError with the tail of
+    the CLI's output on a missing binary, a timeout or a non-zero exit."""
+    work = repo / ".ai-review"
+    work.mkdir(exist_ok=True)
+    rel = f".ai-review/{provider}_{tag}.md"
+    (repo / rel).write_text(prompt)
+    out_file = work / f"{provider}_{tag}.out"
+    out_file.unlink(missing_ok=True)
+    env = {k: v for k, v in os.environ.items() if k not in ("CODEX_API_KEY", "OPENAI_API_KEY", "GEMINI_API_KEY")}
+    env[KEY_ENV[provider]] = key
+    cmd = cli_command(provider, model, prompt, rel, out_file)
     try:
-        with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
-            return json.loads(r.read())
-    except urllib.error.HTTPError as e:
-        detail = e.read()[:400].decode("utf-8", "replace")
-        raise ReviewError(f"HTTP {e.code}: {detail}") from None
-    except (urllib.error.URLError, TimeoutError, OSError) as e:
-        raise ReviewError(f"network: {getattr(e, 'reason', e)}") from None
-
-
-def _get_json(url: str, headers: dict) -> dict:
-    req = urllib.request.Request(url, headers=headers)
-    with urllib.request.urlopen(req, timeout=60) as r:
-        return json.loads(r.read())
-
-
-def call_openai(model: str, system: str, prompt: str, key: str) -> str:
-    data = _post_json("https://api.openai.com/v1/chat/completions",
-                      {"model": model, "messages": [{"role": "system", "content": system},
-                                                    {"role": "user", "content": prompt}],
-                       "response_format": {"type": "json_object"}, "max_completion_tokens": MAX_OUTPUT_TOKENS},
-                      {"authorization": f"Bearer {key}"})
-    try:
-        return data["choices"][0]["message"]["content"] or ""
-    except (KeyError, IndexError, TypeError):
-        raise ReviewError(f"unexpected OpenAI response: {str(data)[:300]}") from None
-
-
-def call_gemini(model: str, system: str, prompt: str, key: str) -> str:
-    data = _post_json(f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
-                      {"systemInstruction": {"parts": [{"text": system}]},
-                       "contents": [{"role": "user", "parts": [{"text": prompt}]}],
-                       "generationConfig": {"responseMimeType": "application/json", "maxOutputTokens": MAX_OUTPUT_TOKENS}},
-                      {"x-goog-api-key": key})
-    try:
-        return "".join(p.get("text", "") for p in data["candidates"][0]["content"]["parts"])
-    except (KeyError, IndexError, TypeError):
-        raise ReviewError(f"unexpected Gemini response: {str(data)[:300]}") from None
-
-
-def available_models(provider: str, key: str) -> list[str]:
-    """Ids the account can use, for the report when a configured id is rejected. Never raises."""
-    try:
-        if provider == "openai":
-            data = _get_json("https://api.openai.com/v1/models", {"authorization": f"Bearer {key}"})
-            return sorted(m["id"] for m in data.get("data", []) if m.get("id", "").startswith(("gpt", "o")))
-        data = _get_json("https://generativelanguage.googleapis.com/v1beta/models?pageSize=200", {"x-goog-api-key": key})
-        return sorted(m["name"].split("/", 1)[-1] for m in data.get("models", [])
-                      if "generateContent" in m.get("supportedGenerationMethods", []))
-    except Exception:                                   # noqa: BLE001 - only a hint for the report
-        return []
-
-
-CALLERS = {"openai": call_openai, "gemini": call_gemini}
+        r = subprocess.run(cmd, cwd=repo, env=env, stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=timeout)
+    except FileNotFoundError:
+        raise ReviewError(f"{cmd[0]} CLI is not installed") from None
+    except subprocess.TimeoutExpired:
+        raise ReviewError(f"timed out after {timeout}s (waiting for an approval or stuck without a TTY?)") from None
+    tail = ((r.stdout or "") + "\n" + (r.stderr or "")).strip()[-1500:]
+    if r.returncode != 0:
+        raise ReviewError(f"exit {r.returncode}: {tail}")
+    answer = out_file.read_text() if out_file.exists() else (r.stdout or "")
+    if not answer.strip():
+        raise ReviewError(f"empty answer: {tail}")
+    return answer
 
 
 def parse_json(text: str) -> dict:
@@ -190,10 +177,15 @@ def build_context(repo: Path, base: str, head: str) -> dict:
             "brief": read("docs/ai-review/brief.md"), "lessons": read("docs/ai-review/lessons.md")}
 
 
-def review(ctx: dict, pr: str, models: dict, keys: dict, call=None) -> dict:
+def review(ctx: dict, pr: str, models: dict, keys: dict, call=None, repo: Path = Path("..")) -> dict:
     """Round 1 and round 2 for every provider with a key. `call(provider, model, system, prompt)`
     is injectable for tests. Errors are recorded per provider and never raised."""
-    call = call or (lambda p, m, s, q: CALLERS[p](m, s, q, keys[p]))
+    tags = {}
+
+    def default_call(p, m, system, prompt):
+        tags[p] = tags.get(p, 0) + 1
+        return run_cli(p, m, system + "\n\n" + prompt, keys[p], repo, f"round{tags[p]}")
+    call = call or default_call
     active = [p for p in ("openai", "gemini") if keys.get(p)]
     res = {p: {"model": models[p], "error": None, "round1": {}, "round2": {}} for p in active}
     system = "You are a careful senior reviewer. You never edit code; you report findings as JSON."
@@ -203,8 +195,6 @@ def review(ctx: dict, pr: str, models: dict, keys: dict, call=None) -> dict:
             res[p]["round1"] = parse_json(call(p, models[p], system, prompt))
         except ReviewError as e:
             res[p]["error"] = str(e)
-            if "model" in str(e).lower() or "HTTP 404" in str(e):
-                res[p]["models_available"] = available_models(p, keys[p]) if keys.get(p) else []
     ok = [p for p in active if not res[p]["error"]]
     if len(ok) == 2:
         for p in ok:
@@ -260,10 +250,7 @@ def render(res: dict, merged: dict, pr: str, head: str) -> str:
         return "\n".join(lines) + "\n"
     for p, r in res.items():
         state = f"오류: {r['error']}" if r["error"] else (r["round1"].get("summary") or "요약 없음")
-        lines.append(f"- **{NAMES[p]}** (`{r['model']}`): {state}")
-        if r.get("models_available") is not None:
-            ids = ", ".join(f"`{m}`" for m in r["models_available"][:25]) or "(목록을 받지 못함)"
-            lines.append(f"  - 사용 가능한 모델: {ids} — 저장소 변수 `{p.upper()}_REVIEW_MODEL`로 지정")
+        lines.append(f"- **{NAMES[p]}** ({CLI_NAMES[p]}, 모델 `{r['model'] or 'CLI 기본값'}`): {state}")
     lines.append("")
     sections = (("consensus", "두 검수자 합의"), ("disputed", "의견 갈림 — 대표님 판단 필요 시 Claude가 정리"),
                 ("single", "한쪽만 지적 (상대 확인 없음)"))
@@ -283,23 +270,6 @@ def render(res: dict, merged: dict, pr: str, head: str) -> str:
     return "\n".join(lines) + "\n"
 
 
-def post_comment(repo_slug: str, pr: str, body: str, token: str) -> str:
-    """Create or update the single cross-review comment on the PR."""
-    api = f"https://api.github.com/repos/{repo_slug}/issues/{pr}/comments"
-    hdr = {"authorization": f"Bearer {token}", "accept": "application/vnd.github+json"}
-    existing = None
-    for page in range(1, 6):
-        rows = _get_json(f"{api}?per_page=100&page={page}", hdr)
-        existing = next((c for c in rows if MARKER in (c.get("body") or "")), existing)
-        if len(rows) < 100:
-            break
-    url, method = (existing["url"], "PATCH") if existing else (api, "POST")
-    req = urllib.request.Request(url, data=json.dumps({"body": body}).encode(), method=method,
-                                 headers={**hdr, "content-type": "application/json"})
-    with urllib.request.urlopen(req, timeout=60) as r:
-        return json.loads(r.read()).get("html_url", "")
-
-
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--repo", default="..")
@@ -307,12 +277,13 @@ def main(argv=None) -> int:
     ap.add_argument("--head", required=True)
     ap.add_argument("--pr", default="")
     ap.add_argument("--out", default="reports/ai_review")
-    ap.add_argument("--post", action="store_true", help="create/update the PR comment (needs GITHUB_TOKEN, GITHUB_REPOSITORY)")
     a = ap.parse_args(argv)
-    keys = {"openai": os.environ.get("OPENAI_API_KEY", "").strip(), "gemini": os.environ.get("GEMINI_API_KEY", "").strip()}
-    models = {p: os.environ.get(f"{p.upper()}_REVIEW_MODEL", "").strip() or m for p, m in DEFAULT_MODELS.items()}
-    ctx = build_context(Path(a.repo), a.base, a.head)
-    res = review(ctx, a.pr or a.head[:8], models, keys)
+    keys = {"openai": (os.environ.get("CODEX_API_KEY") or os.environ.get("OPENAI_API_KEY") or "").strip(),
+            "gemini": os.environ.get("GEMINI_API_KEY", "").strip()}
+    models = {p: os.environ.get(f"{p.upper()}_REVIEW_MODEL", "").strip() for p in ("openai", "gemini")}
+    repo = Path(a.repo).resolve()
+    ctx = build_context(repo, a.base, a.head)
+    res = review(ctx, a.pr or a.head[:8], models, keys, repo=repo)
     merged = merge(res)
     md = render(res, merged, f"#{a.pr}" if a.pr else "", a.head)
     out = Path(a.out)
@@ -320,12 +291,6 @@ def main(argv=None) -> int:
     out.with_suffix(".md").write_text(md)
     out.with_suffix(".json").write_text(json.dumps({"results": res, "merged": merged}, ensure_ascii=False, indent=1))
     print(md)
-    if a.post and a.pr:
-        try:
-            print("comment:", post_comment(os.environ["GITHUB_REPOSITORY"], a.pr, md, os.environ["GITHUB_TOKEN"]))
-        except Exception as e:                          # noqa: BLE001 - the report file is still there
-            print(f"could not post the comment: {e}", file=sys.stderr)
-            return 1
     failed = [p for p, r in res.items() if r["error"]]
     return 1 if res and len(failed) == len(res) else 0
 
