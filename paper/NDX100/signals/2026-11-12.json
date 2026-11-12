@@ -1,0 +1,87 @@
+{
+ "market": "NDX100",
+ "as_of": "2026-11-12",
+ "regime": {
+  "benchmark": "^NDX",
+  "mode": "MA200",
+  "close": 28289.1875,
+  "ma200": 28029.0449,
+  "ma20": 28650.5093,
+  "on": true
+ },
+ "entries_next_open": [
+  {
+   "symbol": "AMD",
+   "signal_close": 585.3,
+   "rs": 100.0,
+   "desired_qty": 17545.409987,
+   "est_stop_from_close": 544.329
+  }
+ ],
+ "exits_next_open": [],
+ "positions": [
+  "AMGN",
+  "CSX",
+  "KDP",
+  "MSFT",
+  "VRTX"
+ ],
+ "watchlist": [
+  {
+   "symbol": "ADP",
+   "label": "1순위 · 임박 (피벗 1% 이내)",
+   "close": 307.92,
+   "pivot": 310.98,
+   "to_pivot_pct": 0.99,
+   "rs": 92.86
+  },
+  {
+   "symbol": "MAR",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 424.66,
+   "pivot": 433.3,
+   "to_pivot_pct": 2.03,
+   "rs": 87.76
+  },
+  {
+   "symbol": "AAPL",
+   "label": "1순위 · 임박 (피벗 1% 이내)",
+   "close": 354.88,
+   "pivot": 355.91,
+   "to_pivot_pct": 0.29,
+   "rs": 85.71
+  },
+  {
+   "symbol": "CTAS",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 227.52,
+   "pivot": 233.46,
+   "to_pivot_pct": 2.61,
+   "rs": 83.67
+  },
+  {
+   "symbol": "FAST",
+   "label": "1순위 · 임박 (피벗 1% 이내)",
+   "close": 55.55,
+   "pivot": 55.62,
+   "to_pivot_pct": 0.13,
+   "rs": 81.63
+  },
+  {
+   "symbol": "CCEP",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 116.93,
+   "pivot": 119.09,
+   "to_pivot_pct": 1.85,
+   "rs": 78.57
+  }
+ ],
+ "coverage": {
+  "requested": 101,
+  "loaded": 100,
+  "failed": [
+   "WBD"
+  ]
+ },
+ "generated_at": "2026-11-12T23:58:46Z"
+}
