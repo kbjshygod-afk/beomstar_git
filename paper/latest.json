@@ -579,14 +579,14 @@
    "xcheck_kis": null
   },
   "KOSPI": {
-   "as_of": "2026-11-09",
+   "as_of": "2026-11-12",
    "start_date": "2026-09-23",
    "regime": {
     "benchmark": "^KS11",
     "mode": "MA200_AND_MA20",
-    "close": 5018.8501,
-    "ma200": 6512.7189,
-    "ma20": 5642.4785,
+    "close": 5342.73,
+    "ma200": 6520.698,
+    "ma20": 5560.4205,
     "on": false
    },
    "entries_next_open": [],
@@ -597,7 +597,7 @@
    "performance": {
     "equity": 98406826.0,
     "return_pct": -1.59,
-    "bench_return_pct": -29.12,
+    "bench_return_pct": -24.55,
     "mdd_pct": -1.77,
     "closed_trades": 2,
     "win_rate_pct": 0.0,
@@ -607,8 +607,8 @@
    },
    "status_csv": "KOSPI/status.csv",
    "audit": {
-    "days": 30,
-    "signal_files": 12,
+    "days": 33,
+    "signal_files": 13,
     "missing_days": [
      "2026-10-02",
      "2026-10-06",
@@ -627,7 +627,9 @@
      "2026-11-02",
      "2026-11-03",
      "2026-11-04",
-     "2026-11-06"
+     "2026-11-06",
+     "2026-11-10",
+     "2026-11-11"
     ],
     "late": [
      "2026-09-23",
@@ -644,7 +646,7 @@
    "xcheck": {
     "source": "KRX Open API",
     "status": "ok",
-    "checked": "2026-11-06",
+    "checked": "2026-11-11",
     "error": null,
     "mismatched_symbols": [],
     "index_match": true
@@ -652,14 +654,14 @@
    "xcheck_kis": {
     "source": "KIS",
     "status": "ok",
-    "checked": "2026-11-05",
+    "checked": "2026-11-11",
     "error": null,
     "mismatched_symbols": [],
     "index_match": true,
     "guard": {
-     "close_mismatched": 177,
+     "close_mismatched": 180,
      "compared": 200,
-     "share_pct": 88.5,
+     "share_pct": 90.0,
      "blocked": false,
      "late": false,
      "enforced": false
@@ -955,7 +957,7 @@
    }
   }
  },
- "updated_at": "2026-11-12T11:16:06Z",
+ "updated_at": "2026-11-12T11:16:16Z",
  "disclaimer": "기계적 룰 출력이며 투자 자문이 아닙니다. 매수·매도 결정은 소유자 본인이 합니다.",
  "unconfirmed": "미확인 추정값(스캐너 원본 코드 미확인): 피벗=직전 20봉 최고가(당일 제외) · 거래량 평균=직전 50일(당일 제외) · RS=지수 대비 가중 1년 수익률 ≥ 0%p(스캐너는 유니버스 백분위 ≥ 70) · 52주 고저=종가 기준 · 200일선 상승=22봉 전 대비 · 수축비=10/40일 평균 TR · 비용=편도 0.2%"
 }
