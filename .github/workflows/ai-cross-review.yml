@@ -27,7 +27,7 @@ jobs:
     # Same-repository PRs only: a fork's PR never gets the keys.
     if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 55
     permissions:
       contents: read
       pull-requests: read
@@ -41,7 +41,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           PR: ${{ github.event.pull_request.number || github.event.inputs.pr }}
         run: |
-          gh api "repos/${{ github.repository }}/pulls/$PR" --jq '"base=\(.base.sha)\nhead=\(.head.sha)"' >> "$GITHUB_OUTPUT"
+          gh api "repos/${{ github.repository }}/pulls/$PR" > pr.json
+          # Every trigger, manual dispatch included: only same-repository PRs ever get the keys.
+          if [ "$(jq -r .head.repo.full_name pr.json)" != "${{ github.repository }}" ]; then
+            echo "::error::PR #$PR comes from another repository; refusing to run with the keys"; exit 1; fi
+          jq -r '"base=\(.base.sha)\nhead=\(.head.sha)"' pr.json >> "$GITHUB_OUTPUT"
           echo "number=$PR" >> "$GITHUB_OUTPUT"
       - name: Keys present?
         id: keys

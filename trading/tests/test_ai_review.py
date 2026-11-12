@@ -135,3 +135,45 @@ def test_login_mode_sets_no_key_variable(tmp_path, monkeypatch):
     monkeypatch.setenv("GEMINI_API_KEY", "should-not-leak")
     R.run_cli("gemini", "", "P", R.LOGIN, tmp_path, "round1")
     assert "GEMINI_API_KEY" not in seen["env"] and "CODEX_API_KEY" not in seen["env"]
+
+
+def test_round_two_prompt_carries_the_full_context_and_own_findings():
+    """Each CLI call is a fresh process (and Antigravity may not open files), so round 2 must
+    repeat the brief, lessons and diff along with both reviewers' round-1 findings (PR #69 review)."""
+    prompts = {}
+    def call(provider, model, system, prompt):
+        if "Round 2" in prompt:
+            prompts[provider] = prompt
+            return json.dumps({"verdicts": [], "additions": []})
+        return _answer([{"id": "F1", "severity": "minor", "claim": f"claim by {provider}"}])
+    R.review(CTX, "69", MODELS, {"openai": "k", "gemini": "k"}, call=call)
+    p = prompts["gemini"]
+    assert "+x = 1" in p and "brief" in p and "lessons" in p and "M\ta.py" in p
+    assert "claim by gemini" in p and "claim by openai" in p        # own and other findings
+
+
+def test_round_two_failures_and_prose_are_visible():
+    def call(provider, model, system, prompt):
+        if "Round 2" in prompt:
+            if provider == "openai":
+                raise R.ReviewError("timed out after 600s")
+            return "I mostly agree with them."
+        return _answer([{"id": "F1", "severity": "major", "claim": "x"}])
+    res = R.review(CTX, "69", MODELS, {"openai": "k", "gemini": "k"}, call=call)
+    assert res["openai"]["round2"] == {"error": "timed out after 600s"}
+    assert res["gemini"]["round2"]["error"] == "round-2 answer was not JSON"
+    md = R.render(res, R.merge(res), "#69", "abc")
+    assert "2차(상대 지적 검토) 실패: timed out" in md and "I mostly agree" in md
+
+
+def test_malformed_model_json_never_crashes_the_report():
+    res = {"openai": {"model": "", "error": None,
+                      "round1": {"summary": None, "findings": [{"claim": None, "severity": None, "line": "7", "evidence": 3}, "junk"],
+                                 "gaps": "not a list", "lesson_candidates": [1]},
+                      "round2": {"verdicts": 42, "additions": {"a": 1}}},
+           "gemini": {"model": "", "error": None, "round1": {"findings": None}, "round2": {"verdicts": [{"id": None, "reason": None}]}}}
+    m = R.merge(res)
+    f = m["single"][0]
+    assert f["claim"] == "" and f["severity"] == "minor" and f["line"] is None and f["evidence"] == "3"
+    assert m["gaps"] == [] and m["lessons"] == [("ChatGPT", "1")] and m["additions"] == []
+    assert R.MARKER in R.render(res, m, "#69", "abc")
