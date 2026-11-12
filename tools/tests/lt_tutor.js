@@ -157,7 +157,7 @@ const MOCK = () => {
   await open(p, 'en', false); await withKey(p); await (await tile(p)).click(); await p.waitForTimeout(200);
   await p.fill('#tuIn', 'hi'); await p.click('#tuSend'); await p.waitForSelector('.tu-row.ai .tu-bub:not(.typing)', { timeout: 5000 }); await p.waitForTimeout(200);
   chk(await p.evaluate(() => window.__xss) === undefined && !(await p.$('.tu-bub img, .tu-bub script')) && /<img src=x/.test(await p.innerText('.tu-row.ai')), '태그가 실행·생성되지 않고 글자로 보임');
-  chk(/TUTOR_KEY_LS, TUTOR_BRIDGE_LS\]\.forEach/.test(await p.evaluate(() => cloudLogout.toString())), '로그아웃하며 기기 기록을 지울 때 키도 지운다'); await ctx.close();
+  chk(/TUTOR_KEY_LS\]\.forEach/.test(await p.evaluate(() => cloudLogout.toString())), '로그아웃하며 기기 기록을 지울 때 키도 지운다'); await ctx.close();
 
   console.log('=== 설정은 있고 로그인 전: 타일은 보이고 열면 로그인 안내(입력칸 없음) ===');
   ({ ctx, p } = await newPage(true)); await open(p, 'zh', false);
@@ -257,51 +257,6 @@ const MOCK = () => {
   await until(p, () => CUR && CUR.code === 'zh', null, 8000);
   chk(await p.evaluate(() => tutorState().msgs.length) === 0 && await p.evaluate(() => S.tutor.code) === 'zh', '언어를 바꾸면 새 대화'); await ctx.close();
 
-  console.log('=== 💚 ChatGPT 연결(내 컴퓨터의 다리 프로그램 — 진짜 서버를 띄워 앱과 맞물려 본다. Codex만 가짜) ===');
-  {
-    const { createServer } = require('../tutor-bridge/bridge.js');
-    const BT = 'bridgeTok_0123456789abcdefghijklmnop'; let asked = [], mode = 'ok';
-    const srv = createServer({ token: BT, origins: [BASE], ask: async pr => { asked.push(pr); if (mode === 'fail') throw Object.assign(new Error('x'), { status: 503, error: '컴퓨터의 Codex가 로그인돼 있지 않아요. 컴퓨터에서 codex login 을 해 주세요' }); return 'Hello! 반가워요 <b>x</b>'; } });
-    await new Promise(r => srv.listen(0, '127.0.0.1', r));
-    const BURL = 'http://127.0.0.1:' + srv.address().port, LINE = BURL + '#' + BT;
-    ({ ctx, p } = await newPage(false)); await open(p, 'en', false, 12); await (await tile(p)).click(); await p.waitForTimeout(200);
-    chk(!(await p.$eval('details.tu-br', d => d.open)), '키가 없을 때 ChatGPT 칸은 접혀 있다(선택 사항)');
-    await p.click('details.tu-br summary'); await p.waitForTimeout(100);
-    sm = await small(p); chk(!sm.length, '연결 칸 단추·입력칸 44px 이상' + (sm.length ? ' → ' + sm.join(',') : ''));
-    await p.fill('#tuBr', 'http://example.com#abc'); await p.click('#tuBrSave'); await p.waitForTimeout(150);
-    chk(/연결 주소 모양이 아니에요/.test(await p.innerText('#tuBrMsg')), '모양이 틀린 주소(http 남의 사이트·짧은 암호)는 거절');
-    await p.fill('#tuBr', BURL + '#wrong_token_wrong_token_wrong'); await p.click('#tuBrSave'); await p.waitForFunction(() => !TUTOR.checking, null, { timeout: 5000 }); await p.waitForTimeout(100);
-    chk(/암호가 맞지 않아요/.test(await p.innerText('#tuBrMsg')) && await p.evaluate(() => localStorage.getItem('lang_starter_tutor_bridge')) === null, '암호가 틀리면 저장하지 않음');
-    await p.fill('#tuBr', 'http://127.0.0.1:9#' + BT); await p.click('#tuBrSave'); await p.waitForFunction(() => !TUTOR.checking, null, { timeout: 8000 }); await p.waitForTimeout(100);
-    chk(/닿지 않아요/.test(await p.innerText('#tuBrMsg')), '꺼져 있는 주소: 닿지 않는다고 안내');
-    await p.fill('#tuBr', ' ' + LINE + ' '); await p.press('#tuBr', 'Enter'); await p.waitForSelector('#tuIn', { timeout: 5000 });
-    chk(await p.evaluate(() => localStorage.getItem('lang_starter_tutor_bridge')) === LINE, '맞으면 이 기기에 저장');
-    chk(!(await p.evaluate(t => (localStorage.getItem('lang_starter_v1') || '').includes(t), BT)), '학습 기록에는 연결 암호가 없다');
-    chk(await p.evaluate(() => S.tutor.engine) === 'openai' && !(await p.$('[data-tu-engine]')), 'Gemini 키 없이 ChatGPT만: 자동으로 ChatGPT, 고르기 단추 없음');
-    chk(/내 컴퓨터\(다리 프로그램\)를 거쳐 OpenAI/.test(await p.innerText('.lg-note')), '안내문: 내 컴퓨터를 거쳐 OpenAI로');
-    chk(/대화 · 문장 교정/.test(await p.evaluate(() => PLAY_TILES.find(t => t.id === 'tutor').status())), '타일 상태: 쓸 수 있음');
-    await p.fill('#tuIn', 'hello'); await p.click('#tuSend'); await p.waitForSelector('.tu-row.ai .tu-bub:not(.typing)', { timeout: 8000 });
-    chk(/Hello! 반가워요 <b>x<\/b>/.test(await p.innerText('.tu-row.ai')) && !(await p.$('.tu-bub b')), '다리 프로그램의 답이 글자로 보임');
-    chk(asked.length === 1 && /영어/.test(asked[0]) && /학습자: hello\n튜터:$/.test(asked[0]), '다리 프로그램이 지시문(영어)+대화를 만들어 Codex에 물음');
-    chk(gens(p).length === 0, '구글로는 아무것도 가지 않음');
-    mode = 'fail'; await p.fill('#tuIn', 'again'); await p.click('#tuSend'); await p.waitForFunction(() => !TUTOR.busy, null, { timeout: 8000 }); await p.waitForTimeout(200);
-    chk(/codex login/.test(await toast(p)) && await p.inputValue('#tuIn') === 'again', '다리 프로그램의 오류 문구가 그대로 보이고 글이 돌아옴'); mode = 'ok';
-    // Gemini 키도 넣으면 고르기 단추가 생긴다
-    await withKey(p); await p.evaluate(() => renderTutor()); await p.waitForTimeout(100);
-    chk((await p.$$('[data-tu-engine]')).length === 2 && await p.getAttribute('[data-tu-engine="openai"]', 'aria-pressed') === 'true', '둘 다 있으면 AI 고르기 2개(고른 것 유지)');
-    await p.click('[data-tu-engine="gemini"]'); await p.fill('#tuIn', 'hi gemini'); await p.click('#tuSend'); await p.waitForFunction(() => document.querySelectorAll('.tu-row.ai').length >= 2, null, { timeout: 5000 });
-    chk(gens(p).length === 1 && asked.length === 2, 'Gemini를 고르면 구글로, 다리 프로그램으로는 안 감');
-    // 다리 프로그램이 꺼졌을 때 · 연결 끊기
-    await p.click('[data-tu-engine="openai"]'); if (srv.closeAllConnections) srv.closeAllConnections(); await new Promise(r => srv.close(r));
-    await p.fill('#tuIn', 'off'); await p.click('#tuSend'); await p.waitForFunction(() => !TUTOR.busy, null, { timeout: 8000 }); await p.waitForTimeout(200);
-    chk(/내 컴퓨터에 닿지 않아요/.test(await toast(p)) && await p.inputValue('#tuIn') === 'off', '다리 프로그램이 꺼지면: 닿지 않는다고 안내, 글이 돌아옴');
-    await p.click('#tuKeyBtn'); await p.waitForTimeout(150);
-    chk(await p.$eval('details.tu-br', d => d.open) && /연결됨: 127\.0\.0\.1/.test(await p.innerText('details.tu-br')) && !(await p.innerText('#main')).includes(BT), '연결됨 표시(주소만, 암호는 화면에 없음)');
-    await p.click('#tuBrDel'); await p.waitForTimeout(200);
-    chk(await p.evaluate(() => localStorage.getItem('lang_starter_tutor_bridge')) === null && await p.evaluate(() => S.tutor.engine) === 'gemini' && !(await p.$('[data-tu-engine]')), '연결 끊기: 지워지고 Gemini만 남음');
-    await ctx.close();
-  }
-
   console.log('=== 개인정보 안내: tutorUrl이 없으면 "내 키" 문구, 있으면 중계 문구(둘 중 하나만) ===');
   for (const withUrl of [false, true]) {
     const c2 = await browser.newContext({ viewport: { width: 390, height: 844 } }), pg = await c2.newPage();
@@ -311,7 +266,7 @@ const MOCK = () => {
     chk(vis.length >= 3 && vis.every(v => v === withUrl), (withUrl ? 'tutorUrl 있음' : 'tutorUrl 없음') + ': .tutor-only ' + vis.length + '곳 모두 ' + (withUrl ? '보임' : '숨김'));
     const own = await pg.evaluate(() => Array.from(document.querySelectorAll('.tutor-own')).map(e => getComputedStyle(e).display !== 'none'));
     chk(own.length >= 4 && own.every(v => v === !withUrl), (withUrl ? 'tutorUrl 있음' : 'tutorUrl 없음') + ': .tutor-own ' + own.length + '곳 모두 ' + (withUrl ? '숨김' : '보임'));
-    if (!withUrl) chk(/이 기기에서 Google\(Gemini API\)로 바로/.test(await pg.innerText('body')) && /키 지우기/.test(await pg.innerText('body')) && /연결 끊기/.test(await pg.innerText('body')) && !/Cloud Functions/.test(await pg.innerText('body')), '내 키 문구(바로 보냄·키 지우기·ChatGPT 연결 끊기) · 중계 서버 문구 없음');
+    if (!withUrl) chk(/이 기기에서 Google\(Gemini API\)로 바로/.test(await pg.innerText('body')) && /키 지우기/.test(await pg.innerText('body')) && !/OpenAI/.test(await pg.innerText('body')), '내 키 문구(바로 보냄·키 지우기) · OpenAI 문구 없음');
     if (withUrl) chk(/저장하지 않아요/.test(await pg.innerText('body')) && /OpenAI/.test(await pg.innerText('body')), '저장 안 함·OpenAI 문구');
     await c2.close();
   }

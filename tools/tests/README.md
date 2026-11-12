@@ -9,7 +9,6 @@
 | `lt_tutor.js` | 🤖 AI 튜터 화면 — 내 키 방식(키 넣기·확인·지우기, 구글로 바로 보내기, 모델·설정 대체, 오류·한도)과 중계 방식(로그인 전·후, 두 AI 고르기), HTML 주입 방어, 개인정보 문구. 구글·서버 응답은 가짜 | 위 서버를 켜 두고 `node tools/tests/lt_tutor.js` |
 | `lt_tutor_fn.js` | 🤖 중계 함수 본체를 Firebase 에뮬레이터에서 실제로(로그인 토큰·하루 한도·실패 시 횟수 되돌리기·대체 AI) | 아래 참고 |
 | `ai-stub.js` | 위 시험에서 Gemini·OpenAI 호출만 가짜로 바꾸는 파일 | — |
-| `../tutor-bridge/bridge.test.js` | 💚 ChatGPT 다리 프로그램(암호·CORS·한도·Codex 실행 인자·오류 분류) — Codex는 가짜 | `node --test tools/tutor-bridge/bridge.test.js` |
 | `../../functions/test/` | 서버 규칙 단위 시험(검증·지시문·두 AI 호출 모양·대체·CORS) | `cd functions && npm test` |
 
 ## 에뮬레이터 시험(`lt_tutor_fn.js`) 켜는 법

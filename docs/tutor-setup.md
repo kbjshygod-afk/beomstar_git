@@ -23,7 +23,7 @@
 - 무료 키로 보낸 글은 구글이 약관에 따라 서비스 개선에 쓸 수 있어요. 개인정보는 적지 마세요.
 - 모델은 `gemini-flash-latest` → `gemini-2.5-flash` → `gemini-2.0-flash` 순으로 써 보고, 되는 것을 그 방문 동안 기억해요(`index.html`의 `TUTOR_MODELS`).
 - (선택) 키를 더 안전하게: Google Cloud 콘솔 → API 및 서비스 → 사용자 인증 정보 → 그 키 → **웹사이트 제한**에 `https://kbjshygod-afk.github.io/*` 를 넣으면 다른 사이트에서는 그 키가 통하지 않아요.
-- **ChatGPT도 쓰려면**: API 키 대신 ChatGPT 구독으로 로그인한 내 컴퓨터의 Codex CLI를 연결해요 → [`docs/tutor-bridge.md`](tutor-bridge.md)
+- ChatGPT는 이 방식으로 쓸 수 없어요(OpenAI API는 무료 키가 없고, 브라우저에서 바로 부르는 것도 권장되지 않아요).
 
 ---
 
