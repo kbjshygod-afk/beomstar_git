@@ -42,6 +42,19 @@ ROLES = {
               "the data-source assumptions right, do the docs and comments still match the code, and what did the "
               "PR leave out (gaps).",
 }
+# Review profiles: which brief, lessons and reviewer roles a run uses. "trading" is the default.
+PROFILES = {
+    "trading": {"brief": "docs/ai-review/brief.md", "lessons": "docs/ai-review/lessons.md", "roles": ROLES},
+    "lang": {"brief": "docs/ai-review/brief-lang.md", "lessons": "docs/ai-review/lessons-lang.md", "roles": {
+        "openai": "Code reviewer: correctness bugs in the single-file web app and its tests, state and storage "
+                  "edge cases (first run, corrupt or old saved data, several tabs, offline), async races, "
+                  "HTML injection, and missing tests for risky paths.",
+        "gemini": "Learner and product reviewer: is the teaching content right for a Korean beginner (wrong or "
+                  "unnatural sentences, wrong pinyin/kana/translations), does the Korean UI text match what the "
+                  "code does, do the privacy notice and docs still match the code, accessibility and small-screen "
+                  "problems, and what did the PR leave out (gaps).",
+    }},
+}
 NAMES = {"openai": "ChatGPT", "gemini": "Gemini"}
 CLI_NAMES = {"openai": "Codex CLI", "gemini": "Antigravity CLI"}
 
@@ -203,15 +216,17 @@ def git(repo: Path, *args: str) -> str:
     return subprocess.run(["git", "-C", str(repo), *args], capture_output=True, text=True, check=True).stdout
 
 
-def build_context(repo: Path, base: str, head: str) -> dict:
-    files = git(repo, "diff", "--name-status", f"{base}...{head}").strip()
-    diff = git(repo, "diff", "--unified=5", f"{base}...{head}")
+def build_context(repo: Path, base: str, head: str, profile: str = "trading", paths: list[str] | None = None) -> dict:
+    """`paths` limits the diff to those files or folders (a large PR is reviewed one area at a time)."""
+    prof, only = PROFILES[profile], (["--", *paths] if paths else [])
+    files = git(repo, "diff", "--name-status", f"{base}...{head}", *only).strip()
+    diff = git(repo, "diff", "--unified=5", f"{base}...{head}", *only)
     trunc = ""
     if len(diff) > MAX_DIFF_CHARS:
         diff, trunc = diff[:MAX_DIFF_CHARS], f", truncated to the first {MAX_DIFF_CHARS:,} characters"
     read = lambda p: (repo / p).read_text() if (repo / p).exists() else "(missing)"   # noqa: E731
     return {"files": files or "(none)", "diff": diff, "trunc": trunc,
-            "brief": read("docs/ai-review/brief.md"), "lessons": read("docs/ai-review/lessons.md")}
+            "brief": read(prof["brief"]), "lessons": read(prof["lessons"]), "roles": prof["roles"]}
 
 
 def review(ctx: dict, pr: str, models: dict, keys: dict, call=None, repo: Path = Path("..")) -> dict:
@@ -226,8 +241,9 @@ def review(ctx: dict, pr: str, models: dict, keys: dict, call=None, repo: Path =
     active = [p for p in ("openai", "gemini") if keys.get(p)]
     res = {p: {"model": models[p], "error": None, "round1": {}, "round2": {}} for p in active}
     system = "You are a careful senior reviewer. You never edit code; you report findings as JSON."
+    roles = ctx.get("roles") or ROLES
     for p in active:
-        prompt = ROUND1.format(role=ROLES[p], pr=pr, **ctx)
+        prompt = ROUND1.format(role=roles[p], pr=pr, **ctx)
         try:
             res[p]["round1"] = parse_json(call(p, models[p], system, prompt))
         except ReviewError as e:
@@ -236,7 +252,7 @@ def review(ctx: dict, pr: str, models: dict, keys: dict, call=None, repo: Path =
     if len(ok) == 2:
         for p in ok:
             other = "gemini" if p == "openai" else "openai"
-            prompt = ROUND2.format(pr=pr, role=ROLES[p], other=NAMES[other], **ctx,
+            prompt = ROUND2.format(pr=pr, role=roles[p], other=NAMES[other], **ctx,
                                    own_findings=json.dumps(_findings(res[p]["round1"]), ensure_ascii=False, indent=1),
                                    other_findings=json.dumps(_findings(res[other]["round1"]), ensure_ascii=False, indent=1))
             try:
@@ -326,6 +342,9 @@ def main(argv=None) -> int:
     ap.add_argument("--out", default="reports/ai_review")
     ap.add_argument("--login", action="store_true",
                     help="use the CLIs' saved subscription logins (codex login, agy sign-in) instead of API keys")
+    ap.add_argument("--profile", default="trading", choices=sorted(PROFILES),
+                    help="which brief, lessons and reviewer roles to use (lang = the language-learning app)")
+    ap.add_argument("--paths", nargs="*", default=None, help="limit the diff to these files or folders")
     a = ap.parse_args(argv)
     keys = {"openai": (os.environ.get("CODEX_API_KEY") or os.environ.get("OPENAI_API_KEY") or "").strip(),
             "gemini": os.environ.get("GEMINI_API_KEY", "").strip()}
@@ -333,7 +352,7 @@ def main(argv=None) -> int:
         keys = {p: keys[p] or LOGIN for p in keys}
     models = {p: os.environ.get(f"{p.upper()}_REVIEW_MODEL", "").strip() for p in ("openai", "gemini")}
     repo = Path(a.repo).resolve()
-    ctx = build_context(repo, a.base, a.head)
+    ctx = build_context(repo, a.base, a.head, a.profile, a.paths)
     res = review(ctx, a.pr or a.head[:8], models, keys, repo=repo)
     merged = merge(res)
     md = render(res, merged, f"#{a.pr}" if a.pr else "", a.head)
