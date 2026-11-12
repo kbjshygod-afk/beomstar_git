@@ -1,0 +1,72 @@
+{
+ "market": "SP500",
+ "as_of": "2026-11-12",
+ "source": "Tiingo",
+ "status": "mismatch",
+ "checked": "2026-11-12",
+ "index": null,
+ "symbols": {
+  "date": "2026-11-12",
+  "compared": 26,
+  "missing": [],
+  "mismatches": [
+   {
+    "symbol": "EBAY",
+    "field": "open",
+    "yahoo": 122.8700027,
+    "krx": 122.34,
+    "diff_pct": 0.431
+   },
+   {
+    "symbol": "VRSN",
+    "field": "open",
+    "yahoo": 316.3599854,
+    "krx": 316.84,
+    "diff_pct": 0.152
+   },
+   {
+    "symbol": "GWW",
+    "field": "volume",
+    "yahoo": 328175.0,
+    "krx": 304754.0,
+    "diff_pct": 7.137
+   },
+   {
+    "symbol": "WAB",
+    "field": "volume",
+    "yahoo": 834880.0,
+    "krx": 784520.0,
+    "diff_pct": 6.032
+   },
+   {
+    "symbol": "WDAY",
+    "field": "open",
+    "yahoo": 191.75,
+    "krx": 191.02,
+    "diff_pct": 0.381
+   }
+  ],
+  "unlisted": [],
+  "sampled": 26,
+  "focus": [
+   "AMD",
+   "AMGN",
+   "ANET",
+   "BDX",
+   "BIIB",
+   "CPAY",
+   "CRL",
+   "EBAY",
+   "ELV",
+   "GWW",
+   "HUM",
+   "KDP",
+   "LLY",
+   "TRV",
+   "VEEV",
+   "WSM"
+  ]
+ },
+ "error": null,
+ "calls": 26
+}
