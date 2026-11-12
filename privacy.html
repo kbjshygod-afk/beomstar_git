@@ -50,6 +50,7 @@
     <ul>
       <li><b>이 기기에만 저장</b><span class="cloud-only">(로그인 여부와 관계없이)</span>: 완료한 레슨, 복습 카드, XP·연속 학습 기록, 설정, 도전장 닉네임(적었다면). 브라우저의 저장소(localStorage)에 있어요.</li>
       <li class="cloud-only"><b>구글 로그인 시</b>: 구글 계정의 이름·이메일·프로필 사진 주소·고유 번호와 가입·마지막 로그인 시각(로그인 확인용으로 Firebase Authentication에 남아요), 위의 학습 기록 전체.</li>
+      <li class="tutor-only"><b>AI 튜터를 쓸 때</b>: 직접 쓴 글(최근 대화 12개까지)과 배우는 언어·수준·고른 AI를 중계 서버(Google Cloud Functions)를 거쳐 Google(Gemini) 또는 OpenAI(ChatGPT)로 보내 답을 받아요. 로그인 확인용 계정 번호와 하루 사용 횟수만 서버에 남고, <b>쓴 글과 AI의 답은 이 앱도 서버도 저장하지 않아요.</b> 다만 AI 회사가 자기 정책에 따라 일정 기간 보관할 수 있으니 이름·연락처 같은 개인정보는 쓰지 마세요.</li>
       <li class="cloud-only"><b>의견 보내기 시</b>: 직접 쓴 글, 고른 만족도, (적었다면) 연락처, 배우는 언어, 앱 버전, 기기 종류(휴대폰/PC), (로그인했다면) 계정 고유 번호.</li>
       <li class="stats-only"><b>사용 통계</b>(켜져 있을 때): 방문, 언어 선택, 레슨·복습 완료 같은 사용 기록과 기기·브라우저 종류, 대략적인 지역. 이름이나 이메일은 넣지 않지만, Google Analytics(Firebase)가 브라우저에 <b>식별용 쿠키</b>(무작위 번호)를 저장해 같은 사람의 방문을 묶어서 세요. 구글 신호·광고 개인화는 꺼 두었어요. ⚙️ 설정의 ‘사용 통계 보내기’를 끄거나, 브라우저의 ‘추적 안 함(Do Not Track)’을 켜 두면 보내지 않아요. 만 14세 미만이라면 설정에서 꺼 주세요.</li>
     </ul>
@@ -84,6 +85,8 @@
       <tr style="text-align:left;border-bottom:1px solid var(--line)"><th style="padding:4px">받는 곳</th><th style="padding:4px">나라</th><th style="padding:4px">항목</th><th style="padding:4px">보관 기간</th><th style="padding:4px">거부 방법</th></tr>
       <tr style="border-bottom:1px solid var(--line)"><td style="padding:4px">Google LLC (Firebase Authentication)</td><td style="padding:4px">미국 등</td><td style="padding:4px">구글 계정 이름·이메일·프로필 사진 주소·고유 번호, 가입·마지막 로그인 시각</td><td style="padding:4px">클라우드 기록 지우기까지(본인 확인 뒤 계정 정보도 삭제)</td><td style="padding:4px">로그인하지 않기</td></tr>
       <tr style="border-bottom:1px solid var(--line)"><td style="padding:4px">Google LLC (Cloud Firestore)</td><td style="padding:4px">대한민국(서울) 서버</td><td style="padding:4px">학습 기록, 보내 주신 의견</td><td style="padding:4px">기록: 클라우드 기록 지우기까지 · 의견: 최대 1년</td><td style="padding:4px">로그인·의견 보내기 안 하기</td></tr>
+      <tr class="tutor-only" style="border-bottom:1px solid var(--line)"><td style="padding:4px">Google LLC (Cloud Functions · Firestore)</td><td style="padding:4px">대한민국(서울) 서버</td><td style="padding:4px">AI 튜터 요청 전달, 계정 번호와 하루 사용 횟수(글은 저장 안 함)</td><td style="padding:4px">사용 횟수: 약 2개월 뒤 자동 삭제</td><td style="padding:4px">AI 튜터 안 쓰기</td></tr>
+      <tr class="tutor-only" style="border-bottom:1px solid var(--line)"><td style="padding:4px">Google LLC (Gemini API) · OpenAI (ChatGPT API)</td><td style="padding:4px">미국 등</td><td style="padding:4px">AI 튜터에 쓴 글과 배우는 언어·수준</td><td style="padding:4px">각 회사의 정책에 따름</td><td style="padding:4px">AI 튜터 안 쓰기(고른 한쪽에만 보내요)</td></tr>
       <tr class="stats-only"><td style="padding:4px">Google LLC (Google Analytics)</td><td style="padding:4px">미국 등</td><td style="padding:4px">사용 기록, 쿠키 식별 번호, 기기 정보</td><td style="padding:4px">최대 14개월</td><td style="padding:4px">설정에서 통계 끄기</td></tr>
     </table></div>
     <ul>
@@ -121,6 +124,7 @@
 <script>
   // cloud-config.js 설정에 따라 켜진 기능만 보여 준다(JS가 꺼져 있으면 모두 보임)
   //  .cloud-only / .nocloud-only : CLOUD_CONFIG(apiKey)가 있을 때 / 없을 때
+  //  .tutor-only : AI 튜터가 켜졌을 때(CLOUD_CONFIG.tutorUrl이 https 주소일 때)
   //  .stats-only : 사용 통계가 켜질 수 있을 때(CLOUD_CONFIG.measurementId가 있을 때 — 앱도 없으면 통계를 끔)
   //  CLOUD_CONFIG.since('YYYY-MM-DD', 기능을 켠 날) : 적용일과 변경 이력에 쓴다
   //  SITE_CONTACT가 없으면 저장소의 GitHub 이슈 페이지가 문의처
@@ -129,6 +133,7 @@
     var hide = function (sel) { document.querySelectorAll(sel).forEach(function (el) { el.style.display = 'none'; }); };
     hide(on ? '.nocloud-only' : '.cloud-only');
     if (!stats) hide('.stats-only');
+    if (!(on && typeof c.tutorUrl === 'string' && /^https:\/\//.test(c.tutorUrl))) hide('.tutor-only');   // AI 튜터 주소가 있을 때만
     // since는 달력에 있는 날짜(YYYY-MM-DD, 월·일 한 자리도 받음)일 때만 쓴다. 없거나 틀리면 처음 만든 날로 두고 콘솔에 알린다
     var since = null, sm = on && typeof c.since === 'string' && /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(c.since.trim());
     if (sm) {

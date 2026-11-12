@@ -1026,6 +1026,26 @@
         /* 🏆 주간 리그 */
         .lg-line { color: #065f46; }
         .lg-note { margin-bottom: 10px; padding: 8px 12px; border-radius: 12px; background: #f1f5f9; color: #475569; font-size: 12.5px; line-height: 1.5; }
+        /* 🤖 AI 튜터 */
+        .tu-ctl { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+        .tu-seg { display: flex; gap: 4px; padding: 3px; border-radius: 12px; background: #eef2f7; }
+        .tu-seg button { min-height: 44px; padding: 0 12px; border: 0; border-radius: 9px; background: transparent; color: var(--text-light); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+        .tu-seg button[aria-pressed="true"] { background: var(--card); color: var(--primary); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+        .tu-log { min-height: 180px; max-height: min(46vh, 420px); overflow-y: auto; overscroll-behavior: contain; padding: 4px 2px 8px; display: flex; flex-direction: column; gap: 8px; }
+        .tu-row { display: flex; }
+        .tu-row.me { justify-content: flex-end; }
+        .tu-bub { max-width: 86%; padding: 10px 13px; border-radius: 16px; font-size: 14.5px; line-height: 1.6; overflow-wrap: anywhere; background: var(--card); border: 1px solid var(--border); }
+        .tu-row.me .tu-bub { background: var(--primary); border-color: var(--primary); color: #fff; border-bottom-right-radius: 5px; }
+        .tu-row.ai .tu-bub { border-bottom-left-radius: 5px; }
+        .tu-bub.note { background: #f1f5f9; color: #475569; font-size: 12.5px; }
+        .tu-bub.typing { letter-spacing: 3px; color: var(--text-light); }
+        .tu-empty { text-align: center; padding: 18px 8px 6px; color: var(--text-light); font-size: 14px; line-height: 1.6; }
+        .tu-starters { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; padding: 4px 0 8px; }
+        .tu-start { min-height: 44px; padding: 0 14px; border: 1.5px solid var(--border); border-radius: 22px; background: var(--card); color: var(--text); font: inherit; font-size: 13.5px; cursor: pointer; }
+        .tu-bar { position: sticky; bottom: 0; display: flex; gap: 8px; align-items: flex-end; padding: 8px 0 2px; background: var(--bg); }
+        .tu-bar textarea { flex: 1; min-width: 0; min-height: 48px; max-height: 120px; padding: 12px 14px; border: 1.5px solid var(--border); border-radius: 16px; background: var(--card); color: var(--text); font: inherit; font-size: 15px; resize: none; }
+        .tu-send { width: 48px; min-width: 48px; height: 48px; padding: 0; border-radius: 50%; font-size: 18px; }
+        .tu-send:disabled { opacity: .5; }
         .lg-study-row { display: flex; flex-wrap: wrap; gap: 6px 12px; margin-top: 6px; font-size: 13px; font-weight: 700; }
         .lg-board { position: relative; max-height: min(440px, 52vh); margin-bottom: 8px; border: 1px solid var(--border); border-radius: 16px; background: var(--card); overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; }   /* 순위표 안에서만 굴린다(내 줄을 가운데로 — 위의 안내·학습 줄이 밀려나지 않게) */
         .lg-row { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 4px 12px; border-top: 1px solid #f1f5f9; }
@@ -4580,6 +4600,7 @@ function renderView() {
         case 'missions': renderMissions(); break;
         case 'challenge': renderChallenge(); break;
         case 'league': renderLeague(); break;
+        case 'tutor': renderTutor(); break;
         case 'dex': renderDex(); break;
         case 'radio': renderRadio(); break;
         case 'story': renderStoryList(); break;
@@ -7104,7 +7125,7 @@ function sayLaterRun() {
 var PLAY = { cur: null, last: null, lastLesson: null, open0: null, next: null, nextTimer: 0, pick: null };   // pick: 홈 추천 · open0: 레슨을 열 때 열린 놀이 · openLesson이 먼저 정의돼 있어 var
 const PLAY_END = [];   // 판이 끝날 때 요약에 더할 것(부스트 등 뒤 기능이 등록) — fn(sum, o)
 const PLAY_STATE = ['feed', 'puz', 'rush', 'mission', 'shadow', 'blank', 'radioUi', 'chal'];   // 판 상태(S의 칸)
-const PLAY_VIEWS = ['play', 'trainer', 'feed', 'puzzle', 'rush', 'missions', 'radio', 'dex', 'league', 'sayLater', 'challenge'];
+const PLAY_VIEWS = ['play', 'trainer', 'feed', 'puzzle', 'rush', 'missions', 'radio', 'dex', 'league', 'sayLater', 'challenge', 'tutor'];
 function resetPlayState() {
     const c = PLAY.cur;
     if (c && c.notes.length) showToast(c.notes.join(' · '), 'gold', 3400);   // 판을 그만둬도 끝 요약으로 미뤄 둔 축하(귀 시간 단계 등)는 한 번 보여 준다
@@ -7359,7 +7380,7 @@ function renderPlay() {
     S.ctxShown = ctx;
     // 상황 칩·조용 모드는 바뀌는 것이 있을 때만(열린 놀이 타일이나 말하기 대기가 있을 때) — 눌러도 아무것도 바뀌지 않는 칩은 두지 않는다.
     // 고르면 그 상황에 맞는 타일이 위로 오고(rank), 무엇이 바뀌었는지 칩 아래 한 줄로 알려 준다
-    const tiles = PLAY_SOON.map(u => playTile(u.id)).filter(Boolean).concat(PLAY_TILES.filter(t => !PLAY_SOON.some(u => u.id === t.id)));
+    const tiles = PLAY_SOON.map(u => playTile(u.id)).filter(Boolean).concat(PLAY_TILES.filter(t => !PLAY_SOON.some(u => u.id === t.id))).filter(t => !(t.hide && t.hide()));   // hide: 설정이 없는 기능(AI 튜터)은 타일을 보이지 않음
     const openN = tiles.filter(t => tileOpen(t) && !t.noPick).length;   // 순위 화면(리그)만 열렸으면 칩을 눌러도 바뀌는 것이 없다
     let h = !openN && !say.length ? '' : '<div class="ctx-row"><div class="ctx-chips" role="group" aria-label="지금 상황">' +
         PLAY_CTX.map(([id, t]) => '<button data-ctx="' + id + '" aria-pressed="' + (id === ctx) + '">' + t + '</button>').join('') + '</div>' +
@@ -9908,6 +9929,92 @@ registerPlayTile({
     id: 'league', ico: '🏆', name: '주간 리그', view: 'league', ctx: ['home'], noPick: true,   // 순위 화면 — 놀이 탭에서 학습 놀이보다 아래 · 홈 '지금 하기 좋은 놀이'로는 권하지 않음
     status: () => { const n = lgNow(); return n ? lgTier(n.lg.tier) + ' · ' + n.rank + '위' : ''; },
     open: () => lgOpen('play'),
+});
+
+/* ═══════════════════ 🤖 AI 튜터 ═══════════════════ */
+// 앱 안 채팅 튜터(대화 · 문장 교정). AI 키는 앱에 없고 중계 함수(저장소 functions/)만 갖는다.
+// cloud-config.js의 tutorUrl이 https 주소일 때만 놀이 탭에 나타나고, 구글 로그인한 사람만 쓴다(하루 한도는 서버가 센다).
+// 대화는 이 기기 메모리에만 있다(새로고침하면 사라짐) — 서버도 글을 저장하지 않고 횟수만 센다. 보상(XP)은 없다: 쓸수록 비용이 드는 기능이라 반복 보상으로 만들지 않는다.
+const TUTOR = { busy: false, ctl: null };
+const TUTOR_ENGINES = [['gemini', '✨ Gemini'], ['openai', '💚 ChatGPT']];
+const TUTOR_MODES = [['chat', '💬 대화'], ['correct', '✏️ 문장 교정']];
+const TUTOR_MAX = 600;
+const TUTOR_STARTERS = { chat: ['자기소개 연습할래요', '카페에서 주문하는 연습', '길 물어보는 연습', '오늘 하루 이야기하기'], correct: ['제가 쓴 문장을 고쳐 주세요'] };
+function tutorUrl() { const c = window.CLOUD_CONFIG, u = c && c.tutorUrl; return typeof u === 'string' && /^https:\/\//.test(u) ? u : ''; }
+function tutorLevel() { return Math.min(5, ALL.reduce((m, l) => isDone(l.id) ? Math.max(m, l.unitId) : m, 0)); }   // 통과한 가장 높은 단계(서버가 0~5로 다시 묶음)
+function tutorState() {
+    if (!S.tutor || S.tutor.code !== CUR.code) { const o = S.tutor; S.tutor = { code: CUR.code, msgs: [], engine: o ? o.engine : 'gemini', mode: o ? o.mode : 'chat', left: null, draft: '' }; }
+    return S.tutor;
+}
+function tutorOpen(from) { S.tutorFrom = from || 'play'; playSeen('tutor'); go('tutor'); }
+function tutorBack() { const f = S.tutorFrom; S.tutorFrom = null; go(f === 'home' ? 'home' : 'play'); }
+function tutorBubble(m) {
+    const me = m.role === 'user';
+    return '<div class="tu-row ' + (me ? 'me' : 'ai') + '"><div class="tu-bub' + (m.role === 'note' ? ' note' : '') + '">' + esc(m.text).replace(/\n/g, '<br>') + '</div></div>';   // 글자로만 그린다 — 답에 코드가 있어도 화면에 끼어들지 못함
+}
+function renderTutor() {
+    const T = tutorState(), top = '<div class="lesson-top"><button class="back-btn tap44" id="tuBack" aria-label="뒤로">←</button><div><div class="lt-title">🤖 AI 튜터</div><div class="lt-sub">' + esc(CUR.flag || '') + ' ' + (T.left != null ? '오늘 ' + T.left + '번 남음' : 'AI와 말 연습') + '</div></div></div>';
+    if (!tutorUrl()) { $main.innerHTML = top + '<div class="empty-state"><div class="es-emoji">🤖</div>AI 튜터는 아직 준비되지 않았어요.</div>'; document.getElementById('tuBack').addEventListener('click', tutorBack); return; }
+    if (!CLOUD.user) {
+        $main.innerHTML = top + '<div class="card"><b>🤖 AI 튜터와 대화해 보세요</b><div class="muted" style="margin:6px 0 10px">쉬운 말로 대화하고, 내가 쓴 문장을 고쳐 받을 수 있어요. 오남용을 막으려고 <b>구글 로그인</b>을 한 사람만 쓸 수 있고, 하루 횟수가 정해져 있어요.</div></div>' + (IN_APP ? '<div class="lg-note" role="note">카카오톡 같은 앱 안 브라우저에서는 구글 로그인이 막혀 있어요. 크롬·사파리 같은 기본 브라우저로 열어 주세요.</div>' : cloudCardHtml('tutor'));
+        document.getElementById('tuBack').addEventListener('click', tutorBack); bindCloudCard('tutor');
+        return;
+    }
+    const seg = (list, cur, kind) => '<div class="tu-seg" role="group" aria-label="' + (kind === 'engine' ? 'AI 고르기' : '방식 고르기') + '">' + list.map(([id, t]) => '<button data-tu-' + kind + '="' + id + '" aria-pressed="' + (id === cur) + '">' + t + '</button>').join('') + '</div>';
+    let h = top + '<div class="tu-ctl">' + seg(TUTOR_ENGINES, T.engine, 'engine') + seg(TUTOR_MODES, T.mode, 'mode') + '</div>' +
+        '<div class="lg-note" role="note">🔒 쓴 글은 AI(' + (T.engine === 'openai' ? 'OpenAI' : 'Google') + ')에 보내져요. 이름·연락처 같은 개인정보는 적지 마세요. 이 앱과 서버는 대화를 저장하지 않아요. AI는 틀릴 수 있어요.</div>' +
+        '<div class="tu-log" id="tuLog" role="log" aria-live="polite" aria-label="대화">';
+    if (!T.msgs.length) h += '<div class="tu-empty">' + (T.mode === 'correct' ? '✏️ 배운 말로 문장을 써 보세요. 자연스럽게 고쳐 드려요.' : '💬 먼저 인사해 보세요! 아래 버튼으로 시작해도 돼요.') + '</div><div class="tu-starters">' +
+        TUTOR_STARTERS[T.mode].map(s => '<button class="tu-start" data-tu-start="' + esc(s) + '">' + esc(s) + '</button>').join('') + '</div>';
+    else h += T.msgs.map(tutorBubble).join('');
+    if (TUTOR.busy) h += '<div class="tu-row ai"><div class="tu-bub typing" aria-label="AI가 쓰는 중">···</div></div>';
+    h += '</div><div class="tu-bar"><textarea id="tuIn" rows="1" maxlength="' + TUTOR_MAX + '" enterkeyhint="send" placeholder="' + (T.mode === 'correct' ? CUR.flag + ' 고치고 싶은 문장을 써요' : '말해 보세요(한국어도 괜찮아요)') + '" aria-label="메시지">' + esc(T.draft) + '</textarea>' +
+        '<button class="btn tu-send" id="tuSend" aria-label="보내기"' + (TUTOR.busy ? ' disabled' : '') + '>➤</button></div>';
+    $main.innerHTML = h;
+    document.getElementById('tuBack').addEventListener('click', tutorBack);
+    $main.querySelectorAll('[data-tu-engine]').forEach(b => b.addEventListener('click', () => { T.engine = b.dataset.tuEngine; renderTutor(); }));
+    $main.querySelectorAll('[data-tu-mode]').forEach(b => b.addEventListener('click', () => { T.mode = b.dataset.tuMode; renderTutor(); }));
+    $main.querySelectorAll('[data-tu-start]').forEach(b => b.addEventListener('click', () => tutorSend(b.dataset.tuStart)));
+    const inp = document.getElementById('tuIn'), send = () => { const v = inp.value; T.draft = ''; tutorSend(v); };
+    inp.addEventListener('input', () => { T.draft = inp.value; });
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); send(); } });   // 한글 조합 중 Enter는 보내지 않음
+    document.getElementById('tuSend').addEventListener('click', send);
+    const log = document.getElementById('tuLog'); if (log) log.scrollTop = log.scrollHeight;
+}
+async function tutorSend(text) {
+    const T = tutorState(), code = CUR.code;
+    text = String(text || '').trim().slice(0, TUTOR_MAX);
+    if (!text || TUTOR.busy || !tutorUrl() || !CLOUD.user) return;
+    T.msgs.push({ role: 'user', text }); T.draft = ''; TUTOR.busy = true;
+    if (S.view === 'tutor') renderTutor();
+    const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 35000); TUTOR.ctl = ctl;
+    let err = '';
+    try {
+        const tok = await CLOUD.user.getIdToken();
+        const r = await fetch(tutorUrl(), {
+            method: 'POST', signal: ctl.signal,
+            headers: { 'content-type': 'application/json', authorization: 'Bearer ' + tok },
+            body: JSON.stringify({ engine: T.engine, lang: code, mode: T.mode, level: tutorLevel(), messages: T.msgs.filter(m => m.role !== 'note').slice(-12).map(m => ({ role: m.role, text: m.text })) }),
+        });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok) { err = (j && typeof j.error === 'string' && j.error) || 'AI가 지금 답하지 못해요'; if (r.status === 429) T.left = 0; }
+        else {
+            T.msgs.push({ role: 'assistant', text: String(j.reply || '') });
+            if (Number.isFinite(j.remaining)) T.left = j.remaining;
+            if (j.fellBack) T.msgs.push({ role: 'note', text: 'ℹ️ ' + (T.engine === 'openai' ? 'ChatGPT' : 'Gemini') + '가 바빠서 다른 AI가 답했어요' });
+        }
+    } catch (e) { err = e && e.name === 'AbortError' ? '답이 너무 늦어요. 잠시 뒤 다시 해 주세요' : '인터넷 연결을 확인해 주세요'; }
+    clearTimeout(timer); TUTOR.busy = false; TUTOR.ctl = null;
+    if (S.tutor !== T) return;   // 그사이 언어를 바꿨다 — 이 대화는 버린다
+    if (err) { T.msgs.pop(); T.draft = text; showToast('🤖 ' + err, '', 3200); }   // 실패하면 보낸 글을 입력칸에 돌려 놓는다
+    if (S.view === 'tutor') renderTutor();
+}
+registerPlayTile({
+    id: 'tutor', ico: '🤖', name: 'AI 튜터', view: 'tutor', ctx: ['home', 'short'], noPick: true,   // 쓸수록 비용이 드는 기능 — 홈 '지금 하기 좋은 놀이'로는 권하지 않음
+    hide: () => !tutorUrl(),   // 배포 전(tutorUrl 없음)에는 타일을 보이지 않음
+    need: () => !!tutorUrl(),
+    status: () => CLOUD.user ? '대화 · 문장 교정' : '구글 로그인 필요',
+    open: () => tutorOpen('play'),
 });
 
 /* ═══════════════════ 📒 문장 스티커북 ═══════════════════ */
@@ -12915,6 +13022,7 @@ function bindCloudCard(where) {
 function refreshCloudUi() {
     const card = document.getElementById('cloudCard');
     if (!card) return;
+    if (S.view === 'tutor' && CLOUD.user) { renderTutor(); return; }   // 🤖 로그인이 끝나면 대화 화면으로
     const where = S.view === 'settings' ? 'settings' : S.view === 'picker' ? 'picker' : 'home';
     if (where === 'home' && CLOUD.user) { card.remove(); return; }
     const tmp = document.createElement('div');
@@ -13050,6 +13158,7 @@ function handleBack() {
     if (DATA && S.view === 'puzzle') { puzLeave(S.puz); return true; }   // 🟩 퍼즐: ← 버튼과 같은 안내(오늘 문제는 묻지 않음)
     if (DATA && S.view === 'missions') { missionBack(); return true; }   // 🗺️ 미션: 판 도중이면 묻고, 레슨에서 왔으면 레슨으로
     if (DATA && S.view === 'dex') { dexBack(); return true; }   // 📒 앨범 → 앨범 목록 → 단계 목록 → 온 곳
+    if (DATA && S.view === 'tutor') { tutorBack(); return true; }   // 🤖 온 곳(홈·놀이)으로
     if (DATA && S.view === 'league') { lgBack(); return true; }   // 🏆 온 곳(홈·나·놀이)으로
     if (DATA && S.view === 'challenge') { chalBack(); return true; }
     if (DATA && S.view === 'radio') { radioBack(); return true; }   // 📻 온 곳(홈·놀이)으로 — 회차는 멈춘 채 남는다(다시 들어오면 이어서)
