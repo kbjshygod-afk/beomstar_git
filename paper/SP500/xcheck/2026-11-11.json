@@ -11,74 +11,81 @@
   "missing": [],
   "mismatches": [
    {
-    "symbol": "CPAY",
+    "symbol": "AMGN",
     "field": "volume",
-    "yahoo": 291672.0,
-    "krx": 288269.0,
-    "diff_pct": 1.167
+    "yahoo": 2004900.0,
+    "krx": 1882711.0,
+    "diff_pct": 6.095
    },
    {
-    "symbol": "EBAY",
-    "field": "open",
-    "yahoo": 123.25,
-    "krx": 122.73,
-    "diff_pct": 0.422
+    "symbol": "CPAY",
+    "field": "volume",
+    "yahoo": 314700.0,
+    "krx": 288269.0,
+    "diff_pct": 8.399
    },
    {
     "symbol": "LLY",
     "field": "volume",
-    "yahoo": 1865138.0,
+    "yahoo": 1872700.0,
     "krx": 1845641.0,
-    "diff_pct": 1.045
+    "diff_pct": 1.445
    },
    {
-    "symbol": "NTAP",
-    "field": "low",
-    "yahoo": 181.8699951,
-    "krx": 181.63,
-    "diff_pct": 0.132
+    "symbol": "NFLX",
+    "field": "volume",
+    "yahoo": 29441400.0,
+    "krx": 28767029.0,
+    "diff_pct": 2.291
+   },
+   {
+    "symbol": "NI",
+    "field": "volume",
+    "yahoo": 4984100.0,
+    "krx": 4272903.0,
+    "diff_pct": 14.269
    },
    {
     "symbol": "NSC",
     "field": "volume",
-    "yahoo": 1213392.0,
+    "yahoo": 1213400.0,
     "krx": 1200941.0,
-    "diff_pct": 1.026
+    "diff_pct": 1.027
    },
    {
     "symbol": "NTRS",
     "field": "volume",
-    "yahoo": 643107.0,
+    "yahoo": 643200.0,
     "krx": 635124.0,
-    "diff_pct": 1.241
+    "diff_pct": 1.256
    },
    {
     "symbol": "NOC",
     "field": "volume",
-    "yahoo": 640193.0,
+    "yahoo": 640400.0,
     "krx": 632603.0,
-    "diff_pct": 1.186
+    "diff_pct": 1.218
    },
    {
     "symbol": "NUE",
     "field": "volume",
-    "yahoo": 1456904.0,
+    "yahoo": 1457400.0,
     "krx": 1387366.0,
-    "diff_pct": 4.773
+    "diff_pct": 4.805
    },
    {
     "symbol": "NOW",
     "field": "volume",
-    "yahoo": 14404875.0,
+    "yahoo": 14481600.0,
     "krx": 14090044.0,
-    "diff_pct": 2.186
+    "diff_pct": 2.704
    },
    {
-    "symbol": "VTRS",
-    "field": "open",
-    "yahoo": 20.98999977,
-    "krx": 20.755,
-    "diff_pct": 1.12
+    "symbol": "TRV",
+    "field": "volume",
+    "yahoo": 1871500.0,
+    "krx": 1796331.0,
+    "diff_pct": 4.017
    }
   ],
   "unlisted": [],
