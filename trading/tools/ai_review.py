@@ -15,7 +15,8 @@ Round 2: each reads the other's findings and answers agree / disagree / unsure, 
 both missed. The result is one Markdown report (consensus first, then disputed, then single) at
 --out; the workflow posts it as one PR comment.
 
-A missing key skips that reviewer; with neither key the run writes a note and exits 0. Keys are
+With --login the CLIs use their saved subscription logins (`codex login --device-auth`, the
+agy Google sign-in) and need no keys. Otherwise a missing key skips that reviewer; with neither key the run writes a note and exits 0. Keys are
 read from the environment and only passed to their own CLI; they are never printed. Model ids
 come from OPENAI_REVIEW_MODEL / GEMINI_REVIEW_MODEL (repository variables; empty = the CLI's
 default). A CLI failure is reported with the end of its output, so a wrong model id or a login
@@ -89,6 +90,7 @@ class ReviewError(Exception):
 
 
 KEY_ENV = {"openai": "CODEX_API_KEY", "gemini": "GEMINI_API_KEY"}
+LOGIN = "<login>"         # placeholder key: run the CLI with its saved subscription login
 MAX_ARG = 125_000
 POINTER = ("Read the file {path} in this repository and follow its instructions exactly. Do not modify, create "
            "or delete files. Your final answer must be only the JSON object it asks for.")
@@ -115,7 +117,8 @@ def run_cli(provider: str, model: str, prompt: str, key: str, repo: Path, tag: s
     out_file = work / f"{provider}_{tag}.out"
     out_file.unlink(missing_ok=True)
     env = {k: v for k, v in os.environ.items() if k not in ("CODEX_API_KEY", "OPENAI_API_KEY", "GEMINI_API_KEY")}
-    env[KEY_ENV[provider]] = key
+    if key and key != LOGIN:
+        env[KEY_ENV[provider]] = key          # else the CLI uses its own saved login
     cmd = cli_command(provider, model, prompt, rel, out_file)
     try:
         r = subprocess.run(cmd, cwd=repo, env=env, stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=timeout)
@@ -277,9 +280,13 @@ def main(argv=None) -> int:
     ap.add_argument("--head", required=True)
     ap.add_argument("--pr", default="")
     ap.add_argument("--out", default="reports/ai_review")
+    ap.add_argument("--login", action="store_true",
+                    help="use the CLIs' saved subscription logins (codex login, agy sign-in) instead of API keys")
     a = ap.parse_args(argv)
     keys = {"openai": (os.environ.get("CODEX_API_KEY") or os.environ.get("OPENAI_API_KEY") or "").strip(),
             "gemini": os.environ.get("GEMINI_API_KEY", "").strip()}
+    if a.login:
+        keys = {p: keys[p] or LOGIN for p in keys}
     models = {p: os.environ.get(f"{p.upper()}_REVIEW_MODEL", "").strip() for p in ("openai", "gemini")}
     repo = Path(a.repo).resolve()
     ctx = build_context(repo, a.base, a.head)
