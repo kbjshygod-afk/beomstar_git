@@ -51,7 +51,7 @@
     <ul>
       <li><b>이 기기에만 저장</b><span class="cloud-only">(로그인 여부와 관계없이)</span>: 완료한 레슨, 복습 카드, XP·연속 학습 기록, 설정, 도전장 닉네임(적었다면). 브라우저의 저장소(localStorage)에 있어요.</li>
       <li class="cloud-only"><b>구글 로그인 시</b>: 구글 계정의 이름·이메일·프로필 사진 주소·고유 번호와 가입·마지막 로그인 시각(로그인 확인용으로 Firebase Authentication에 남아요), 위의 학습 기록 전체.</li>
-      <li class="tutor-own"><b>AI 튜터를 쓸 때</b>(직접 넣은 Gemini 키): 직접 쓴 글(최근 대화 12개까지)과 배우는 언어·수준을 <b>이 기기에서 Google(Gemini API)로 바로</b> 보내 답을 받아요. 이 앱의 서버를 거치지 않고, 앱은 대화를 저장하지 않아요(화면을 새로 열면 사라져요). 넣은 키는 이 기기의 브라우저 저장소에만 있고, 구글 로그인을 해도 클라우드나 백업 파일에 들어가지 않아요. AI 튜터 화면의 🔑 키 → <b>키 지우기</b>로 지울 수 있어요. 무료 키로 보낸 글은 Google이 자기 약관에 따라 서비스 개선에 쓰거나 사람이 검토할 수 있으니 이름·연락처 같은 개인정보는 쓰지 마세요.</li>
+      <li class="tutor-own"><b>AI 튜터를 쓸 때</b>(직접 넣은 Gemini 키): 직접 쓴 글(최근 대화 12개까지)과 배우는 언어·수준을 <b>이 기기에서 Google(Gemini API)로 바로</b> 보내 답을 받아요. 이 앱의 서버를 거치지 않고, 앱은 대화를 저장하지 않아요(화면을 새로 열면 사라져요). 넣은 키는 이 기기의 브라우저 저장소에만 있고, 구글 로그인을 해도 클라우드나 백업 파일에 들어가지 않아요. AI 튜터 화면의 🔑 키 → <b>키 지우기</b>로 지울 수 있어요. <b>ChatGPT 연결</b>(선택)을 쓰면 글이 Google 대신, 내가 내 컴퓨터에서 켠 프로그램과 그 터널(Cloudflare)을 거쳐 OpenAI(ChatGPT)로 가요. 연결 주소도 이 기기에만 저장되고 <b>연결 끊기</b>로 지워요. 무료 키로 보낸 글은 Google이 자기 약관에 따라 서비스 개선에 쓰거나 사람이 검토할 수 있으니 이름·연락처 같은 개인정보는 쓰지 마세요.</li>
       <li class="tutor-only"><b>AI 튜터를 쓸 때</b>: 직접 쓴 글(최근 대화 12개까지)과 배우는 언어·수준·고른 AI를 중계 서버(Google Cloud Functions)를 거쳐 Google(Gemini) 또는 OpenAI(ChatGPT)로 보내 답을 받아요. 로그인 확인용 계정 번호와 하루 사용 횟수만 서버에 남고, <b>쓴 글과 AI의 답은 이 앱도 서버도 저장하지 않아요.</b> 다만 AI 회사가 자기 정책에 따라 일정 기간 보관할 수 있으니 이름·연락처 같은 개인정보는 쓰지 마세요.</li>
       <li class="cloud-only"><b>의견 보내기 시</b>: 직접 쓴 글, 고른 만족도, (적었다면) 연락처, 배우는 언어, 앱 버전, 기기 종류(휴대폰/PC), (로그인했다면) 계정 고유 번호.</li>
       <li class="stats-only"><b>사용 통계</b>(켜져 있을 때): 방문, 언어 선택, 레슨·복습 완료 같은 사용 기록과 기기·브라우저 종류, 대략적인 지역. 이름이나 이메일은 넣지 않지만, Google Analytics(Firebase)가 브라우저에 <b>식별용 쿠키</b>(무작위 번호)를 저장해 같은 사람의 방문을 묶어서 세요. 구글 신호·광고 개인화는 꺼 두었어요. ⚙️ 설정의 ‘사용 통계 보내기’를 끄거나, 브라우저의 ‘추적 안 함(Do Not Track)’을 켜 두면 보내지 않아요. 만 14세 미만이라면 설정에서 꺼 주세요.</li>
@@ -93,7 +93,7 @@
     </table></div>
     <ul>
       <li>그 밖의 곳에 정보를 넘기거나 팔지 않아요. 법에 따라 요구되는 경우는 예외예요.</li>
-      <li class="tutor-own">AI 튜터(직접 넣은 키)를 쓰면 쓴 글과 배우는 언어·수준이 Google LLC(Gemini API, 미국 등)로 가요. 보관 기간은 Google의 정책에 따르고, AI 튜터를 쓰지 않으면 보내지 않아요. 이 앱이 맡기는 것이 아니라 내 키로 내가 직접 보내는 것이에요.</li>
+      <li class="tutor-own">AI 튜터(직접 넣은 키)를 쓰면 쓴 글과 배우는 언어·수준이 Google LLC(Gemini API, 미국 등)로, ChatGPT 연결을 쓰면 OpenAI(미국 등)로 가요. 보관 기간은 각 회사의 정책에 따르고, AI 튜터를 쓰지 않으면 보내지 않아요. 이 앱이 맡기는 것이 아니라 내 키로 내가 직접 보내는 것이에요.</li>
       <li>예전 「Emma 영어 선생님」(AI 자유 회화)은 직접 넣은 AI 키로 대화 내용을 구글(Gemini)·Anthropic에 보내요. 키는 그 화면의 🔑 키 지우기로 지울 수 있어요.</li>
     </ul>
   </section>
@@ -117,7 +117,7 @@
     <ul>
       <li id="contactLine" class="cloud-only">앱의 ⚙️ 설정 → <b>💬 의견 보내기</b>로 알려 주세요. 답장이 필요하면 연락처를 함께 적어 주세요. 보낸 의견이나 연락처를 지우고 싶을 때도 같은 방법으로 요청하면 바로 지워요.</li>
       <li id="contactFallback">문의·오류 제보: <a href="https://github.com/kbjshygod-afk/beomstar_git/issues" target="_blank" rel="noopener">GitHub 이슈 페이지</a>(GitHub 계정이 필요해요). 누구나 볼 수 있는 공개 게시판이니 이메일·전화번호 같은 개인정보는 적지 말아 주세요.</li>
-      <li>변경 이력: 2026-09-25 처음 만듦<span class="cloud-only"><span id="histOpen">(</span>구글 로그인·클라우드 저장·의견 보내기<span class="stats-only">·사용 통계</span> 도입<span id="histClose">)</span></span><span class="tutor-own"> · 2026-11-13 AI 튜터(직접 넣은 Gemini 키) 추가</span>.</li>
+      <li>변경 이력: 2026-09-25 처음 만듦<span class="cloud-only"><span id="histOpen">(</span>구글 로그인·클라우드 저장·의견 보내기<span class="stats-only">·사용 통계</span> 도입<span id="histClose">)</span></span><span class="tutor-own"> · 2026-11-13 AI 튜터(직접 넣은 Gemini 키 · ChatGPT 연결) 추가</span>.</li>
       <li>이 안내가 바뀌면 이 페이지에 날짜와 함께 알려 드려요.</li>
     </ul>
   </section>

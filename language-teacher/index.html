@@ -1054,6 +1054,7 @@
         .tu-msg { min-height: 20px; margin: 6px 0; font-size: 13px; color: #b45309; }
         .tu-acts { display: flex; flex-wrap: wrap; gap: 8px; }
         .tu-acts .btn { min-height: 48px; flex: 1 1 auto; }
+        .tu-br summary { min-height: 44px; display: flex; align-items: center; gap: 6px; cursor: pointer; }
         .lg-study-row { display: flex; flex-wrap: wrap; gap: 6px 12px; margin-top: 6px; font-size: 13px; font-weight: 700; }
         .lg-board { position: relative; max-height: min(440px, 52vh); margin-bottom: 8px; border: 1px solid var(--border); border-radius: 16px; background: var(--card); overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; }   /* 순위표 안에서만 굴린다(내 줄을 가운데로 — 위의 안내·학습 줄이 밀려나지 않게) */
         .lg-row { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 4px 12px; border-top: 1px solid #f1f5f9; }
@@ -9942,16 +9943,18 @@ registerPlayTile({
 /* ═══════════════════ 🤖 AI 튜터 ═══════════════════ */
 // 앱 안 채팅 튜터(대화 · 문장 교정). 두 가지 방식이 있다.
 //  ① 내 키 방식(기본, 무료): 쓰는 사람이 구글 AI 스튜디오의 무료 Gemini 키를 이 기기에 넣고, 앱이 구글로 바로 보낸다. 서버·로그인이 필요 없다.
+//     ChatGPT도 쓰려면 내 컴퓨터에서 '다리 프로그램'(tools/tutor-bridge — Codex CLI에 ChatGPT 구독으로 로그인)을 켜고 그 연결 주소를 넣는다.
 //  ② 중계 방식: cloud-config.js의 tutorUrl이 https 주소일 때만. 키는 중계 함수(저장소 functions/)만 갖고, 구글 로그인한 사람만 쓴다(하루 한도는 서버가 센다).
-// 키는 학습 기록(LS_KEY)과 다른 칸에 둔다 — 클라우드 저장·백업 파일에 들어가지 않는다.
+// 키·연결 주소는 학습 기록(LS_KEY)과 다른 칸에 둔다 — 클라우드 저장·백업 파일에 들어가지 않는다.
 // 대화는 이 기기 메모리에만 있다(새로고침하면 사라짐). 보상(XP)은 없다: 쓸수록 한도·비용이 드는 기능이라 반복 보상으로 만들지 않는다.
-const TUTOR = { busy: false, ctl: null, memKey: '', model: '', checking: false };
+const TUTOR = { busy: false, ctl: null, memKey: '', memBridge: '', model: '', checking: false };
 const TUTOR_ENGINES = [['gemini', '✨ Gemini'], ['openai', '💚 ChatGPT']];
 const TUTOR_MODES = [['chat', '💬 대화'], ['correct', '✏️ 문장 교정']];
 const TUTOR_MAX = 600;
 const TUTOR_STARTERS = { chat: ['자기소개 연습할래요', '카페에서 주문하는 연습', '길 물어보는 연습', '오늘 하루 이야기하기'], correct: ['제가 쓴 문장을 고쳐 주세요'] };
 const TUTOR_KEY_LS = 'lang_starter_tutor_key';
 const TUTOR_KEY_RE = /^[A-Za-z0-9_\-.]{20,200}$/;
+const TUTOR_BRIDGE_LS = 'lang_starter_tutor_bridge';   // 'https://주소#암호' 한 줄
 const TUTOR_KEY_PAGE = 'https://aistudio.google.com/apikey';
 const TUTOR_API = 'https://generativelanguage.googleapis.com/v1beta/models';
 const TUTOR_MODELS = ['gemini-flash-latest', 'gemini-2.5-flash', 'gemini-2.0-flash'];   // 앞에서부터 써 보고, 없는 이름(404)이면 다음으로
@@ -9979,6 +9982,13 @@ function tutorPrompt(code, level, mode) {
 function tutorUrl() { const c = window.CLOUD_CONFIG, u = c && c.tutorUrl; return typeof u === 'string' && /^https:\/\//.test(u) ? u : ''; }
 function tutorKeyGet() { let v = ''; try { v = localStorage.getItem(TUTOR_KEY_LS) || ''; } catch (e) { v = ''; } v = v || TUTOR.memKey; return TUTOR_KEY_RE.test(v) ? v : ''; }
 function tutorKeySet(v) { TUTOR.memKey = v || ''; TUTOR.model = ''; try { if (v) localStorage.setItem(TUTOR_KEY_LS, v); else localStorage.removeItem(TUTOR_KEY_LS); } catch (e) { } }   // 저장소가 막힌 브라우저에선 이번 방문 동안만 기억
+function tutorBridgeParse(v) {   // https 주소(또는 이 컴퓨터 안 주소) + '#' + 암호
+    const m = /^(https:\/\/[a-z0-9.-]+(?::\d+)?|http:\/\/(?:127\.0\.0\.1|localhost)(?::\d+)?)\/?#([A-Za-z0-9_-]{20,100})$/i.exec(String(v || '').trim());
+    return m ? { url: m[1], token: m[2] } : null;
+}
+function tutorBridgeGet() { let v = ''; try { v = localStorage.getItem(TUTOR_BRIDGE_LS) || ''; } catch (e) { v = ''; } return tutorBridgeParse(v || TUTOR.memBridge); }
+function tutorBridgeSet(v) { TUTOR.memBridge = v || ''; try { if (v) localStorage.setItem(TUTOR_BRIDGE_LS, v); else localStorage.removeItem(TUTOR_BRIDGE_LS); } catch (e) { } }
+function tutorAvail() { const a = []; if (tutorKeyGet()) a.push('gemini'); if (tutorBridgeGet()) a.push('openai'); return a; }   // 내 키 방식에서 지금 쓸 수 있는 AI
 function tutorLevel() { return Math.min(5, ALL.reduce((m, l) => isDone(l.id) ? Math.max(m, l.unitId) : m, 0)); }   // 통과한 가장 높은 단계(0~5로 묶음)
 function tutorState() {
     if (!S.tutor || S.tutor.code !== CUR.code) { const o = S.tutor; S.tutor = { code: CUR.code, msgs: [], engine: o ? o.engine : 'gemini', mode: o ? o.mode : 'chat', left: null, draft: '', keyEdit: false }; }
@@ -10035,11 +10045,30 @@ async function tutorAskGemini(key, system, msgs, signal) {
     }
     throw last;
 }
+async function tutorBridgeCheck(b) {
+    let r;
+    try { r = await fetch(b.url + '/health', { headers: { authorization: 'Bearer ' + b.token } }); } catch (e) { return { ok: false, msg: '내 컴퓨터에 닿지 않아요. 다리 프로그램이 켜져 있는지 확인해 주세요' }; }
+    if (r.status === 401) return { ok: false, msg: '연결 암호가 맞지 않아요. 한 줄을 처음부터 끝까지 그대로 복사해 주세요' };
+    const j = r.ok ? await r.json().catch(() => null) : null;
+    return j && j.ok === true ? { ok: true } : { ok: false, msg: '다리 프로그램의 주소가 아닌 것 같아요. 컴퓨터 화면의 한 줄을 다시 복사해 주세요' };
+}
+// ChatGPT: 내 컴퓨터의 다리 프로그램에 묻는다(지시문은 다리 프로그램이 만든다). 성공하면 답 글자, 실패하면 { msg } 를 던진다.
+async function tutorAskBridge(b, body, signal) {
+    let r;
+    try { r = await fetch(b.url + '/tutor', { method: 'POST', signal, headers: { 'content-type': 'application/json', authorization: 'Bearer ' + b.token }, body: JSON.stringify(body) }); }
+    catch (e) { if (e && e.name === 'AbortError') throw e; throw { msg: '내 컴퓨터에 닿지 않아요. 다리 프로그램이 켜져 있는지, 주소가 바뀌지 않았는지 확인해 주세요' }; }
+    const j = await r.json().catch(() => ({}));
+    if (r.status === 401) throw { keyBad: true, msg: '연결 암호가 맞지 않아요. 🔑 키에서 ChatGPT 연결 주소를 다시 넣어 주세요' };
+    const text = r.ok ? String(j && j.reply || '').trim() : '';
+    if (!text) throw { msg: (!r.ok && j && typeof j.error === 'string' && j.error) || 'ChatGPT가 지금 답하지 못해요' };
+    return text;
+}
 function tutorTop(sub) { return '<div class="lesson-top"><button class="back-btn tap44" id="tuBack" aria-label="뒤로">←</button><div><div class="lt-title">🤖 AI 튜터</div><div class="lt-sub">' + esc(CUR.flag || '') + ' ' + sub + '</div></div></div>'; }
-// 내 키 방식의 키 넣기·바꾸기·지우기 화면
+// 내 키 방식의 설정 화면: Gemini 키 넣기·바꾸기·지우기 + ChatGPT(내 컴퓨터) 연결
 function renderTutorKey(T) {
-    const has = tutorKeyGet();
-    $main.innerHTML = tutorTop('무료 키로 켜기') +
+    const has = tutorKeyGet(), br = tutorBridgeGet(), any = !!(has || br);
+    const done = () => { T.keyEdit = false; renderTutor(); };
+    $main.innerHTML = tutorTop(any ? '키 · 연결' : '무료 키로 켜기') +
         '<div class="card tu-key"><b>🔑 ' + (has ? '내 Gemini 키' : 'AI 튜터 켜기 (무료)') + '</b>' +
         (has ? '<div class="muted" style="margin:6px 0 10px">저장된 키: <b>····' + esc(has.slice(-4)) + '</b></div>'
             : '<ol class="tu-steps"><li>아래 단추로 <b>구글 AI 스튜디오</b>를 열고 구글 계정으로 들어가요.</li><li><b>API 키 만들기</b>를 눌러 키를 만들고 복사해요. (카드 등록 없이 무료)</li><li>이 화면으로 돌아와 아래 칸에 붙여 넣고 <b>저장</b>을 눌러요.</li></ol>' +
@@ -10047,29 +10076,45 @@ function renderTutorKey(T) {
         '<label class="tu-lab" for="tuKey">' + (has ? '새 키로 바꾸기' : 'Gemini 키') + '</label>' +
         '<input id="tuKey" type="password" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" maxlength="200" placeholder="여기에 붙여 넣기">' +
         '<div class="tu-msg" id="tuKeyMsg" role="status" aria-live="polite"></div>' +
-        '<div class="tu-acts"><button class="btn" id="tuKeySave">저장</button>' + (has ? '<button class="btn ghost" id="tuKeyDone">돌아가기</button><button class="btn fail" id="tuKeyDel">키 지우기</button>' : '') + '</div></div>' +
-        '<div class="lg-note" role="note">🔒 키는 <b>이 기기에만</b> 저장돼요. 구글 로그인을 해도 클라우드나 백업 파일에 들어가지 않고, AI에게 물을 때 구글로만 보내요. 키는 비밀번호처럼 남에게 보여 주지 마세요. 무료 키로 보낸 글은 구글이 서비스 개선에 쓸 수 있으니 이름·연락처 같은 개인정보는 적지 마세요.</div>';
-    document.getElementById('tuBack').addEventListener('click', () => { if (has && T.keyEdit) { T.keyEdit = false; renderTutor(); } else tutorBack(); });
-    const inp = document.getElementById('tuKey'), msg = document.getElementById('tuKeyMsg'), btn = document.getElementById('tuKeySave');
-    const save = async () => {
-        const v = inp.value.trim();
-        if (TUTOR.checking) return;
-        if (!TUTOR_KEY_RE.test(v)) { msg.textContent = v ? '키 모양이 아니에요. 빈칸 없이 그대로 붙여 넣어 주세요' : '키를 붙여 넣어 주세요'; return; }
-        TUTOR.checking = true; btn.disabled = true; msg.textContent = '키를 확인하는 중…';
-        const res = await tutorKeyCheck(v);
-        TUTOR.checking = false;
-        if (S.view !== 'tutor' || !document.body.contains(btn)) return;   // 그사이 다른 화면으로 갔다
-        if (!res.ok) { btn.disabled = false; msg.textContent = res.msg; return; }
-        tutorKeySet(v); T.keyEdit = false; showToast('🤖 AI 튜터가 켜졌어요', '', 2400); renderTutor();
+        '<div class="tu-acts"><button class="btn" id="tuKeySave">저장</button>' + (has ? '<button class="btn fail" id="tuKeyDel">키 지우기</button>' : '') + '</div></div>' +
+        '<details class="card tu-key tu-br"' + (br ? ' open' : '') + '><summary><b>💚 ChatGPT 연결</b> <span class="muted">(선택 · 내 컴퓨터 필요)</span></summary>' +
+        (br ? '<div class="muted" style="margin:6px 0 10px">연결됨: <b>' + esc(br.url.replace(/^https?:\/\//, '')) + '</b></div>'
+            : '<div class="muted" style="margin:6px 0 10px;line-height:1.6">ChatGPT 구독으로 로그인한 <b>내 컴퓨터</b>에서 다리 프로그램을 켜면 화면에 연결 주소 한 줄이 나와요. 그 줄을 아래에 붙여 넣어요. 컴퓨터와 그 프로그램이 켜져 있을 때만 되고, 답은 Gemini보다 늦어요.</div>') +
+        '<label class="tu-lab" for="tuBr">' + (br ? '새 주소로 바꾸기' : '연결 주소') + '</label>' +
+        '<input id="tuBr" type="password" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" maxlength="400" placeholder="https://…#… 한 줄 붙여 넣기">' +
+        '<div class="tu-msg" id="tuBrMsg" role="status" aria-live="polite"></div>' +
+        '<div class="tu-acts"><button class="btn" id="tuBrSave">연결</button>' + (br ? '<button class="btn fail" id="tuBrDel">연결 끊기</button>' : '') + '</div></details>' +
+        (any ? '<button class="btn ghost block" id="tuKeyDone" style="min-height:48px;margin-bottom:10px">돌아가기</button>' : '') +
+        '<div class="lg-note" role="note">🔒 키와 연결 주소는 <b>이 기기에만</b> 저장돼요. 구글 로그인을 해도 클라우드나 백업 파일에 들어가지 않아요. 비밀번호처럼 남에게 보여 주지 마세요. 무료 키로 보낸 글은 구글이 서비스 개선에 쓸 수 있으니 이름·연락처 같은 개인정보는 적지 마세요.</div>';
+    document.getElementById('tuBack').addEventListener('click', () => { if (any && T.keyEdit) done(); else tutorBack(); });
+    // 붙여 넣은 값을 확인(check)한 뒤에만 저장한다 — Gemini 키와 ChatGPT 연결 주소가 같은 흐름을 쓴다
+    const wire = (inpId, msgId, btnId, parse, badShape, check, store, okToast) => {
+        const inp = document.getElementById(inpId), msg = document.getElementById(msgId), btn = document.getElementById(btnId);
+        const save = async () => {
+            const v = inp.value.trim(), val = parse(v);
+            if (TUTOR.checking) return;
+            if (!val) { msg.textContent = v ? badShape : '붙여 넣어 주세요'; return; }
+            TUTOR.checking = true; btn.disabled = true; msg.textContent = '확인하는 중…';
+            const res = await check(val);
+            TUTOR.checking = false;
+            if (S.view !== 'tutor' || !document.body.contains(btn)) return;   // 그사이 다른 화면으로 갔다
+            if (!res.ok) { btn.disabled = false; msg.textContent = res.msg; return; }
+            store(v); showToast(okToast, '', 2400); done();
+        };
+        btn.addEventListener('click', save);
+        inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); save(); } });
     };
-    btn.addEventListener('click', save);
-    inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); save(); } });
-    const done = document.getElementById('tuKeyDone'); if (done) done.addEventListener('click', () => { T.keyEdit = false; renderTutor(); });
-    const del = document.getElementById('tuKeyDel'); if (del) del.addEventListener('click', () => { tutorKeySet(''); T.keyEdit = false; T.msgs = []; showToast('🔑 이 기기에서 키를 지웠어요', '', 2400); renderTutor(); });
+    wire('tuKey', 'tuKeyMsg', 'tuKeySave', v => TUTOR_KEY_RE.test(v) ? v : null, '키 모양이 아니에요. 빈칸 없이 그대로 붙여 넣어 주세요', tutorKeyCheck, tutorKeySet, '🤖 AI 튜터가 켜졌어요');
+    wire('tuBr', 'tuBrMsg', 'tuBrSave', tutorBridgeParse, '연결 주소 모양이 아니에요. 컴퓨터 화면의 한 줄(https://…#…)을 그대로 붙여 넣어 주세요', tutorBridgeCheck, tutorBridgeSet, '💚 ChatGPT가 연결됐어요');
+    const on = (id, fn) => { const el = document.getElementById(id); if (el) el.addEventListener('click', fn); };
+    on('tuKeyDone', done);
+    on('tuKeyDel', () => { tutorKeySet(''); T.msgs = []; showToast('🔑 이 기기에서 키를 지웠어요', '', 2400); done(); });
+    on('tuBrDel', () => { tutorBridgeSet(''); T.msgs = []; showToast('💚 ChatGPT 연결을 끊었어요', '', 2400); done(); });
 }
 function renderTutor() {
-    const T = tutorState(), relay = !!tutorUrl();
-    if (!relay && (!tutorKeyGet() || T.keyEdit)) { renderTutorKey(T); return; }
+    const T = tutorState(), relay = !!tutorUrl(), avail = relay ? [] : tutorAvail();
+    if (!relay && (!avail.length || T.keyEdit)) { renderTutorKey(T); return; }
+    if (!relay && !avail.includes(T.engine)) T.engine = avail[0];
     const top = tutorTop(T.left != null ? '오늘 ' + T.left + '번 남음' : 'AI와 말 연습');
     if (relay && !CLOUD.user) {
         $main.innerHTML = top + '<div class="card"><b>🤖 AI 튜터와 대화해 보세요</b><div class="muted" style="margin:6px 0 10px">쉬운 말로 대화하고, 내가 쓴 문장을 고쳐 받을 수 있어요. 오남용을 막으려고 <b>구글 로그인</b>을 한 사람만 쓸 수 있고, 하루 횟수가 정해져 있어요.</div></div>' + (IN_APP ? '<div class="lg-note" role="note">카카오톡 같은 앱 안 브라우저에서는 구글 로그인이 막혀 있어요. 크롬·사파리 같은 기본 브라우저로 열어 주세요.</div>' : cloudCardHtml('tutor'));
@@ -10077,9 +10122,10 @@ function renderTutor() {
         return;
     }
     const seg = (list, cur, kind) => '<div class="tu-seg" role="group" aria-label="' + (kind === 'engine' ? 'AI 고르기' : '방식 고르기') + '">' + list.map(([id, t]) => '<button data-tu-' + kind + '="' + id + '" aria-pressed="' + (id === cur) + '">' + t + '</button>').join('') + '</div>';
-    let h = top + '<div class="tu-ctl">' + (relay ? seg(TUTOR_ENGINES, T.engine, 'engine') : '') + seg(TUTOR_MODES, T.mode, 'mode') + (relay ? '' : '<button class="tu-keybtn" id="tuKeyBtn" aria-label="Gemini 키 바꾸기·지우기">🔑 키</button>') + '</div>' +
+    let h = top + '<div class="tu-ctl">' + (relay ? seg(TUTOR_ENGINES, T.engine, 'engine') : avail.length > 1 ? seg(TUTOR_ENGINES, T.engine, 'engine') : '') + seg(TUTOR_MODES, T.mode, 'mode') + (relay ? '' : '<button class="tu-keybtn" id="tuKeyBtn" aria-label="키·연결 바꾸기">🔑 키</button>') + '</div>' +
         '<div class="lg-note" role="note">' + (relay
             ? '🔒 쓴 글은 AI(' + (T.engine === 'openai' ? 'OpenAI' : 'Google') + ')에 보내져요. 이름·연락처 같은 개인정보는 적지 마세요. 이 앱과 서버는 대화를 저장하지 않아요. AI는 틀릴 수 있어요.'
+            : T.engine === 'openai' ? '🔒 쓴 글은 내 컴퓨터(다리 프로그램)를 거쳐 OpenAI(ChatGPT)로 보내져요. 답이 조금 늦을 수 있어요. 개인정보는 적지 마세요. 이 앱은 대화를 저장하지 않아요. AI는 틀릴 수 있어요.'
             : '🔒 쓴 글은 이 기기에서 Google(Gemini)로 바로 보내져요. 이름·연락처 같은 개인정보는 적지 마세요. 이 앱은 대화를 저장하지 않아요. AI는 틀릴 수 있어요.') + '</div>' +
         '<div class="tu-log" id="tuLog" role="log" aria-live="polite" aria-label="대화">';
     if (!T.msgs.length) h += '<div class="tu-empty">' + (T.mode === 'correct' ? '✏️ 배운 말로 문장을 써 보세요. 자연스럽게 고쳐 드려요.' : '💬 먼저 인사해 보세요! 아래 버튼으로 시작해도 돼요.') + '</div><div class="tu-starters">' +
@@ -10101,12 +10147,14 @@ function renderTutor() {
     const log = document.getElementById('tuLog'); if (log) log.scrollTop = log.scrollHeight;
 }
 async function tutorSend(text) {
-    const T = tutorState(), code = CUR.code, relay = tutorUrl(), key = relay ? '' : tutorKeyGet();
+    const T = tutorState(), code = CUR.code, relay = tutorUrl(), avail = relay ? [] : tutorAvail();
+    if (!relay && avail.length && !avail.includes(T.engine)) T.engine = avail[0];
+    const viaBridge = !relay && T.engine === 'openai';
     text = String(text || '').trim().slice(0, TUTOR_MAX);
-    if (!text || TUTOR.busy || (relay ? !CLOUD.user : !key)) return;
+    if (!text || TUTOR.busy || (relay ? !CLOUD.user : !avail.length)) return;
     T.msgs.push({ role: 'user', text }); T.draft = ''; TUTOR.busy = true;
     if (S.view === 'tutor') renderTutor();
-    const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 35000); TUTOR.ctl = ctl;
+    const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), viaBridge ? 150000 : 35000); TUTOR.ctl = ctl;
     const hist = T.msgs.filter(m => m.role !== 'note').slice(-12).map(m => ({ role: m.role, text: m.text }));
     while (hist.length && hist[0].role !== 'user') hist.shift();   // 첫 글은 학습자의 글이어야 한다
     let err = '', keyBad = false;
@@ -10126,7 +10174,9 @@ async function tutorSend(text) {
                 if (j.fellBack) T.msgs.push({ role: 'note', text: 'ℹ️ ' + (T.engine === 'openai' ? 'ChatGPT' : 'Gemini') + '가 바빠서 다른 AI가 답했어요' });
             }
         } else {
-            T.msgs.push({ role: 'assistant', text: await tutorAskGemini(key, tutorPrompt(code, tutorLevel(), T.mode), hist, ctl.signal) });
+            T.msgs.push({ role: 'assistant', text: viaBridge
+                ? await tutorAskBridge(tutorBridgeGet(), { lang: code, mode: T.mode, level: tutorLevel(), messages: hist }, ctl.signal)
+                : await tutorAskGemini(tutorKeyGet(), tutorPrompt(code, tutorLevel(), T.mode), hist, ctl.signal) });
         }
     } catch (e) {
         if (e && typeof e.msg === 'string') { err = e.msg; keyBad = !!e.keyBad; }
@@ -10140,7 +10190,7 @@ async function tutorSend(text) {
 registerPlayTile({
     id: 'tutor', ico: '🤖', name: 'AI 튜터', view: 'tutor', ctx: ['home', 'short'], noPick: true,   // 쓸수록 한도·비용이 드는 기능 — 홈 '지금 하기 좋은 놀이'로는 권하지 않음
     need: () => true,
-    status: () => tutorUrl() ? (CLOUD.user ? '대화 · 문장 교정' : '구글 로그인 필요') : (tutorKeyGet() ? '대화 · 문장 교정' : '무료 키로 켜기'),
+    status: () => tutorUrl() ? (CLOUD.user ? '대화 · 문장 교정' : '구글 로그인 필요') : (tutorAvail().length ? '대화 · 문장 교정' : '무료 키로 켜기'),
     open: () => tutorOpen('play'),
 });
 
@@ -12694,7 +12744,7 @@ async function cloudLogout(wipeLocal) {
         const g = nextGen(store);
         store = normalizeStore({ gen: g, genAt: todayStr() }); save();
         // 통계 끄기 선택(STATS_OFF_KEY)은 기기 설정이라 남긴다
-        try { [LS_KEY + '_before_restore', LS_KEY + '_corrupt_backup', CLOUD_HINT_KEY, LEGACY_DONE_KEY, 'nihao_zh_v1', 'hola_es_v1', DEQ_KEY, DEV_KEY, NICK_KEY, RADIO_LAST_KEY, TUTOR_KEY_LS].forEach(k => localStorage.removeItem(k)); } catch (e) { }   // 기기 id도 새로(지운 뒤 다시 센 상자 수가 계정의 옛 칸과 겹치지 않게)
+        try { [LS_KEY + '_before_restore', LS_KEY + '_corrupt_backup', CLOUD_HINT_KEY, LEGACY_DONE_KEY, 'nihao_zh_v1', 'hola_es_v1', DEQ_KEY, DEV_KEY, NICK_KEY, RADIO_LAST_KEY, TUTOR_KEY_LS, TUTOR_BRIDGE_LS].forEach(k => localStorage.removeItem(k)); } catch (e) { }   // 기기 id도 새로(지운 뒤 다시 센 상자 수가 계정의 옛 칸과 겹치지 않게)
         reloadOtherTabs();
         showToast('👋 로그아웃하고 이 기기의 기록을 지웠어요');
         setTimeout(() => location.reload(), 600);
