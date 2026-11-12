@@ -31,7 +31,7 @@ import sys
 from pathlib import Path
 
 MAX_DIFF_CHARS = 100_000   # Antigravity gets the prompt as one argument (Linux limit 128 KiB)
-TIMEOUT = 900             # seconds per CLI call; agy has been seen to hang without a TTY
+TIMEOUT = 600             # seconds per CLI call (4 calls in series = 40 min, under the 55-min job)
 MARKER = "<!-- ai-cross-review -->"
 SEVERITIES = ("blocker", "major", "minor", "nit")
 
@@ -71,9 +71,30 @@ Answer with JSON only:
   "lesson_candidates": ["<a reusable lesson, only if it would help future reviews>"]}}
 Report only what you can support from the diff. An empty findings list is a fine answer."""
 
-ROUND2 = """You reviewed pull request {pr} (your role: {role}).
+ROUND2 = """{brief}
+
+# Shared lessons
+{lessons}
+
+# Your role
+{role}
+
+# Pull request {pr}
+Changed files:
+{files}
+
+Diff (base...head{trunc}):
+```diff
+{diff}
+```
+
+# Round 2
+This is the second round of the review of pull request {pr}. Your own first-round findings were:
+```json
+{own_findings}
+```
 The other reviewer ({other}) reported the findings below. For each one, say whether you agree, and why,
-quoting the diff when you can. Then add anything that both of you missed.
+quoting the diff above. Then add anything that both of you missed.
 
 Other reviewer's findings:
 ```json
@@ -149,18 +170,31 @@ def parse_json(text: str) -> dict:
         out = json.loads(t)
         return out if isinstance(out, dict) else {"findings": []}
     except json.JSONDecodeError:
-        return {"summary": "(answer was not JSON)", "findings": [
+        return {"_unparsed": True, "summary": "(answer was not JSON)", "findings": [
             {"id": "F1", "severity": "minor", "file": "", "line": None, "claim": text.strip()[:2000],
              "evidence": "", "fix": "", "confidence": "low"}]}
 
 
+TEXT_FIELDS = ("file", "claim", "evidence", "fix", "confidence")
+
+
+def _list(d, key: str) -> list:
+    v = d.get(key) if isinstance(d, dict) else None
+    return v if isinstance(v, list) else []
+
+
 def _findings(d: dict, key: str = "findings") -> list[dict]:
+    """Findings normalised to the expected shape: text fields are strings, a bad severity becomes
+    'minor', a missing id gets F<n>. Malformed model output never crashes the report."""
     out = []
-    for i, f in enumerate(d.get(key) or [], 1):
+    for i, f in enumerate(_list(d, key), 1):
         if not isinstance(f, dict):
             continue
-        sev = str(f.get("severity", "minor")).lower()
-        f = {**f, "severity": sev if sev in SEVERITIES else "minor", "id": str(f.get("id") or f"F{i}")}
+        sev = str(f.get("severity") or "minor").lower()
+        f = {**f, **{k: "" if f.get(k) is None else str(f.get(k)) for k in TEXT_FIELDS},
+             "severity": sev if sev in SEVERITIES else "minor", "id": str(f.get("id") or f"F{i}")}
+        if not isinstance(f.get("line"), int):
+            f["line"] = None
         out.append(f)
     return out
 
@@ -202,12 +236,18 @@ def review(ctx: dict, pr: str, models: dict, keys: dict, call=None, repo: Path =
     if len(ok) == 2:
         for p in ok:
             other = "gemini" if p == "openai" else "openai"
-            prompt = ROUND2.format(pr=pr, role=ROLES[p], other=NAMES[other],
+            prompt = ROUND2.format(pr=pr, role=ROLES[p], other=NAMES[other], **ctx,
+                                   own_findings=json.dumps(_findings(res[p]["round1"]), ensure_ascii=False, indent=1),
                                    other_findings=json.dumps(_findings(res[other]["round1"]), ensure_ascii=False, indent=1))
             try:
-                res[p]["round2"] = parse_json(call(p, models[p], system, prompt))
+                answer = call(p, models[p], system, prompt)
             except ReviewError as e:
                 res[p]["round2"] = {"error": str(e)}
+                continue
+            r2 = parse_json(answer)
+            if r2.get("_unparsed"):            # prose instead of JSON: keep it visible, do not read it as round 1
+                r2 = {"error": "round-2 answer was not JSON", "raw": answer.strip()[:2000]}
+            res[p]["round2"] = r2
     return res
 
 
@@ -219,18 +259,18 @@ def merge(res: dict) -> dict:
         other = "gemini" if p == "openai" else "openai"
         verdicts = {}
         if other in res:
-            verdicts = {str(v.get("id")): v for v in (res[other].get("round2", {}).get("verdicts") or []) if isinstance(v, dict)}
+            verdicts = {str(v.get("id")): v for v in _list(res[other].get("round2", {}), "verdicts") if isinstance(v, dict)}
         for f in _findings(r.get("round1", {})):
             v = verdicts.get(f["id"], {})
-            item = {**f, "by": NAMES[p], "other_verdict": v.get("verdict"), "other_reason": v.get("reason", "")}
+            item = {**f, "by": NAMES[p], "other_verdict": v.get("verdict"), "other_reason": str(v.get("reason") or "")}
             g = {"agree": "consensus", "disagree": "disputed"}.get(str(v.get("verdict")).lower(), "single")
             groups[g].append(item)
     rank = {s: i for i, s in enumerate(SEVERITIES)}
     for g in groups.values():
         g.sort(key=lambda f: rank[f["severity"]])
     additions = [{**f, "by": NAMES[p]} for p, r in res.items() for f in _findings(r.get("round2", {}), "additions")]
-    gaps = [(NAMES[p], g) for p, r in res.items() for g in (r.get("round1", {}).get("gaps") or [])]
-    lessons = [(NAMES[p], l) for p, r in res.items() for l in (r.get("round1", {}).get("lesson_candidates") or [])]
+    gaps = [(NAMES[p], str(g)) for p, r in res.items() for g in _list(r.get("round1", {}), "gaps")]
+    lessons = [(NAMES[p], str(l)) for p, r in res.items() for l in _list(r.get("round1", {}), "lesson_candidates")]
     return {**groups, "additions": additions, "gaps": gaps, "lessons": lessons}
 
 
@@ -252,8 +292,12 @@ def render(res: dict, merged: dict, pr: str, head: str) -> str:
         lines += ["검수 키(`OPENAI_API_KEY`, `GEMINI_API_KEY`)가 없어 건너뛰었습니다."]
         return "\n".join(lines) + "\n"
     for p, r in res.items():
-        state = f"오류: {r['error']}" if r["error"] else (r["round1"].get("summary") or "요약 없음")
+        state = f"오류: {r['error']}" if r["error"] else str(r["round1"].get("summary") or "요약 없음")
         lines.append(f"- **{NAMES[p]}** ({CLI_NAMES[p]}, 모델 `{r['model'] or 'CLI 기본값'}`): {state}")
+        if r.get("round2", {}).get("error"):
+            lines.append(f"  - ⚠ 2차(상대 지적 검토) 실패: {r['round2']['error']} — 상대 지적은 '한쪽만 지적'으로 남습니다")
+            if r["round2"].get("raw"):
+                lines.append(f"  - 2차 답변 원문 일부: {r['round2']['raw'][:500]}")
     lines.append("")
     sections = (("consensus", "두 검수자 합의"), ("disputed", "의견 갈림 — 대표님 판단 필요 시 Claude가 정리"),
                 ("single", "한쪽만 지적 (상대 확인 없음)"))

@@ -36,3 +36,15 @@ last.
   into code during the paper period.
 - The backtest universe uses the current constituents, so it has survivorship bias (SPEC 8.1).
   Treat backtest win rates as optimistic.
+
+## Review tooling (accepted from the first cross-review, PR #69, 2026-11-12)
+- **Each CLI call is a fresh process.** A later round only knows what its prompt contains. Every
+  round must carry the full context (brief, lessons, diff), not just the previous round's output.
+  (Codex and Gemini agreed; reproduced.)
+- **Apply trust checks on every trigger path.** `workflow_dispatch` skipped the same-repository
+  check that `pull_request` had. Check the resolved PR's head repository before any secret is
+  exposed. (Both reviewers found this.)
+- **Treat model output as untrusted input.** `{"claim": null}` crashed the report. Normalise the
+  types of every field before using it, and surface failures and non-JSON answers in the report
+  instead of dropping them.
+- **Time budgets must add up.** Four 15-minute calls in series did not fit a 45-minute job.
