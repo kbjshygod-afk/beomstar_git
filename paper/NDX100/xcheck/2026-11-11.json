@@ -67,18 +67,18 @@
     "diff_pct": 4.318
    },
    {
-    "symbol": "LITE",
-    "field": "volume",
-    "yahoo": 6385200.0,
-    "krx": 6215328.0,
-    "diff_pct": 2.66
-   },
-   {
     "symbol": "MELI",
     "field": "volume",
     "yahoo": 610200.0,
     "krx": 594947.0,
     "diff_pct": 2.5
+   },
+   {
+    "symbol": "LITE",
+    "field": "volume",
+    "yahoo": 6385200.0,
+    "krx": 6215328.0,
+    "diff_pct": 2.66
    }
   ],
   "unlisted": [],
