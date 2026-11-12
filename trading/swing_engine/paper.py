@@ -526,7 +526,7 @@ def _store_xcheck(market: str, root: Path, rec: dict, suffix: str) -> dict:
     return rec
 
 
-def kis_record(market: str, frames: dict, bench: pd.DataFrame, as_of, cache_dir) -> dict | None:
+def kis_record(market: str, frames: dict, bench: pd.DataFrame, as_of, cache_dir, settled: bool = False) -> dict | None:
     """Yahoo vs KIS record for the signal day of a Korean market when KIS_APP_KEY/SECRET are set
     (checklist 2.4); None when KIS does not apply. Not stored yet (see cross_check_kis). Never raises."""
     dm = data_market(market)
@@ -540,24 +540,38 @@ def kis_record(market: str, frames: dict, bench: pd.DataFrame, as_of, cache_dir)
     if cred is None:
         return None
     try:
-        return xcheck.run_kis(dm, frames, bench, pd.Timestamp(as_of), cred, cache_dir)
+        return xcheck.run_kis(dm, frames, bench, pd.Timestamp(as_of), cred, cache_dir, settled=settled)
     except Exception as e:                            # noqa: BLE001 - a cross-check must never stop the ledger
         log.warning("%s: KIS cross-check failed: %s", market, e)
         return {"market": dm, "as_of": _day(as_of), "source": xcheck.KIS_SOURCE, "status": "error",
                 "checked": None, "index": None, "symbols": None, "error": str(e)}
 
 
-def cross_check_kis(market: str, frames: dict, bench: pd.DataFrame, as_of, root: Path, cache_dir, rec=None) -> dict | None:
-    """Yahoo vs KIS on the previous trading day's bar, written to root/xcheck/<T-1>.kis.json
-    (observation only). KIS's bar for the current day keeps following the NXT after-hours price
-    through the evening and settles to the KRX close by the next day (2026-11-06: 086520 KIS read
-    70,800 on 10-30 at 18:03 KST and 72,200 a week later, equal to KRX and Yahoo; 11-05 71,200 in
-    the evening, 71,100 the next day, volume equal too), so the same-day comparison could not
-    agree. `rec` is the guard's same-day record: its guard verdict is carried over, and it is
-    stored as before when there is no previous bar or KIS gives no T-1 record."""
+def settled_kis_day(bench: pd.DataFrame, now: datetime | None = None) -> int | None:
+    """Position in `bench` of the latest day whose KIS bar is final (kis.settles_at: the next
+    trading day's NXT close), looking at T-1 and T-2; None when neither is."""
+    now = now or datetime.now(kis.KST)
+    for i in (-2, -3):
+        if len(bench) >= -i and now >= kis.settles_at(bench.index[i + 1]):
+            return i
+    return None
+
+
+def cross_check_kis(market: str, frames: dict, bench: pd.DataFrame, as_of, root: Path, cache_dir, rec=None,
+                    now: datetime | None = None) -> dict | None:
+    """Yahoo vs KIS on the latest settled bar (T-1 once the next trading day's NXT session has
+    closed, else T-2), written to root/xcheck/<that day>.kis.json (observation only). Until KIS
+    settles it during the next trading day, a day's KIS bar carries the KRX+NXT combined close
+    (2026-11-06: 086520 KIS read 70,800 on 10-30 at 18:03 KST and 72,200 a week later, equal to KRX
+    and Yahoo; 2026-11-09: the 11-06 bars fetched that afternoon were the combined close on ~90% of
+    symbols, see kis.settles_at), so an earlier comparison measures NXT drift. `rec` is the guard's
+    same-day record: its guard verdict is carried over, and it is stored as before when no settled
+    bar exists or KIS gives no record for it."""
     t1 = None
-    if bench is not None and len(bench) >= 2:
-        t1 = kis_record(market, frames, bench.iloc[:-1], bench.index[-2], cache_dir)
+    i = settled_kis_day(bench, now) if bench is not None else None
+    if i is not None:
+        cut = len(bench) + i + 1
+        t1 = kis_record(market, frames, bench.iloc[:cut], bench.index[i], cache_dir, settled=True)
     if t1 is None or t1.get("status") == "error" and rec is not None:
         if rec is None:
             rec = kis_record(market, frames, bench, as_of, cache_dir)

@@ -1,6 +1,6 @@
 """KIS Open API client and cross-check (checklist 2.4): token caching, headers, parsing, limits."""
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 import urllib.error
 
 import pandas as pd
@@ -104,9 +104,9 @@ def test_bars_on_maps_symbols_and_caches(tmp_path, monkeypatch):
             return pd.DataFrame({"open": [1.0], "high": [1.0], "low": [1.0], "close": [33600.0], "volume": [5.0]},
                                 index=pd.to_datetime(["2026-10-30"]))
     d = pd.Timestamp("2026-10-30")
-    df = kis.bars_on(FakeClient(), "KOSDAQ", ["096530.KQ", "999999.KQ"], d, tmp_path)
+    df = kis.bars_on(FakeClient(), "KOSDAQ", ["096530.KQ", "999999.KQ"], d, tmp_path, settled=True)
     assert list(df.index) == ["096530.KQ"] and df.loc["096530.KQ", "close"] == 33600.0 and df.attrs["missing"] == ["999999.KQ"]
-    df2 = kis.bars_on(FakeClient(), "KOSDAQ", ["096530.KQ", "999999.KQ"], d, tmp_path)
+    df2 = kis.bars_on(FakeClient(), "KOSDAQ", ["096530.KQ", "999999.KQ"], d, tmp_path, settled=True)
     assert calls == ["096530", "999999"] and df2.attrs["missing"] == ["999999.KQ"]
 
 
@@ -119,7 +119,7 @@ def test_run_kis_compares_the_signal_day(monkeypatch):
         calls = 3
         def __init__(self, cred, cache_dir=None, **kw):
             pass
-    def bars_on(client, market, symbols, date, cache_dir=None):
+    def bars_on(client, market, symbols, date, cache_dir=None, settled=False):
         df = pd.DataFrame({"open": [33800.0], "high": [33900.0], "low": [32250.0], "close": [33600.0], "volume": [310000.0]},
                           index=["096530.KQ"])
         df.attrs["missing"] = []
@@ -150,3 +150,31 @@ def test_bars_on_does_not_cache_an_unsettled_day(tmp_path):
     kis.bars_on(FakeClient(), "KOSDAQ", ["086520.KQ"], today, tmp_path)
     assert calls == ["086520", "086520"]                                   # fetched twice, never cached
     assert not (tmp_path / "kis" / f"KOSDAQ_{today.strftime('%Y%m%d')}.json").exists()
+
+
+def test_bars_on_refetches_a_past_day_unless_settled(tmp_path):
+    """A past calendar day is not enough: the 11-06 bar fetched on 11-09 afternoon was still the
+    KRX+NXT close. Only a caller-confirmed settled bar is cached, and old 'settled' files are ignored."""
+    calls = []
+    class FakeClient:
+        calls = 0
+        def stock_bars(self, code, start, end):
+            calls.append(code)
+            return pd.DataFrame({"open": [1.0], "high": [1.0], "low": [1.0], "close": [132800.0], "volume": [5.0]},
+                                index=[pd.Timestamp(start)])
+    d = pd.Timestamp("2026-11-06")
+    old = tmp_path / "kis" / "KOSDAQ_20261106.json"
+    old.parent.mkdir(parents=True)
+    old.write_text(json.dumps({"rows": {"036930.KQ": {"open": 1.0, "high": 1.0, "low": 1.0, "close": 137400.0, "volume": 5.0}},
+                               "missing": [], "settled": True}))
+    df = kis.bars_on(FakeClient(), "KOSDAQ", ["036930.KQ"], d, tmp_path)          # old flag: refetched, not cached
+    assert calls == ["036930"] and df.loc["036930.KQ", "close"] == 132800.0
+    assert json.loads(old.read_text()).get("final") is None
+    kis.bars_on(FakeClient(), "KOSDAQ", ["036930.KQ"], d, tmp_path, settled=True)
+    df = kis.bars_on(FakeClient(), "KOSDAQ", ["036930.KQ"], d, tmp_path, settled=True)
+    assert calls == ["036930", "036930"] and df.loc["036930.KQ", "close"] == 132800.0
+
+
+def test_settles_at_is_the_next_trading_days_nxt_close():
+    t = kis.settles_at(pd.Timestamp("2026-11-09"))
+    assert (t.year, t.month, t.day, t.hour) == (2026, 11, 9, 20) and t.utcoffset() == timedelta(hours=9)
