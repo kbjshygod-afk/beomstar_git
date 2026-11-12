@@ -1,9 +1,12 @@
-// 🤖 AI 튜터 화면 시험 (Playwright, 서버·키 없이: 중계 함수 응답은 가짜로 바꿔 끼움)
+// 🤖 AI 튜터 화면 시험 (Playwright, 서버·키 없이: 구글(Gemini)·중계 함수 응답은 가짜로 바꿔 끼움)
+// 앞부분 = 내 키 방식(기본), 뒷부분 = 중계 방식(tutorUrl이 있을 때)
 // 사용: NODE_PATH=/opt/node-tools/node_modules node tools/tests/lt_tutor.js [base=http://127.0.0.1:8765]
 'use strict';
 const { chromium } = require('playwright');
 const BASE = (process.argv[2] || 'http://127.0.0.1:8765').replace(/\/$/, '');
 const URL = BASE + '/language-teacher/index.html', TUTOR = 'https://tutor.test/t';
+const KEY = 'AIzaTESTkey_0123456789abcdefghijklmnopq', GOOD = t => ({ status: 200, json: { candidates: [{ content: { parts: [{ text: t }] }, finishReason: 'STOP' }] } });
+const BADKEY = { status: 400, json: { error: { code: 400, message: 'API key not valid. Please pass a valid API key.', status: 'INVALID_ARGUMENT', details: [{ reason: 'API_KEY_INVALID' }] } } };
 let bad = 0; const chk = (c, m) => { console.log((c ? '  ✓ ' : '  ✗ FAIL ') + m); if (!c) bad++; };
 const MOCK = () => {
   try { Object.defineProperty(window, 'speechSynthesis', { configurable: true, value: { speak(u) { setTimeout(() => u.onend && u.onend({}), 10); }, cancel() { }, getVoices() { return []; } } }); } catch (e) { }
@@ -13,9 +16,10 @@ const MOCK = () => {
   const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
   const errors = [];
   // withUrl: 설정 파일에 tutorUrl을 끼워 넣는다 · 파이어베이스 묶음은 막아 로그인 상태를 시험이 정한다
-  const newPage = async (withUrl, handler) => {
+  // ghandler(n, {model, body, list}) : 구글(Gemini) 쪽 가짜 응답. 없으면 목록 200 · 답 '你好'
+  const newPage = async (withUrl, handler, ghandler) => {
     const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, serviceWorkers: 'block' });
-    const p = await ctx.newPage(); p.reqs = [];
+    const p = await ctx.newPage(); p.reqs = []; p.greqs = [];
     p.on('pageerror', e => errors.push(e.message)); p.on('dialog', d => d.accept());
     await p.addInitScript(MOCK);
     await p.route('**/vendor/firebase/**', r => r.abort());
@@ -25,6 +29,15 @@ const MOCK = () => {
       if (r.request().method() === 'OPTIONS') return r.fulfill({ status: 204, headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*' } });
       const out = handler ? await handler(p.reqs.length, rq) : { status: 200, json: { reply: '你好!(nǐ hǎo) 안녕하세요', remaining: 29, engine: 'gemini' } };
       r.fulfill({ status: out.status, headers: { 'access-control-allow-origin': '*', 'content-type': 'application/json' }, body: JSON.stringify(out.json), ...(out.delay ? {} : {}) });
+    });
+    await p.route('https://generativelanguage.googleapis.com/**', async r => {
+      const rq = r.request(), u = new (require('url').URL)(rq.url()), cors = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*' };
+      if (rq.method() === 'OPTIONS') return r.fulfill({ status: 204, headers: cors });
+      const m = /models\/([^:/]+):generateContent/.exec(u.pathname), list = !m;
+      const g = { method: rq.method(), url: rq.url(), key: rq.headers()['x-goog-api-key'], model: m ? decodeURIComponent(m[1]) : '', list, body: list ? null : JSON.parse(rq.postData() || '{}') };
+      p.greqs.push(g);
+      const out = ghandler ? await ghandler(p.greqs.length, g) : (list ? { status: 200, json: { models: [] } } : GOOD('你好!(nǐ hǎo) 안녕하세요'));
+      r.fulfill({ status: out.status, headers: { ...cors, 'content-type': 'application/json' }, body: JSON.stringify(out.json) });
     });
     return { ctx, p };
   };
@@ -42,10 +55,109 @@ const MOCK = () => {
   const ids = p => p.evaluate(() => Array.from(document.querySelectorAll('[data-play]')).map(e => e.dataset.play));
   let ctx, p;
 
-  console.log('=== tutorUrl이 없으면: 놀이 탭에 AI 튜터 타일이 없다(배포 전 안전) ===');
-  ({ ctx, p } = await newPage(false)); await open(p, 'zh', true);
-  chk(!(await ids(p)).includes('tutor'), '타일 숨김');
-  chk(await p.evaluate(() => typeof tutorUrl === 'function' && tutorUrl() === ''), 'tutorUrl() 빈 값'); await ctx.close();
+  const toast = p => p.evaluate(() => document.getElementById('toastBox').innerText);
+  const small = p => p.evaluate(() => Array.from(document.querySelectorAll('#main button, #main textarea, #main input, #main a.btn')).filter(b => { const r = b.getBoundingClientRect(); return r.width && (r.height < 44 || r.width < 44); }).map(b => (b.id || b.className || b.tagName) + ':' + Math.round(b.getBoundingClientRect().width) + 'x' + Math.round(b.getBoundingClientRect().height)));
+  const withKey = p => p.evaluate(k => { localStorage.setItem('lang_starter_tutor_key', k); }, KEY);
+  const gens = p => p.greqs.filter(g => !g.list);
+
+  console.log('=== 내 키 방식 · 키가 없을 때: 타일은 보이고, 열면 키 넣는 화면(입력칸 없음, 요청 없음) ===');
+  ({ ctx, p } = await newPage(false)); await open(p, 'zh', false);
+  chk(await p.evaluate(() => tutorUrl() === ''), 'tutorUrl() 빈 값(중계 꺼짐)');
+  chk((await ids(p)).includes('tutor'), '타일 보임(로그인 없이)');
+  chk(/무료 키로 켜기/.test(await (await tile(p)).innerText()), '타일에 "무료 키로 켜기"');
+  await (await tile(p)).click(); await p.waitForTimeout(300);
+  chk(await p.evaluate(() => S.view) === 'tutor' && !!(await p.$('#tuKey')) && !(await p.$('#tuIn')), '키 넣는 화면(대화 입력칸 없음)');
+  chk(await p.getAttribute('#tuKey', 'type') === 'password', '키 칸은 가려짐(password)');
+  const link = await p.$('a.tu-link');
+  chk(await link.getAttribute('href') === 'https://aistudio.google.com/apikey' && /noopener/.test(await link.getAttribute('rel')) && await link.getAttribute('target') === '_blank', '구글 AI 스튜디오 링크(새 창·noopener)');
+  chk(/이 기기에만/.test(await p.innerText('.lg-note')), '키 보관 안내');
+  chk(!(await p.$('#tuKeyDel')), '키가 없으면 지우기 단추 없음');
+  let sm = await small(p); chk(!sm.length, '키 화면 단추·입력칸 44px 이상' + (sm.length ? ' → ' + sm.join(',') : ''));
+  chk(await p.evaluate(() => document.documentElement.scrollWidth) <= 390, '키 화면 가로 넘침 없음');
+  chk(p.greqs.length === 0 && p.reqs.length === 0, '아직 아무 요청도 없음');
+
+  console.log('=== 키 저장: 모양이 틀리면 요청 없이 거절 · 구글이 거절하면 저장 안 함 · 맞으면 저장하고 대화 화면 ===');
+  await p.fill('#tuKey', '짧은 키'); await p.click('#tuKeySave'); await p.waitForTimeout(150);
+  chk(/키 모양이 아니에요/.test(await p.innerText('#tuKeyMsg')) && p.greqs.length === 0, '모양이 틀린 키: 안내, 요청 없음');
+  await ctx.close();
+  ({ ctx, p } = await newPage(false, null, async (n, g) => g.list ? BADKEY : GOOD('x'))); await open(p, 'zh', false); await (await tile(p)).click(); await p.waitForTimeout(200);
+  await p.fill('#tuKey', KEY); await p.click('#tuKeySave'); await p.waitForFunction(() => !TUTOR.checking, null, { timeout: 5000 }); await p.waitForTimeout(150);
+  chk(/키가 맞지 않아요/.test(await p.innerText('#tuKeyMsg')), '구글이 거절한 키: 안내');
+  chk(await p.evaluate(() => localStorage.getItem('lang_starter_tutor_key')) === null && !(await p.$('#tuIn')), '저장하지 않고 키 화면에 머묾');
+  chk(await p.$eval('#tuKeySave', b => !b.disabled), '저장 단추 다시 누를 수 있음'); await ctx.close();
+  ({ ctx, p } = await newPage(false)); await open(p, 'zh', false, 12); await (await tile(p)).click(); await p.waitForTimeout(200);
+  await p.fill('#tuKey', '  ' + KEY + '  '); await p.press('#tuKey', 'Enter'); await p.waitForSelector('#tuIn', { timeout: 5000 });
+  const kc = p.greqs[0];
+  chk(kc.list && kc.method === 'GET' && kc.key === KEY && !kc.url.includes(KEY), '키 확인: 목록 요청, 키는 헤더로만(주소에 없음)');
+  chk(await p.evaluate(() => localStorage.getItem('lang_starter_tutor_key')) === KEY, '앞뒤 빈칸을 떼고 이 기기에 저장');
+  chk(!(await p.evaluate(k => (localStorage.getItem('lang_starter_v1') || '').includes(k), KEY)), '학습 기록(클라우드로 가는 칸)에는 키가 없다');
+  chk(!(await p.$('[data-tu-engine]')) && (await p.$$('[data-tu-mode]')).length === 2 && !!(await p.$('#tuKeyBtn')), 'AI 고르기 없음 · 방식 2개 · 🔑 키 단추');
+  chk(/Google\(Gemini\)로 바로/.test(await p.innerText('.lg-note')), '안내문: 구글로 바로 보냄');
+
+  console.log('=== 내 키로 대화: 구글로 바로, 지시문·기록 모양, 답 표시 ===');
+  await (await p.$('.tu-start')).click(); await p.waitForSelector('.tu-row.ai .tu-bub:not(.typing)', { timeout: 5000 });
+  let g1 = gens(p)[0];
+  chk(g1.method === 'POST' && g1.model === 'gemini-flash-latest' && g1.key === KEY && !g1.url.includes(KEY), 'POST · 첫 모델 · 키는 헤더로만');
+  chk(/중국어/.test(g1.body.systemInstruction.parts[0].text) && /병음/.test(g1.body.systemInstruction.parts[0].text) && /대화 상대/.test(g1.body.systemInstruction.parts[0].text), '지시문: 중국어·병음·대화 상대');
+  chk(g1.body.contents.length === 1 && g1.body.contents[0].role === 'user' && g1.body.generationConfig.thinkingConfig.thinkingBudget === 0, '글 1개(user) · 생각 끄기');
+  chk(/你好/.test(await p.innerText('.tu-row.ai')), 'AI 답이 보임');
+  chk(p.reqs.length === 0, '중계 서버로는 아무것도 가지 않음');
+  await p.click('[data-tu-mode="correct"]'); await p.fill('#tuIn', '我是韩国人'); await p.press('#tuIn', 'Enter'); await p.waitForFunction(() => document.querySelectorAll('.tu-row.ai').length >= 2, null, { timeout: 5000 });
+  g1 = gens(p)[1];
+  chk(g1.body.contents.map(c => c.role).join() === 'user,model,user' && g1.body.contents[2].parts[0].text === '我是韩国人', '기록이 user,model,user 순으로 간다');
+  chk(/교정 선생님/.test(g1.body.systemInstruction.parts[0].text), '교정 방식의 지시문');
+  sm = await small(p); chk(!sm.length, '대화 화면 단추 44px 이상' + (sm.length ? ' → ' + sm.join(',') : ''));
+  chk(await p.evaluate(() => document.documentElement.scrollWidth) <= 390, '대화 화면 가로 넘침 없음');
+
+  console.log('=== 🔑 키: 끝 4자리만 보이고, 돌아가기·지우기 ===');
+  await p.click('#tuKeyBtn'); await p.waitForTimeout(150);
+  chk(new RegExp('····' + KEY.slice(-4)).test(await p.innerText('.tu-key')) && !(await p.innerText('#main')).includes(KEY), '끝 4자리만 보임(전체 키는 화면에 없음)');
+  await p.click('#tuKeyDone'); await p.waitForTimeout(150); chk(!!(await p.$('#tuIn')) && await p.evaluate(() => S.tutor.msgs.length) === 4, '돌아가면 대화가 그대로');
+  await p.click('#tuKeyBtn'); await p.click('#tuKeyDel'); await p.waitForTimeout(200);
+  chk(await p.evaluate(() => localStorage.getItem('lang_starter_tutor_key')) === null && !!(await p.$('#tuKey')) && !(await p.$('#tuIn')), '지우면 이 기기에서 사라지고 키 화면으로');
+  chk(await p.evaluate(() => S.tutor.msgs.length) === 0, '대화도 비움'); await ctx.close();
+
+  console.log('=== 모델 이름이 없으면(404) 다음 모델 · 생각 끄기를 안 받으면(400) 설정 없이 다시 · 생각에 길이를 다 쓰면 넉넉히 다시 ===');
+  ({ ctx, p } = await newPage(false, null, async (n, g) => g.list ? { status: 200, json: {} } : g.model === 'gemini-flash-latest' ? { status: 404, json: { error: { code: 404, status: 'NOT_FOUND' } } } : GOOD('둘째 모델')));
+  await open(p, 'en', false); await withKey(p); await (await tile(p)).click(); await p.waitForTimeout(200);
+  await p.fill('#tuIn', 'hi'); await p.click('#tuSend'); await p.waitForSelector('.tu-row.ai .tu-bub:not(.typing)', { timeout: 5000 });
+  chk(gens(p).map(g => g.model).join() === 'gemini-flash-latest,gemini-2.5-flash' && /둘째 모델/.test(await p.innerText('.tu-row.ai')), '404 → 다음 모델이 답함');
+  await p.fill('#tuIn', 'again'); await p.click('#tuSend'); await p.waitForFunction(() => document.querySelectorAll('.tu-row.ai').length >= 2, null, { timeout: 5000 });
+  chk(gens(p).length === 3 && gens(p)[2].model === 'gemini-2.5-flash', '되는 모델을 기억해 다음부터 바로 씀'); await ctx.close();
+  ({ ctx, p } = await newPage(false, null, async (n, g) => g.list ? { status: 200, json: {} } : g.body.generationConfig.thinkingConfig ? { status: 400, json: { error: { code: 400, message: 'Thinking budget is not supported', status: 'INVALID_ARGUMENT' } } } : GOOD('설정 없이 답')));
+  await open(p, 'ja', false); await withKey(p); await (await tile(p)).click(); await p.waitForTimeout(200);
+  await p.fill('#tuIn', 'こんにちは'); await p.click('#tuSend'); await p.waitForSelector('.tu-row.ai .tu-bub:not(.typing)', { timeout: 5000 });
+  chk(gens(p).length === 2 && !gens(p)[1].body.generationConfig.thinkingConfig && gens(p)[1].body.generationConfig.maxOutputTokens >= 2000 && /설정 없이 답/.test(await p.innerText('.tu-row.ai')), '400(생각 끄기 거절) → 설정 없이 넉넉한 길이로 다시');
+  chk(/히라가나/.test(gens(p)[0].body.systemInstruction.parts[0].text), '일본어 지시문: 히라가나'); await ctx.close();
+  ({ ctx, p } = await newPage(false, null, async (n, g) => g.list ? { status: 200, json: {} } : g.body.generationConfig.thinkingConfig ? { status: 200, json: { candidates: [{ content: { parts: [] }, finishReason: 'MAX_TOKENS' }] } } : { status: 200, json: { candidates: [{ content: { parts: [{ text: '속생각', thought: true }, { text: '진짜 답' }] } }] } }));
+  await open(p, 'es', false); await withKey(p); await (await tile(p)).click(); await p.waitForTimeout(200);
+  await p.fill('#tuIn', 'hola'); await p.click('#tuSend'); await p.waitForSelector('.tu-row.ai .tu-bub:not(.typing)', { timeout: 5000 });
+  chk(gens(p).length === 2 && (await p.innerText('.tu-row.ai')).trim() === '진짜 답', '빈 답(MAX_TOKENS) → 다시 · 생각 부분은 보여 주지 않음'); await ctx.close();
+
+  console.log('=== 내 키 방식 실패 처리: 한도(429)·서버 오류·빈 답·연결 끊김 → 토스트, 글은 입력칸으로 · 키 오류면 키 화면으로 ===');
+  for (const [name, out, re] of [['429', { status: 429, json: { error: { code: 429, status: 'RESOURCE_EXHAUSTED' } } }, /무료 한도/], ['503', { status: 503, json: { error: { code: 503 } } }, /바빠요/], ['빈 답', { status: 200, json: { promptFeedback: { blockReason: 'SAFETY' } } }, /답하지 못해요/]]) {
+    ({ ctx, p } = await newPage(false, null, async (n, g) => g.list ? { status: 200, json: {} } : out)); await open(p, 'fr', false); await withKey(p); await (await tile(p)).click(); await p.waitForTimeout(200);
+    await p.fill('#tuIn', 'bonjour'); await p.click('#tuSend'); await p.waitForFunction(() => !TUTOR.busy, null, { timeout: 5000 }); await p.waitForTimeout(200);
+    chk(re.test(await toast(p)), name + ': 안내 토스트'); chk(await p.inputValue('#tuIn') === 'bonjour' && await p.evaluate(() => S.tutor.msgs.length) === 0, name + ': 글이 돌아오고 기록에 안 남음');
+    if (name === '429') chk(gens(p).length === 1, '429: 다른 모델로 되풀이하지 않음');
+    await ctx.close();
+  }
+  ({ ctx, p } = await newPage(false, null, async (n, g) => g.list ? { status: 200, json: {} } : BADKEY)); await open(p, 'zh', false); await withKey(p); await (await tile(p)).click(); await p.waitForTimeout(200);
+  await p.fill('#tuIn', '你好'); await p.click('#tuSend'); await p.waitForFunction(() => !TUTOR.busy, null, { timeout: 5000 }); await p.waitForTimeout(200);
+  chk(/키가 맞지 않거나/.test(await toast(p)) && !!(await p.$('#tuKey')), '키 오류: 안내하고 키 화면으로');
+  chk(await p.evaluate(() => S.tutor.draft) === '你好' && gens(p).length === 1, '쓴 글은 남겨 둠 · 한 번만 시도');
+  await p.click('#tuKeyDone'); await p.waitForTimeout(150); chk(await p.inputValue('#tuIn') === '你好', '돌아가면 입력칸에 그대로'); await ctx.close();
+  ({ ctx, p } = await newPage(false)); await open(p, 'zh', false); await withKey(p); await (await tile(p)).click(); await p.waitForTimeout(200);
+  await p.unroute('https://generativelanguage.googleapis.com/**'); await p.route('https://generativelanguage.googleapis.com/**', r => r.abort('failed'));
+  await p.fill('#tuIn', '你好'); await p.click('#tuSend'); await p.waitForFunction(() => !TUTOR.busy, null, { timeout: 5000 }); await p.waitForTimeout(200);
+  chk(/인터넷/.test(await toast(p)) && await p.inputValue('#tuIn') === '你好', '연결 끊김: 안내, 글이 돌아옴'); await ctx.close();
+
+  console.log('=== 내 키 방식 안전: 답에 HTML이 있어도 글자로만 · 로그인해도 화면이 바뀌지 않음 · 기록 지우기에 키 포함 ===');
+  ({ ctx, p } = await newPage(false, null, async (n, g) => g.list ? { status: 200, json: {} } : GOOD('<img src=x onerror="window.__xss=1"><script>window.__xss=2<\/script>')));
+  await open(p, 'en', false); await withKey(p); await (await tile(p)).click(); await p.waitForTimeout(200);
+  await p.fill('#tuIn', 'hi'); await p.click('#tuSend'); await p.waitForSelector('.tu-row.ai .tu-bub:not(.typing)', { timeout: 5000 }); await p.waitForTimeout(200);
+  chk(await p.evaluate(() => window.__xss) === undefined && !(await p.$('.tu-bub img, .tu-bub script')) && /<img src=x/.test(await p.innerText('.tu-row.ai')), '태그가 실행·생성되지 않고 글자로 보임');
+  chk(/TUTOR_KEY_LS\]\.forEach/.test(await p.evaluate(() => cloudLogout.toString())), '로그아웃하며 기기 기록을 지울 때 키도 지운다'); await ctx.close();
 
   console.log('=== 설정은 있고 로그인 전: 타일은 보이고 열면 로그인 안내(입력칸 없음) ===');
   ({ ctx, p } = await newPage(true)); await open(p, 'zh', false);
@@ -96,8 +208,7 @@ const MOCK = () => {
 
   console.log('=== 화면: 가로 넘침 없음 · 단추 44px · 뒤로 가기 ===');
   chk(await p.evaluate(() => document.documentElement.scrollWidth) <= 390, 'scrollWidth ≤ 390');
-  const small = await p.evaluate(() => Array.from(document.querySelectorAll('#main button, #main textarea')).filter(b => { const r = b.getBoundingClientRect(); return r.width && (r.height < 44 || r.width < 44); }).map(b => (b.id || b.className || b.tagName) + ':' + Math.round(b.getBoundingClientRect().width) + 'x' + Math.round(b.getBoundingClientRect().height)));
-  chk(!small.length, '모든 단추·입력칸 44px 이상' + (small.length ? ' → ' + small.join(',') : ''));
+  sm = await small(p); chk(!sm.length, '모든 단추·입력칸 44px 이상' + (sm.length ? ' → ' + sm.join(',') : ''));
   chk(await p.evaluate(() => document.querySelector('.tu-bar').getBoundingClientRect().bottom <= window.innerHeight + 1), '입력줄이 화면 안에 보임');
   await p.click('#tuBack'); await p.waitForTimeout(200); chk(await p.evaluate(() => S.view) === 'play', '← 로 놀이 탭');
   await (await tile(p)).click(); await p.waitForTimeout(200);
@@ -146,13 +257,16 @@ const MOCK = () => {
   await until(p, () => CUR && CUR.code === 'zh', null, 8000);
   chk(await p.evaluate(() => tutorState().msgs.length) === 0 && await p.evaluate(() => S.tutor.code) === 'zh', '언어를 바꾸면 새 대화'); await ctx.close();
 
-  console.log('=== 개인정보 안내: tutorUrl이 있을 때만 AI 튜터 문구가 보인다 ===');
+  console.log('=== 개인정보 안내: tutorUrl이 없으면 "내 키" 문구, 있으면 중계 문구(둘 중 하나만) ===');
   for (const withUrl of [false, true]) {
     const c2 = await browser.newContext({ viewport: { width: 390, height: 844 } }), pg = await c2.newPage();
     await pg.route('**/cloud-config.js*', async r => { const res = await r.fetch(); let b = await res.text(); if (withUrl) b = b.replace('tutorUrl: null', "tutorUrl: '" + TUTOR + "'"); r.fulfill({ response: res, body: b }); });
     await pg.goto(BASE + '/privacy.html'); await pg.waitForTimeout(300);
     const vis = await pg.evaluate(() => Array.from(document.querySelectorAll('.tutor-only')).map(e => getComputedStyle(e).display !== 'none'));
     chk(vis.length >= 3 && vis.every(v => v === withUrl), (withUrl ? 'tutorUrl 있음' : 'tutorUrl 없음') + ': .tutor-only ' + vis.length + '곳 모두 ' + (withUrl ? '보임' : '숨김'));
+    const own = await pg.evaluate(() => Array.from(document.querySelectorAll('.tutor-own')).map(e => getComputedStyle(e).display !== 'none'));
+    chk(own.length >= 4 && own.every(v => v === !withUrl), (withUrl ? 'tutorUrl 있음' : 'tutorUrl 없음') + ': .tutor-own ' + own.length + '곳 모두 ' + (withUrl ? '숨김' : '보임'));
+    if (!withUrl) chk(/이 기기에서 Google\(Gemini API\)로 바로/.test(await pg.innerText('body')) && /키 지우기/.test(await pg.innerText('body')) && !/OpenAI/.test(await pg.innerText('body')), '내 키 문구(바로 보냄·키 지우기) · OpenAI 문구 없음');
     if (withUrl) chk(/저장하지 않아요/.test(await pg.innerText('body')) && /OpenAI/.test(await pg.innerText('body')), '저장 안 함·OpenAI 문구');
     await c2.close();
   }
