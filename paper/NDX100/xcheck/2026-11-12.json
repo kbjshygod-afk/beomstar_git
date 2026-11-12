@@ -1,0 +1,62 @@
+{
+ "market": "NDX100",
+ "as_of": "2026-11-12",
+ "source": "Tiingo",
+ "status": "mismatch",
+ "checked": "2026-11-12",
+ "index": null,
+ "symbols": {
+  "date": "2026-11-12",
+  "compared": 16,
+  "missing": [],
+  "mismatches": [
+   {
+    "symbol": "CMCSA",
+    "field": "open",
+    "yahoo": 25.27000046,
+    "krx": 25.32,
+    "diff_pct": 0.197
+   },
+   {
+    "symbol": "CMCSA",
+    "field": "volume",
+    "yahoo": 19512243.0,
+    "krx": 19260499.0,
+    "diff_pct": 1.29
+   },
+   {
+    "symbol": "COST",
+    "field": "volume",
+    "yahoo": 2081002.0,
+    "krx": 2058388.0,
+    "diff_pct": 1.087
+   },
+   {
+    "symbol": "BKR",
+    "field": "low",
+    "yahoo": 47.90000153,
+    "krx": 47.8,
+    "diff_pct": 0.209
+   },
+   {
+    "symbol": "CEG",
+    "field": "open",
+    "yahoo": 270.5499878,
+    "krx": 270.9,
+    "diff_pct": 0.129
+   }
+  ],
+  "unlisted": [],
+  "sampled": 16,
+  "focus": [
+   "AMD",
+   "AMGN",
+   "CSX",
+   "KDP",
+   "MSFT",
+   "VRTX"
+  ]
+ },
+ "error": null,
+ "calls": 16
+}
