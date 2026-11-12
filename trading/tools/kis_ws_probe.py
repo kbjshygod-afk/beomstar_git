@@ -12,6 +12,9 @@ a comment on the GitHub issue "한국장 손절 근접 알림" — once per symb
 session, logged to <out>/alerts_<date>.jsonl. Needs `pip install websocket-client`. Listening
 only: no orders.
 Market hours: KRX 09:00-15:30 KST (venue J); NXT 08:00-20:00 (NX); UN = both.
+On GitHub Actions (kis-ws workflow, weekdays in two runs) --state-file carries the alerts already
+sent that KST day from the morning run to the afternoon run, and --none-ok makes "nothing held"
+a normal, successful run.
 """
 import argparse
 import json
@@ -24,17 +27,19 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from swing_engine import kis_ws  # noqa: E402
-from swing_engine.kis import KISError  # noqa: E402
+from swing_engine.kis import KST, KISError  # noqa: E402
 
 KR_MARKETS = ("KOSPI", "KOSDAQ", "KOSDAQ_V2")
+NO_TRADES = 3       # exit status: the listening window completed and no trade arrived (holiday, off-hours)
 
 
-def held_from_ledger(repo: Path, ref: str = "origin/paper-trading") -> dict:
-    """{code: stop_price} of the Korean ledgers' open positions."""
+def held_from_ledger(repo: Path, ref: str = "origin/paper-trading") -> dict | None:
+    """{code: stop_price} of the Korean ledgers' open positions; None when the ledger could not be
+    read (so a read failure is never mistaken for "nothing held")."""
     subprocess.run(["git", "-C", str(repo), "fetch", "-q", "origin", "paper-trading"], capture_output=True)
     r = subprocess.run(["git", "-C", str(repo), "show", f"{ref}:paper/latest.json"], capture_output=True, text=True)
     if r.returncode != 0:
-        return {}
+        return None
     out = {}
     for m, e in json.loads(r.stdout).get("markets", {}).items():
         if m in KR_MARKETS:
@@ -43,23 +48,27 @@ def held_from_ledger(repo: Path, ref: str = "origin/paper-trading") -> dict:
     return out
 
 
-def deliver_alert(text: str, issue_title: str) -> None:
+def deliver_alert(text: str, issue_title: str) -> bool:
     """macOS notification; and a comment on the GitHub issue when `gh` is installed and logged in.
-    Failures are printed, never raised: the listener keeps running."""
-    try:
-        subprocess.run(["osascript", "-e", f'display notification {json.dumps(text)} with title "스윙 손절 근접"'],
-                       capture_output=True, timeout=10)
-    except (OSError, subprocess.SubprocessError) as e:
-        print(f"  (notification failed: {e})")
+    Returns whether the issue comment was posted (True when no issue is configured). Failures are
+    printed, never raised: the listener keeps running."""
+    if sys.platform == "darwin":
+        try:
+            subprocess.run(["osascript", "-e", f'display notification {json.dumps(text)} with title "스윙 손절 근접"'],
+                           capture_output=True, timeout=10)
+        except (OSError, subprocess.SubprocessError) as e:
+            print(f"  (notification failed: {e})")
     if not issue_title:
-        return
+        return True
     try:
         sys.path.insert(0, str(Path(__file__).resolve().parent))
         from signal_alert import post_github_issue
         n = post_github_issue(issue_title, text + "\n\n_장중 실시간 알림 (tools/kis_ws_probe.py). 주문 아님._", "한국장")
         print(f"  (commented on issue #{n})")
+        return True
     except Exception as e:                                       # noqa: BLE001 - gh missing / not logged in
         print(f"  (issue comment failed: {str(e)[:160]})")
+        return False
 
 
 def main(argv=None) -> int:
@@ -74,6 +83,8 @@ def main(argv=None) -> int:
     ap.add_argument("--near-pct", type=float, default=kis_ws.NEAR_PCT, help="'near' = within this %% above the stop")
     ap.add_argument("--no-alert", action="store_true", help="record only, no notifications or issue comments")
     ap.add_argument("--github-issue", default="한국장 손절 근접 알림", help="issue title for alert comments ('' = none)")
+    ap.add_argument("--state-file", default=None, help="alerts already sent today (shared between runs of one day)")
+    ap.add_argument("--none-ok", action="store_true", help="exit 0 when the ledger holds no Korean symbol")
     a = ap.parse_args(argv)
     try:
         import websocket  # websocket-client
@@ -92,7 +103,13 @@ def main(argv=None) -> int:
         stops = {c.strip().split(".")[0]: None for c in a.symbols.split(",") if c.strip()}
     else:
         stops = held_from_ledger(Path(a.repo))
+        if stops is None:
+            print("could not read paper/latest.json from origin/paper-trading", file=sys.stderr)
+            return 2
         if not stops:
+            if a.none_ok:
+                print("RESULT: no held Korean symbols in the ledger; nothing to watch")
+                return 0
             print("no held Korean symbols in the ledger; pass --symbols", file=sys.stderr)
             return 2
     codes = sorted(stops)[:kis_ws.MAX_SUBSCRIPTIONS]
@@ -106,14 +123,21 @@ def main(argv=None) -> int:
     print(f"approval key ok (length {len(key)})")
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
-    day = datetime.now().strftime("%Y-%m-%d")
+    day = datetime.now(KST).strftime("%Y-%m-%d")
     log = open(out / f"ticks_{day}.jsonl", "a", encoding="utf-8")
     rec = kis_ws.Recorder(stops=stops)
     watcher = kis_ws.StopWatcher(stops, a.near_pct)
+    delivered = set()                   # alerts actually posted today; only these are carried to the next run
+    if a.state_file:
+        delivered = kis_ws.load_fired(a.state_file, day)
+        watcher.fired = set(delivered)
+        if delivered:
+            print(f"already alerted today: {sorted(delivered)}")
     alerts = open(out / f"alerts_{day}.jsonl", "a", encoding="utf-8")
     deadline = time.monotonic() + a.minutes * 60
     next_report = time.monotonic() + a.report_every
     reconnects = 0
+    ended_early = False
     while time.monotonic() < deadline:
         try:
             ws = websocket.create_connection(kis_ws.WS_URL[cred["env"]], timeout=30)
@@ -141,8 +165,10 @@ def main(argv=None) -> int:
                             alerts.flush()
                             text_ev = kis_ws.alert_text(ev)
                             print(f"[{datetime.now():%H:%M:%S}] ALERT {text_ev}")
-                            if not a.no_alert:
-                                deliver_alert(text_ev, a.github_issue)
+                            if not a.no_alert and deliver_alert(text_ev, a.github_issue):
+                                delivered.add((ev["code"], ev["level"]))
+                                if a.state_file:
+                                    kis_ws.save_fired(a.state_file, day, delivered)
                     log.flush()
                 elif kind == "other":
                     print(f"  ? {text[:120]}")
@@ -154,6 +180,7 @@ def main(argv=None) -> int:
             reconnects += 1
             print(f"socket error ({e}); reconnect {reconnects}")
             if reconnects > 5:
+                ended_early = True
                 break
             time.sleep(5)
     log.close()
@@ -164,7 +191,14 @@ def main(argv=None) -> int:
     (out / f"summary_{day}.json").write_text(json.dumps(sm, ensure_ascii=False, indent=1))
     print("\nRESULT:", rec.summary_text())
     print(f"files: {out / f'ticks_{day}.jsonl'} · {out / f'summary_{day}.json'} (send the summary, never the env file)")
-    return 0 if rec.stats else 1
+    if ended_early:
+        print("ENDED EARLY: too many socket errors before the listening window ended")
+        return 1
+    if not rec.stats:
+        print(f"COMPLETED WITHOUT TRADES: the full {a.minutes:g}-minute window ran and no trade arrived "
+              "(outside the session or a holiday)")
+        return NO_TRADES
+    return 0
 
 
 if __name__ == "__main__":

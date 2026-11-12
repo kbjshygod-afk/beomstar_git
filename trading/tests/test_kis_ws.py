@@ -69,3 +69,69 @@ def test_stop_watcher_fires_near_then_hit_once_each():
     w2 = kis_ws.StopWatcher({"A": 100.0})
     assert [e["level"] for e in w2.check("A", 95.0)] == ["near", "hit"]
     assert "손절가 30,000까지 +1.67%" in kis_ws.alert_text(near[0]) and "지금 주문하지 않습니다" in kis_ws.alert_text(hit[0])
+
+
+def test_fired_state_carries_alerts_within_one_kst_day(tmp_path):
+    """The morning and afternoon Actions runs share the alerts sent that day (checklist 2.6)."""
+    f = tmp_path / "state" / "fired.json"
+    assert kis_ws.load_fired(f, "2026-11-13") == set()                    # missing file
+    kis_ws.save_fired(f, "2026-11-13", {("093320", "near")})
+    assert kis_ws.load_fired(f, "2026-11-13") == {("093320", "near")}
+    assert kis_ws.load_fired(f, "2026-11-14") == set()                    # a new day starts clean
+    f.write_text("not json")
+    assert kis_ws.load_fired(f, "2026-11-13") == set()
+    w = kis_ws.StopWatcher({"093320": 158400.0})
+    w.fired = {("093320", "near")}
+    assert [e["level"] for e in w.check("093320", 158000.0)] == ["hit"]   # 'near' already sent
+
+
+def test_probe_none_ok_exits_zero_when_nothing_is_held(monkeypatch, capsys):
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
+    import types
+    import kis_ws_probe as P
+    monkeypatch.setitem(sys.modules, "websocket", types.ModuleType("websocket"))   # not installed in CI
+    monkeypatch.setattr(P.kis_ws, "env_file_credentials", lambda path: {"key": "k" * 36, "secret": "s", "env": "prod"})
+    monkeypatch.setattr(P, "held_from_ledger", lambda repo: {})
+    assert P.main(["--none-ok", "--env-file", "/dev/null"]) == 0
+    assert "nothing to watch" in capsys.readouterr().out
+    assert P.main(["--env-file", "/dev/null"]) == 2
+
+
+def test_load_fired_ignores_malformed_entries(tmp_path):
+    f = tmp_path / "fired.json"
+    f.write_text(json.dumps({"date": "2026-11-13", "fired": [None, ["093320"], ["093320", "near"], ["1", "bad"], 5]}))
+    assert kis_ws.load_fired(f, "2026-11-13") == {("093320", "near")}
+    f.write_text(json.dumps({"date": "2026-11-13", "fired": {"x": 1}}))
+    assert kis_ws.load_fired(f, "2026-11-13") == set()
+
+
+def test_probe_ledger_read_failure_is_not_nothing_held(monkeypatch):
+    """--none-ok forgives only a ledger read that found no Korean positions (PR #72 review)."""
+    import sys
+    import types
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
+    import kis_ws_probe as P
+    monkeypatch.setitem(sys.modules, "websocket", types.ModuleType("websocket"))
+    monkeypatch.setattr(P.kis_ws, "env_file_credentials", lambda path: {"key": "k" * 36, "secret": "s", "env": "prod"})
+    monkeypatch.setattr(P, "held_from_ledger", lambda repo: None)
+    assert P.main(["--none-ok", "--env-file", "/dev/null"]) == 2
+
+
+def test_deliver_alert_reports_whether_the_comment_was_posted(monkeypatch):
+    import sys
+    import types
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
+    import kis_ws_probe as P
+    fake = types.ModuleType("signal_alert")
+    def boom(*a, **k):
+        raise RuntimeError("gh: 502")
+    fake.post_github_issue = boom
+    monkeypatch.setitem(sys.modules, "signal_alert", fake)
+    assert P.deliver_alert("x", "한국장 손절 근접 알림") is False      # not persisted -> afternoon run retries
+    fake.post_github_issue = lambda *a, **k: 7
+    assert P.deliver_alert("x", "한국장 손절 근접 알림") is True
+    assert P.deliver_alert("x", "") is True

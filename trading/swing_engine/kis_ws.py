@@ -21,6 +21,7 @@ import urllib.error
 import urllib.request
 from dataclasses import dataclass, field
 from datetime import datetime
+from pathlib import Path
 
 from .kis import BASE, KISError, num
 
@@ -206,6 +207,25 @@ class StopWatcher:
                 out.append({"code": code, "level": level, "price": price, "stop": stop,
                             "distance_pct": round((price / stop - 1) * 100, 2)})
         return out
+
+
+def load_fired(path, day: str) -> set:
+    """Alerts already sent today (KST date `day`) by an earlier run, so a second scheduled run on
+    the same day does not repeat them. A missing, unreadable or other-day file means none."""
+    try:
+        d = json.loads(Path(path).read_text())
+    except (OSError, ValueError, TypeError):
+        return set()
+    if not isinstance(d, dict) or d.get("date") != day or not isinstance(d.get("fired"), list):
+        return set()
+    return {(str(e[0]), e[1]) for e in d["fired"]
+            if isinstance(e, (list, tuple)) and len(e) == 2 and e[1] in ("near", "hit")}
+
+
+def save_fired(path, day: str, fired: set) -> None:
+    p = Path(path)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(json.dumps({"date": day, "fired": sorted([list(x) for x in fired])}))
 
 
 def alert_text(ev: dict, name: str | None = None) -> str:

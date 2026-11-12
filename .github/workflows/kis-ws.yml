@@ -2,9 +2,18 @@
 # owner's Mac. Listens only; there is no order code. Keys come from the KIS_APP_KEY /
 # KIS_APP_SECRET repository secrets and are never printed. Ticks, alerts and the summary are kept
 # as a run artifact; stop-proximity alerts go to the issue "한국장 손절 근접 알림".
+#
+# Weekday schedule (2.6): the KRX session (09:00-15:30 KST, 390 min) is longer than one job
+# (max 360 min), so it is covered by two runs: 08:50 KST for 205 min and 12:05 KST for 210 min.
+# The alerts already sent that KST day are carried from the first run to the second through the
+# Actions cache, so each symbol/level is alerted once a day. A day with nothing held, or a KRX
+# holiday (subscribed, no trades), ends green.
 name: kis-ws
 
 on:
+  schedule:
+    - cron: '50 23 * * 0-4'   # 08:50 KST Mon-Fri
+    - cron: '5 3 * * 1-5'     # 12:05 KST Mon-Fri
   workflow_dispatch:
     inputs:
       minutes:
@@ -27,6 +36,10 @@ permissions:
   contents: read
   issues: write
 
+concurrency:
+  group: kis-ws-${{ github.event_name }}
+  cancel-in-progress: false
+
 jobs:
   listen:
     runs-on: ubuntu-latest
@@ -40,6 +53,16 @@ jobs:
           cache: pip
           cache-dependency-path: trading/requirements.txt
       - run: pip install -r trading/requirements.txt websocket-client
+      - name: KST date
+        id: day
+        run: echo "kst=$(TZ=Asia/Seoul date +%F)" >> "$GITHUB_OUTPUT"
+      - name: Alerts already sent today
+        if: github.event_name == 'schedule'
+        uses: actions/cache/restore@v4
+        with:
+          path: kis_ws_state
+          key: kis-ws-fired-${{ steps.day.outputs.kst }}-${{ github.run_id }}
+          restore-keys: kis-ws-fired-${{ steps.day.outputs.kst }}-
       - name: Listen
         working-directory: trading
         env:
@@ -47,27 +70,44 @@ jobs:
           KIS_APP_SECRET: ${{ secrets.KIS_APP_SECRET }}
           KIS_ENV: ${{ vars.KIS_ENV || 'vps' }}
           GH_TOKEN: ${{ github.token }}
-          MINUTES: ${{ github.event.inputs.minutes || '2' }}
+          EVENT: ${{ github.event_name }}
+          CRON: ${{ github.event.schedule }}
+          MINUTES_IN: ${{ github.event.inputs.minutes }}
           SYMBOLS: ${{ github.event.inputs.symbols || '' }}
           VENUE: ${{ github.event.inputs.venue || 'J' }}
-          ALERT: ${{ github.event.inputs.alert || 'false' }}
+          ALERT_IN: ${{ github.event.inputs.alert || 'false' }}
         run: |
           if [ -z "$KIS_APP_KEY" ] || [ -z "$KIS_APP_SECRET" ]; then echo "::error::KIS_APP_KEY / KIS_APP_SECRET secrets are not set"; exit 2; fi
+          case "$EVENT" in
+            schedule) ALERT=true; if [ "$CRON" = "50 23 * * 0-4" ]; then MINUTES=205; else MINUTES=210; fi ;;
+            push) ALERT=false; MINUTES=2 ;;
+            *) ALERT="$ALERT_IN"; MINUTES="${MINUTES_IN:-60}" ;;
+          esac
           args=(--minutes "$MINUTES" --venue "$VENUE" --out ../kis_ws_out --env-file /dev/null --repo ..)
           [ -n "$SYMBOLS" ] && args+=(--symbols "$SYMBOLS")
           [ "$ALERT" = "true" ] || args+=(--no-alert)
+          [ "$EVENT" = "schedule" ] && args+=(--state-file ../kis_ws_state/fired.json --none-ok)
           rc=0
           python tools/kis_ws_probe.py "${args[@]}" > probe.txt 2>&1 || rc=$?
           cat probe.txt
-          { echo '```'; grep -E "^RESULT|^KIS WebSocket|SUBSCRIBE|approval|APPROVAL|reconnect" probe.txt | head -40; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
-          # Outside the session (push smoke runs) no trades arrive; a working connection is the pass.
-          if [ "$rc" -ne 0 ] && [ "${{ github.event_name }}" = "push" ] && grep -q "SUBSCRIBE SUCCESS" probe.txt; then
-            echo "smoke run: approval and subscription ok, no trades outside the session"; rc=0
+          { echo '```'; grep -E "^RESULT|^KIS WebSocket|SUBSCRIBE|approval|APPROVAL|reconnect|ALERT|already alerted" probe.txt | head -40; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          # Exit 3 = the whole listening window ran and no trade arrived (push smoke runs off-hours, KRX
+          # holidays). Only that, with a confirmed subscription, is forgiven; a crash or an early end
+          # after subscribing (exit 1) stays red.
+          if [ "$rc" -eq 3 ] && [ "$EVENT" != "workflow_dispatch" ] && grep -q "SUBSCRIBE SUCCESS" probe.txt; then
+            echo "approval and subscription ok, full window without trades (outside the session or a holiday)"; rc=0
           fi
           exit $rc
+      - name: Save alerts sent today
+        if: always() && github.event_name == 'schedule' && hashFiles('kis_ws_state/fired.json') != ''
+        uses: actions/cache/save@v4
+        with:
+          path: kis_ws_state
+          key: kis-ws-fired-${{ steps.day.outputs.kst }}-${{ github.run_id }}
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: kis-ws-${{ github.run_id }}
           path: kis_ws_out/
           retention-days: 30
+          if-no-files-found: ignore
