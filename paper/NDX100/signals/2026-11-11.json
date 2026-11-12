@@ -1,0 +1,63 @@
+{
+ "market": "NDX100",
+ "as_of": "2026-11-11",
+ "regime": {
+  "benchmark": "^NDX",
+  "mode": "MA200",
+  "close": 28374.25,
+  "ma200": 28017.7129,
+  "ma20": 28732.8299,
+  "on": true
+ },
+ "entries_next_open": [],
+ "exits_next_open": [],
+ "positions": [
+  "AMGN",
+  "CSX",
+  "KDP",
+  "MSFT",
+  "VRTX"
+ ],
+ "watchlist": [
+  {
+   "symbol": "MAR",
+   "label": "1순위 · 임박 (피벗 1% 이내)",
+   "close": 429.18,
+   "pivot": 433.3,
+   "to_pivot_pct": 0.96,
+   "rs": 87.76
+  },
+  {
+   "symbol": "ADP",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 306.36,
+   "pivot": 310.98,
+   "to_pivot_pct": 1.51,
+   "rs": 86.73
+  },
+  {
+   "symbol": "CTAS",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 227.26,
+   "pivot": 233.46,
+   "to_pivot_pct": 2.73,
+   "rs": 82.65
+  },
+  {
+   "symbol": "CCEP",
+   "label": "2순위 · 근접 (피벗 3% 이내)",
+   "close": 117.87,
+   "pivot": 119.09,
+   "to_pivot_pct": 1.04,
+   "rs": 81.63
+  }
+ ],
+ "coverage": {
+  "requested": 101,
+  "loaded": 100,
+  "failed": [
+   "WBD"
+  ]
+ },
+ "generated_at": "2026-11-12T11:16:06Z"
+}
