@@ -1,0 +1,12 @@
+{
+  "name": "language-starter-tutor-functions",
+  "private": true,
+  "description": "랭귀지 스타터 AI 튜터 중계 함수 — 앱이 AI 키를 갖지 않고, 로그인한 사람만 하루 한도 안에서 쓰게 한다",
+  "engines": { "node": "22" },
+  "main": "index.js",
+  "scripts": { "test": "node --test test/*.test.js" },
+  "dependencies": {
+    "firebase-admin": "^13.0.0",
+    "firebase-functions": "^6.0.0"
+  }
+}

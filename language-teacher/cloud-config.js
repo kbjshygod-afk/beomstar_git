@@ -12,7 +12,10 @@ window.CLOUD_CONFIG = {
   messagingSenderId: '994570010930',
   appId: '1:994570010930:web:8f1fa6324c4cc2fead172b',
   measurementId: 'G-6D5SSPTV6X',
-  since: '2026-09-26'   // 구글 로그인·클라우드 저장·사용 통계·의견 보내기를 켠 날
+  since: '2026-09-26',  // 구글 로그인·클라우드 저장·사용 통계·의견 보내기를 켠 날
+  // 🤖 AI 튜터 중계 함수 주소(https만). 비워 두면(null) 놀이 탭에 AI 튜터가 나타나지 않고 개인정보 안내에서도 빠져요.
+  // 함수를 배포한 뒤 docs/tutor-setup.md 4단계의 주소를 여기에 적으세요. 예: 'https://asia-northeast3-lang-starter.cloudfunctions.net/tutor'
+  tutorUrl: null
 };
 
 // 문의·오류 제보 링크(https만). 넣으면 허브·설정·도움말·개인정보 안내에 한꺼번에 나타나요.
