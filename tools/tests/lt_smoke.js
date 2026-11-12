@@ -36,7 +36,7 @@ const MOCK = () => {
     await p.evaluate(() => go('play')); await p.waitForTimeout(250);
     const tiles = await p.evaluate(() => Array.from(document.querySelectorAll('[data-play]')).map(e => e.dataset.play));
     chk(tiles.length >= 8, '놀이 타일 ' + tiles.length + '개: ' + tiles.join(','));
-    chk(!tiles.includes('tutor'), 'tutorUrl이 없으면 AI 튜터 타일이 없다');
+    chk(tiles.includes('tutor'), 'AI 튜터 타일이 있다(내 키 방식 — 로그인·서버 없이)');
     for (const t of tiles) {
       await p.evaluate(() => { closeModal(true); go('play'); }); await p.waitForTimeout(150);
       await p.evaluate(id => { const t = playTile(id); if (t && tileOpen(t)) t.open(); }, t); await look('놀이 ' + t);
