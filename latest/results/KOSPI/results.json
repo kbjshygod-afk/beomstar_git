@@ -1,6 +1,6 @@
 {
   "market": "KOSPI",
-  "generated_at": "2026-11-12T15:46:02+00:00",
+  "generated_at": "2026-11-12T22:43:55+00:00",
   "config": {
     "start": "2014-11-12",
     "end": "2026-11-12",
@@ -401,7 +401,7 @@
           "qty": 1065.0,
           "stop_price": 43710.0,
           "last_close": 58400.0,
-          "exit_ma": 50956.0,
+          "exit_ma": 51170.0,
           "unrealized_pnl": 11916498.0,
           "price_pnl_pct": 24.255319148936174,
           "exit_pending": false
@@ -766,7 +766,7 @@
           "qty": 1184.0,
           "stop_price": 43710.0,
           "last_close": 58400.0,
-          "exit_ma": 50956.0,
+          "exit_ma": 51170.0,
           "unrealized_pnl": 13248012.799999997,
           "price_pnl_pct": 24.255319148936174,
           "exit_pending": false
