@@ -1,9 +1,9 @@
 {
  "market": "SP500",
  "start_date": "2026-09-25",
- "as_of": "2026-11-06",
- "days": 31,
- "signal_files": 12,
+ "as_of": "2026-11-11",
+ "days": 34,
+ "signal_files": 13,
  "missing_days": [
   "2026-09-30",
   "2026-10-02",
@@ -23,7 +23,9 @@
   "2026-10-28",
   "2026-11-02",
   "2026-11-03",
-  "2026-11-04"
+  "2026-11-04",
+  "2026-11-09",
+  "2026-11-10"
  ],
  "late": [
   "2026-10-01",
@@ -205,6 +207,21 @@
    "compared_file": "2026-11-06.json",
    "revisions_after_open": [],
    "deadline": "2026-11-09T14:30:00Z",
+   "on_time": true,
+   "entries_match": true,
+   "exits_match": true,
+   "entries_only_committed": [],
+   "entries_only_recomputed": [],
+   "exits_only_committed": [],
+   "exits_only_recomputed": [],
+   "revisions": []
+  },
+  {
+   "date": "2026-11-11",
+   "committed_at": "2026-11-12T11:15:56Z",
+   "compared_file": "2026-11-11.json",
+   "revisions_after_open": [],
+   "deadline": "2026-11-12T14:30:00Z",
    "on_time": true,
    "entries_match": true,
    "exits_match": true,

@@ -1,0 +1,35 @@
+{
+ "market": "SP500",
+ "as_of": "2026-11-11",
+ "source": "Tiingo",
+ "status": "ok",
+ "checked": "2026-11-11",
+ "index": null,
+ "symbols": {
+  "date": "2026-11-11",
+  "compared": 25,
+  "missing": [],
+  "mismatches": [],
+  "unlisted": [],
+  "sampled": 25,
+  "focus": [
+   "AMGN",
+   "BDX",
+   "BIIB",
+   "CPAY",
+   "CRL",
+   "EBAY",
+   "ELV",
+   "GWW",
+   "HUM",
+   "KDP",
+   "LLY",
+   "TRV",
+   "VEEV",
+   "VTRS",
+   "WSM"
+  ]
+ },
+ "error": null,
+ "calls": 25
+}
