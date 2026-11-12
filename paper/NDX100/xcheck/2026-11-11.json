@@ -1,0 +1,33 @@
+{
+ "market": "NDX100",
+ "as_of": "2026-11-11",
+ "source": "Tiingo",
+ "status": "mismatch",
+ "checked": "2026-11-11",
+ "index": null,
+ "symbols": {
+  "date": "2026-11-11",
+  "compared": 15,
+  "missing": [],
+  "mismatches": [
+   {
+    "symbol": "LITE",
+    "field": "volume",
+    "yahoo": 6385200.0,
+    "krx": 6456230.0,
+    "diff_pct": 1.1
+   }
+  ],
+  "unlisted": [],
+  "sampled": 15,
+  "focus": [
+   "AMGN",
+   "CSX",
+   "KDP",
+   "MSFT",
+   "VRTX"
+  ]
+ },
+ "error": null,
+ "calls": 15
+}
