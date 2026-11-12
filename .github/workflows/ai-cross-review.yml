@@ -1,0 +1,79 @@
+# Cross-review of code PRs by ChatGPT (OpenAI API) and Gemini (Gemini API), read-only
+# (docs/ai-review/brief.md). Two rounds: independent reviews, then each reads the other's.
+# The result is one PR comment, updated on each push. Claude verifies every finding before
+# acting; accepted lessons go to docs/ai-review/lessons.md, which both reviewers read first.
+# Keys come only from the OPENAI_API_KEY / GEMINI_API_KEY secrets (a missing one skips that
+# reviewer; with neither the job does nothing). Model ids: repository variables
+# OPENAI_REVIEW_MODEL / GEMINI_REVIEW_MODEL.
+name: ai-cross-review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches: ['claude/dazzling-ride-a0nb4k']
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: 'PR number to review'
+        required: true
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: ai-cross-review-${{ github.event.pull_request.number || github.event.inputs.pr }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    # Same-repository PRs only: a fork's PR never gets the keys.
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Resolve PR
+        id: pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number || github.event.inputs.pr }}
+        run: |
+          gh api "repos/${{ github.repository }}/pulls/$PR" --jq '"base=\(.base.sha)\nhead=\(.head.sha)\nref=\(.head.ref)"' >> "$GITHUB_OUTPUT"
+          echo "number=$PR" >> "$GITHUB_OUTPUT"
+      - name: Keys present?
+        id: keys
+        env:
+          HAS_OPENAI: ${{ secrets.OPENAI_API_KEY != '' }}
+          HAS_GEMINI: ${{ secrets.GEMINI_API_KEY != '' }}
+        run: |
+          if [ "$HAS_OPENAI" = "true" ] || [ "$HAS_GEMINI" = "true" ]; then echo "any=true" >> "$GITHUB_OUTPUT"
+          else echo "any=false" >> "$GITHUB_OUTPUT"; echo "::notice::OPENAI_API_KEY / GEMINI_API_KEY not set; cross-review skipped"; fi
+      - uses: actions/checkout@v4
+        if: steps.keys.outputs.any == 'true'
+        with:
+          ref: ${{ steps.pr.outputs.head }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        if: steps.keys.outputs.any == 'true'
+        with:
+          python-version: '3.12'
+      - name: Cross-review
+        if: steps.keys.outputs.any == 'true'
+        working-directory: trading
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          OPENAI_REVIEW_MODEL: ${{ vars.OPENAI_REVIEW_MODEL }}
+          GEMINI_REVIEW_MODEL: ${{ vars.GEMINI_REVIEW_MODEL }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          python tools/ai_review.py --repo .. --base "${{ steps.pr.outputs.base }}" --head "${{ steps.pr.outputs.head }}" \
+            --pr "${{ steps.pr.outputs.number }}" --out reports/ai_review --post > review.md
+          cat reports/ai_review.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always() && steps.keys.outputs.any == 'true'
+        with:
+          name: ai-cross-review-${{ steps.pr.outputs.number }}-${{ github.run_id }}
+          path: trading/reports/
+          retention-days: 30
