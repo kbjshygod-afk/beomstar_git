@@ -11,7 +11,16 @@
 | 반영 | Claude가 지적마다 재현·확인 후 수정하거나 근거를 들어 반박. 의견이 갈리면 대표님께 보고 |
 | 학습 | 채택된 교훈을 `lessons.md`에 추가 → 다음 검수부터 세 모델 모두 먼저 읽음 |
 
-## 설정 (대표님, 한 번만)
+## 구독 계정으로 실행 (API 키 없음, 2026-11-12부터 기본)
+- **실행 위치:** 이 Claude 세션. Claude가 PR을 올릴 때마다 직접 돌립니다: `python tools/ai_review.py --login --repo .. --base <sha> --head <sha> --pr <번호>`
+- **로그인 방법:**
+  - ChatGPT: `codex login --device-auth`가 링크와 코드를 보여주면, 대표님이 휴대폰으로 그 링크를 열어 코드를 입력합니다.
+  - Gemini: `agy`가 Google 로그인 링크를 보여주면, 대표님이 로그인한 뒤 화면에 나온 인증 코드를 Claude에게 전달합니다.
+- **유지:** 로그인 정보는 세션 컨테이너 안에만 저장됩니다. 컨테이너가 교체되면 다시 로그인해야 합니다. 저장소에는 절대 커밋하지 않습니다(`.ai-review/`는 무시 목록).
+- **사용량:** 각 구독의 사용 한도에서 차감되며, 추가 요금은 없습니다.
+- **GitHub Actions 워크플로:** API 키가 있을 때만 돕니다. 키를 등록하지 않으면 아무것도 하지 않습니다.
+
+## (선택) API 키로 GitHub Actions에서 실행
 1. **API 키 2개를 발급합니다.** ChatGPT·Antigravity 구독과 API는 별개라서 따로 받아야 합니다.
    - OpenAI: platform.openai.com → API keys → Create new secret key
    - Gemini: aistudio.google.com → Get API key

@@ -124,3 +124,14 @@ def test_build_context_reads_the_diff_brief_and_lessons(tmp_path, monkeypatch):
     ctx = R.build_context(tmp_path, base, "HEAD")
     assert ctx["files"] == "M\ta.py" and ctx["brief"] == "BRIEF" and ctx["lessons"] == "(missing)"
     assert len(ctx["diff"]) == 60 and "truncated" in ctx["trunc"]
+
+
+def test_login_mode_sets_no_key_variable(tmp_path, monkeypatch):
+    seen = {}
+    def fake_run(cmd, cwd, env, stdin, capture_output, text, timeout):
+        seen["env"] = env
+        return subprocess.CompletedProcess(cmd, 0, '{"findings": []}', "")
+    monkeypatch.setattr(R.subprocess, "run", fake_run)
+    monkeypatch.setenv("GEMINI_API_KEY", "should-not-leak")
+    R.run_cli("gemini", "", "P", R.LOGIN, tmp_path, "round1")
+    assert "GEMINI_API_KEY" not in seen["env"] and "CODEX_API_KEY" not in seen["env"]
