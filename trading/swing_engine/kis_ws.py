@@ -216,9 +216,10 @@ def load_fired(path, day: str) -> set:
         d = json.loads(Path(path).read_text())
     except (OSError, ValueError, TypeError):
         return set()
-    if not isinstance(d, dict) or d.get("date") != day:
+    if not isinstance(d, dict) or d.get("date") != day or not isinstance(d.get("fired"), list):
         return set()
-    return {(str(c), str(lv)) for c, lv in d.get("fired") or [] if lv in ("near", "hit")}
+    return {(str(e[0]), e[1]) for e in d["fired"]
+            if isinstance(e, (list, tuple)) and len(e) == 2 and e[1] in ("near", "hit")}
 
 
 def save_fired(path, day: str, fired: set) -> None:

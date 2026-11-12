@@ -91,9 +91,11 @@ jobs:
           python tools/kis_ws_probe.py "${args[@]}" > probe.txt 2>&1 || rc=$?
           cat probe.txt
           { echo '```'; grep -E "^RESULT|^KIS WebSocket|SUBSCRIBE|approval|APPROVAL|reconnect|ALERT|already alerted" probe.txt | head -40; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
-          # Outside the session (push smoke runs, KRX holidays) no trades arrive; a working subscription is the pass.
-          if [ "$rc" -ne 0 ] && [ "$EVENT" != "workflow_dispatch" ] && grep -q "SUBSCRIBE SUCCESS" probe.txt; then
-            echo "approval and subscription ok, no trades (outside the session or a holiday)"; rc=0
+          # Exit 3 = the whole listening window ran and no trade arrived (push smoke runs off-hours, KRX
+          # holidays). Only that, with a confirmed subscription, is forgiven; a crash or an early end
+          # after subscribing (exit 1) stays red.
+          if [ "$rc" -eq 3 ] && [ "$EVENT" != "workflow_dispatch" ] && grep -q "SUBSCRIBE SUCCESS" probe.txt; then
+            echo "approval and subscription ok, full window without trades (outside the session or a holiday)"; rc=0
           fi
           exit $rc
       - name: Save alerts sent today

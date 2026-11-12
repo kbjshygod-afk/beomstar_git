@@ -97,3 +97,41 @@ def test_probe_none_ok_exits_zero_when_nothing_is_held(monkeypatch, capsys):
     assert P.main(["--none-ok", "--env-file", "/dev/null"]) == 0
     assert "nothing to watch" in capsys.readouterr().out
     assert P.main(["--env-file", "/dev/null"]) == 2
+
+
+def test_load_fired_ignores_malformed_entries(tmp_path):
+    f = tmp_path / "fired.json"
+    f.write_text(json.dumps({"date": "2026-11-13", "fired": [None, ["093320"], ["093320", "near"], ["1", "bad"], 5]}))
+    assert kis_ws.load_fired(f, "2026-11-13") == {("093320", "near")}
+    f.write_text(json.dumps({"date": "2026-11-13", "fired": {"x": 1}}))
+    assert kis_ws.load_fired(f, "2026-11-13") == set()
+
+
+def test_probe_ledger_read_failure_is_not_nothing_held(monkeypatch):
+    """--none-ok forgives only a ledger read that found no Korean positions (PR #72 review)."""
+    import sys
+    import types
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
+    import kis_ws_probe as P
+    monkeypatch.setitem(sys.modules, "websocket", types.ModuleType("websocket"))
+    monkeypatch.setattr(P.kis_ws, "env_file_credentials", lambda path: {"key": "k" * 36, "secret": "s", "env": "prod"})
+    monkeypatch.setattr(P, "held_from_ledger", lambda repo: None)
+    assert P.main(["--none-ok", "--env-file", "/dev/null"]) == 2
+
+
+def test_deliver_alert_reports_whether_the_comment_was_posted(monkeypatch):
+    import sys
+    import types
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
+    import kis_ws_probe as P
+    fake = types.ModuleType("signal_alert")
+    def boom(*a, **k):
+        raise RuntimeError("gh: 502")
+    fake.post_github_issue = boom
+    monkeypatch.setitem(sys.modules, "signal_alert", fake)
+    assert P.deliver_alert("x", "한국장 손절 근접 알림") is False      # not persisted -> afternoon run retries
+    fake.post_github_issue = lambda *a, **k: 7
+    assert P.deliver_alert("x", "한국장 손절 근접 알림") is True
+    assert P.deliver_alert("x", "") is True

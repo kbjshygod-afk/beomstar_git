@@ -48,3 +48,13 @@ last.
   types of every field before using it, and surface failures and non-JSON answers in the report
   instead of dropping them.
 - **Time budgets must add up.** Four 15-minute calls in series did not fit a 45-minute job.
+
+## Monitoring jobs (accepted from the review of the 2.6 KIS alerts, 2026-11-12)
+- **An early "connected" line is not a completed run.** Forgive only an explicit "window completed,
+  no data" result (its own exit status), never any failure that happens after a successful
+  connection. (Both reviewers found this.)
+- **Persist delivery, not detection.** Saving an alert as "sent" before it was actually posted
+  silences it for the rest of the day when posting fails. (Both reviewers found this.)
+- **A read failure is not an empty result.** "Could not read the ledger" must not look like
+  "nothing held".
+- **Validate persisted state.** Valid JSON with the wrong shape must fall back safely.
