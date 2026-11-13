@@ -11,39 +11,46 @@
   "missing": [],
   "mismatches": [
    {
-    "symbol": "EBAY",
-    "field": "open",
-    "yahoo": 122.8700027,
-    "krx": 122.34,
-    "diff_pct": 0.431
+    "symbol": "AMGN",
+    "field": "volume",
+    "yahoo": 2827600.0,
+    "krx": 2225839.0,
+    "diff_pct": 21.282
    },
    {
-    "symbol": "VRSN",
-    "field": "open",
-    "yahoo": 316.3599854,
-    "krx": 316.84,
-    "diff_pct": 0.152
+    "symbol": "ANET",
+    "field": "volume",
+    "yahoo": 9758100.0,
+    "krx": 9230311.0,
+    "diff_pct": 5.409
+   },
+   {
+    "symbol": "TRV",
+    "field": "volume",
+    "yahoo": 1081300.0,
+    "krx": 1067978.0,
+    "diff_pct": 1.232
+   },
+   {
+    "symbol": "VRTX",
+    "field": "volume",
+    "yahoo": 984000.0,
+    "krx": 959722.0,
+    "diff_pct": 2.467
    },
    {
     "symbol": "GWW",
     "field": "volume",
-    "yahoo": 328175.0,
+    "yahoo": 328200.0,
     "krx": 304754.0,
-    "diff_pct": 7.137
+    "diff_pct": 7.144
    },
    {
     "symbol": "WAB",
     "field": "volume",
-    "yahoo": 834880.0,
+    "yahoo": 871400.0,
     "krx": 784520.0,
-    "diff_pct": 6.032
-   },
-   {
-    "symbol": "WDAY",
-    "field": "open",
-    "yahoo": 191.75,
-    "krx": 191.02,
-    "diff_pct": 0.381
+    "diff_pct": 9.97
    }
   ],
   "unlisted": [],
@@ -68,5 +75,5 @@
   ]
  },
  "error": null,
- "calls": 26
+ "calls": 0
 }
