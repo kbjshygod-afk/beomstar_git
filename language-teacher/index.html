@@ -9949,7 +9949,7 @@ const TUTOR = { busy: false, ctl: null, memKey: '', model: '', checking: false }
 const TUTOR_ENGINES = [['gemini', '✨ Gemini'], ['openai', '💚 ChatGPT']];
 const TUTOR_MODES = [['chat', '💬 대화'], ['correct', '✏️ 문장 교정']];
 const TUTOR_MAX = 600;
-const TUTOR_STARTERS = { chat: ['자기소개 연습할래요', '카페에서 주문하는 연습', '길 물어보는 연습', '오늘 하루 이야기하기'], correct: ['제가 쓴 문장을 고쳐 주세요'] };
+const TUTOR_STARTERS = { chat: ['자기소개 연습할래요', '카페에서 주문하는 연습', '길 물어보는 연습', '오늘 하루 이야기하기'], correct: [] };   // 교정은 고칠 문장이 있어야 해서 시작 단추 없이 입력칸으로
 const TUTOR_KEY_LS = 'lang_starter_tutor_key';
 const TUTOR_KEY_RE = /^[A-Za-z0-9_\-.]{20,200}$/;
 const TUTOR_KEY_PAGE = 'https://aistudio.google.com/apikey';
@@ -9981,7 +9981,7 @@ function tutorKeyGet() { let v = ''; try { v = localStorage.getItem(TUTOR_KEY_LS
 function tutorKeySet(v) { TUTOR.memKey = v || ''; TUTOR.model = ''; try { if (v) localStorage.setItem(TUTOR_KEY_LS, v); else localStorage.removeItem(TUTOR_KEY_LS); } catch (e) { } }   // 저장소가 막힌 브라우저에선 이번 방문 동안만 기억
 function tutorLevel() { return Math.min(5, ALL.reduce((m, l) => isDone(l.id) ? Math.max(m, l.unitId) : m, 0)); }   // 통과한 가장 높은 단계(0~5로 묶음)
 function tutorState() {
-    if (!S.tutor || S.tutor.code !== CUR.code) { const o = S.tutor; S.tutor = { code: CUR.code, msgs: [], engine: o ? o.engine : 'gemini', mode: o ? o.mode : 'chat', left: null, draft: '', keyEdit: false }; }
+    if (!S.tutor || S.tutor.code !== CUR.code) { if (TUTOR.ctl) TUTOR.ctl.abort(); const o = S.tutor; S.tutor = { code: CUR.code, msgs: [], engine: o ? o.engine : 'gemini', mode: o ? o.mode : 'chat', left: null, draft: '', keyEdit: false }; }
     return S.tutor;
 }
 function tutorOpen(from) { S.tutorFrom = from || 'play'; playSeen('tutor'); go('tutor'); }
@@ -9999,10 +9999,14 @@ function tutorGeminiErr(status, j) {
     return { msg: 'AI가 지금 답하지 못해요' };
 }
 async function tutorKeyCheck(key) {   // 키가 맞는지만 확인(모델 목록 1개 — 답 생성 한도를 쓰지 않는다)
-    let r;
-    try { r = await fetch(TUTOR_API + '?pageSize=1', { headers: { 'x-goog-api-key': key } }); } catch (e) { return { ok: false, msg: '확인하지 못했어요. 인터넷 연결을 보고 다시 해 주세요' }; }
+    let r, j = {};
+    const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 15000);   // 응답(오류 본문까지)이 끝내 안 오면 '확인 중'에 갇히지 않게
+    try { r = await fetch(TUTOR_API + '?pageSize=1', { headers: { 'x-goog-api-key': key }, signal: ctl.signal }); if (!r.ok) j = await r.json().catch(() => ({})); }
+    catch (e) { return { ok: false, msg: e && e.name === 'AbortError' ? '확인이 너무 오래 걸려요. 잠시 뒤 다시 해 주세요' : '확인하지 못했어요. 인터넷 연결을 보고 다시 해 주세요' }; }
+    finally { clearTimeout(timer); }
+    if (ctl.signal.aborted) return { ok: false, msg: '확인이 너무 오래 걸려요. 잠시 뒤 다시 해 주세요' };   // 본문을 기다리다 끊긴 경우(.catch가 오류를 삼킴)
     if (r.ok) return { ok: true };
-    const e = tutorGeminiErr(r.status, await r.json().catch(() => ({})));
+    const e = tutorGeminiErr(r.status, j);
     return { ok: false, msg: e.keyBad ? '키가 맞지 않아요. 처음부터 끝까지 그대로 복사했는지 확인해 주세요' : e.msg };
 }
 // 내 키 방식: 구글로 바로 보낸다. 성공하면 답 글자, 실패하면 { msg } 를 던진다.
@@ -10094,7 +10098,7 @@ function renderTutor() {
     $main.querySelectorAll('[data-tu-mode]').forEach(b => b.addEventListener('click', () => { T.mode = b.dataset.tuMode; renderTutor(); }));
     $main.querySelectorAll('[data-tu-start]').forEach(b => b.addEventListener('click', () => tutorSend(b.dataset.tuStart)));
     const kb = document.getElementById('tuKeyBtn'); if (kb) kb.addEventListener('click', () => { T.keyEdit = true; renderTutor(); });
-    const inp = document.getElementById('tuIn'), send = () => { const v = inp.value; T.draft = ''; tutorSend(v); };
+    const inp = document.getElementById('tuIn'), send = () => { if (TUTOR.busy) return; const v = inp.value; T.draft = ''; tutorSend(v); };   // 답을 기다리는 중이면 쓰던 글을 그대로 둔다
     inp.addEventListener('input', () => { T.draft = inp.value; });
     inp.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); send(); } });   // 한글 조합 중 Enter는 보내지 않음
     document.getElementById('tuSend').addEventListener('click', send);
@@ -10112,7 +10116,7 @@ async function tutorSend(text) {
     let err = '', keyBad = false;
     try {
         if (relay) {
-            const tok = await CLOUD.user.getIdToken();
+            const tok = await Promise.race([CLOUD.user.getIdToken(), new Promise((_, rej) => ctl.signal.addEventListener('abort', () => rej(Object.assign(new Error('aborted'), { name: 'AbortError' })), { once: true }))]);   // 토큰 받기가 멈춰도 제한 시간에 끊긴다
             const r = await fetch(relay, {
                 method: 'POST', signal: ctl.signal,
                 headers: { 'content-type': 'application/json', authorization: 'Bearer ' + tok },
@@ -10133,8 +10137,8 @@ async function tutorSend(text) {
         else err = e && e.name === 'AbortError' ? '답이 너무 늦어요. 잠시 뒤 다시 해 주세요' : '인터넷 연결을 확인해 주세요';
     }
     clearTimeout(timer); TUTOR.busy = false; TUTOR.ctl = null;
-    if (S.tutor !== T) return;   // 그사이 언어를 바꿨다 — 이 대화는 버린다
-    if (err) { T.msgs.pop(); T.draft = text; if (keyBad) T.keyEdit = true; showToast('🤖 ' + err, '', 3600); }   // 실패하면 보낸 글을 입력칸에 돌려 놓는다 · 키가 틀렸으면 키 화면으로
+    if (S.tutor !== T) { if (S.view === 'tutor') renderTutor(); return; }   // 그사이 언어를 바꿨다 — 이 대화는 버리고, 새 언어 화면의 '쓰는 중'을 푼다
+    if (err) { T.msgs.pop(); T.draft = T.draft.trim() ? text + '\n' + T.draft : text; if (keyBad) T.keyEdit = true; showToast('🤖 ' + err, '', 3600); }   // 실패하면 보낸 글을 입력칸에 돌려 놓는다 · 키가 틀렸으면 키 화면으로
     if (S.view === 'tutor') renderTutor();
 }
 registerPlayTile({
@@ -13285,7 +13289,7 @@ function handleBack() {
     if (DATA && S.view === 'puzzle') { puzLeave(S.puz); return true; }   // 🟩 퍼즐: ← 버튼과 같은 안내(오늘 문제는 묻지 않음)
     if (DATA && S.view === 'missions') { missionBack(); return true; }   // 🗺️ 미션: 판 도중이면 묻고, 레슨에서 왔으면 레슨으로
     if (DATA && S.view === 'dex') { dexBack(); return true; }   // 📒 앨범 → 앨범 목록 → 단계 목록 → 온 곳
-    if (DATA && S.view === 'tutor') { tutorBack(); return true; }   // 🤖 온 곳(홈·놀이)으로
+    if (DATA && S.view === 'tutor') { const T = S.tutor; if (T && T.keyEdit && !tutorUrl() && tutorKeyGet()) { T.keyEdit = false; renderTutor(); return true; } tutorBack(); return true; }   // 🤖 키 화면이면 대화로, 아니면 온 곳(홈·놀이)으로
     if (DATA && S.view === 'league') { lgBack(); return true; }   // 🏆 온 곳(홈·나·놀이)으로
     if (DATA && S.view === 'challenge') { chalBack(); return true; }
     if (DATA && S.view === 'radio') { radioBack(); return true; }   // 📻 온 곳(홈·놀이)으로 — 회차는 멈춘 채 남는다(다시 들어오면 이어서)

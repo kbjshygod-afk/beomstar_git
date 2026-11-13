@@ -20,6 +20,13 @@
 - **사용량:** 각 구독의 사용 한도에서 차감되며, 추가 요금은 없습니다.
 - **GitHub Actions 워크플로:** API 키가 있을 때만 돕니다. 키를 등록하지 않으면 아무것도 하지 않습니다.
 
+## 언어 앱(랭귀지 스타터) 검수
+- `--profile lang`을 붙이면 언어 앱용 지침(`brief-lang.md`)과 교훈(`lessons-lang.md`)을 읽고, 역할도 바뀝니다.
+  - ChatGPT: 코드 정확성, 저장 데이터·여러 탭·오프라인 같은 경계 조건, HTML 주입, 시험 누락
+  - Gemini: 학습 내용의 정확성(문장·병음·읽는 법·번역), 화면 문구와 코드 일치, 개인정보 안내 일치, 작은 화면·접근성, 빠진 부분
+- 변경이 크면 `--paths`로 영역을 나눠 돌립니다. 이때 그 영역의 **시험 파일도 꼭 넣습니다**(빼면 "시험이 없다"는 잘못된 지적이 나옵니다).
+- 예: `python tools/ai_review.py --login --profile lang --repo .. --base <sha> --head <sha> --paths language-teacher privacy.html tools/tests`
+
 ## (선택) API 키로 GitHub Actions에서 실행
 1. **API 키 2개를 발급합니다.** ChatGPT·Antigravity 구독과 API는 별개라서 따로 받아야 합니다.
    - OpenAI: platform.openai.com → API keys → Create new secret key

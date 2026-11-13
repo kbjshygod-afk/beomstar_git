@@ -177,3 +177,27 @@ def test_malformed_model_json_never_crashes_the_report():
     assert f["claim"] == "" and f["severity"] == "minor" and f["line"] is None and f["evidence"] == "3"
     assert m["gaps"] == [] and m["lessons"] == [("ChatGPT", "1")] and m["additions"] == []
     assert R.MARKER in R.render(res, m, "#69", "abc")
+
+
+def test_lang_profile_uses_its_own_brief_lessons_and_roles_and_paths_limit_the_diff(tmp_path):
+    import subprocess
+    run = lambda *a: subprocess.run(["git", "-C", str(tmp_path), *a], check=True, capture_output=True)  # noqa: E731
+    run("init", "-q"); run("config", "user.email", "t@t"); run("config", "user.name", "t")
+    (tmp_path / "docs/ai-review").mkdir(parents=True)
+    (tmp_path / "docs/ai-review/brief.md").write_text("TRADING BRIEF")
+    (tmp_path / "docs/ai-review/brief-lang.md").write_text("LANG BRIEF")
+    (tmp_path / "docs/ai-review/lessons-lang.md").write_text("LANG LESSONS")
+    (tmp_path / "app").mkdir(); (tmp_path / "app/a.txt").write_text("1\n"); (tmp_path / "b.txt").write_text("1\n")
+    run("add", "-A"); run("commit", "-qm", "base")
+    base = subprocess.run(["git", "-C", str(tmp_path), "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
+    (tmp_path / "app/a.txt").write_text("2\n"); (tmp_path / "b.txt").write_text("2\n")
+    run("add", "-A"); run("commit", "-qm", "change")
+    ctx = R.build_context(tmp_path, base, "HEAD", "lang", ["app"])
+    assert ctx["brief"] == "LANG BRIEF" and ctx["lessons"] == "LANG LESSONS"
+    assert "app/a.txt" in ctx["files"] and "b.txt" not in ctx["files"] and "b.txt" not in ctx["diff"]
+    assert "Korean beginner" in ctx["roles"]["gemini"]
+    seen = []
+    R.review(ctx, "1", {"openai": "", "gemini": ""}, {"openai": "k", "gemini": "k"},
+             call=lambda p, m, system, prompt: seen.append((p, prompt)) or '{"findings": []}')
+    assert any(p == "gemini" and "Korean beginner" in pr and "LANG BRIEF" in pr for p, pr in seen)
+    assert R.build_context(tmp_path, base, "HEAD")["brief"] == "TRADING BRIEF"      # default profile unchanged

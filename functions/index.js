@@ -68,7 +68,7 @@ exports.tutor = onRequest(
             }, v.value);
             return send(res, 200, { reply: out.reply, engine: out.engine, fellBack: out.fellBack, remaining: Math.max(0, limit - used) });
         } catch (e) {
-            await ref.set({ n: FieldValue.increment(-1) }, { merge: true }).catch(() => { });   // 실패한 호출은 한도에서 빼 준다
+            await ref.set({ n: FieldValue.increment(-1) }, { merge: true }).catch(re => console.error('tutor refund failed', re && (re.code || re.message)));   // 실패한 호출은 한도에서 빼 준다(이것마저 실패하면 기록만)
             console.error('tutor fail', e && e.status, e && e.message);   // 학습자 글은 남기지 않는다
             if (e && e.status === 503) return send(res, 503, { error: 'AI 튜터가 아직 준비되지 않았어요' });
             return send(res, 502, { error: 'AI가 지금 답하지 못해요. 잠시 뒤 다시 해 주세요' });
