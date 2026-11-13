@@ -12,7 +12,7 @@ const LANGS = {
 const LEVELS = { 0: '발음·인사 수준(아주 짧은 말)', 1: '왕초보(기초 인사·자기소개)', 2: '초보(숫자·시간·간단한 질문)', 3: '초급(자기소개·가족·취미)', 4: '초중급(일상생활 대화)', 5: '중급 입문(여행·식당 등 실전 상황)' };
 const MODES = ['chat', 'correct'];
 const ENGINES = ['gemini', 'openai'];
-const LIMITS = { messages: 12, chars: 600, outTokens: 400 };
+const LIMITS = { messages: 12, chars: 600, outTokens: 400, callMs: 20000 };   // callMs: AI 한 곳의 제한 시간 — 두 곳을 다 써도 함수 제한(60초) 안에 끝나 횟수를 되돌릴 수 있게
 
 function clampLevel(v) { const n = Math.floor(Number(v)); return Number.isFinite(n) ? Math.max(0, Math.min(5, n)) : 1; }   // 영어는 6~8단계도 있어 5로 묶는다 · 숫자가 아니면 1
 
@@ -59,11 +59,19 @@ function dayKey(now) {   // 한국 날짜 기준(하루 한도가 한국 자정�
     return d.toISOString().slice(0, 10);
 }
 
-// 두 AI 호출 — fetch를 주입받아 시험에서 가짜로 바꾼다. 실패는 { status, retry } 모양으로 던진다.
-async function callGemini(fetchFn, cfg, system, msgs) {
+// 두 AI 호출 — fetch를 주입받아 시험에서 가짜로 바꾼다. 실패는 { status } 모양으로 던진다.
+// 응답(본문까지)이 callMs 안에 끝나지 않으면 끊고 504로 본다 — 다른 AI로 넘어갈 수 있다.
+async function timed(fn, ms) {
+    const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), ms || LIMITS.callMs);
+    try { return await fn(ctl.signal); }
+    catch (e) { if (ctl.signal.aborted) throw Object.assign(new Error('timeout'), { status: 504 }); throw e; }
+    finally { clearTimeout(timer); }
+}
+function callGemini(fetchFn, cfg, system, msgs) { return timed(signal => geminiOnce(fetchFn, cfg, system, msgs, signal), cfg.timeoutMs); }
+async function geminiOnce(fetchFn, cfg, system, msgs, signal) {
     const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(cfg.model) + ':generateContent';
     const r = await fetchFn(url, {
-        method: 'POST',
+        method: 'POST', signal,
         headers: { 'content-type': 'application/json', 'x-goog-api-key': cfg.key },
         body: JSON.stringify({
             systemInstruction: { parts: [{ text: system }] },
@@ -78,9 +86,10 @@ async function callGemini(fetchFn, cfg, system, msgs) {
     if (!text) throw Object.assign(new Error('gemini empty'), { status: 502 });
     return text;
 }
-async function callOpenAI(fetchFn, cfg, system, msgs) {
+function callOpenAI(fetchFn, cfg, system, msgs) { return timed(signal => openaiOnce(fetchFn, cfg, system, msgs, signal), cfg.timeoutMs); }
+async function openaiOnce(fetchFn, cfg, system, msgs, signal) {
     const r = await fetchFn('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
+        method: 'POST', signal,
         headers: { 'content-type': 'application/json', authorization: 'Bearer ' + cfg.key },
         body: JSON.stringify({
             model: cfg.model, temperature: 0.6, max_tokens: LIMITS.outTokens,

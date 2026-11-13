@@ -10000,7 +10000,10 @@ function tutorGeminiErr(status, j) {
 }
 async function tutorKeyCheck(key) {   // 키가 맞는지만 확인(모델 목록 1개 — 답 생성 한도를 쓰지 않는다)
     let r;
-    try { r = await fetch(TUTOR_API + '?pageSize=1', { headers: { 'x-goog-api-key': key } }); } catch (e) { return { ok: false, msg: '확인하지 못했어요. 인터넷 연결을 보고 다시 해 주세요' }; }
+    const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 15000);   // 응답이 끝내 안 오면 '확인 중'에 갇히지 않게
+    try { r = await fetch(TUTOR_API + '?pageSize=1', { headers: { 'x-goog-api-key': key }, signal: ctl.signal }); }
+    catch (e) { return { ok: false, msg: e && e.name === 'AbortError' ? '확인이 너무 오래 걸려요. 잠시 뒤 다시 해 주세요' : '확인하지 못했어요. 인터넷 연결을 보고 다시 해 주세요' }; }
+    finally { clearTimeout(timer); }
     if (r.ok) return { ok: true };
     const e = tutorGeminiErr(r.status, await r.json().catch(() => ({})));
     return { ok: false, msg: e.keyBad ? '키가 맞지 않아요. 처음부터 끝까지 그대로 복사했는지 확인해 주세요' : e.msg };
@@ -10094,7 +10097,7 @@ function renderTutor() {
     $main.querySelectorAll('[data-tu-mode]').forEach(b => b.addEventListener('click', () => { T.mode = b.dataset.tuMode; renderTutor(); }));
     $main.querySelectorAll('[data-tu-start]').forEach(b => b.addEventListener('click', () => tutorSend(b.dataset.tuStart)));
     const kb = document.getElementById('tuKeyBtn'); if (kb) kb.addEventListener('click', () => { T.keyEdit = true; renderTutor(); });
-    const inp = document.getElementById('tuIn'), send = () => { const v = inp.value; T.draft = ''; tutorSend(v); };
+    const inp = document.getElementById('tuIn'), send = () => { if (TUTOR.busy) return; const v = inp.value; T.draft = ''; tutorSend(v); };   // 답을 기다리는 중이면 쓰던 글을 그대로 둔다
     inp.addEventListener('input', () => { T.draft = inp.value; });
     inp.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); send(); } });   // 한글 조합 중 Enter는 보내지 않음
     document.getElementById('tuSend').addEventListener('click', send);

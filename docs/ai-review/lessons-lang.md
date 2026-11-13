@@ -23,3 +23,13 @@ Each entry gives the date, the lesson, and where it came from. The newest entrie
 - **2026-11-13: a setting kept outside the saved record must be added to "erase this device".**
   The tutor key is in its own `localStorage` entry so it is not synced; the sign-out wipe list has
   to name it explicitly. (#73)
+- **2026-11-13: every network call needs a time limit.** A `fetch` that never answers left the
+  tutor key check stuck on "확인 중" for the rest of the visit, and in the relay a stalled AI call
+  could run past the function's 60-second limit before the fallback or the quota refund ran. Give
+  each call its own limit, short enough that all retries and cleanup fit in the outer limit.
+  (ChatGPT cross-review of #72/#73)
+- **2026-11-13: a "busy" guard must not eat the input.** Pressing Enter while an answer was
+  pending cleared the saved draft and then the send was refused, so the next render wiped what
+  the learner had typed. Check "busy" before touching the draft. (ChatGPT cross-review of #73)
+- **2026-11-13: the privacy notice must cover fallbacks.** The relay row said text goes only to
+  the chosen AI, but the relay falls back to the other one. (ChatGPT cross-review of #72)

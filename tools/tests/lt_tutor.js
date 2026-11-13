@@ -85,6 +85,14 @@ const MOCK = () => {
   chk(/키가 맞지 않아요/.test(await p.innerText('#tuKeyMsg')), '구글이 거절한 키: 안내');
   chk(await p.evaluate(() => localStorage.getItem('lang_starter_tutor_key')) === null && !(await p.$('#tuIn')), '저장하지 않고 키 화면에 머묾');
   chk(await p.$eval('#tuKeySave', b => !b.disabled), '저장 단추 다시 누를 수 있음'); await ctx.close();
+  console.log('=== 키 확인 응답이 끝내 오지 않으면 15초 뒤 풀리고 다시 누를 수 있다 ===');
+  ({ ctx, p } = await newPage(false, null, async (n, g) => g.list && n === 1 ? new Promise(() => { }) : { status: 200, json: {} }));
+  await open(p, 'zh', false); await (await tile(p)).click(); await p.waitForTimeout(200);
+  await p.fill('#tuKey', KEY); await p.click('#tuKeySave'); await p.waitForTimeout(300);
+  chk(await p.evaluate(() => TUTOR.checking) && await p.$eval('#tuKeySave', b => b.disabled), '확인 중(단추 잠김)');
+  chk(await until(p, () => !TUTOR.checking, null, 18000), '15초 뒤 확인 중 상태가 풀림');
+  chk(/너무 오래/.test(await p.innerText('#tuKeyMsg')) && await p.$eval('#tuKeySave', b => !b.disabled), '안내가 나오고 단추를 다시 누를 수 있음');
+  await p.click('#tuKeySave'); chk(!!(await p.waitForSelector('#tuIn', { timeout: 5000 }).catch(() => null)), '다시 누르면 저장되고 대화 화면'); await ctx.close();
   ({ ctx, p } = await newPage(false)); await open(p, 'zh', false, 12); await (await tile(p)).click(); await p.waitForTimeout(200);
   await p.fill('#tuKey', '  ' + KEY + '  '); await p.press('#tuKey', 'Enter'); await p.waitForSelector('#tuIn', { timeout: 5000 });
   const kc = p.greqs[0];
@@ -248,8 +256,12 @@ const MOCK = () => {
   chk(await p.$eval('#tuSend', b => b.disabled), '보내기 단추 잠김'); chk(!!(await p.$('.tu-bub.typing')), '"쓰는 중" 표시');
   await p.evaluate(() => tutorSend('두 번째')); await p.waitForTimeout(100);
   chk(p.reqs.length === 1, '기다리는 동안 두 번째 요청은 보내지 않음');
+  await p.fill('#tuIn', '다음에 보낼 글'); await p.press('#tuIn', 'Enter'); await p.waitForTimeout(100);
+  chk(p.reqs.length === 1 && await p.inputValue('#tuIn') === '다음에 보낼 글', '기다리는 중 Enter: 보내지 않고 글은 입력칸에 남음');
   release(); await p.waitForFunction(() => !TUTOR.busy, null, { timeout: 5000 }); await p.waitForTimeout(200);
   chk(/바빠서 다른 AI/.test(await p.innerText('#tuLog')), '대체 AI 안내 줄');
+  chk(await p.inputValue('#tuIn') === '다음에 보낼 글', '답이 온 뒤에도 쓰던 글이 그대로');
+  await p.fill('#tuIn', '');
   chk(!(await p.evaluate(() => S.tutor.msgs.filter(m => m.role === 'note').length === 0)), 'note가 기록에 있음(서버로는 안 보냄)');
   await p.evaluate(() => tutorSend('suite')); await p.waitForFunction(() => !TUTOR.busy, null, { timeout: 5000 });
   chk(p.reqs[1] && p.reqs[1].body.messages.every(m => m.role === 'user' || m.role === 'assistant'), 'note는 서버로 가지 않는다');

@@ -96,3 +96,17 @@ test('CORS: 우리 사이트(정확히 같은 주소)만 허용하고 나머지�
     for (const o of ['https://evil.example', 'https://kbjshygod-afk.github.io.evil.com', 'http://kbjshygod-afk.github.io', 'https://KBJSHYGOD-AFK.github.io', '', undefined, null, '*', 5])
         assert.deepEqual(c.corsHeaders(o, allowed), {}, String(o));
 });
+test('시간 제한: 응답이 오지 않는 AI는 끊고(504) 다른 AI로 넘어간다 — 함수 제한 시간 안에 끝난다', async () => {
+    const hang = (url, o) => new Promise((_, rej) => o.signal.addEventListener('abort', () => rej(Object.assign(new Error('aborted'), { name: 'AbortError' }))));
+    const quick = { gemini: { key: 'g', model: 'gm', timeoutMs: 50 }, openai: { key: 'o', model: 'om', timeoutMs: 50 } };
+    const t0 = Date.now();
+    const out = await c.answer((url, o) => url.includes('googleapis') ? hang(url, o) : openaiOk('살아 있는 쪽'), quick, req());
+    assert.equal(out.engine, 'openai'); assert.equal(out.fellBack, true); assert.equal(out.reply, '살아 있는 쪽');
+    await assert.rejects(c.answer(hang, quick, req()), e => e.status === 504);   // 둘 다 멈추면 504(함수가 횟수를 되돌린다)
+    assert.ok(Date.now() - t0 < 2000, '제한 시간대로 끊김');
+    assert.ok(c.LIMITS.callMs * 2 < 60000, '두 AI를 다 기다려도 함수 제한(60초)보다 짧다');
+});
+test('시간 제한: 본문을 읽다가 멈춰도 끊는다', async () => {
+    const slowBody = (url, o) => Promise.resolve({ ok: true, status: 200, json: () => new Promise((_, rej) => o.signal.addEventListener('abort', () => rej(new Error('aborted')))) });
+    await assert.rejects(c.answer(slowBody, { gemini: { key: 'g', model: 'gm', timeoutMs: 50 } }, req()), e => e.status === 504);
+});
