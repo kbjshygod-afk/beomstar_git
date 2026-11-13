@@ -85,6 +85,24 @@ def test_a_pending_exit_waits_for_the_first_real_open_after_a_halt():
     assert t["exit_date"] == "2021-03-08" and t["exit_price"] == 3.0 and t["exit_type"] == "EXIT_MA"
 
 
+def test_a_stop_through_a_halt_fills_at_the_reopening_open():
+    """Held into a halt with no exit signal: the stop is taken at the first real open, far below it."""
+    from swing_engine.params import resolve
+    from swing_engine.portfolio import PortfolioConfig, simulate
+    b = K.adjusted_bars(_rows([
+        ("2021-03-01", 10, 10, 10, 10, 100, 0),
+        ("2021-03-02", 10, 10, 10, 10, 100, 0),           # entry at this open, stop 9
+        ("2021-03-03", 0, 0, 0, 10, 0, 0),                # halted
+        ("2021-03-04", 0, 0, 0, 10, 0, 0),                # halted
+        ("2021-03-05", 2, 2.2, 1.5, 2, 5000, -8),         # liquidation trading opens at 2
+    ]))
+    f = b.assign(exit_ma=0.0, full_signal=b.index == pd.Timestamp("2021-03-01"), rs_key=50.0)
+    cfg = PortfolioConfig(params=resolve("CUSTOM", stop_pct=10.0), initial_equity=1000.0, risk_pct=4.0, cost_pct=0.0)
+    t = simulate({"X.KQ": f}, cfg).trades.iloc[0]
+    assert t["exit_type"] == "STOP" and t["exit_date"] == "2021-03-05" and t["exit_price"] == 2.0
+    assert round(t["price_pnl_pct"]) == -80
+
+
 def test_missing_year_file_is_an_error_not_a_fake_action(tmp_path):
     pytest.importorskip("pyarrow")
     rows = pd.DataFrame({"Code": ["000020"], "Date": pd.to_datetime(["2020-01-02"]), "Open": [5.0], "High": [6.0],

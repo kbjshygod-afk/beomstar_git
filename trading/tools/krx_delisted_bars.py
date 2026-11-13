@@ -21,6 +21,7 @@ day without a bar as untradable (portfolio.simulate, HAS): a position is marked 
 and a pending exit or a stop waits for the first real open after the halt, so the
 liquidation-trading gap of a delisting is taken in full. (Yahoo shows halted days of surviving
 stocks as flat bars, which the simulator can trade; that older limitation is not changed here.)
+Indicators count bars, so a moving average spans a suspension without counting the halted days.
 All yearly marcap files of the requested range must be present: a missing year would make the
 price change across the gap look like a corporate action.
 

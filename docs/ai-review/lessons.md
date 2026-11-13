@@ -79,3 +79,7 @@ last.
 - **GitHub's `schedule` is not a clock.** The first scheduled kis-ws run was 30+ minutes late
   (this repository already runs its 2-hourly ledger through a keeper chain for the same reason).
   Time-critical runs are started by a dispatcher; the schedule is only a backup.
+- **A dedup marker must mean "done", not "started".** Saving the slot marker before listening
+  would have locked the backup run out after an early failure. Write it only after success; let
+  the concurrency group prevent overlap. (Both reviewers; round 2 of the 11-13 review.)
+- **Measure a deadline-based duration when the timed step begins**, after setup, and with seconds.

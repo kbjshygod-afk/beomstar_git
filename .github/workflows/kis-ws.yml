@@ -10,8 +10,9 @@
 #   * Primary start: the Claude session dispatches this workflow with slot=am at 08:50 KST and
 #     slot=pm at 12:05 KST on weekdays (GitHub's own schedule was 30+ minutes late on the first
 #     day, 2026-11-13, and has been hours late in this repository).
-#   * Backup start: the `schedule` triggers below. Whichever comes second finds the slot's marker
-#     in the Actions cache and stops, so a slot is listened to once.
+#   * Backup start: the `schedule` triggers below. Daily runs are serialized; a run that finds
+#     the slot's "done" marker (saved after a successful listen) stops, and one that follows a
+#     failed run listens for what is left of the slot.
 # Alerts already posted that KST day are carried between runs through the Actions cache, so each
 # symbol/level is alerted once a day. Nothing held, or a full window without trades (holiday),
 # ends green; a crash or an early end stays red.
@@ -79,7 +80,7 @@ jobs:
             echo "left=$left"
           } >> "$GITHUB_OUTPUT"
           echo "slot='$slot' · KST $now · minutes left in the slot: $left"
-      - name: Slot already started today?
+      - name: Slot already done today?
         id: marker
         if: steps.slot.outputs.slot != ''
         uses: actions/cache/restore@v4
@@ -95,17 +96,9 @@ jobs:
           LEFT: ${{ steps.slot.outputs.left }}
         run: |
           run=true
-          if [ -n "$SLOT" ] && [ "$HIT" = "true" ]; then run=false; echo "::notice::slot $SLOT already started today by another run; nothing to do"; fi
+          if [ -n "$SLOT" ] && [ "$HIT" = "true" ]; then run=false; echo "::notice::slot $SLOT was already covered today by another run; nothing to do"; fi
           if [ -n "$SLOT" ] && [ "$run" = "true" ] && [ "$LEFT" -lt 2 ]; then run=false; echo "::notice::slot $SLOT is over (started too late); nothing to do"; fi
           echo "run=$run" >> "$GITHUB_OUTPUT"
-      - name: Mark the slot as started
-        if: steps.go.outputs.run == 'true' && steps.slot.outputs.slot != ''
-        run: mkdir -p kis_ws_slot && echo "${{ github.run_id }}" > kis_ws_slot/started
-      - uses: actions/cache/save@v4
-        if: steps.go.outputs.run == 'true' && steps.slot.outputs.slot != ''
-        with:
-          path: kis_ws_slot
-          key: kis-ws-slot-${{ steps.slot.outputs.kst }}-${{ steps.slot.outputs.slot }}
       - uses: actions/checkout@v4
         if: steps.go.outputs.run == 'true'
       - run: git fetch --no-tags --depth=1 origin paper-trading
@@ -135,14 +128,20 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           EVENT: ${{ github.event_name }}
           SLOT: ${{ steps.slot.outputs.slot }}
-          LEFT: ${{ steps.slot.outputs.left }}
           MINUTES_IN: ${{ github.event.inputs.minutes }}
           SYMBOLS: ${{ github.event.inputs.symbols || '' }}
           VENUE: ${{ github.event.inputs.venue || 'J' }}
           ALERT_IN: ${{ github.event.inputs.alert || 'false' }}
         run: |
           if [ -z "$KIS_APP_KEY" ] || [ -z "$KIS_APP_SECRET" ]; then echo "::error::KIS_APP_KEY / KIS_APP_SECRET secrets are not set"; exit 2; fi
-          if [ -n "$SLOT" ]; then ALERT=true; MINUTES="$LEFT"; SYMBOLS=""
+          if [ -n "$SLOT" ]; then
+            # Time left in the slot, measured now (after setup), so the am run ends by 12:00 KST.
+            IFS=: read -r hh mm ss <<< "$(TZ=Asia/Seoul date +%H:%M:%S)"
+            if [ "$SLOT" = "am" ]; then end=$((12 * 3600)); else end=$((15 * 3600 + 35 * 60)); fi
+            MINUTES=$(( (end - (10#$hh * 3600 + 10#$mm * 60 + 10#$ss)) / 60 ))
+            [ "$MINUTES" -gt 340 ] && MINUTES=340
+            if [ "$MINUTES" -lt 2 ]; then echo "slot $SLOT is over; nothing to listen to"; exit 0; fi
+            ALERT=true; SYMBOLS=""
           elif [ "$EVENT" = "push" ]; then ALERT=false; MINUTES=2
           else ALERT="$ALERT_IN"; MINUTES="${MINUTES_IN:-60}"; fi
           args=(--minutes "$MINUTES" --venue "$VENUE" --out ../kis_ws_out --env-file /dev/null --repo ..)
@@ -160,6 +159,17 @@ jobs:
             echo "approval and subscription ok, full window without trades (outside the session or a holiday)"; rc=0
           fi
           exit $rc
+      - name: Mark the slot as done
+        # Only after a successful Listen: a run that failed leaves no marker, so the backup start
+        # (or a re-dispatch) can still cover what is left of the slot. Daily runs are serialized
+        # by the concurrency group, so two never listen at once.
+        if: success() && steps.go.outputs.run == 'true' && steps.slot.outputs.slot != ''
+        run: mkdir -p kis_ws_slot && echo "${{ github.run_id }}" > kis_ws_slot/done
+      - uses: actions/cache/save@v4
+        if: success() && steps.go.outputs.run == 'true' && steps.slot.outputs.slot != ''
+        with:
+          path: kis_ws_slot
+          key: kis-ws-slot-${{ steps.slot.outputs.kst }}-${{ steps.slot.outputs.slot }}
       - name: Save alerts sent today
         if: always() && steps.slot.outputs.slot != '' && hashFiles('kis_ws_state/fired.json') != ''
         uses: actions/cache/save@v4
