@@ -626,14 +626,14 @@
    "xcheck_kis": null
   },
   "KOSPI": {
-   "as_of": "2026-11-12",
+   "as_of": "2026-11-13",
    "start_date": "2026-09-29",
    "regime": {
     "benchmark": "^KS11",
     "mode": "MA200_AND_MA20",
-    "close": 5342.73,
-    "ma200": 6520.698,
-    "ma20": 5560.4205,
+    "close": 5290.5298,
+    "ma200": 6522.6274,
+    "ma20": 5541.5445,
     "on": false
    },
    "entries_next_open": [],
@@ -644,7 +644,7 @@
    "performance": {
     "equity": 99196034.0,
     "return_pct": -0.8,
-    "bench_return_pct": -22.24,
+    "bench_return_pct": -23.0,
     "mdd_pct": -0.8,
     "closed_trades": 1,
     "win_rate_pct": 0.0,
@@ -654,8 +654,8 @@
    },
    "status_csv": "KOSPI/status.csv",
    "audit": {
-    "days": 31,
-    "signal_files": 31,
+    "days": 32,
+    "signal_files": 32,
     "missing_days": [],
     "late": [],
     "uncommitted": [],
@@ -677,15 +677,7 @@
     "checked": "2026-11-11",
     "error": null,
     "mismatched_symbols": [],
-    "index_match": true,
-    "guard": {
-     "close_mismatched": 0,
-     "compared": 200,
-     "share_pct": 0.0,
-     "blocked": false,
-     "late": false,
-     "enforced": false
-    }
+    "index_match": true
    }
   },
   "KOSDAQ": {
@@ -847,7 +839,7 @@
    }
   }
  },
- "updated_at": "2026-11-13T07:49:46Z",
+ "updated_at": "2026-11-13T09:28:29Z",
  "disclaimer": "기계적 룰 출력이며 투자 자문이 아닙니다. 매수·매도 결정은 소유자 본인이 합니다.",
  "unconfirmed": "미확인 추정값(스캐너 원본 코드 미확인): 피벗=직전 20봉 최고가(당일 제외) · 거래량 평균=직전 50일(당일 제외) · RS=지수 대비 가중 1년 수익률 ≥ 0%p(스캐너는 유니버스 백분위 ≥ 70) · 52주 고저=종가 기준 · 200일선 상승=22봉 전 대비 · 수축비=10/40일 평균 TR · 비용=편도 0.2%"
 }
