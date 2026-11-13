@@ -1046,6 +1046,11 @@
         .tu-bar textarea { flex: 1; min-width: 0; min-height: 48px; max-height: 120px; padding: 12px 14px; border: 1.5px solid var(--border); border-radius: 16px; background: var(--card); color: var(--text); font: inherit; font-size: 15px; resize: none; }
         .tu-send { width: 48px; min-width: 48px; height: 48px; padding: 0; border-radius: 50%; font-size: 18px; }
         .tu-send:disabled { opacity: .5; }
+        .tu-mic { width: 48px; min-width: 48px; height: 48px; padding: 0; border: 1.5px solid var(--border); border-radius: 50%; background: var(--card); font-size: 20px; cursor: pointer; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+        .tu-mic.on { background: var(--error); border-color: var(--error); transform: scale(1.12); box-shadow: 0 0 0 6px rgba(220, 38, 38, .18); }
+        .tu-mic:disabled { opacity: .5; }
+        .tu-miclang { width: 44px; min-width: 44px; height: 48px; padding: 0; border: 1.5px solid var(--border); border-radius: 14px; background: var(--card); color: var(--text-light); font: inherit; font-size: 14px; font-weight: 800; cursor: pointer; }
+        .tu-heard { margin: 6px 0 0; padding: 8px 12px; border-radius: 12px; background: #fff7ed; color: #9a3412; font-size: 14px; line-height: 1.5; overflow-wrap: anywhere; }
         .tu-keybtn { min-height: 44px; margin-left: auto; padding: 0 12px; border: 1.5px solid var(--border); border-radius: 12px; background: var(--card); color: var(--text-light); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
         .tu-steps { margin: 8px 0 12px; padding-left: 20px; font-size: 14px; line-height: 1.7; }
         .tu-link { display: flex; align-items: center; justify-content: center; min-height: 48px; margin-bottom: 14px; text-decoration: none; }
@@ -4569,7 +4574,7 @@ function showWelcome(code, deqInfo) {
 const S = { view: 'picker', lessonIdx: 0, step: 0, quiz: null, review: null, trainer: null, story: null, storyIdx: null, openUnit: null };
 const $main = document.getElementById('main');
 
-function go(view) { radioAway(view); stopSpeak(); seqPlaying = false; rolePlayToken++; closeModal(true); clearPlayNext(); $main.style.overflow = ''; document.body.classList.remove('feed-on'); S.view = view; if (view === 'history' || view === 'guide' || view === 'settings') S.meSub = view; render(); }   // overflow: 피드가 바꾼 값을 되돌림 · radioAway: 📻 라디오는 다른 화면으로 가면 일시정지
+function go(view) { radioAway(view); stopSpeak(); tutorMicAbort(); seqPlaying = false; rolePlayToken++; closeModal(true); clearPlayNext(); $main.style.overflow = ''; document.body.classList.remove('feed-on'); S.view = view; if (view === 'history' || view === 'guide' || view === 'settings') S.meSub = view; render(); }   // overflow: 피드가 바꾼 값을 되돌림 · radioAway: 📻 라디오는 다른 화면으로 가면 일시정지
 function subnavHtml(cur) {
     return '<div class="subnav" role="tablist">' + [['history', '📅 기록'], ['guide', '📖 가이드'], ['settings', '⚙️ 설정']].map(([v, t]) =>
         '<button data-sub="' + v + '" role="tab" aria-selected="' + (v === cur) + '"' + (v === cur ? ' class="on"' : '') + '>' + t + '</button>').join('') + '</div>';
@@ -10114,7 +10119,92 @@ function renderTutorKey(T) {
     const done = document.getElementById('tuKeyDone'); if (done) done.addEventListener('click', () => { T.keyEdit = false; renderTutor(); });
     const del = document.getElementById('tuKeyDel'); if (del) del.addEventListener('click', () => { tutorKeySet(''); T.keyEdit = false; T.msgs = []; showToast('🔑 이 기기에서 키를 지웠어요', '', 2400); renderTutor(); });
 }
+// 🎤 누르고 말하기: 단추를 누르고 있는 동안 듣고, 떼면 들린 말을 바로 AI에게 보낸다(브라우저 음성 인식 — 말하기 채점과 같은 것).
+// 말할 언어는 배우는 언어가 기본이고, 옆 단추로 한국어로 바꿀 수 있다(음성 인식은 한 번에 한 언어만 알아듣는다).
+const TUTOR_MIC = { rec: null, held: false, text: '', part: '', err: '', t0: 0, timer: null, lang: '', runs: 0 };
+function tutorMicJoin(a, b) { a = String(a || '').trim(); b = String(b || '').trim(); return !a ? b : !b ? a : a + (/[぀-ヿ㐀-鿿]$/.test(a) && /^[぀-ヿ㐀-鿿]/.test(b) ? '' : ' ') + b; }   // 한자·가나끼리는 띄우지 않는다
+function tutorMicUi(state, text) {   // state: '' 쉬는 중 · 'on' 듣는 중 · 'wait' 알아듣는 중
+    const b = document.getElementById('tuMic'), h = document.getElementById('tuHeard');
+    if (b) { b.classList.toggle('on', state === 'on'); b.setAttribute('aria-pressed', String(state === 'on')); }
+    if (h) { h.hidden = !state; h.textContent = !state ? '' : text || (state === 'on' ? '🎤 듣고 있어요… 다 말하면 손을 떼세요' : '알아듣는 중…'); }
+}
+function tutorMicAbort() {   // 화면을 떠나거나 다시 그릴 때: 보내지 않고 끊는다
+    const m = TUTOR_MIC; m.held = false; clearTimeout(m.timer); m.text = ''; m.part = '';
+    if (m.rec) { const r = m.rec; m.rec = null; try { r.abort(); } catch (e) { } audioSessionType('playback'); }
+}
+function tutorMicStart(T) {
+    const m = TUTOR_MIC;
+    if (!SR || TUTOR.busy || m.held || m.rec) return;
+    stopSpeak(); stopRecog();
+    if (!store.seen.micAsk) { store.seen.micAsk = todayStr(); save(); showToast('🎤 처음 한 번은 마이크 사용을 「허용」해 주세요', '', 3000); }
+    m.held = true; m.text = ''; m.part = ''; m.err = ''; m.runs = 0; m.t0 = Date.now(); m.lang = T.micKo ? 'ko-KR' : CUR.ttsLang;
+    tutorMicUi('on');
+    m.timer = setTimeout(() => tutorMicRelease(T), 30000);   // 너무 오래 누르고 있으면 여기서 끊고 보낸다
+    tutorMicListen(T);
+}
+function tutorMicListen(T) {
+    const m = TUTOR_MIC, base = m.text, started = Date.now();
+    let r;
+    try { r = new SR(); } catch (e) { m.err = 'start'; tutorMicFinish(T); return; }
+    audioSessionType('play-and-record');
+    m.rec = r; m.runs++;
+    r.lang = m.lang; r.interimResults = true; r.continuous = true; r.maxAlternatives = 1;
+    r.onresult = ev => {
+        if (m.rec !== r) return;
+        let fin = '', interim = '';
+        for (let i = 0; i < ev.results.length; i++) {
+            const t = String(ev.results[i][0] && ev.results[i][0].transcript || '').trim();
+            if (!t) continue;
+            if (ev.results[i].isFinal) fin = fin && t.startsWith(fin) ? t : tutorMicJoin(fin, t);   // 안드로이드 크롬은 앞 결과를 포함한 글을 다시 준다 — 겹치면 긴 쪽만
+            else interim = tutorMicJoin(interim, t);
+        }
+        m.text = tutorMicJoin(base, fin); m.part = interim;
+        tutorMicUi(m.held ? 'on' : 'wait', tutorMicJoin(m.text, m.part));
+    };
+    r.onerror = ev => { if (m.rec !== r) return; const c = ev && ev.error; if (c !== 'no-speech' && c !== 'aborted') m.err = c || 'error'; };
+    r.onend = () => {
+        if (m.rec !== r) return;
+        m.rec = null; m.text = tutorMicJoin(m.text, m.part); m.part = '';   // 끝 결과 없이 끝나면 마지막 중간 결과를 쓴다
+        // 아직 누르고 있는데 브라우저가 스스로 끝냈다(조용했을 때) — 이어서 듣는다. 바로바로 끝나는 고장 난 상태면 되풀이하지 않는다.
+        if (m.held && !m.err && m.runs < 8 && Date.now() - started > 400) { tutorMicListen(T); return; }
+        tutorMicFinish(T);
+    };
+    try { r.start(); } catch (e) { m.rec = null; m.err = 'start'; tutorMicFinish(T); }
+}
+function tutorMicRelease(T) {
+    const m = TUTOR_MIC;
+    if (!m.held) return;
+    m.held = false; clearTimeout(m.timer);
+    if (Date.now() - m.t0 < 350 && !m.text && !m.part) { tutorMicAbort(); tutorMicUi(''); showToast('🎤 누르고 있는 동안 말하고, 다 말하면 떼세요', '', 2600); return; }   // 톡 누르기만 한 경우
+    const r = m.rec;
+    if (!r) { tutorMicFinish(T); return; }
+    tutorMicUi('wait', tutorMicJoin(m.text, m.part));
+    try { r.stop(); } catch (e) { }
+    setTimeout(() => { if (m.rec === r) { m.rec = null; try { r.abort(); } catch (e) { } m.text = tutorMicJoin(m.text, m.part); m.part = ''; tutorMicFinish(T); } }, 1500);   // 끝 신호를 주지 않는 브라우저(아이폰 등): 들린 만큼으로
+}
+function tutorMicFinish(T) {
+    const m = TUTOR_MIC, said = m.text.trim().slice(0, TUTOR_MAX), err = m.err;
+    m.held = false; clearTimeout(m.timer); m.text = ''; m.part = ''; audioSessionType('playback');
+    if (S.tutor !== T || S.view !== 'tutor') return;
+    tutorMicUi('');
+    if (said) { const keep = T.draft; tutorSend(said); T.draft = keep; const inp = document.getElementById('tuIn'); if (inp) inp.value = keep; return; }   // 말한 그대로 바로 보낸다(쓰던 글은 그대로 둔다)
+    if (err === 'not-allowed' || err === 'service-not-allowed' || err === 'audio-capture') { MIC_BLOCKED.on = true; showToast('🎤 ' + micHelpText(err), '', 5000); return; }
+    showToast('🎤 ' + (err === 'network' ? '음성 인식은 인터넷이 필요해요. 연결을 확인해 주세요' : err ? '음성 인식을 시작하지 못했어요. 잠시 뒤 다시 해 주세요' : '소리가 안 들렸어요. 누른 채로 조금 더 크게 말해 보세요'), '', 3200);
+}
+function tutorMicBind(T) {
+    const b = document.getElementById('tuMic'), l = document.getElementById('tuMicLang');
+    if (l) l.addEventListener('click', () => { T.micKo = !T.micKo; renderTutor(); });
+    if (!b) return;
+    const down = e => { e.preventDefault(); try { if (e.pointerId != null) b.setPointerCapture(e.pointerId); } catch (x) { } tutorMicStart(T); }, up = () => tutorMicRelease(T);
+    b.addEventListener('pointerdown', down);
+    ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(n => b.addEventListener(n, up));
+    b.addEventListener('contextmenu', e => e.preventDefault());   // 길게 누를 때 뜨는 메뉴를 막는다
+    b.addEventListener('keydown', e => { if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) { e.preventDefault(); tutorMicStart(T); } });   // 키보드: 누르고 있는 동안
+    b.addEventListener('keyup', e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); up(); } });
+    b.addEventListener('blur', up);
+}
 function renderTutor() {
+    tutorMicAbort();   // 다시 그리면 듣던 것은 끊는다
     const T = tutorState(), relay = !!tutorUrl();
     if (!relay && (!tutorKeyGet() || T.keyEdit)) { renderTutorKey(T); return; }
     const top = tutorTop(T.left != null ? '오늘 ' + T.left + '번 남음' : 'AI와 말 연습');
@@ -10127,13 +10217,17 @@ function renderTutor() {
     let h = top + '<div class="tu-ctl">' + (relay ? seg(TUTOR_ENGINES, T.engine, 'engine') : '') + seg(TUTOR_MODES, T.mode, 'mode') + (relay ? '' : '<button class="tu-keybtn" id="tuKeyBtn" aria-label="Gemini 키 바꾸기·지우기">🔑 키</button>') + '</div>' +
         '<div class="lg-note" role="note">' + (relay
             ? '🔒 쓴 글은 AI(' + (T.engine === 'openai' ? 'OpenAI' : 'Google') + ')에 보내져요. 이름·연락처 같은 개인정보는 적지 마세요. 이 앱과 서버는 대화를 저장하지 않아요. AI는 틀릴 수 있어요.'
-            : '🔒 쓴 글은 이 기기에서 Google(Gemini)로 바로 보내져요. 이름·연락처 같은 개인정보는 적지 마세요. 이 앱은 대화를 저장하지 않아요. AI는 틀릴 수 있어요.') + '</div>' +
+            : '🔒 쓴 글은 이 기기에서 Google(Gemini)로 바로 보내져요. 이름·연락처 같은 개인정보는 적지 마세요. 이 앱은 대화를 저장하지 않아요. AI는 틀릴 수 있어요.') + (SR && !IN_APP ? ' 🎤로 말한 소리는 브라우저 회사의 음성 인식으로 보내질 수 있어요.' : '') + '</div>' +
         '<div class="tu-log" id="tuLog" role="log" aria-live="polite" aria-label="대화">';
     if (!T.msgs.length) h += '<div class="tu-empty">' + (T.mode === 'correct' ? '✏️ 배운 말로 문장을 써 보세요. 자연스럽게 고쳐 드려요.' : '💬 먼저 인사해 보세요! 아래 버튼으로 시작해도 돼요.') + '</div><div class="tu-starters">' +
         TUTOR_STARTERS[T.mode].map(s => '<button class="tu-start" data-tu-start="' + esc(s) + '">' + esc(s) + '</button>').join('') + '</div>';
     else h += T.msgs.map(tutorBubble).join('');
     if (TUTOR.busy) h += '<div class="tu-row ai"><div class="tu-bub typing" aria-label="AI가 쓰는 중">···</div></div>';
-    h += '</div><div class="tu-bar"><textarea id="tuIn" rows="1" maxlength="' + TUTOR_MAX + '" enterkeyhint="send" placeholder="' + (T.mode === 'correct' ? CUR.flag + ' 고치고 싶은 문장을 써요' : '말해 보세요(한국어도 괜찮아요)') + '" aria-label="메시지">' + esc(T.draft) + '</textarea>' +
+    const micOk = !!SR && !IN_APP;   // 음성 인식이 되는 브라우저에서만(앱 안 브라우저는 마이크가 막혀 있다)
+    h += '</div><div class="tu-heard" id="tuHeard" role="status" aria-live="polite" hidden></div><div class="tu-bar">' +
+        (micOk ? '<button class="tu-mic" id="tuMic" aria-label="누르고 있는 동안 말하기(떼면 보내요)" aria-pressed="false"' + (TUTOR.busy ? ' disabled' : '') + '>🎤</button>' +
+            '<button class="tu-miclang" id="tuMicLang" aria-label="말할 언어: ' + (T.micKo ? '한국어' : esc(CUR.name || '배우는 언어')) + ' (누르면 바꿔요)">' + (T.micKo ? '한' : ({ zh: '中', en: 'EN', ja: '日', es: 'ES', fr: 'FR' })[CUR.code] || esc(String(CUR.code || '').toUpperCase())) + '</button>' : '') +
+        '<textarea id="tuIn" rows="1" maxlength="' + TUTOR_MAX + '" enterkeyhint="send" placeholder="' + (T.mode === 'correct' ? CUR.flag + ' 고치고 싶은 문장을 써요' : (micOk ? '쓰거나 🎤 누르고 말해요' : '말해 보세요(한국어도 괜찮아요)')) + '" aria-label="메시지">' + esc(T.draft) + '</textarea>' +
         '<button class="btn tu-send" id="tuSend" aria-label="보내기"' + (TUTOR.busy ? ' disabled' : '') + '>➤</button></div>';
     $main.innerHTML = h;
     document.getElementById('tuBack').addEventListener('click', tutorBack);
@@ -10145,6 +10239,7 @@ function renderTutor() {
     inp.addEventListener('input', () => { T.draft = inp.value; });
     inp.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); send(); } });   // 한글 조합 중 Enter는 보내지 않음
     document.getElementById('tuSend').addEventListener('click', send);
+    tutorMicBind(T);
     const log = document.getElementById('tuLog'); if (log) log.scrollTop = log.scrollHeight;
 }
 async function tutorSend(text) {
