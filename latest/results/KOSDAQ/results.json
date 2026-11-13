@@ -1,13 +1,13 @@
 {
   "market": "KOSDAQ",
-  "generated_at": "2026-11-12T23:11:15+00:00",
+  "generated_at": "2026-11-13T00:21:57+00:00",
   "config": {
-    "start": "2014-11-12",
-    "end": "2026-11-12",
-    "test_start": "2016-11-12",
+    "start": "2014-11-13",
+    "end": "2026-11-13",
+    "test_start": "2016-11-13",
     "test_start_auto": false,
     "warmup_bars": 253,
-    "warmup_end": "2015-11-18",
+    "warmup_end": "2015-11-19",
     "initial_equity": 100000000.0,
     "risk_pct": 0.75,
     "cost_pct": 0.2,
@@ -40,7 +40,7 @@
     "loaded": 150,
     "failed": [],
     "benchmark": "^KQ11",
-    "benchmark_rows": 2940,
+    "benchmark_rows": 2939,
     "short_history": [
       "0009K0.KQ",
       "0158S0.KQ",

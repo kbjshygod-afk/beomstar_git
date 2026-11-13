@@ -1,13 +1,13 @@
 {
   "market": "SP500",
-  "generated_at": "2026-11-12T23:12:01+00:00",
+  "generated_at": "2026-11-13T00:22:37+00:00",
   "config": {
-    "start": "2014-11-12",
-    "end": "2026-11-12",
-    "test_start": "2016-11-12",
+    "start": "2014-11-13",
+    "end": "2026-11-13",
+    "test_start": "2016-11-13",
     "test_start_auto": false,
     "warmup_bars": 253,
-    "warmup_end": "2015-11-12",
+    "warmup_end": "2015-11-13",
     "initial_equity": 100000000.0,
     "risk_pct": 0.75,
     "cost_pct": 0.2,
@@ -40,7 +40,7 @@
     "loaded": 503,
     "failed": [],
     "benchmark": "^GSPC",
-    "benchmark_rows": 3018,
+    "benchmark_rows": 3017,
     "short_history": [
       "FDXF",
       "HONA",
