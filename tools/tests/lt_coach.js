@@ -101,6 +101,38 @@ const MOCK = () => {
   chk(typeof sv.th === 'number' && sv.n >= 1 && sv.junk === undefined && sv.bt.recog === 1 && !('hack' in sv.bt) && sv.m === 2, '실력·난이도 저장 · 모르는 칸·망가진 값은 버림 · 합칠 때 기록 많은 쪽');
   await ctx.close();
 
+  console.log('=== 🧱 레슨 기억 강도: 시간이 지나면 줄고, 약해진 레슨은 홈에서 그 레슨 단어로 연습 ===');
+  ({ ctx, p } = await open('es', 6, 2));
+  const sg = await p.evaluate(() => {
+    const l = ALL.find(x => isDone(x.id) && lessonCardKeys(x).length >= 4), ks = lessonCardKeys(l), pr = prog(), now = Date.now();
+    ks.forEach(k => { pr.srs[k].hr = 3; pr.srs[k].hw = 0; pr.srs[k].ht = now; delete pr.srs[k].mastered; });
+    const fresh = lessonStrength(l, now);
+    ks.forEach(k => { pr.srs[k].ht = now - 40 * 864e5; }); save();
+    return { id: l.id, gi: LESSON_BY_ID[l.id], unit: l.unitId, fresh, stale: lessonStrength(l, now), n: ks.length, weak: (weakestLesson() || {}).gi };
+  });
+  chk(sg.fresh > 0.99 && sg.stale < 0.6, '방금 연습: 강도 ' + sg.fresh.toFixed(2) + ' → 40일 뒤: ' + sg.stale.toFixed(2));
+  chk(sg.weak === sg.gi, '가장 약해진 통과 레슨을 찾음');
+  await p.evaluate(u => { S.openUnit = u; go('home'); }, sg.unit); await p.waitForTimeout(250);
+  chk(!!(await p.$('[data-lesson="' + sg.gi + '"] .str-bars')) && /기억 강도 [0-4]\/4/.test(await p.getAttribute('[data-lesson="' + sg.gi + '"] .str-bars', 'aria-label')), '레슨 줄에 4칸 강도 막대(읽기 프로그램용 이름 포함)');
+  chk(!!(await p.$('#weakBanner')), '홈에 "다시 단단하게" 안내');
+  await p.click('#weakBanner'); await p.waitForTimeout(250);
+  const ws = await p.evaluate(() => ({ view: S.view, keys: S.coach.q.map(x => x.key), title: S.coach.title }));
+  const allowed = await p.evaluate(gi => lessonCardKeys(ALL[gi]), sg.gi);
+  chk(ws.view === 'coach' && ws.keys.every(k => allowed.includes(k)) && /다시 단단하게/.test(await p.innerText('.lt-sub')), '그 레슨 단어로만 맞춤 연습(' + ws.keys.length + '문제)');
+  const onlyLesson = await p.evaluate(gi => {   // 다른 레슨 카드를 훨씬 더 약하게 만들어도 그 레슨 카드로만 고르는지
+    const pr = prog(), mine = lessonCardKeys(ALL[gi]), now = Date.now();
+    Object.keys(pr.srs).filter(k => !mine.includes(k)).forEach(k => { pr.srs[k].ht = now - 300 * 864e5; pr.srs[k].hr = 0; });
+    const q = coachBuild(mine).q.map(x => x.key), free = coachBuild().q.map(x => x.key);
+    return { ok: q.every(k => mine.includes(k)), freeOther: free.some(k => !mine.includes(k)) };
+  }, sg.gi);
+  chk(onlyLesson.ok && onlyLesson.freeOther, '다른 카드가 더 약해도 레슨 연습은 그 레슨 카드만(제한 없는 연습은 다른 카드를 고름)');
+  await p.evaluate(() => { const pr = prog(); S.coach.q.forEach(it => { hlrObserve(pr.srs[it.key], 1); }); save(); });
+  const strAfter = await p.evaluate(gi => lessonStrength(ALL[gi]), sg.gi);
+  chk(strAfter > 0.9 && strAfter > sg.stale + 0.4, '한 세션(최대 10장) 연습하면 강도가 다시 오름(' + sg.stale.toFixed(2) + ' → ' + strAfter.toFixed(2) + ')');
+  await p.evaluate(() => coachBack()); await p.waitForTimeout(200);
+  chk(await p.evaluate(() => S.view) === 'home' && await p.evaluate(gi => (weakestLesson() || {}).gi !== gi, sg.gi), '홈으로 돌아오면 그 레슨은 더 이상 약한 레슨이 아님(다른 레슨은 위에서 일부러 약하게 만듦)');
+  await ctx.close();
+
   chk(!errors.length, 'pageerror 없음' + (errors.length ? ': ' + errors.slice(0, 3).join(' | ') : ''));
   await browser.close();
   console.log(bad ? 'RESULT: ' + bad + '건 실패' : 'RESULT: ALL PASS'); process.exit(bad ? 1 : 0);

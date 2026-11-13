@@ -193,6 +193,8 @@
         .lesson-row .l-title { font-size: 14px; font-weight: 600; }
         .lesson-row .l-goal { font-size: 11.5px; color: var(--text-light); margin-top: 1px; }
         .lesson-row .l-state { margin-left: auto; font-size: 15px; flex-shrink: 0; }
+        .str-bars { display: inline-flex; gap: 2px; vertical-align: middle; } .str-bars i { width: 10px; height: 6px; border-radius: 2px; background: #e2e8f0; } .str-bars i.on { background: #f5b400; }
+        .l-str { margin-top: 3px; line-height: 1; }
         /* ── Lesson view ────────────────────── */
         .lesson-top { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
         .back-btn { background: white; border: 1px solid var(--border); border-radius: 12px; width: 42px; height: 42px; font-size: 17px; cursor: pointer; flex-shrink: 0; }
@@ -4865,6 +4867,8 @@ function renderHome() {
     if (qs && !dlq.quick) html += '<div class="quick-card" id="quickBtn" role="button" tabindex="0"><div class="qc-ico">⚡</div><div><div class="qc-t">바쁜 날엔 1분만!</div><div class="qc-d">오늘의 한 문장 듣고 말하기' + (Object.keys(prog().srs).length >= 4 ? ' + 짝 맞추기 5쌍' : '') + ' — 연속 기록이 이어져요</div></div></div>';
     if (deqPending()) html += '<div class="guide-banner" id="deqBanner" role="button" tabindex="0">📦 Daily English Quest 기록이 있어요 — 가져와서 이어 하기 →</div>';
     if (doneCount() === 0) html += '<div class="guide-banner" id="guideBanner" role="button" tabindex="0">👋 처음이신가요? 학습 가이드 먼저 보기 →</div>';
+    const weak = weakestLesson();
+    if (weak) html += '<div class="guide-banner" id="weakBanner" role="button" tabindex="0">🧱 「' + esc(weak.l.title) + '」 기억이 약해졌어요 ' + strengthBars(weak.v) + ' — 다시 단단하게 →</div>';
     if (due > 0) html += '<div class="guide-banner" id="reviewBanner" role="button" tabindex="0">🃏 잊어버릴 때쯤 다시 보는 단어 카드 ' + Math.min(due, sessionCap()) + '장이 기다려요 →</div>';
 
     html += '<div class="section-title">학습 경로 — 순서대로 배우면 됩니다</div>';
@@ -4882,6 +4886,7 @@ function renderHome() {
             '<div class="prog-bar"><div style="width:' + (done / lessons.length * 100) + '%"></div></div>';
         if (open) {
             html += '<div class="lesson-list">';
+            const strengthOf = {}, nowS = Date.now(); lessons.forEach(l => { const gi = LESSON_BY_ID[l.id]; if (isDone(l.id)) strengthOf[gi] = lessonStrength(l, nowS); });   // 🧱 펼친 단원만 계산
             if (done < lessons.length && lessons.length >= 2 && u.unitId > 0) html += '<div class="skip-row" data-skip="' + u.unitId + '" role="button" tabindex="0">⏩ 이미 아는 단계라면? 건너뛰기 시험 (10문제 · 80% 이상이면 단계 통과)</div>';
             lessons.forEach((l, li) => {
                 const gi = LESSON_BY_ID[l.id];
@@ -4893,7 +4898,7 @@ function renderHome() {
                 const stateIco = done_ ? ((prog().boss && prog().boss[l.id] ? '👑' : '') + ((prog().shadow || {})[l.id] && prog().shadow[l.id].d ? '<span aria-label="따라 하기 도장">🗣</span>' : '') + (imp && imp !== 'legacy' ? '<div class="stars" style="color:var(--text-light)">📦 DEQ</div>' : '<div class="stars" aria-label="별 ' + starsOf(l.id) + '개">' + starStr(starsOf(l.id)) + '</div>')) : skipped ? '<span class="muted" style="font-size:11px">⏭ 선택</span>' : (unlocked ? (atHere ? '📍' : '▶') : '🔒');
                 html += '<div class="lesson-row ' + cls + '" data-lesson="' + gi + '" ' + (unlocked ? '' : 'data-locked="1"') + ' role="button" tabindex="0">' +
                     '<div class="lesson-num">' + (li + 1) + '</div>' +
-                    '<div><div class="l-title">' + esc(l.title) + '</div><div class="l-goal">' + esc(l.goal || '') + '</div></div>' +
+                    '<div><div class="l-title">' + esc(l.title) + '</div><div class="l-goal">' + esc(l.goal || '') + '</div>' + (done_ && strengthOf[gi] != null ? '<div class="l-str">' + strengthBars(strengthOf[gi]) + '</div>' : '') + '</div>' +
                     '<div class="l-state">' + stateIco + '</div></div>';
             });
             html += '</div>';
@@ -4950,6 +4955,8 @@ function renderHome() {
     ['quickBtn', 'eveBanner'].forEach(id => { const el = document.getElementById(id); if (el) el.addEventListener('click', startQuick); });
     const rb = document.getElementById('reviewBanner');
     if (rb) rb.addEventListener('click', () => { resetTransient(); go('review'); });
+    const wb = document.getElementById('weakBanner');
+    if (wb && weak) wb.addEventListener('click', () => { resetTransient(); coachOpen('home', weak.ks, weak.l.title); });
     $main.querySelectorAll('.unit-head').forEach(h => h.addEventListener('click', () => {
         const uid = parseInt(h.dataset.unit, 10);
         S.openUnit = (S.openUnit === uid) ? -1 : uid;
@@ -10096,14 +10103,14 @@ function coachCanType(card, type) {
     if (type === 'build') { const n = coachTokens(card.native).length; return n >= 2 && n <= 8; }
     return true;
 }
-function coachPool() {
+function coachPool(keys) {
     const now = Date.now();
-    return Object.entries(prog().srs || {}).filter(([, c]) => c && c.native && c.ko && !c.mastered).map(([key, c]) => ({ key, c, pm: hlrP(c, now) }));
+    return Object.entries(prog().srs || {}).filter(([k, c]) => c && c.native && c.ko && !c.mastered && (!keys || keys.includes(k))).map(([key, c]) => ({ key, c, pm: hlrP(c, now) }));
 }
 // 세션 만들기: 기억 확률이 낮은 카드부터, 카드마다 예측 정답률이 easy 이상인 가장 어려운 유형(없으면 가장 쉬운 유형).
 // 끝쪽 probes개는 예측 정답률이 probe에 가장 가까운 유형(도전). 쉬운 것 → 어려운 것 순으로 놓는다.
-function coachBuild() {
-    const pool = coachPool();
+function coachBuild(keys) {
+    const pool = coachPool(keys);
     if (pool.length < 4) return null;
     const now = Date.now(), picked = pool.sort((a, b) => a.pm - b.pm || cmpStr(a.key, b.key)).slice(0, COACH.len);
     const items = picked.map((x, i) => {
@@ -10125,10 +10132,25 @@ function coachChoices(item, field) {
     const wrong = seededShuffle(others, hashStr(item.key + field)).slice(0, 3);
     return seededShuffle([right].concat(wrong), hashStr(item.key + 'o')).map(v => ({ v, ok: v === right }));
 }
-function coachOpen(from) { S.coachFrom = from || 'play'; S.coach = coachBuild(); playSeen('coach'); go('coach'); }
+// 🧱 레슨 기억 강도: 그 레슨 단어 카드들의 기억 확률(HLR) 평균 — 예전 듀오링고 '기술 강도' 막대(4칸)처럼 시간이 지나면 줄고 복습하면 찬다
+function lessonCardKeys(l) { const p = prog(); return (l.words || []).map(w => srsKey(w)).filter((k, i, a) => p.srs[k] && a.indexOf(k) === i); }
+function lessonStrength(l, now) {
+    const p = prog(), ks = lessonCardKeys(l);
+    if (!ks.length) return null;
+    now = now || Date.now();
+    return ks.reduce((a, k) => a + (p.srs[k].mastered ? Math.max(0.9, hlrP(p.srs[k], now)) : hlrP(p.srs[k], now)), 0) / ks.length;
+}
+function strengthBars(v) { const n = Math.max(0, Math.min(4, Math.round(v * 4))); return '<span class="str-bars" role="img" aria-label="기억 강도 ' + n + '/4">' + [0, 1, 2, 3].map(i => '<i' + (i < n ? ' class="on"' : '') + '></i>').join('') + '</span>'; }
+// 가장 약해진 통과 레슨(강도 0.6 미만, 카드 4장 이상)
+function weakestLesson() {
+    const now = Date.now(); let best = null;
+    ALL.forEach((l, gi) => { if (!isDone(l.id)) return; const ks = lessonCardKeys(l).filter(k => !prog().srs[k].mastered); if (ks.length < 4) return; const v = lessonStrength(l, now); if (v != null && v < 0.6 && (!best || v < best.v)) best = { l, gi, v, ks }; });
+    return best;
+}
+function coachOpen(from, keys, title) { S.coachFrom = from || 'play'; S.coach = coachBuild(keys); if (S.coach && keys) { S.coach.keys = keys; S.coach.title = title; } playSeen('coach'); go('coach'); }
 function coachBack() { const f = S.coachFrom; S.coachFrom = null; S.coach = null; go(f === 'review' ? 'review' : f === 'home' ? 'home' : 'play'); }
 function renderCoach() {
-    const st = S.coach, top = '<div class="lesson-top"><button class="back-btn tap44" id="coBack" aria-label="뒤로">←</button><div><div class="lt-title">🎯 맞춤 연습</div><div class="lt-sub">잊어 가는 것부터 · 내 실력에 맞게</div></div></div>';
+    const st = S.coach, top = '<div class="lesson-top"><button class="back-btn tap44" id="coBack" aria-label="뒤로">←</button><div><div class="lt-title">🎯 맞춤 연습</div><div class="lt-sub">' + (st && st.title ? '🧱 ' + esc(st.title) + ' 다시 단단하게' : '잊어 가는 것부터 · 내 실력에 맞게') + '</div></div></div>';
     if (!st) { $main.innerHTML = top + '<div class="empty-state"><div class="es-emoji">🎯</div>복습 카드가 4장 이상 모이면 열려요.<br>레슨을 하나 통과해 보세요.</div>'; document.getElementById('coBack').addEventListener('click', coachBack); return; }
     if (st.i >= st.q.length) { coachEnd(top); return; }
     const it = st.q[st.i], c = prog().srs[it.key];
@@ -10181,7 +10203,7 @@ function coachEnd(top) {
         '<div class="muted" style="margin-top:8px;line-height:1.6">' + (acc >= 95 ? '아주 잘했어요! 다음엔 조금 더 어려운 문제가 나와요.' : acc >= 75 ? '딱 알맞은 난이도예요. 틀린 건 곧 다시 나와요.' : '어려웠죠? 다음엔 조금 쉽게 나와요. 틀린 건 내일 다시 볼게요.') + '</div></div>' +
         '<button class="btn block" id="coAgain">한 번 더</button><button class="btn ghost block" id="coDone" style="margin-top:8px">끝내기</button>';
     document.getElementById('coBack').addEventListener('click', coachBack);
-    document.getElementById('coAgain').addEventListener('click', () => { S.coach = coachBuild(); renderCoach(); });
+    document.getElementById('coAgain').addEventListener('click', () => { const k = st.keys, tt = st.title; S.coach = coachBuild(k); if (S.coach && k) { S.coach.keys = k; S.coach.title = tt; } renderCoach(); });
     document.getElementById('coDone').addEventListener('click', coachBack);
 }
 registerPlayTile({
