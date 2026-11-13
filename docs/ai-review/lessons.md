@@ -83,3 +83,6 @@ last.
   would have locked the backup run out after an early failure. Write it only after success; let
   the concurrency group prevent overlap. (Both reviewers; round 2 of the 11-13 review.)
 - **Measure a deadline-based duration when the timed step begins**, after setup, and with seconds.
+- **KIS allows one WebSocket session per app key.** A second listener gets "ALREADY IN USE appkey"
+  (2026-11-13, a push smoke run met the live listener). Never test against a key a live job is
+  using; a refused listener stops at once (exit 4) instead of reconnecting.

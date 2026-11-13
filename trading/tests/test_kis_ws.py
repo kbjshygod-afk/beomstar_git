@@ -135,3 +135,35 @@ def test_deliver_alert_reports_whether_the_comment_was_posted(monkeypatch):
     fake.post_github_issue = lambda *a, **k: 7
     assert P.deliver_alert("x", "한국장 손절 근접 알림") is True
     assert P.deliver_alert("x", "") is True
+
+
+def test_probe_stops_at_once_when_the_app_key_is_in_use(monkeypatch, tmp_path, capsys):
+    """KIS allows one session per key; the second listener must not keep reconnecting (2026-11-13)."""
+    import sys
+    import types
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
+    import kis_ws_probe as P
+    opened = []
+
+    class FakeWS:
+        def send(self, text):
+            pass
+
+        def recv(self):
+            return json.dumps({"header": {"tr_id": "H0STCNT0", "tr_key": ""},
+                               "body": {"rt_cd": "9", "msg_cd": "OPSP8996", "msg1": "ALREADY IN USE appkey"}})
+
+        def close(self):
+            pass
+
+    fake = types.ModuleType("websocket")
+    fake.WebSocketTimeoutException = type("WebSocketTimeoutException", (Exception,), {})
+    fake.WebSocketException = type("WebSocketException", (Exception,), {})
+    fake.create_connection = lambda url, timeout=30: opened.append(url) or FakeWS()
+    monkeypatch.setitem(sys.modules, "websocket", fake)
+    monkeypatch.setattr(P.kis_ws, "env_file_credentials", lambda path: {"key": "k" * 36, "secret": "s", "env": "prod"})
+    monkeypatch.setattr(P.kis_ws, "approval_key", lambda cred: "a" * 36)
+    rc = P.main(["--symbols", "093320", "--minutes", "1", "--out", str(tmp_path), "--env-file", "/dev/null", "--no-alert"])
+    assert rc == P.KEY_IN_USE and len(opened) == 1                 # one attempt, no reconnect loop
+    assert "KEY IN USE" in capsys.readouterr().out

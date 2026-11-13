@@ -13,6 +13,8 @@
 #   * Backup start: the `schedule` triggers below. Daily runs are serialized; a run that finds
 #     the slot's "done" marker (saved after a successful listen) stops, and one that follows a
 #     failed run listens for what is left of the slot.
+# KIS allows one WebSocket session per app key, so only one listener may run at a time: daily runs
+# share one concurrency group, and a manual test during a daily run is refused by KIS (exit 4).
 # Alerts already posted that KST day are carried between runs through the Actions cache, so each
 # symbol/level is alerted once a day. Nothing held, or a full window without trades (holiday),
 # ends green; a crash or an early end stays red.
@@ -91,11 +93,18 @@ jobs:
       - name: Decide
         id: go
         env:
+          EVENT: ${{ github.event_name }}
           SLOT: ${{ steps.slot.outputs.slot }}
           HIT: ${{ steps.marker.outputs.cache-hit }}
           LEFT: ${{ steps.slot.outputs.left }}
         run: |
           run=true
+          # KIS allows one WebSocket session per app key. A push smoke run during the KRX session
+          # would collide with the daily listener (2026-11-13: "ALREADY IN USE appkey"), so it is
+          # skipped on weekdays between 08:45 and 15:40 KST; the unit tests still run in swing-backtest.
+          hm=$((10#$(TZ=Asia/Seoul date +%H) * 60 + 10#$(TZ=Asia/Seoul date +%M))); dow=$(TZ=Asia/Seoul date +%u)
+          if [ "$EVENT" = "push" ] && [ "$dow" -le 5 ] && [ "$hm" -ge 525 ] && [ "$hm" -le 940 ]; then
+            run=false; echo "::notice::KRX session hours: smoke run skipped so it cannot take the app key from the daily listener"; fi
           if [ -n "$SLOT" ] && [ "$HIT" = "true" ]; then run=false; echo "::notice::slot $SLOT was already covered today by another run; nothing to do"; fi
           if [ -n "$SLOT" ] && [ "$run" = "true" ] && [ "$LEFT" -lt 2 ]; then run=false; echo "::notice::slot $SLOT is over (started too late); nothing to do"; fi
           echo "run=$run" >> "$GITHUB_OUTPUT"
@@ -151,7 +160,7 @@ jobs:
           rc=0
           python tools/kis_ws_probe.py "${args[@]}" > probe.txt 2>&1 || rc=$?
           cat probe.txt
-          { echo "slot: ${SLOT:-none} · minutes: $MINUTES"; echo '```'; grep -E "^RESULT|^KIS WebSocket|SUBSCRIBE|approval|APPROVAL|reconnect|ALERT|already alerted|ENDED EARLY|COMPLETED WITHOUT" probe.txt | head -40; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          { echo "slot: ${SLOT:-none} · minutes: $MINUTES"; echo '```'; grep -E "^RESULT|^KIS WebSocket|SUBSCRIBE|approval|APPROVAL|reconnect|ALERT|already alerted|ENDED EARLY|COMPLETED WITHOUT|KEY IN USE" probe.txt | head -40; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
           # Exit 3 = the whole listening window ran and no trade arrived (push smoke runs off-hours, KRX
           # holidays). Only that, with a confirmed subscription, is forgiven for daily and smoke runs; a
           # crash or an early end after subscribing (exit 1) stays red, and so does any manual test.

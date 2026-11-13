@@ -12,6 +12,8 @@ a comment on the GitHub issue "한국장 손절 근접 알림" — once per symb
 session, logged to <out>/alerts_<date>.jsonl. Needs `pip install websocket-client`. Listening
 only: no orders.
 Market hours: KRX 09:00-15:30 KST (venue J); NXT 08:00-20:00 (NX); UN = both.
+KIS allows one WebSocket session per app key: a second listener is refused ("ALREADY IN USE
+appkey") and exits with status 4 without retrying.
 On GitHub Actions (kis-ws workflow, weekdays in two runs) --state-file carries the alerts already
 sent that KST day from the morning run to the afternoon run, and --none-ok makes "nothing held"
 a normal, successful run.
@@ -31,6 +33,7 @@ from swing_engine.kis import KST, KISError  # noqa: E402
 
 KR_MARKETS = ("KOSPI", "KOSDAQ", "KOSDAQ_V2")
 NO_TRADES = 3       # exit status: the listening window completed and no trade arrived (holiday, off-hours)
+KEY_IN_USE = 4      # exit status: KIS refused the session because another listener holds this app key
 
 
 def held_from_ledger(repo: Path, ref: str = "origin/paper-trading") -> dict | None:
@@ -137,7 +140,7 @@ def main(argv=None) -> int:
     deadline = time.monotonic() + a.minutes * 60
     next_report = time.monotonic() + a.report_every
     reconnects = 0
-    ended_early = False
+    ended_early = key_in_use = False
     while time.monotonic() < deadline:
         try:
             ws = websocket.create_connection(kis_ws.WS_URL[cred["env"]], timeout=30)
@@ -156,6 +159,11 @@ def main(argv=None) -> int:
                         trk, rt, msg = kis_ws.ack_status(payload)
                         if rt is not None:
                             print(f"  ack {trk}: rt_cd {rt} {msg}")
+                        if "ALREADY IN USE" in str(msg).upper():
+                            # KIS allows one WebSocket session per app key (seen 2026-11-13). Retrying
+                            # only knocks on the session that holds it, so stop at once.
+                            key_in_use = True
+                            break
                 elif kind == "ticks":
                     for t in payload:
                         log.write(json.dumps({"ts": datetime.now().isoformat(timespec="seconds"), **t}, ensure_ascii=False) + "\n")
@@ -176,6 +184,8 @@ def main(argv=None) -> int:
                     print(f"[{datetime.now():%H:%M:%S}] {rec.summary_text()}")
                     next_report = time.monotonic() + a.report_every
             ws.close()
+            if key_in_use:
+                break
         except (OSError, websocket.WebSocketException) as e:
             reconnects += 1
             print(f"socket error ({e}); reconnect {reconnects}")
@@ -191,6 +201,9 @@ def main(argv=None) -> int:
     (out / f"summary_{day}.json").write_text(json.dumps(sm, ensure_ascii=False, indent=1))
     print("\nRESULT:", rec.summary_text())
     print(f"files: {out / f'ticks_{day}.jsonl'} · {out / f'summary_{day}.json'} (send the summary, never the env file)")
+    if key_in_use:
+        print("KEY IN USE: another listener already holds this KIS app key (one session per key); nothing was heard")
+        return KEY_IN_USE
     if ended_early:
         print("ENDED EARLY: too many socket errors before the listening window ended")
         return 1
