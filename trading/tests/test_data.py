@@ -327,6 +327,23 @@ def test_cache_from_before_the_open_is_refetched_after_the_close(tmp_path, monke
     assert fake.calls == 2 and fr["005930.KS"].index[-1] == pd.Timestamp("2026-09-25")
 
 
+def test_cache_missing_the_last_final_bar_is_refetched(tmp_path, monkeypatch):
+    # 2026-11-04 17:11 KST: Yahoo sent ^KQ11 only up to 11-03 although 11-04 had closed.
+    # That download must not be served until the next close; the next run fetches again.
+    fake = FormingYF("2026-11-03")
+    monkeypatch.setattr(D, "_yf_download", fake)
+    D.download_yahoo(["^KQ11"], "2026-09-01", "2026-11-05", cache_dir=tmp_path,
+                     now=datetime(2026, 11, 4, 8, 11, tzinfo=timezone.utc), market="KOSDAQ")
+    fake.upto = pd.Timestamp("2026-11-04")
+    fr, _ = D.download_yahoo(["^KQ11"], "2026-09-01", "2026-11-05", cache_dir=tmp_path,
+                             now=datetime(2026, 11, 4, 10, 7, tzinfo=timezone.utc), market="KOSDAQ")
+    assert fake.calls == 2 and fr["^KQ11"].index[-1] == pd.Timestamp("2026-11-04")
+    # a complete download is reused as before
+    D.download_yahoo(["^KQ11"], "2026-09-01", "2026-11-05", cache_dir=tmp_path,
+                     now=datetime(2026, 11, 4, 12, 7, tzinfo=timezone.utc), market="KOSDAQ")
+    assert fake.calls == 2
+
+
 def test_legacy_cache_without_version_is_ignored(tmp_path, monkeypatch):
     fake = FormingYF("2026-09-24")
     monkeypatch.setattr(D, "_yf_download", fake)

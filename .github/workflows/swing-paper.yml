@@ -39,7 +39,9 @@ env:
   ALERT_MARKETS: KOSDAQ KOSDAQ_V2
 
 concurrency:
-  group: swing-paper
+  # push-triggered trials write to paper-trading-trial: their own queue, so a trial waiting on
+  # data never holds back the real runs (2026-10-08: a trial blocked them for an hour)
+  group: swing-paper-${{ github.event_name == 'push' && 'trial' || 'live' }}
   cancel-in-progress: false
 
 jobs:
@@ -62,7 +64,7 @@ jobs:
           echo "markets=$m" >> "$GITHUB_OUTPUT"
           # data not ready (exit 75): scheduled and keeper runs (tries=1) leave it to the next run
           # 2 hours later; manual and trial runs retry stocks in place (crypto lags by hours)
-          if [ "${{ github.event_name }}" = "schedule" ]; then tries=1; else tries="${{ github.event.inputs.tries || '3' }}"; fi
+          if [ "${{ github.event_name }}" = "schedule" ] || [ "${{ github.event_name }}" = "push" ]; then tries=1; else tries="${{ github.event.inputs.tries || '3' }}"; fi
           echo "tries=$tries" >> "$GITHUB_OUTPUT"; echo "wait=600" >> "$GITHUB_OUTPUT"
           # push-triggered runs are trials: they write to a separate branch
           if [ "${{ github.event_name }}" = "push" ]; then echo "branch=paper-trading-trial" >> "$GITHUB_OUTPUT"; else echo "branch=paper-trading" >> "$GITHUB_OUTPUT"; fi
@@ -90,6 +92,14 @@ jobs:
           BRANCH: ${{ steps.m.outputs.branch }}
           TRIES: ${{ steps.m.outputs.tries }}
           WAIT: ${{ steps.m.outputs.wait }}
+          # Yahoo vs KRX cross-check of Korean bars (swing_engine/xcheck.py); unset = no check
+          KRX_API_KEY: ${{ secrets.KRX_API_KEY }}
+          # Yahoo vs KIS cross-check of the signal day (swing_engine/kis.py); unset = no check
+          KIS_APP_KEY: ${{ secrets.KIS_APP_KEY }}
+          KIS_APP_SECRET: ${{ secrets.KIS_APP_SECRET }}
+          KIS_ENV: ${{ vars.KIS_ENV || 'vps' }}
+          TIINGO_TOKEN: ${{ secrets.TIINGO_TOKEN }}
+          KIS_GUARD: ${{ vars.KIS_GUARD || '0' }}   # 1 = hold back Korean signals when KIS disagrees (off: KIS paper server data unreliable, 2026-10-31)
         run: |
           status=0
           for market in ${{ steps.m.outputs.markets }}; do
@@ -101,7 +111,8 @@ jobs:
                 --cache-dir .cache --push-branch "$BRANCH" -v || rc=$?
               if [ "$rc" -eq 75 ] && [ "$market" != "CRYPTO" ] && [ "$attempt" -lt "$TRIES" ]; then
                 echo "::warning::$market data not ready (attempt $attempt/$TRIES), retrying in ${WAIT}s"
-                rm -rf .cache                     # refetch instead of reusing the incomplete download
+                # refetch Yahoo instead of reusing the incomplete download; KIS bars and token stay
+                find .cache -mindepth 1 -maxdepth 1 ! -name kis -exec rm -rf {} + 2>/dev/null || true
                 sleep "$WAIT"; attempt=$((attempt + 1)); continue
               fi
               break

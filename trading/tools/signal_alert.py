@@ -134,6 +134,7 @@ def render(signal: dict, entry: dict | None, fmt: str = "github", report_url: st
     cov = signal.get("coverage", {})
     if cov.get("failed"):
         L.append(f"데이터 실패 {len(cov['failed'])}/{cov.get('requested', '?')}종목: {', '.join(cov['failed'][:8])}")
+    L.append(data_line(cov, entry))
 
     tail = []
     gen = _local(signal.get("generated_at"), market)
@@ -145,6 +146,30 @@ def render(signal: dict, entry: dict | None, fmt: str = "github", report_url: st
         L.append(" · ".join(tail))
     L.append(f"_{DISCLAIMER}_")
     return "\n".join(L)
+
+
+def _xcheck_part(x: dict) -> str:
+    """'KRX(10-29 봉) 일치' / 'KIS(10-30 봉) 불일치 148 (가드 해제)' / 'KIS 실패' from a latest.json summary."""
+    src = str(x.get("source") or "KRX").split(" ")[0]
+    if x.get("status") == "error":
+        return f"{src} 실패"
+    if x.get("status") == "not_published" or not x.get("checked"):
+        return f"{src} 봉 미공개"
+    bad = x.get("mismatched_symbols") or []
+    part = f"{src}({x['checked'][5:]} 봉) " + (f"불일치 {len(bad)}" if bad else "일치")
+    if x.get("index_match") is False:
+        part += " · 지수 불일치"
+    g = x.get("guard") or {}
+    if g.get("late"):
+        part += " (가드 해제)"
+    return part
+
+
+def data_line(cov: dict, entry: dict | None) -> str:
+    """'데이터 출처 Yahoo 150/150 · 대조 KRX(10-29 봉) 일치 · KIS(10-30 봉) 불일치 148' (checklist 5.1)."""
+    txt = f"데이터 출처 Yahoo {cov.get('loaded', '?')}/{cov.get('requested', '?')}"
+    parts = [_xcheck_part(x) for x in ((entry or {}).get("xcheck"), (entry or {}).get("xcheck_kis")) if x]
+    return txt + (" · 대조 " + " · ".join(parts) if parts else " · 대조 없음")
 
 
 def post_slack(url: str, text: str) -> None:
