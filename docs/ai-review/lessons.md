@@ -92,3 +92,12 @@ last.
   +16.2pp -> +7.0pp). After correcting a dataset, re-run every study that used it, with the same
   tool, before the next decision that cites it. Thresholds re-derived after seeing the new results
   are reference only, never a verdict. (2026-11-13)
+- **Measure the noise before quoting it.** "Path noise is 1-2pp of CAGR" was said for weeks from
+  two anecdotes. Measured (tools/path_noise.py, 2 x 40 paired paths): the same rules give a 10-year
+  CAGR between about 7% and 14% (sd about 1.9pp). Differences under about 3pp between two backtests
+  were being read as findings. Any comparison of two backtests needs a paired noise run, and the
+  reading rule is committed before the run. (2026-11-13)
+- **Say what a filter robustly improves.** The breadth filter's CAGR edge is inside the noise, but
+  its profit factor and drawdown were better in 80 of 80 paired paths. Report each metric's
+  robustness separately instead of one headline number.
+
