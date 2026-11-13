@@ -7,10 +7,10 @@
   "entry_price": 437.8900146,
   "qty": 24086.34911346862,
   "stop_price": 407.23771357799995,
-  "last_close": 467.0599976,
-  "exit_ma": 424.87420166,
-  "unrealized_pnl": 659004.5103237703,
-  "price_pnl_pct": 6.661486224262481,
+  "last_close": 465.6700134,
+  "exit_ma": 425.305202026,
+  "unrealized_pnl": 625591.8249097709,
+  "price_pnl_pct": 6.3440585246905545,
   "exit_pending": false
  },
  {
@@ -21,10 +21,10 @@
   "entry_price": 35.31999969,
   "qty": 297703.06687467825,
   "stop_price": 32.8475997117,
-  "last_close": 35.41999817,
-  "exit_ma": 33.2630000308,
-  "unrealized_pnl": -12349.174448454753,
-  "price_pnl_pct": 0.28312140678843356,
+  "last_close": 36.34000015,
+  "exit_ma": 33.3322000124,
+  "unrealized_pnl": 260990.46170636825,
+  "price_pnl_pct": 2.8878835474304587,
   "exit_pending": false
  },
  {
@@ -35,10 +35,10 @@
   "entry_price": 51.56000137,
   "qty": 202751.5170602284,
   "stop_price": 47.9508012741,
-  "last_close": 52.40000153,
-  "exit_ma": 48.92420021139999,
-  "unrealized_pnl": 128155.2101677116,
-  "price_pnl_pct": 1.6291701661760305,
+  "last_close": 52.04999924,
+  "exit_ma": 48.98540016259999,
+  "unrealized_pnl": 57333.64188620262,
+  "price_pnl_pct": 0.9503449514745244,
   "exit_pending": false
  },
  {
@@ -49,24 +49,10 @@
   "entry_price": 560.8800049,
   "qty": 18721.89471550134,
   "stop_price": 521.618404557,
-  "last_close": 542.6199951,
-  "exit_ma": 522.75460388,
-  "unrealized_pnl": -383181.20261673443,
-  "price_pnl_pct": -3.255600064269648,
-  "exit_pending": false
- },
- {
-  "symbol": "MSFT",
-  "signal_date": "2026-11-04",
-  "exit_signal_date": null,
-  "entry_date": "2026-11-05",
-  "entry_price": 554.9400024,
-  "qty": 18893.628909307216,
-  "stop_price": 516.094202232,
-  "last_close": 523.0,
-  "exit_ma": 518.721999512,
-  "unrealized_pnl": -644194.9494916685,
-  "price_pnl_pct": -5.755577587102422,
+  "last_close": 538.5999756,
+  "exit_ma": 522.367402952,
+  "unrealized_pnl": -458293.0596863311,
+  "price_pnl_pct": -3.9723343862066107,
   "exit_pending": false
  }
 ]
