@@ -39,11 +39,12 @@ EPS = 1e-9                         # the boundaries themselves pass (1.20 + 0.10
 
 
 def row(summary: dict) -> dict:
-    f = summary["full"]
-    return {"trades": f["trades"], "cagr_pct": f["cagr_pct"], "excess_cagr_pp": f["excess_cagr_pp"],
-            "profit_factor": f["profit_factor"], "win_rate_pct": f["win_rate_pct"],
-            "max_drawdown_pct": f["max_drawdown_pct"], "exposure_pct": f.get("exposure_pct"),
-            "h1_excess_pp": summary["h1"]["excess_cagr_pp"], "h2_excess_pp": summary["h2"]["excess_cagr_pp"]}
+    f = summary.get("full") or {}                 # a half (or everything) is missing on a short window
+    return {"trades": f.get("trades"), "cagr_pct": f.get("cagr_pct"), "excess_cagr_pp": f.get("excess_cagr_pp"),
+            "profit_factor": f.get("profit_factor"), "win_rate_pct": f.get("win_rate_pct"),
+            "max_drawdown_pct": f.get("max_drawdown_pct"), "exposure_pct": f.get("exposure_pct"),
+            "h1_excess_pp": (summary.get("h1") or {}).get("excess_cagr_pp"),
+            "h2_excess_pp": (summary.get("h2") or {}).get("excess_cagr_pp")}
 
 
 def plateau(base: dict, by_threshold: dict) -> dict:
@@ -51,6 +52,9 @@ def plateau(base: dict, by_threshold: dict) -> dict:
     rows = list(by_threshold.values())
     if len(rows) < 2:
         return {"plateau": False, "reason": "at least two thresholds are needed"}
+    need = ("cagr_pct", "profit_factor", "max_drawdown_pct", "h1_excess_pp", "h2_excess_pp")
+    if any(r.get(k) is None or r[k] != r[k] for r in [base, *rows] for k in need):
+        return {"plateau": False, "reason": "a metric is missing (too few trades to judge)"}
     cagr = [r["cagr_pct"] for r in rows]
     pf_ok = sum(r["profit_factor"] >= base["profit_factor"] + PF_GAIN - EPS for r in rows)
     checks = {
@@ -85,18 +89,26 @@ def run(data_dir: str, market: str, thresholds: list) -> dict:
     for t in thresholds:
         U.apply_gate(frames, orig, lambda f, x, t=t: x["breadth"].reindex(f.index) >= float(t), ctx)
         out[str(t)] = row(R.summarize(simulate(frames, cfg), bench, market))
-        print(f"{market} breadth >= {t}: cagr {out[str(t)]['cagr_pct']:.2f} pf {out[str(t)]['profit_factor']:.3f} "
-              f"mdd {out[str(t)]['max_drawdown_pct']:.1f} trades {out[str(t)]['trades']}", flush=True)
+        r = out[str(t)]
+        print(f"{market} breadth >= {t}: cagr {_n(r['cagr_pct'], '.2f')} pf {_n(r['profit_factor'], '.3f')} "
+              f"mdd {_n(r['max_drawdown_pct'])} trades {r['trades']}", flush=True)
     return {"market": market, "baseline": base, "thresholds": out, "result": plateau(base, out)}
+
+
+def _n(v, spec=".1f", unit="") -> str:
+    """A number for the table; a missing value (too few trades) prints as n/a instead of raising."""
+    return "n/a" if v is None or v != v else format(v, spec) + unit
 
 
 def table(res: dict) -> str:
     head = ("| 문턱 | 거래 | CAGR | 지수 초과 | PF | 승률 | 최대 낙폭 | 노출 | 전반 초과 | 후반 초과 |\n"
             "|---|---|---|---|---|---|---|---|---|---|\n")
     def line(name, r):
-        return (f"| {name} | {r['trades']:,} | {r['cagr_pct']:.1f}% | {r['excess_cagr_pp']:+.1f}%p | "
-                f"{r['profit_factor']:.2f} | {r['win_rate_pct']:.1f}% | {r['max_drawdown_pct']:.1f}% | "
-                f"{(r['exposure_pct'] or 0):.1f}% | {r['h1_excess_pp']:+.1f}%p | {r['h2_excess_pp']:+.1f}%p |\n")
+        return (f"| {name} | {_n(r['trades'], ',')} | {_n(r['cagr_pct'], '.1f', '%')} | "
+                f"{_n(r['excess_cagr_pp'], '+.1f', '%p')} | {_n(r['profit_factor'], '.2f')} | "
+                f"{_n(r['win_rate_pct'], '.1f', '%')} | {_n(r['max_drawdown_pct'], '.1f', '%')} | "
+                f"{_n(r['exposure_pct'], '.1f', '%')} | {_n(r['h1_excess_pp'], '+.1f', '%p')} | "
+                f"{_n(r['h2_excess_pp'], '+.1f', '%p')} |\n")
     return head + line("기준 (필터 없음)", res["baseline"]) + "".join(
         line(f"폭 ≥ {t}%", r) for t, r in res["thresholds"].items())
 
@@ -114,7 +126,8 @@ def main(argv=None) -> int:
     (out / "breadth_sensitivity.json").write_text(json.dumps(res, ensure_ascii=False, indent=1))
     print(table(res))
     r = res["result"]
-    print(f"plateau: {r['plateau']} · checks {r.get('checks')} · CAGR spread {r.get('cagr_spread_pp', float('nan')):.2f}pp")
+    print(f"plateau: {r['plateau']} · checks {r.get('checks')} · CAGR spread {_n(r.get('cagr_spread_pp'), '.2f')}pp"
+          + (f" · {r['reason']}" if r.get("reason") else ""))
     return 0
 
 

@@ -121,3 +121,50 @@ def test_priority_decides_who_is_filled_when_cash_runs_out():
     assert [p["symbol"] for p in simulate(f, cfg).open_positions] == ["A.KQ"]
     f["A.KQ"]["rs_key"], f["B.KQ"]["rs_key"] = 10.0, 80.0
     assert [p["symbol"] for p in simulate(f, cfg).open_positions] == ["B.KQ"]
+
+
+def test_report_prints_missing_metrics_instead_of_raising():
+    """No losing trade means no profit factor; the console table must still print (found by the
+    Codex/Gemini cross-review of 2026-11-13: the JSON was written and then the print raised)."""
+    rows = [{"mode": m, "rep": 0, "a": {"cagr_pct": 5.0, "profit_factor": None},
+             "b": {"cagr_pct": 6.0, "profit_factor": None}} for m in P.MODES]
+    s = P.summarize_runs(rows, {"a": {"cagr_pct": 5.0}, "b": {"cagr_pct": None}})
+    text = P.report(s)
+    assert "profit_factor" in text and "n/a" in text and "B ahead 100%" in text
+    assert P._n(None) == "n/a" and P._n(float("nan")) == "n/a" and P._n(1.234) == "1.23"
+
+
+def _snapshot(dirpath, n=900, symbols=8, seed=3):
+    """A small point-in-time snapshot: trending random walks from 2015, all symbols members."""
+    rng = np.random.default_rng(seed)
+    idx = pd.bdate_range("2015-01-01", periods=n)
+    frames = {}
+    for k in range(symbols):
+        r = rng.normal(0.0012 + 0.0004 * k, 0.02, n)
+        close = 1000.0 * np.exp(np.cumsum(r))
+        spread = np.abs(rng.normal(0, 0.01, n))
+        vol = rng.integers(50_000, 150_000, n).astype(float)
+        vol[rng.random(n) < 0.08] *= 4                                # volume spikes, so breakouts can qualify
+        frames[f"{k:06d}.KQ"] = pd.DataFrame({"open": close * (1 - spread / 2), "high": close * (1 + spread),
+                                              "low": close * (1 - spread), "close": close, "volume": vol}, index=idx)
+    bench = pd.DataFrame({"close": 100.0 * np.exp(np.cumsum(rng.normal(0.0002, 0.01, n)))}, index=idx)
+    pd.to_pickle({"market": "KOSDAQ", "frames": frames, "universe": sorted(frames), "bench": bench},
+                 dirpath / "KOSDAQ.pkl.xz", compression="xz")
+    codes = ",".join(s.split(".")[0] for s in sorted(frames))
+    pd.DataFrame({"date": ["2015-01-01", "2017-01-02"], "codes": [codes, codes]}).to_csv(
+        dirpath / "KOSDAQ_membership.csv.gz", index=False)
+
+
+def test_main_runs_end_to_end_on_a_small_snapshot(tmp_path, capsys):
+    """Snapshot loading, point-in-time preparation, both presets, both perturbations, the JSON and
+    the console table together (a gap named by the cross-review)."""
+    import json
+    _snapshot(tmp_path)
+    out = tmp_path / "out"
+    assert P.main(["--data", str(tmp_path), "--out", str(out), "--reps", "2", "--jobs", "1"]) == 0
+    d = json.loads((out / "path_noise.json").read_text())
+    assert d["a"] == "KOSDAQ" and d["b"] == "KOSDAQ_V2" and len(d["runs"]) == 4
+    assert {r["mode"] for r in d["runs"]} == set(P.MODES) and set(d["summary"]) == set(P.MODES)
+    assert d["verdict"]["verdict"] in ("outside the noise", "inside the noise", "incomplete")
+    text = capsys.readouterr().out
+    assert "VERDICT:" in text and "[priority] 2 paired paths" in text and "[drop] 2 paired paths" in text

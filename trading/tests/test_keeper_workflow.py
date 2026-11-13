@@ -160,6 +160,31 @@ def test_the_slot_query_looks_back_45_minutes_and_counts_only_live_or_successful
     assert '.conclusion == "" or .conclusion == null or .conclusion == "success"' in q
 
 
+@pytest.mark.skipif(not shutil.which("jq"), reason="needs jq")
+def test_the_slot_filter_counts_the_right_runs(tmp_path):
+    """The jq filter the keeper sends, taken from the call it really makes and applied to
+    representative run records (a gap named by the Codex/Gemini cross-review of 2026-11-13)."""
+    import json
+    start = _epoch("2026-11-16 08:49")
+    _, calls, _ = _run(tmp_path, LOOP, start, state={"fast_after": _epoch("2026-11-16 09:00")})
+    flt = _of(calls, "run list")[0][1].split("--jq ", 1)[1]
+    runs = [
+        {"displayTitle": "kis-ws slot am", "conclusion": ""},            # queued or in progress
+        {"displayTitle": "kis-ws slot am", "conclusion": None},
+        {"displayTitle": "kis-ws slot am", "conclusion": "success"},
+        {"displayTitle": "kis-ws slot am", "conclusion": "failure"},     # left no marker: does not count
+        {"displayTitle": "kis-ws slot am", "conclusion": "cancelled"},
+        {"displayTitle": "kis-ws slot pm", "conclusion": "success"},     # the other slot
+        {"displayTitle": "kis-ws", "conclusion": ""},                    # a manual test or a smoke run
+    ]
+    def count(records):
+        r = subprocess.run(["jq", flt], input=json.dumps(records), capture_output=True, text=True)
+        assert r.returncode == 0, r.stderr
+        return int(r.stdout)
+    assert count(runs) == 3
+    assert count(runs[3:]) == 0 and count([]) == 0
+
+
 def test_the_hand_over_waits_when_the_loop_failed(tmp_path):
     script = _step("Hand over")["run"]
     r, calls, end = _run(tmp_path, script, 1_000_000, env={"LOOP": "success"})

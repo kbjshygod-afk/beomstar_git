@@ -113,16 +113,36 @@ def verdict(summary: dict) -> dict:
             "verdict": "outside the noise" if outside else ("inside the noise" if complete else "incomplete")}
 
 
+def _n(v, spec=".2f") -> str:
+    """A number for the console table; a missing value prints as n/a instead of raising."""
+    return "n/a" if v is None or not np.isfinite(v) else format(v, spec)
+
+
+def report(summary: dict) -> str:
+    """The console table. Any metric may be missing (no losing trade means no profit factor)."""
+    lines = []
+    for mode, s in summary.items():
+        lines.append(f"\n[{mode}] {s['reps']} paired paths")
+        for k, m in s["metrics"].items():
+            a, b, d = m["a"], m["b"], m["b_minus_a"]
+            lines.append(
+                f"  {k:18s} A p05/p50/p95 {_n(a.get('p05')):>7} {_n(a.get('p50')):>7} {_n(a.get('p95')):>7} "
+                f"(rule {_n(m.get('rule_a'))}) · B {_n(b.get('p05')):>7} {_n(b.get('p50')):>7} {_n(b.get('p95')):>7} "
+                f"(rule {_n(m.get('rule_b'))}) · B-A {_n(d.get('p05')):>6} {_n(d.get('p50')):>6} {_n(d.get('p95')):>6} "
+                f"· B ahead {_n(m.get('b_ahead_pct'), '.0f')}%")
+    return "\n".join(lines)
+
+
 def metrics_of(summary: dict) -> dict:
     """The numbers compared, from robustness.summarize()."""
     if not summary:
         return {}
-    f = summary["full"]
+    f = summary.get("full") or {}                 # a half is None when the window does not reach it
     return {"cagr_pct": f.get("cagr_pct"), "excess_cagr_pp": f.get("excess_cagr_pp"),
             "profit_factor": f.get("profit_factor"), "max_drawdown_pct": f.get("max_drawdown_pct"),
             "trades": f.get("trades"), "win_rate_pct": f.get("win_rate_pct"),
-            "h1_excess_pp": summary.get("h1", {}).get("excess_cagr_pp"),
-            "h2_excess_pp": summary.get("h2", {}).get("excess_cagr_pp")}
+            "h1_excess_pp": (summary.get("h1") or {}).get("excess_cagr_pp"),
+            "h2_excess_pp": (summary.get("h2") or {}).get("excess_cagr_pp")}
 
 
 def _prepare(data_dir: str, market: str, preset: str):
@@ -182,7 +202,7 @@ def main(argv=None) -> int:
     with get_context("fork").Pool(max(1, a.jobs)) as pool:      # fork: the prepared frames are shared
         for r in pool.imap_unordered(_job, jobs):
             rows.append(r)
-            print(f"{r['mode']} {r['rep']:02d}: {a.a} {r['a'].get('cagr_pct'):.2f} · {a.b} {r['b'].get('cagr_pct'):.2f}",
+            print(f"{r['mode']} {r['rep']:02d}: {a.a} {_n(r['a'].get('cagr_pct'))} · {a.b} {_n(r['b'].get('cagr_pct'))}",
                   flush=True)
     rows.sort(key=lambda r: (MODES.index(r["mode"]), r["rep"]))
     summary = summarize_runs(rows, rule)
@@ -192,16 +212,7 @@ def main(argv=None) -> int:
     (out / "path_noise.json").write_text(json.dumps(
         {"market": a.market, "a": a.a, "b": a.b, "reps": a.reps, "drop_pct": a.drop_pct, "seed": a.seed,
          "rule": rule, "summary": summary, "verdict": v, "runs": rows}, ensure_ascii=False, indent=1))
-    for mode, s in summary.items():
-        print(f"\n[{mode}] {s['reps']} paired paths")
-        for k, m in s["metrics"].items():
-            d = m["b_minus_a"]
-            print(f"  {k:18s} A p05/p50/p95 {m['a'].get('p05', float('nan')):7.2f} {m['a'].get('p50', float('nan')):7.2f} "
-                  f"{m['a'].get('p95', float('nan')):7.2f} (rule {m['rule_a']:.2f}) · "
-                  f"B {m['b'].get('p05', float('nan')):7.2f} {m['b'].get('p50', float('nan')):7.2f} "
-                  f"{m['b'].get('p95', float('nan')):7.2f} (rule {m['rule_b']:.2f}) · "
-                  f"B-A {d.get('p05', float('nan')):6.2f} {d.get('p50', float('nan')):6.2f} {d.get('p95', float('nan')):6.2f} "
-                  f"· B ahead {m['b_ahead_pct']:.0f}%")
+    print(report(summary))
     print(f"\nVERDICT: {a.b} vs {a.a}: {v['verdict']} (5th percentile of the paired CAGR difference: {v['cagr_diff_p05']})")
     return 0
 

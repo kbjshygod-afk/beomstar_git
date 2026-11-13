@@ -49,3 +49,26 @@ def test_a_single_threshold_cannot_be_a_plateau():
 def test_table_lists_the_baseline_and_every_threshold():
     t = B.table({"baseline": BASE, "thresholds": {"40": _r(), "50": _r()}})
     assert t.count("\n") == 5 and "기준 (필터 없음)" in t and "폭 ≥ 40%" in t and "폭 ≥ 50%" in t
+
+
+def test_missing_metrics_are_not_a_plateau_and_do_not_raise():
+    res = B.plateau(BASE, {"40": _r(), "50": _r(profit_factor=None)})
+    assert not res["plateau"] and "missing" in res["reason"]
+    res = B.plateau({**BASE, "h1_excess_pp": float("nan")}, {"40": _r(), "50": _r()})
+    assert not res["plateau"]
+    text = B.table({"baseline": BASE, "thresholds": {"50": _r(profit_factor=None, trades=None, exposure_pct=None)}})
+    assert text.count("n/a") == 3
+
+
+def test_main_runs_end_to_end_on_a_small_snapshot(tmp_path, capsys):
+    """Loading, point-in-time preparation, the gate at each threshold and the output together."""
+    import json
+    from test_path_noise import _snapshot
+    _snapshot(tmp_path)
+    out = tmp_path / "out"
+    assert B.main(["--data", str(tmp_path), "--out", str(out), "--thresholds", "40", "50"]) == 0
+    d = json.loads((out / "KOSDAQ" / "breadth_sensitivity.json").read_text())
+    assert list(d["thresholds"]) == ["40", "50"] and "plateau" in d["result"]
+    # a gate can only remove entries
+    assert all((r["trades"] or 0) <= (d["baseline"]["trades"] or 0) for r in d["thresholds"].values())
+    assert "기준 (필터 없음)" in capsys.readouterr().out

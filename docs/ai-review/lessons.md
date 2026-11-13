@@ -106,4 +106,10 @@ last.
 - **Test the workflow's shell as written.** The keeper loop is extracted from the YAML and run
   under `bash -e -o pipefail` with stub `date`/`sleep`/`gh` and a virtual clock
   (tests/test_keeper_workflow.py), so a 5 h 45 min run is checked in seconds.
+- **Run every research tool end to end on a tiny snapshot.** Unit tests of the pure parts passed
+  while both new tools crashed on a window with no second half (`summary["h2"]` is None) and the
+  console table raised on a missing profit factor after the JSON was written. The reviewers named
+  the missing integration test; writing it found the crash. (Codex and Gemini, 2026-11-13.)
+- **Test a query against records, not against a stubbed count.** The keeper's jq filter is taken
+  from the call it really makes and applied to queued, successful, failed and cancelled runs.
 
