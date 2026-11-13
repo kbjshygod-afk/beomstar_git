@@ -69,7 +69,7 @@ cd functions && npm install && npm test && cd ..
 firebase deploy --only functions,firestore:rules
 ```
 
-`npm test`(12개)가 모두 통과해야 해요. 배포가 끝나면 함수 주소가 나와요.
+`npm test`가 모두 통과해야 해요. 배포가 끝나면 함수 주소가 나와요.
 
 ## 4. 앱에 주소 적기
 
@@ -79,8 +79,8 @@ firebase deploy --only functions,firestore:rules
 tutorUrl: 'https://asia-northeast3-lang-starter.cloudfunctions.net/tutor'
 ```
 
-(2세대 함수는 배포 로그의 `Function URL (tutor)` 값을 그대로 써도 돼요.) 저장소에 올려 배포하면 놀이 탭에 🤖 AI 튜터가 나타나고,
-개인정보 안내(`privacy.html`)에도 AI 튜터 문구가 함께 나타나요.
+(2세대 함수는 배포 로그의 `Function URL (tutor)` 값을 그대로 써도 돼요.) 저장소에 올려 배포하면 🤖 AI 튜터가 ①번(내 키) 대신 이 중계 방식으로 바뀌고,
+개인정보 안내(`privacy.html`)도 중계 방식 문구로 바뀌어요.
 
 ## 5. 사용 횟수 기록 자동 삭제 (개인정보 안내의 약속)
 
@@ -119,7 +119,7 @@ AI 회사 쪽에도 월 지출 한도를 걸어 두세요(Google AI Studio·Open
 ## 시험
 
 ```bash
-cd functions && npm test          # 서버 규칙·두 AI 호출 모양·대체 동작·CORS 13개 (인터넷·키 필요 없음)
+cd functions && npm test          # 서버 규칙·두 AI 호출 모양·대체 동작·CORS (인터넷·키 필요 없음)
 ```
 
 앱 화면과 에뮬레이터를 쓰는 시험은 `tools/tests/README.md`를 보세요.

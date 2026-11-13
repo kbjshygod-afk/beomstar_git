@@ -33,3 +33,19 @@ Each entry gives the date, the lesson, and where it came from. The newest entrie
   the learner had typed. Check "busy" before touching the draft. (ChatGPT cross-review of #73)
 - **2026-11-13: the privacy notice must cover fallbacks.** The relay row said text goes only to
   the chosen AI, but the relay falls back to the other one. (ChatGPT cross-review of #72)
+- **2026-11-13: a time limit must cover reading the body too.** The key check cleared its timer
+  as soon as the headers arrived, so a stalled error body could still hang it. Keep the limit
+  until the body is read. (ChatGPT, agreed by Gemini, second review of #72/#73)
+- **2026-11-13: a draft restored after a failure must not overwrite newer text.** The learner can
+  keep typing while waiting; on failure put the failed text back in front of the new text.
+  (ChatGPT, agreed by Gemini)
+- **2026-11-13: switching language must cancel the request in flight.** A global "busy" flag left
+  the new language's tutor locked until the old request ended. Abort it and redraw. (Gemini,
+  agreed by ChatGPT)
+- **2026-11-13: the phone's back button must match the on-screen ←.** On a sub-screen (the key
+  screen) both go back one step, not out of the feature. (Gemini, agreed by ChatGPT)
+- **2026-11-13: `obj[userValue]` is not a membership test.** `LANGS['constructor']` is truthy;
+  use `hasOwnProperty`. (ChatGPT, agreed by Gemini)
+- **2026-11-13: give reviewers the tests with the code.** The review was limited with `--paths`
+  and left out `tools/tests/`, so both reviewers reported "no tests" for flows that were tested.
+  Always include the test files of the area under review.

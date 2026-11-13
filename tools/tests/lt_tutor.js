@@ -93,6 +93,10 @@ const MOCK = () => {
   chk(await until(p, () => !TUTOR.checking, null, 18000), '15초 뒤 확인 중 상태가 풀림');
   chk(/너무 오래/.test(await p.innerText('#tuKeyMsg')) && await p.$eval('#tuKeySave', b => !b.disabled), '안내가 나오고 단추를 다시 누를 수 있음');
   await p.click('#tuKeySave'); chk(!!(await p.waitForSelector('#tuIn', { timeout: 5000 }).catch(() => null)), '다시 누르면 저장되고 대화 화면'); await ctx.close();
+  ({ ctx, p } = await newPage(false)); await open(p, 'zh', false);
+  const stalled = await p.evaluate(async k => { const real = window.fetch; window.fetch = (u, o) => Promise.resolve({ ok: false, status: 400, json: () => new Promise((_, rej) => o.signal.addEventListener('abort', () => rej(new Error('aborted')))) });
+    const t0 = Date.now(); try { const r = await tutorKeyCheck(k); return { r, ms: Date.now() - t0 }; } finally { window.fetch = real; } }, KEY);
+  chk(!stalled.r.ok && /너무 오래/.test(stalled.r.msg) && stalled.ms < 17000, '오류 본문을 읽다 멈춰도 15초 뒤 끝남(' + Math.round(stalled.ms / 1000) + '초)'); await ctx.close();
   ({ ctx, p } = await newPage(false)); await open(p, 'zh', false, 12); await (await tile(p)).click(); await p.waitForTimeout(200);
   await p.fill('#tuKey', '  ' + KEY + '  '); await p.press('#tuKey', 'Enter'); await p.waitForSelector('#tuIn', { timeout: 5000 });
   const kc = p.greqs[0];
@@ -121,6 +125,10 @@ const MOCK = () => {
   await p.click('#tuKeyBtn'); await p.waitForTimeout(150);
   chk(new RegExp('····' + KEY.slice(-4)).test(await p.innerText('.tu-key')) && !(await p.innerText('#main')).includes(KEY), '끝 4자리만 보임(전체 키는 화면에 없음)');
   await p.click('#tuKeyDone'); await p.waitForTimeout(150); chk(!!(await p.$('#tuIn')) && await p.evaluate(() => S.tutor.msgs.length) === 4, '돌아가면 대화가 그대로');
+  await p.click('#tuKeyBtn'); await p.waitForTimeout(100); await p.evaluate(() => handleBack()); await p.waitForTimeout(150);
+  chk(await p.evaluate(() => S.view) === 'tutor' && !!(await p.$('#tuIn')), '키 화면에서 휴대폰 뒤로 가기: 튜터를 나가지 않고 대화로');
+  await p.evaluate(() => handleBack()); await p.waitForTimeout(150); chk(await p.evaluate(() => S.view) === 'play', '대화 화면에서 뒤로 가기: 놀이 탭으로');
+  await (await tile(p)).click(); await p.waitForTimeout(200);
   await p.click('#tuKeyBtn'); await p.click('#tuKeyDel'); await p.waitForTimeout(200);
   chk(await p.evaluate(() => localStorage.getItem('lang_starter_tutor_key')) === null && !!(await p.$('#tuKey')) && !(await p.$('#tuIn')), '지우면 이 기기에서 사라지고 키 화면으로');
   chk(await p.evaluate(() => S.tutor.msgs.length) === 0, '대화도 비움'); await ctx.close();
@@ -159,6 +167,21 @@ const MOCK = () => {
   await p.unroute('https://generativelanguage.googleapis.com/**'); await p.route('https://generativelanguage.googleapis.com/**', r => r.abort('failed'));
   await p.fill('#tuIn', '你好'); await p.click('#tuSend'); await p.waitForFunction(() => !TUTOR.busy, null, { timeout: 5000 }); await p.waitForTimeout(200);
   chk(/인터넷/.test(await toast(p)) && await p.inputValue('#tuIn') === '你好', '연결 끊김: 안내, 글이 돌아옴'); await ctx.close();
+
+  console.log('=== 기다리는 동안 새로 쓴 글은 실패해도 남는다 · 언어를 바꾸면 진행 중인 요청을 끊고 새 화면이 잠기지 않는다 ===');
+  { let rel; const g8 = new Promise(r => { rel = r; });
+    ({ ctx, p } = await newPage(false, null, async (n, g) => g.list ? { status: 200, json: {} } : (await g8, { status: 503, json: { error: { code: 503 } } })));
+    await open(p, 'fr', false); await withKey(p); await (await tile(p)).click(); await p.waitForTimeout(200);
+    await p.fill('#tuIn', 'bonjour'); await p.click('#tuSend'); await p.waitForTimeout(150);
+    await p.fill('#tuIn', 'ça va ?'); rel(); await p.waitForFunction(() => !TUTOR.busy, null, { timeout: 5000 }); await p.waitForTimeout(200);
+    chk(await p.inputValue('#tuIn') === 'bonjour\nça va ?', '실패한 글과 새로 쓴 글이 둘 다 입력칸에 남음'); await ctx.close(); }
+  ({ ctx, p } = await newPage(false, null, async (n, g) => g.list ? { status: 200, json: {} } : new Promise(() => { })));
+  await open(p, 'en', false); await withKey(p); await (await tile(p)).click(); await p.waitForTimeout(200);
+  await p.fill('#tuIn', 'hello'); await p.click('#tuSend'); await p.waitForTimeout(150);
+  chk(await p.evaluate(() => TUTOR.busy), '답을 기다리는 중');
+  await p.evaluate(() => activateLanguage('ja')); await until(p, () => CUR && CUR.code === 'ja', null, 8000); await p.evaluate(() => tutorOpen('play'));
+  chk(await until(p, () => !TUTOR.busy && !document.querySelector('.tu-bub.typing') && document.getElementById('tuSend') && !document.getElementById('tuSend').disabled, null, 3000), '새 언어 화면: 쓰는 중 표시 없고 보내기 가능(바로 풀림)');
+  chk(await p.evaluate(() => S.tutor.code === 'ja' && S.tutor.msgs.length === 0), '새 언어는 빈 대화'); await ctx.close();
 
   console.log('=== 내 키 방식 안전: 답에 HTML이 있어도 글자로만 · 로그인해도 화면이 바뀌지 않음 · 기록 지우기에 키 포함 ===');
   ({ ctx, p } = await newPage(false, null, async (n, g) => g.list ? { status: 200, json: {} } : GOOD('<img src=x onerror="window.__xss=1"><script>window.__xss=2<\/script>')));

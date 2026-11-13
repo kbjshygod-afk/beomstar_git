@@ -41,7 +41,7 @@ function validateRequest(body) {
     const bad = error => ({ ok: false, code: 400, error });
     if (!body || typeof body !== 'object' || Array.isArray(body)) return bad('요청 형식이 맞지 않아요');
     const lang = String(body.lang || ''), engine = String(body.engine || 'gemini'), mode = String(body.mode || 'chat');
-    if (!LANGS[lang]) return bad('지원하지 않는 언어예요');
+    if (!Object.prototype.hasOwnProperty.call(LANGS, lang)) return bad('지원하지 않는 언어예요');   // 'constructor' 같은 물려받은 이름은 막는다
     if (!ENGINES.includes(engine)) return bad('지원하지 않는 AI예요');
     if (!MODES.includes(mode)) return bad('지원하지 않는 방식이에요');
     if (!Array.isArray(body.messages) || !body.messages.length) return bad('보낼 글이 없어요');
