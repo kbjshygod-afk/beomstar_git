@@ -10025,8 +10025,10 @@ function tutorRankModels(names) {
 }
 async function tutorModelList(key, signal) {
     if (TUTOR.models) return TUTOR.models;
+    const ctl = new AbortController(), stop = () => ctl.abort(), timer = setTimeout(stop, 6000);   // 목록이 늦으면 기다리지 않고 알려진 이름으로 — 답 받을 시간을 남긴다
+    if (signal) signal.addEventListener('abort', stop, { once: true });
     try {
-        const r = await fetch(TUTOR_API + '?pageSize=1000', { headers: { 'x-goog-api-key': key }, signal });
+        const r = await fetch(TUTOR_API + '?pageSize=1000', { headers: { 'x-goog-api-key': key }, signal: ctl.signal });
         if (r.ok) {
             const j = await r.json().catch(() => ({}));
             const names = (Array.isArray(j.models) ? j.models : []).filter(m => m && typeof m.name === 'string' && Array.isArray(m.supportedGenerationMethods) && m.supportedGenerationMethods.includes('generateContent')).map(m => m.name.replace(/^models\//, ''));
@@ -10034,7 +10036,9 @@ async function tutorModelList(key, signal) {
             TUTOR.models = pick.length ? pick : TUTOR_MODELS;   // 받은 목록은 이번 방문 동안 기억
             return TUTOR.models;
         }
-    } catch (e) { if (e && e.name === 'AbortError') throw e; }
+    } catch (e) { if (signal && signal.aborted) throw Object.assign(new Error('aborted'), { name: 'AbortError' }); }   // 보내기 자체가 끊긴 경우만 위로 올린다
+    finally { clearTimeout(timer); if (signal) signal.removeEventListener('abort', stop); }
+    if (signal && signal.aborted) throw Object.assign(new Error('aborted'), { name: 'AbortError' });
     return TUTOR_MODELS;   // 목록을 못 받았으면 알려진 이름으로(기억하지 않고 다음에 다시 물어본다)
 }
 // 내 키 방식: 구글로 바로 보낸다. 성공하면 답 글자, 실패하면 { msg } 를 던진다.
@@ -10043,8 +10047,9 @@ async function tutorAskGemini(key, system, msgs, signal) {
     const contents = msgs.map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.text }] }));
     const all = await tutorModelList(key, signal), now = Date.now();
     let models = all.filter(m => !(TUTOR.skip[m] > now)); if (!models.length) models = all;   // 모두 쉬는 중이면 처음부터 다시 물어본다
-    let last = null, limited = null;
+    let last = null, limited = null, tried = 0, forbidden = 0;
     for (const model of models) {
+        let viaCut = false;
         // '생각' 단계를 줄여 빠르게: 모델 세대마다 설정 이름이 달라 차례로 써 보고(400이면 다음), 통한 것을 기억한다. 마지막은 설정 없이 넉넉한 길이.
         for (let i = TUTOR.think[model] || 0; i < TUTOR_THINK.length; i++) {
             const tc = TUTOR_THINK[i], gen = Object.assign({ maxOutputTokens: tc ? 1024 : 8192, temperature: 0.6 }, tc || {});
@@ -10057,18 +10062,24 @@ async function tutorAskGemini(key, system, msgs, signal) {
                 const c = j && j.candidates && j.candidates[0], parts = c && c.content && c.content.parts;
                 const text = Array.isArray(parts) ? parts.filter(p => p && !p.thought).map(p => p.text || '').join('').trim() : '';
                 const cut = !!(c && c.finishReason === 'MAX_TOKENS');
-                if (cut && tc) { i = TUTOR_THINK.length - 2; continue; }   // 길이가 모자라 잘렸다(생각에 썼거나 답이 길다) — 잘린 답을 보여 주지 않고 넉넉하게 다시
-                if (text) { TUTOR.think[model] = i; return text; }
+                if (cut && tc) { viaCut = true; i = TUTOR_THINK.length - 2; continue; }   // 길이가 모자라 잘렸다(생각에 썼거나 답이 길다) — 잘린 답을 보여 주지 않고 넉넉하게 다시
+                if (text) { if (!viaCut) TUTOR.think[model] = i; return cut ? text + '\n…(답이 너무 길어 여기까지만 보여요)' : text; }   // 잘려서 넘어온 경우는 설정을 기억하지 않는다(다음 글은 다시 빠른 설정부터)
                 throw { msg: 'AI가 이 글에는 답하지 못해요. 다르게 써 보세요' };   // 안전 필터 등으로 빈 답
             }
-            const e = tutorGeminiErr(r.status, j); last = e;
+            const e = tutorGeminiErr(r.status, j);
             if (e.keyBad && r.status !== 403) throw e;      // 키 자체가 틀림 — 다른 모델도 소용없다
             if (r.status === 400 && tc) continue;           // 이 '생각' 설정을 받지 않는 모델 — 다음 설정으로
-            if (r.status === 429) { limited = e; TUTOR.skip[model] = now + 10 * 60000; }   // 이 모델의 한도 — 10분 쉬게 하고 다음 모델
+            tried++;
+            // 안 되는 모델은 잠깐 쉬게 한다 — 다음 글에서 같은 실패를 되풀이하지 않게(한도·권한 10분, 없는 이름 하루, 서버 오류 2분)
+            if (r.status === 429) { limited = e; TUTOR.skip[model] = now + 10 * 60000; }
             else if (r.status === 404) TUTOR.skip[model] = now + 24 * 3600000;
+            else if (r.status === 403) { forbidden++; TUTOR.skip[model] = now + 10 * 60000; }
+            else if (r.status >= 500) TUTOR.skip[model] = now + 2 * 60000;
+            if (r.status !== 403) last = e;
             break;
         }
     }
+    if (tried && forbidden === tried) throw tutorGeminiErr(403, null);   // 모든 모델이 권한 없음 — 키 문제로 본다(한 모델만 403이면 키는 멀쩡하다)
     throw limited || last || { msg: 'AI가 지금 답하지 못해요' };
 }
 function tutorTop(sub) { return '<div class="lesson-top"><button class="back-btn tap44" id="tuBack" aria-label="뒤로">←</button><div><div class="lt-title">🤖 AI 튜터</div><div class="lt-sub">' + esc(CUR.flag || '') + ' ' + sub + '</div></div></div>'; }

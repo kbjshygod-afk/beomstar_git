@@ -184,6 +184,33 @@ const MOCK = () => {
     await open(p, 'ja', false); await withKey(p); await (await tile(p)).click(); await p.waitForTimeout(200);
     await p.fill('#tuIn', 'こんにちは'); await p.click('#tuSend'); await p.waitForSelector('.tu-row.ai .tu-bub:not(.typing)', { timeout: 5000 });
     chk((await p.innerText('.tu-row.ai')).trim() === '끝까지 쓴 답' && gens(p).length === 2 && gens(p)[1].body.generationConfig.maxOutputTokens >= 8000, '잘린 답(MAX_TOKENS)은 버리고 넉넉한 길이로 다시 받아 보여 줌'); await ctx.close();
+    console.log('=== 교차 검수 반영: 목록이 멈춰도 답을 받는다 · 403/5xx 모델도 쉬게 한다 · 한 모델만 403이면 키 화면으로 안 간다 · 잘림 뒤에도 빠른 설정을 다시 쓴다 ===');
+    ({ ctx, p } = await newPage(false, null, async (n, g) => g.list ? (/pageSize=1000/.test(g.url) ? new Promise(() => { }) : { status: 200, json: {} }) : GOOD('목록 없이 답')));
+    await open(p, 'zh', false); await withKey(p); await (await tile(p)).click(); await p.waitForTimeout(200);
+    const tl = Date.now(); await p.fill('#tuIn', '你好'); await p.click('#tuSend');
+    chk(!!(await p.waitForSelector('.tu-row.ai .tu-bub:not(.typing)', { timeout: 12000 }).catch(() => null)) && /목록 없이 답/.test(await p.innerText('.tu-row.ai')), '모델 목록 요청이 멈춰도 약 6초 뒤 알려진 모델로 답을 받음(' + Math.round((Date.now() - tl) / 1000) + '초)');
+    chk(gens(p)[0].model === 'gemini-flash-latest' && await p.evaluate(() => TUTOR.models === null), '알려진 이름을 쓰고, 목록은 다음에 다시 물어봄'); await ctx.close();
+    for (const st of [403, 503]) {
+      ({ ctx, p } = await newPage(false, null, async (n, g) => g.list ? { status: 200, json: LIST } : g.model === 'gemini-flash-latest' ? { status: st, json: { error: { code: st } } } : GOOD('둘째')));
+      await open(p, 'en', false); await withKey(p); await (await tile(p)).click(); await p.waitForTimeout(200);
+      await p.fill('#tuIn', 'one'); await p.click('#tuSend'); await p.waitForFunction(() => !TUTOR.busy && S.tutor.msgs.length >= 2, null, { timeout: 5000 });
+      await p.fill('#tuIn', 'two'); await p.click('#tuSend'); await p.waitForFunction(() => !TUTOR.busy && S.tutor.msgs.length >= 4, null, { timeout: 5000 });
+      chk(gens(p).map(g => g.model).join() === 'gemini-flash-latest,gemini-3.8-flash,gemini-3.8-flash', st + ': 실패한 모델은 다음 글에서 건너뜀(같은 실패를 되풀이하지 않음)'); await ctx.close();
+    }
+    ({ ctx, p } = await newPage(false, null, async (n, g) => g.list ? { status: 200, json: LIST } : g.model === 'gemini-4.0-flash-preview-09-2026' ? { status: 403, json: { error: { code: 403 } } } : { status: 404, json: { error: { code: 404 } } }));
+    await open(p, 'en', false); await withKey(p); await (await tile(p)).click(); await p.waitForTimeout(200);
+    await p.fill('#tuIn', 'hi'); await p.click('#tuSend'); await p.waitForFunction(() => !TUTOR.busy, null, { timeout: 8000 }); await p.waitForTimeout(200);
+    chk(!(await p.$('#tuKey')) && /답하지 못해요 \(404\)/.test(await toast(p)) && await p.inputValue('#tuIn') === 'hi', '마지막 모델만 403(나머지 404): 키 화면으로 가지 않고 오류 안내'); await ctx.close();
+    let longOnce = true;
+    ({ ctx, p } = await newPage(false, null, async (n, g) => g.list ? { status: 200, json: LIST } : (g.body.generationConfig.thinkingConfig && longOnce) ? { status: 200, json: { candidates: [{ content: { parts: [{ text: '끊긴…' }] }, finishReason: 'MAX_TOKENS' }] } } : GOOD('답')));
+    await open(p, 'fr', false); await withKey(p); await (await tile(p)).click(); await p.waitForTimeout(200);
+    await p.fill('#tuIn', 'un'); await p.click('#tuSend'); await p.waitForFunction(() => !TUTOR.busy && S.tutor.msgs.length >= 2, null, { timeout: 5000 }); longOnce = false;
+    await p.fill('#tuIn', 'deux'); await p.click('#tuSend'); await p.waitForFunction(() => !TUTOR.busy && S.tutor.msgs.length >= 4, null, { timeout: 5000 });
+    chk(gens(p).length === 3 && !gens(p)[1].body.generationConfig.thinkingConfig && gens(p)[2].body.generationConfig.thinkingConfig.thinkingBudget === 0, '한 번 잘려 넉넉하게 받은 뒤에도 다음 글은 다시 빠른 설정부터'); await ctx.close();
+    ({ ctx, p } = await newPage(false, null, async (n, g) => g.list ? { status: 200, json: LIST } : { status: 200, json: { candidates: [{ content: { parts: [{ text: '아주 긴 답의 앞부분' }] }, finishReason: 'MAX_TOKENS' }] } }));
+    await open(p, 'es', false); await withKey(p); await (await tile(p)).click(); await p.waitForTimeout(200);
+    await p.fill('#tuIn', 'hola'); await p.click('#tuSend'); await p.waitForFunction(() => !TUTOR.busy && S.tutor.msgs.length >= 2, null, { timeout: 5000 });
+    chk(/아주 긴 답의 앞부분\n…\(답이 너무 길어 여기까지만 보여요\)/.test(await p.evaluate(() => S.tutor.msgs[1].text)) && gens(p).length === 2 && await p.evaluate(() => Object.keys(TUTOR.think).length === 0), '넉넉한 길이로도 잘리면: 끊겼다고 표시하고, 그 설정을 기억하지 않음'); await ctx.close();
   }
 
   console.log('=== 내 키 방식 실패 처리: 한도(429)·서버 오류·빈 답·연결 끊김 → 토스트, 글은 입력칸으로 · 키 오류면 키 화면으로 ===');
