@@ -58,3 +58,15 @@ last.
 - **A read failure is not an empty result.** "Could not read the ledger" must not look like
   "nothing held".
 - **Validate persisted state.** Valid JSON with the wrong shape must fall back safely.
+
+## Research (2026-11-13)
+- **Check what already exists before proposing new work.** On 11-06 Claude proposed "rebuilding the
+  backtest without survivorship bias" as new work. A point-in-time backtest had existed since
+  2026-09-26 (`tools/robustness.py` part `pit`, `tools/krx_membership.py`); only the delisted
+  members' prices were missing. Search the tools and docs (`grep -rn pit trading/tools docs`)
+  before scoping a study.
+- **Reproduce the published number first.** Before changing data, re-run the old study and match
+  its figures (KOSDAQ pit CAGR 12.03%, warning lines to the decimal); only then is a difference
+  attributable to the change.
+- **Clip added data to the study window.** Built bars that ran past the snapshot's last day
+  changed the test window and the benchmark figure; compare like for like.
