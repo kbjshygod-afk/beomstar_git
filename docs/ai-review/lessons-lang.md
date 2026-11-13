@@ -49,3 +49,15 @@ Each entry gives the date, the lesson, and where it came from. The newest entrie
 - **2026-11-13: give reviewers the tests with the code.** The review was limited with `--paths`
   and left out `tools/tests/`, so both reviewers reported "no tests" for flows that were tested.
   Always include the test files of the area under review.
+- **2026-11-13: do not hard-code a provider's model names or assume one quota.** The tutor gave
+  up when its first model returned 429, although the free quota is per model, and the names were
+  fixed in the code. Ask the provider which models the key can use, fall through on 429/403/404/5xx,
+  and rest a failing model for a while so the next message does not repeat the failure. (#79)
+- **2026-11-13: a helper request must not spend the caller's whole time limit.** The model-list
+  call shared the 35-second send limit; when it stalled, no answer was attempted. Give the helper
+  its own short limit and a fallback. (ChatGPT, agreed by Gemini)
+- **2026-11-13: decide "bad key" from all attempts, not the last one.** One model returning 403
+  after others returned 404 sent a learner with a valid key to the key screen. (both reviewers)
+- **2026-11-13: remember a setting only when it was chosen for the right reason.** A retry after
+  a truncated answer pinned the slow no-thinking-control setting for the rest of the visit.
+  (both reviewers)
