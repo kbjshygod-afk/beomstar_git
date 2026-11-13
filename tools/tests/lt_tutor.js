@@ -114,7 +114,7 @@ const MOCK = () => {
   chk(g1.body.contents.length === 1 && g1.body.contents[0].role === 'user' && g1.body.generationConfig.thinkingConfig.thinkingBudget === 0, '글 1개(user) · 생각 끄기');
   chk(/你好/.test(await p.innerText('.tu-row.ai')), 'AI 답이 보임');
   chk(p.reqs.length === 0, '중계 서버로는 아무것도 가지 않음');
-  await p.click('[data-tu-mode="correct"]'); await p.fill('#tuIn', '我是韩国人'); await p.press('#tuIn', 'Enter'); await p.waitForFunction(() => document.querySelectorAll('.tu-row.ai').length >= 2, null, { timeout: 5000 });
+  await p.click('[data-tu-mode="correct"]'); await p.fill('#tuIn', '我是韩国人'); await p.press('#tuIn', 'Enter'); await p.waitForFunction(() => !TUTOR.busy && document.querySelectorAll('.tu-row.ai .tu-bub:not(.typing)').length >= 2, null, { timeout: 5000 });
   g1 = gens(p)[1];
   chk(g1.body.contents.map(c => c.role).join() === 'user,model,user' && g1.body.contents[2].parts[0].text === '我是韩国人', '기록이 user,model,user 순으로 간다');
   chk(/교정 선생님/.test(g1.body.systemInstruction.parts[0].text), '교정 방식의 지시문');
@@ -137,25 +137,61 @@ const MOCK = () => {
   ({ ctx, p } = await newPage(false, null, async (n, g) => g.list ? { status: 200, json: {} } : g.model === 'gemini-flash-latest' ? { status: 404, json: { error: { code: 404, status: 'NOT_FOUND' } } } : GOOD('둘째 모델')));
   await open(p, 'en', false); await withKey(p); await (await tile(p)).click(); await p.waitForTimeout(200);
   await p.fill('#tuIn', 'hi'); await p.click('#tuSend'); await p.waitForSelector('.tu-row.ai .tu-bub:not(.typing)', { timeout: 5000 });
-  chk(gens(p).map(g => g.model).join() === 'gemini-flash-latest,gemini-2.5-flash' && /둘째 모델/.test(await p.innerText('.tu-row.ai')), '404 → 다음 모델이 답함');
-  await p.fill('#tuIn', 'again'); await p.click('#tuSend'); await p.waitForFunction(() => document.querySelectorAll('.tu-row.ai').length >= 2, null, { timeout: 5000 });
-  chk(gens(p).length === 3 && gens(p)[2].model === 'gemini-2.5-flash', '되는 모델을 기억해 다음부터 바로 씀'); await ctx.close();
+  chk(gens(p).map(g => g.model).join() === 'gemini-flash-latest,gemini-flash-lite-latest' && /둘째 모델/.test(await p.innerText('.tu-row.ai')), '404 → 다음 모델이 답함');
+  await p.fill('#tuIn', 'again'); await p.click('#tuSend'); await p.waitForFunction(() => !TUTOR.busy && document.querySelectorAll('.tu-row.ai .tu-bub:not(.typing)').length >= 2, null, { timeout: 5000 });
+  chk(gens(p).length === 3 && gens(p)[2].model === 'gemini-flash-lite-latest', '없는 모델은 건너뛰고 다음부터 되는 모델을 바로 씀'); await ctx.close();
   ({ ctx, p } = await newPage(false, null, async (n, g) => g.list ? { status: 200, json: {} } : g.body.generationConfig.thinkingConfig ? { status: 400, json: { error: { code: 400, message: 'Thinking budget is not supported', status: 'INVALID_ARGUMENT' } } } : GOOD('설정 없이 답')));
   await open(p, 'ja', false); await withKey(p); await (await tile(p)).click(); await p.waitForTimeout(200);
   await p.fill('#tuIn', 'こんにちは'); await p.click('#tuSend'); await p.waitForSelector('.tu-row.ai .tu-bub:not(.typing)', { timeout: 5000 });
-  chk(gens(p).length === 2 && !gens(p)[1].body.generationConfig.thinkingConfig && gens(p)[1].body.generationConfig.maxOutputTokens >= 2000 && /설정 없이 답/.test(await p.innerText('.tu-row.ai')), '400(생각 끄기 거절) → 설정 없이 넉넉한 길이로 다시');
+  chk(gens(p).length === 3 && gens(p)[1].body.generationConfig.thinkingConfig.thinkingLevel === 'minimal' && !gens(p)[2].body.generationConfig.thinkingConfig && gens(p)[2].body.generationConfig.maxOutputTokens >= 2000 && /설정 없이 답/.test(await p.innerText('.tu-row.ai')), '400(생각 끄기 거절) → 설정 없이 넉넉한 길이로 다시');
   chk(/히라가나/.test(gens(p)[0].body.systemInstruction.parts[0].text), '일본어 지시문: 히라가나'); await ctx.close();
   ({ ctx, p } = await newPage(false, null, async (n, g) => g.list ? { status: 200, json: {} } : g.body.generationConfig.thinkingConfig ? { status: 200, json: { candidates: [{ content: { parts: [] }, finishReason: 'MAX_TOKENS' }] } } : { status: 200, json: { candidates: [{ content: { parts: [{ text: '속생각', thought: true }, { text: '진짜 답' }] } }] } }));
   await open(p, 'es', false); await withKey(p); await (await tile(p)).click(); await p.waitForTimeout(200);
   await p.fill('#tuIn', 'hola'); await p.click('#tuSend'); await p.waitForSelector('.tu-row.ai .tu-bub:not(.typing)', { timeout: 5000 });
   chk(gens(p).length === 2 && (await p.innerText('.tu-row.ai')).trim() === '진짜 답', '빈 답(MAX_TOKENS) → 다시 · 생각 부분은 보여 주지 않음'); await ctx.close();
 
+  console.log('=== 모델 고르기: 이 키로 쓸 수 있는 목록에서 고르고, 한 모델의 한도가 차면(429) 다음 모델이 답한다 ===');
+  {
+    const M = n => ({ name: 'models/' + n, supportedGenerationMethods: ['generateContent'] });
+    const LIST = { models: [M('gemini-3.5-flash-lite'), M('gemini-3.8-flash'), M('gemini-3.6-flash'), M('gemini-flash-latest'), M('gemini-flash-lite-latest'), M('gemini-3.1-flash-lite'), M('gemini-4.0-flash-preview-09-2026'),
+      M('gemini-3.8-flash-image'), M('gemini-3.8-pro'), M('gemini-3.8-flash-tts'), { name: 'models/gemini-embedding-001', supportedGenerationMethods: ['embedContent'] }, { name: 'models/gemini-9.9-flash', supportedGenerationMethods: ['embedContent'] }] };
+    const order = await (async () => { ({ ctx, p } = await newPage(false)); await open(p, 'zh', false); const o = await p.evaluate(l => tutorRankModels(l.models.filter(m => m.supportedGenerationMethods.includes('generateContent')).map(m => m.name.replace('models/', ''))), LIST); await ctx.close(); return o; })();
+    chk(order.join() === 'gemini-flash-latest,gemini-3.8-flash,gemini-3.6-flash,gemini-flash-lite-latest,gemini-3.5-flash-lite,gemini-3.1-flash-lite,gemini-4.0-flash-preview-09-2026', '순서: 일반(최신 별칭·높은 버전) → 가벼운 모델 → 미리보기 · 그림·음성·pro는 뺌 → ' + order.join());
+    let lim = new Set(['gemini-flash-latest', 'gemini-3.8-flash']);
+    ({ ctx, p } = await newPage(false, null, async (n, g) => g.list ? { status: 200, json: LIST } : lim.has(g.model) ? { status: 429, json: { error: { code: 429, status: 'RESOURCE_EXHAUSTED' } } } : GOOD('답: ' + g.model)));
+    await open(p, 'zh', false); await withKey(p); await (await tile(p)).click(); await p.waitForTimeout(200);
+    await p.fill('#tuIn', '你好'); await p.click('#tuSend'); await p.waitForSelector('.tu-row.ai .tu-bub:not(.typing)', { timeout: 5000 });
+    chk(gens(p).map(g => g.model).join() === 'gemini-flash-latest,gemini-3.8-flash,gemini-3.6-flash' && /답: gemini-3\.6-flash/.test(await p.innerText('.tu-row.ai')), '앞의 두 모델이 한도(429)여도 세 번째 모델이 답함');
+    chk(p.greqs.filter(g => g.list).length === 1 && /pageSize=1000/.test(p.greqs.find(g => g.list).url), '모델 목록은 한 번만 물어봄');
+    await p.fill('#tuIn', '再见'); await p.click('#tuSend'); await p.waitForFunction(() => !TUTOR.busy && document.querySelectorAll('.tu-row.ai .tu-bub:not(.typing)').length >= 2, null, { timeout: 5000 });
+    chk(gens(p).length === 4 && gens(p)[3].model === 'gemini-3.6-flash' && p.greqs.filter(g => g.list).length === 1, '한도가 찬 모델은 잠깐 건너뛰고 바로 되는 모델로(요청 낭비 없음)');
+    lim = new Set(order); await p.evaluate(() => { TUTOR.skip = {}; });
+    await p.fill('#tuIn', '谢谢'); await p.click('#tuSend'); await p.waitForFunction(() => !TUTOR.busy, null, { timeout: 8000 }); await p.waitForTimeout(200);
+    chk(/무료 한도/.test(await toast(p)) && await p.inputValue('#tuIn') === '谢谢' && gens(p).length === 4 + order.length, '모든 모델이 한도면: 한도 안내, 글은 돌아옴');
+    lim = new Set(); await p.click('#tuSend'); await p.waitForFunction(() => !TUTOR.busy && S.tutor.msgs.length >= 6, null, { timeout: 5000 });
+    chk(/답: gemini-flash-latest/.test(await p.evaluate(() => S.tutor.msgs[S.tutor.msgs.length - 1].text)), '모두 쉬는 중이면 처음 모델부터 다시 물어봄(한도가 풀리면 바로 됨)'); await ctx.close();
+
+    console.log('=== 권한 없는 모델(403)은 다음 모델로 · 모두 403이면 키 화면 · 길이에 잘린 답은 보여 주지 않고 다시 ===');
+    ({ ctx, p } = await newPage(false, null, async (n, g) => g.list ? { status: 200, json: LIST } : g.model === 'gemini-flash-latest' ? { status: 403, json: { error: { code: 403, status: 'PERMISSION_DENIED' } } } : GOOD('둘째가 답')));
+    await open(p, 'en', false); await withKey(p); await (await tile(p)).click(); await p.waitForTimeout(200);
+    await p.fill('#tuIn', 'hi'); await p.click('#tuSend'); await p.waitForSelector('.tu-row.ai .tu-bub:not(.typing)', { timeout: 5000 });
+    chk(/둘째가 답/.test(await p.innerText('.tu-row.ai')) && gens(p).length === 2, '첫 모델이 403이어도 다음 모델이 답함'); await ctx.close();
+    ({ ctx, p } = await newPage(false, null, async (n, g) => g.list ? { status: 200, json: LIST } : { status: 403, json: { error: { code: 403, status: 'PERMISSION_DENIED' } } }));
+    await open(p, 'en', false); await withKey(p); await (await tile(p)).click(); await p.waitForTimeout(200);
+    await p.fill('#tuIn', 'hi'); await p.click('#tuSend'); await p.waitForFunction(() => !TUTOR.busy, null, { timeout: 8000 }); await p.waitForTimeout(200);
+    chk(/키가 맞지 않거나 막혀/.test(await toast(p)) && !!(await p.$('#tuKey')), '모든 모델이 403이면: 키 안내와 키 화면'); await ctx.close();
+    ({ ctx, p } = await newPage(false, null, async (n, g) => g.list ? { status: 200, json: LIST } : g.body.generationConfig.thinkingConfig ? { status: 200, json: { candidates: [{ content: { parts: [{ text: '중간에 끊긴 답…' }] }, finishReason: 'MAX_TOKENS' }] } } : GOOD('끝까지 쓴 답')));
+    await open(p, 'ja', false); await withKey(p); await (await tile(p)).click(); await p.waitForTimeout(200);
+    await p.fill('#tuIn', 'こんにちは'); await p.click('#tuSend'); await p.waitForSelector('.tu-row.ai .tu-bub:not(.typing)', { timeout: 5000 });
+    chk((await p.innerText('.tu-row.ai')).trim() === '끝까지 쓴 답' && gens(p).length === 2 && gens(p)[1].body.generationConfig.maxOutputTokens >= 8000, '잘린 답(MAX_TOKENS)은 버리고 넉넉한 길이로 다시 받아 보여 줌'); await ctx.close();
+  }
+
   console.log('=== 내 키 방식 실패 처리: 한도(429)·서버 오류·빈 답·연결 끊김 → 토스트, 글은 입력칸으로 · 키 오류면 키 화면으로 ===');
   for (const [name, out, re] of [['429', { status: 429, json: { error: { code: 429, status: 'RESOURCE_EXHAUSTED' } } }, /무료 한도/], ['503', { status: 503, json: { error: { code: 503 } } }, /바빠요/], ['빈 답', { status: 200, json: { promptFeedback: { blockReason: 'SAFETY' } } }, /답하지 못해요/]]) {
     ({ ctx, p } = await newPage(false, null, async (n, g) => g.list ? { status: 200, json: {} } : out)); await open(p, 'fr', false); await withKey(p); await (await tile(p)).click(); await p.waitForTimeout(200);
     await p.fill('#tuIn', 'bonjour'); await p.click('#tuSend'); await p.waitForFunction(() => !TUTOR.busy, null, { timeout: 5000 }); await p.waitForTimeout(200);
     chk(re.test(await toast(p)), name + ': 안내 토스트'); chk(await p.inputValue('#tuIn') === 'bonjour' && await p.evaluate(() => S.tutor.msgs.length) === 0, name + ': 글이 돌아오고 기록에 안 남음');
-    if (name === '429') chk(gens(p).length === 1, '429: 다른 모델로 되풀이하지 않음');
+    if (name === '429') chk(gens(p).length === 4 && new Set(gens(p).map(g => g.model)).size === 4, '429: 알려진 모델 4개를 한 번씩 써 본 뒤 한도 안내');
     await ctx.close();
   }
   ({ ctx, p } = await newPage(false, null, async (n, g) => g.list ? { status: 200, json: {} } : BADKEY)); await open(p, 'zh', false); await withKey(p); await (await tile(p)).click(); await p.waitForTimeout(200);
@@ -218,7 +254,7 @@ const MOCK = () => {
   await p.click('[data-tu-engine="openai"]'); await p.waitForTimeout(100);
   chk(await p.getAttribute('[data-tu-engine="openai"]', 'aria-pressed') === 'true', 'ChatGPT 선택됨');
   chk(/OpenAI/.test(await p.innerText('.lg-note')), '안내문이 고른 AI 이름으로 바뀜');
-  await p.fill('#tuIn', '你好吗？'); await p.press('#tuIn', 'Enter'); await p.waitForFunction(() => document.querySelectorAll('.tu-row.ai').length >= 2, null, { timeout: 5000 });
+  await p.fill('#tuIn', '你好吗？'); await p.press('#tuIn', 'Enter'); await p.waitForFunction(() => !TUTOR.busy && document.querySelectorAll('.tu-row.ai .tu-bub:not(.typing)').length >= 2, null, { timeout: 5000 });
   const r2 = p.reqs[1];
   chk(r2.body.engine === 'openai', '두 번째 요청 engine=openai');
   chk(r2.body.messages.map(m => m.role).join() === 'user,assistant,user', '기록이 user,assistant,user 순으로 간다');
@@ -234,7 +270,7 @@ const MOCK = () => {
   console.log('=== 방식 바꾸기(교정): 시작 문구가 바뀌고 mode=correct로 간다 ===');
   await p.click('[data-tu-mode="correct"]'); await p.waitForTimeout(100);
   chk(await p.getAttribute('[data-tu-mode="correct"]', 'aria-pressed') === 'true', '교정 선택됨');
-  await p.fill('#tuIn', '我是韩国人'); await p.click('#tuSend'); await p.waitForFunction(() => document.querySelectorAll('.tu-row.ai').length >= 3, null, { timeout: 5000 });
+  await p.fill('#tuIn', '我是韩国人'); await p.click('#tuSend'); await p.waitForFunction(() => !TUTOR.busy && document.querySelectorAll('.tu-row.ai .tu-bub:not(.typing)').length >= 3, null, { timeout: 5000 });
   chk(p.reqs[2].body.mode === 'correct', 'mode=correct');
 
   console.log('=== 화면: 가로 넘침 없음 · 단추 44px · 뒤로 가기 ===');

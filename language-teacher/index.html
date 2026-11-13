@@ -9945,7 +9945,7 @@ registerPlayTile({
 //  ② 중계 방식: cloud-config.js의 tutorUrl이 https 주소일 때만. 키는 중계 함수(저장소 functions/)만 갖고, 구글 로그인한 사람만 쓴다(하루 한도는 서버가 센다).
 // 키는 학습 기록(LS_KEY)과 다른 칸에 둔다 — 클라우드 저장·백업 파일에 들어가지 않는다.
 // 대화는 이 기기 메모리에만 있다(새로고침하면 사라짐). 보상(XP)은 없다: 쓸수록 한도·비용이 드는 기능이라 반복 보상으로 만들지 않는다.
-const TUTOR = { busy: false, ctl: null, memKey: '', model: '', checking: false };
+const TUTOR = { busy: false, ctl: null, memKey: '', checking: false, models: null, skip: {}, think: {} };   // models: 이 키로 쓸 모델 순서 · skip: 잠깐 쉬게 할 모델 · think: 모델별로 통한 '생각' 설정
 const TUTOR_ENGINES = [['gemini', '✨ Gemini'], ['openai', '💚 ChatGPT']];
 const TUTOR_MODES = [['chat', '💬 대화'], ['correct', '✏️ 문장 교정']];
 const TUTOR_MAX = 600;
@@ -9954,7 +9954,8 @@ const TUTOR_KEY_LS = 'lang_starter_tutor_key';
 const TUTOR_KEY_RE = /^[A-Za-z0-9_\-.]{20,200}$/;
 const TUTOR_KEY_PAGE = 'https://aistudio.google.com/apikey';
 const TUTOR_API = 'https://generativelanguage.googleapis.com/v1beta/models';
-const TUTOR_MODELS = ['gemini-flash-latest', 'gemini-2.5-flash', 'gemini-2.0-flash'];   // 앞에서부터 써 보고, 없는 이름(404)이면 다음으로
+const TUTOR_MODELS = ['gemini-flash-latest', 'gemini-flash-lite-latest', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'];   // 모델 목록을 못 받았을 때만 쓰는 이름
+const TUTOR_THINK = [{ thinkingConfig: { thinkingBudget: 0 } }, { thinkingConfig: { thinkingLevel: 'minimal' } }, null];
 // 지시문은 functions/tutor-core.js의 buildSystemPrompt와 같은 내용이다(중계 방식은 서버가, 내 키 방식은 앱이 만든다) — 고칠 때 둘 다 고친다.
 const TUTOR_LANGS = {
     zh: ['중국어(표준 중국어, 간체)', '중국어 문장에는 병음(성조 표시)을 함께 적는다.'], en: ['영어', ''],
@@ -9978,7 +9979,7 @@ function tutorPrompt(code, level, mode) {
 }
 function tutorUrl() { const c = window.CLOUD_CONFIG, u = c && c.tutorUrl; return typeof u === 'string' && /^https:\/\//.test(u) ? u : ''; }
 function tutorKeyGet() { let v = ''; try { v = localStorage.getItem(TUTOR_KEY_LS) || ''; } catch (e) { v = ''; } v = v || TUTOR.memKey; return TUTOR_KEY_RE.test(v) ? v : ''; }
-function tutorKeySet(v) { TUTOR.memKey = v || ''; TUTOR.model = ''; try { if (v) localStorage.setItem(TUTOR_KEY_LS, v); else localStorage.removeItem(TUTOR_KEY_LS); } catch (e) { } }   // 저장소가 막힌 브라우저에선 이번 방문 동안만 기억
+function tutorKeySet(v) { TUTOR.memKey = v || ''; TUTOR.models = null; TUTOR.skip = {}; TUTOR.think = {}; try { if (v) localStorage.setItem(TUTOR_KEY_LS, v); else localStorage.removeItem(TUTOR_KEY_LS); } catch (e) { } }   // 저장소가 막힌 브라우저에선 이번 방문 동안만 기억
 function tutorLevel() { return Math.min(5, ALL.reduce((m, l) => isDone(l.id) ? Math.max(m, l.unitId) : m, 0)); }   // 통과한 가장 높은 단계(0~5로 묶음)
 function tutorState() {
     if (!S.tutor || S.tutor.code !== CUR.code) { if (TUTOR.ctl) TUTOR.ctl.abort(); const o = S.tutor; S.tutor = { code: CUR.code, msgs: [], engine: o ? o.engine : 'gemini', mode: o ? o.mode : 'chat', left: null, draft: '', keyEdit: false }; }
@@ -9994,9 +9995,9 @@ function tutorBubble(m) {
 function tutorGeminiErr(status, j) {
     const reason = JSON.stringify(j && j.error || '');
     if (status === 401 || status === 403 || (status === 400 && /API_KEY_INVALID|API key/i.test(reason))) return { keyBad: true, msg: '키가 맞지 않거나 막혀 있어요. 🔑 키에서 다시 넣어 주세요' };
-    if (status === 429) return { msg: '무료 한도를 넘었어요. 잠시 뒤(안 되면 내일) 다시 해 주세요' };
-    if (status >= 500) return { msg: 'AI가 지금 바빠요. 잠시 뒤 다시 해 주세요' };
-    return { msg: 'AI가 지금 답하지 못해요' };
+    if (status === 429) return { msg: '무료 한도를 넘었어요. 잠시 뒤(안 되면 내일) 다시 해 주세요 (429)' };
+    if (status >= 500) return { msg: 'AI가 지금 바빠요. 잠시 뒤 다시 해 주세요 (' + status + ')' };
+    return { msg: 'AI가 지금 답하지 못해요 (' + status + ')' };   // 숫자는 문의할 때 원인을 찾는 데 쓴다
 }
 async function tutorKeyCheck(key) {   // 키가 맞는지만 확인(모델 목록 1개 — 답 생성 한도를 쓰지 않는다)
     let r, j = {};
@@ -10009,15 +10010,44 @@ async function tutorKeyCheck(key) {   // 키가 맞는지만 확인(모델 목�
     const e = tutorGeminiErr(r.status, j);
     return { ok: false, msg: e.keyBad ? '키가 맞지 않아요. 처음부터 끝까지 그대로 복사했는지 확인해 주세요' : e.msg };
 }
+// 쓸 모델 순서: 이 키로 쓸 수 있는 모델 목록을 구글에 물어, 빠른 일반 모델(flash) → 가벼운 모델(flash-lite) 순으로 고른다.
+// 모델 이름과 무료 한도는 구글이 자주 바꾼다 — 이름을 코드에 박아 두면 어느 날 갑자기 안 된다.
+function tutorRankModels(names) {
+    const has = n => names.includes(n);
+    const ver = (lite, preview) => names.map(n => { const m = /^gemini-(\d+(?:\.\d+)?)-flash(-lite)?(-preview(?:-[\w.-]+)?)?$/.exec(n); return m && !!m[2] === lite && !!m[3] === preview ? { n, v: parseFloat(m[1]) } : null; })
+        .filter(Boolean).sort((a, b) => b.v - a.v || (a.n < b.n ? 1 : -1)).map(x => x.n);
+    const out = [];
+    if (has('gemini-flash-latest')) out.push('gemini-flash-latest');
+    out.push(...ver(false, false).slice(0, 2));
+    if (has('gemini-flash-lite-latest')) out.push('gemini-flash-lite-latest');
+    out.push(...ver(true, false).slice(0, 2), ...ver(false, true).slice(0, 1), ...ver(true, true).slice(0, 1));
+    return out;
+}
+async function tutorModelList(key, signal) {
+    if (TUTOR.models) return TUTOR.models;
+    try {
+        const r = await fetch(TUTOR_API + '?pageSize=1000', { headers: { 'x-goog-api-key': key }, signal });
+        if (r.ok) {
+            const j = await r.json().catch(() => ({}));
+            const names = (Array.isArray(j.models) ? j.models : []).filter(m => m && typeof m.name === 'string' && Array.isArray(m.supportedGenerationMethods) && m.supportedGenerationMethods.includes('generateContent')).map(m => m.name.replace(/^models\//, ''));
+            const pick = tutorRankModels(names);
+            TUTOR.models = pick.length ? pick : TUTOR_MODELS;   // 받은 목록은 이번 방문 동안 기억
+            return TUTOR.models;
+        }
+    } catch (e) { if (e && e.name === 'AbortError') throw e; }
+    return TUTOR_MODELS;   // 목록을 못 받았으면 알려진 이름으로(기억하지 않고 다음에 다시 물어본다)
+}
 // 내 키 방식: 구글로 바로 보낸다. 성공하면 답 글자, 실패하면 { msg } 를 던진다.
+// 한 모델이 안 되면(한도 429 · 없는 이름 404 · 권한 403 · 서버 오류) 다음 모델로 넘어간다 — 무료 한도는 모델마다 따로다.
 async function tutorAskGemini(key, system, msgs, signal) {
     const contents = msgs.map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.text }] }));
-    const models = TUTOR.model ? [TUTOR.model] : TUTOR_MODELS;
-    let last = { msg: 'AI가 지금 답하지 못해요' };
+    const all = await tutorModelList(key, signal), now = Date.now();
+    let models = all.filter(m => !(TUTOR.skip[m] > now)); if (!models.length) models = all;   // 모두 쉬는 중이면 처음부터 다시 물어본다
+    let last = null, limited = null;
     for (const model of models) {
-        // 먼저 '생각' 단계를 끄고 짧게 요청한다(빠르고 한도를 덜 쓴다). 그 설정을 받지 않는 모델(400)이면 설정 없이 넉넉한 길이로 한 번 더.
-        for (const lean of [true, false]) {
-            const gen = lean ? { maxOutputTokens: 500, temperature: 0.6, thinkingConfig: { thinkingBudget: 0 } } : { maxOutputTokens: 4096, temperature: 0.6 };
+        // '생각' 단계를 줄여 빠르게: 모델 세대마다 설정 이름이 달라 차례로 써 보고(400이면 다음), 통한 것을 기억한다. 마지막은 설정 없이 넉넉한 길이.
+        for (let i = TUTOR.think[model] || 0; i < TUTOR_THINK.length; i++) {
+            const tc = TUTOR_THINK[i], gen = Object.assign({ maxOutputTokens: tc ? 1024 : 8192, temperature: 0.6 }, tc || {});
             const r = await fetch(TUTOR_API + '/' + encodeURIComponent(model) + ':generateContent', {
                 method: 'POST', signal, headers: { 'content-type': 'application/json', 'x-goog-api-key': key },
                 body: JSON.stringify({ systemInstruction: { parts: [{ text: system }] }, contents, generationConfig: gen }),
@@ -10026,18 +10056,20 @@ async function tutorAskGemini(key, system, msgs, signal) {
             if (r.ok) {
                 const c = j && j.candidates && j.candidates[0], parts = c && c.content && c.content.parts;
                 const text = Array.isArray(parts) ? parts.filter(p => p && !p.thought).map(p => p.text || '').join('').trim() : '';
-                if (text) { TUTOR.model = model; return text; }
-                if (lean && c && c.finishReason === 'MAX_TOKENS') continue;   // 생각에 길이를 다 썼다 — 넉넉하게 다시
+                const cut = !!(c && c.finishReason === 'MAX_TOKENS');
+                if (cut && tc) { i = TUTOR_THINK.length - 2; continue; }   // 길이가 모자라 잘렸다(생각에 썼거나 답이 길다) — 잘린 답을 보여 주지 않고 넉넉하게 다시
+                if (text) { TUTOR.think[model] = i; return text; }
                 throw { msg: 'AI가 이 글에는 답하지 못해요. 다르게 써 보세요' };   // 안전 필터 등으로 빈 답
             }
             const e = tutorGeminiErr(r.status, j); last = e;
-            if (e.keyBad || r.status === 429 || r.status >= 500) throw e;
-            if (r.status === 404) break;         // 이 이름의 모델이 없다 — 다음 모델
-            if (r.status === 400 && lean) continue;   // '생각 끄기'를 받지 않는 모델일 수 있다
-            throw e;
+            if (e.keyBad && r.status !== 403) throw e;      // 키 자체가 틀림 — 다른 모델도 소용없다
+            if (r.status === 400 && tc) continue;           // 이 '생각' 설정을 받지 않는 모델 — 다음 설정으로
+            if (r.status === 429) { limited = e; TUTOR.skip[model] = now + 10 * 60000; }   // 이 모델의 한도 — 10분 쉬게 하고 다음 모델
+            else if (r.status === 404) TUTOR.skip[model] = now + 24 * 3600000;
+            break;
         }
     }
-    throw last;
+    throw limited || last || { msg: 'AI가 지금 답하지 못해요' };
 }
 function tutorTop(sub) { return '<div class="lesson-top"><button class="back-btn tap44" id="tuBack" aria-label="뒤로">←</button><div><div class="lt-title">🤖 AI 튜터</div><div class="lt-sub">' + esc(CUR.flag || '') + ' ' + sub + '</div></div></div>'; }
 // 내 키 방식의 키 넣기·바꾸기·지우기 화면
