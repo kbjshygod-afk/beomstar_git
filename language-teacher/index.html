@@ -1416,6 +1416,7 @@ const SCHEMA = 4;   // 저장 형식 번호. 칸을 바꾸면 올릴 것 — 더
 const EXT_ID = /^[A-Za-z0-9_-]{1,24}(#[0-9]{1,2})?$/;   // 레슨·이야기·미션·앨범 id (best·ghost 키는 rushE·rushT처럼 대문자도 쓴다)
 const BLANK_ID = /^(lesson|story):[A-Za-z0-9_-]{1,24}(#[0-9]{1,2})?$/;
 const LANG_EXT = {
+    hlr: { clean: cleanHlr, merge: (a, b) => ((b && b.n) || 0) >= ((a && a.n) || 0) ? b : a },   // 🧠 기억 모델 가중치 — 기록이 더 많은 쪽
     feed: { clean: v => capMap(cleanMap(v, (x, k) => isHex12(k) && isObj(x) && isDate(x.d) ? { b: clampInt(x.b, 0, 5, 0), d: x.d } : undefined, 9000), 3000, (x, y) => cmpStr(y.v.d, x.v.d)), merge: (a, b) => capMap(mergeKeys(a, b, (x, y) => x.d !== y.d ? (x.d > y.d ? x : y) : (x.b >= y.b ? x : y)), 3000, (x, y) => cmpStr(y.v.d, x.v.d)) },
     fav: { clean: cleanFav, merge: mergeFav },
     mission: { clean: v => capMap(cleanMap(v, (x, k) => EXT_ID.test(k) ? cleanMission(x) : undefined, 1200), 400, (x, y) => cmpStr(y.v.l, x.v.l)), merge: (a, b) => capMap(mergeKeys(a, b, mergeMission), 400, (x, y) => cmpStr(y.v.l, x.v.l)) },
@@ -1464,6 +1465,11 @@ function cleanMap(m, fn, maxKeys) {
     if (!isObj(m)) return o;
     Object.keys(m).slice(0, maxKeys || 5000).forEach(k => { const v = fn(m[k], k); if (v !== undefined) o[clip(k, 300)] = v; });
     return o;
+}
+function cleanHlr(v) {
+    if (!isObj(v) || !Array.isArray(v.w) || v.w.length !== 3 || !v.w.every(n => typeof n === 'number' && Number.isFinite(n))) return undefined;
+    const c = Array.isArray(v.c) && v.c.length === 3 ? v.c.map(n => clampInt(n, 0, 1e9, 0)) : [0, 0, 0];
+    return { w: v.w.map(n => Math.max(-20, Math.min(20, n))), c, n: clampInt(v.n, 0, 1e9, 0) };
 }
 /* 놀이 칸 정리·합치기 도우미(등록표 LANG_EXT·TOP_EXT가 쓴다) */
 function isHex12(k) { return typeof k === 'string' && /^[0-9a-f]{12}$/.test(k); }
@@ -1731,6 +1737,12 @@ function cleanLangProg(p) {
             if (c.keep) x.keep = clampInt(c.keep, 0, 9, 0);
             if (isDate(c.rv)) x.rv = c.rv;   // 마지막으로 채점한 날(기기끼리 합칠 때 최신 판정)
             if (x.rv && typeof c.rt === 'number' && c.rt > 0) x.rt = clampInt(c.rt, 0, 1e13, 0);   // 그 판정 시각(ms) — 같은 날 두 판정이면 나중 것
+            // 🧠 기억 모델(HLR): 맞힌 수·틀린 수(0.5 단위)·마지막 연습 시각·그날 센 날
+            if (typeof c.hr === 'number' && Number.isFinite(c.hr)) x.hr = Math.max(0, Math.min(1e5, Math.round(c.hr * 2) / 2));
+            if (typeof c.hw === 'number' && Number.isFinite(c.hw)) x.hw = Math.max(0, Math.min(1e5, Math.round(c.hw * 2) / 2));
+            if (typeof c.ht === 'number' && c.ht > 0) x.ht = clampInt(c.ht, 0, 1e13, 0);
+            if (isDate(c.hd)) x.hd = c.hd;
+            if (isDate(c.hdw)) x.hdw = c.hdw;
             return x;
         }),
         streak: isObj(p.streak) ? { last: isDate(p.streak.last) ? p.streak.last : '', count: clampInt(p.streak.count, 0, 100000, 0) } : { last: '', count: 0 },
@@ -4102,11 +4114,92 @@ function addSrsCard(p, card) {
     if (card.ko && !o.ko.split(' / ').includes(card.ko)) o.ko = o.ko + ' / ' + card.ko;
     return false;
 }
+/* ═══════════════════ 🧠 기억 모델 — 반감기 회귀(HLR, 듀오링고) ═══════════════════ */
+// Settles & Meeder(2016, ACL) "A Trainable Spaced Repetition Model for Language Learning"과 공개 코드(duolingo/halflife-regression)를 따른다.
+//   기억 확률 p = 2^(−Δ/h)  (Δ: 마지막 연습 뒤 지난 날수)
+//   반감기   h = 2^(θ·x),  x = [1, √(1+맞힌 수), √(1+틀린 수)]  — 듀오링고가 실제로 배포한 '횟수만 쓰는' 판(단어별 특징은 과적합으로 뺐다)
+//   h는 15분 ~ 274일로 자른다(논문).
+// 가중치 θ: 듀오링고가 학습한 값은 공개되지 않았다. 시작값은 예전 상자 간격과 비슷하게 맞춘 우리 값이고,
+// 학습자 자신의 기록으로 논문의 학습 규칙(제곱 오차 + α·반감기 오차 + λ·규제, AdaGrad식 학습률)에 따라 기기 안에서 조금씩 맞춘다.
+// 규제는 0이 아니라 시작값 쪽으로 당긴다(우리 선택 — 기록이 적을 때 엉뚱하게 튀지 않게).
+const HLR = {
+    prior: [2.46, 3.59, -4.8],   // [절편, 맞힘, 틀림] — 우리 선택: 틀린 적 없으면 예전 상자 간격(1·2·4·7·15·30·60일)과 거의 같게 최소제곱으로 맞추고, 한 번 틀리면 간격이 약 1/4
+    minH: 15 / 1440, maxH: 274,
+    lrate: 0.001, alpha: 0.01, l2: 0.1,   // 논문 값(η, α, λ)
+    target: 0.8,   // 다음 복습: 기억 확률이 이 값까지 떨어지는 날(우리 선택 — 듀오링고 값은 비공개. 세션 정답률을 높게 유지하는 쪽)
+};
+const LN2 = Math.LN2;
+function hlrW() { const h = prog().hlr; return h && Array.isArray(h.w) && h.w.length === 3 ? h.w : HLR.prior; }
+function hlrX(c) { const legacy = c.hr === undefined && c.hw === undefined; return [1, Math.sqrt(1 + (legacy ? Math.max(0, (c.box || 1) - 1) : (c.hr || 0))), Math.sqrt(1 + (c.hw || 0))]; }   // 관찰 기록이 없는 예전 카드는 상자로 짐작(hlrInit과 같은 규칙)
+function hlrClampH(h) { return Math.min(HLR.maxH, Math.max(HLR.minH, h)); }
+function hlrHalfLife(c, w) { w = w || hlrW(); const x = hlrX(c); return hlrClampH(Math.pow(2, w[0] * x[0] + w[1] * x[1] + w[2] * x[2])); }
+// 마지막 연습 시각(ms). 예전 카드(기록 없음)는 채점 시각 → 채점한 날 → 예전 상자 간격으로 거꾸로 짐작한다
+function hlrLast(c) {
+    if (c.ht > 0) return c.ht;
+    if (c.rt > 0) return c.rt;
+    if (isDate(c.rv)) return new Date(c.rv + 'T12:00:00').getTime();
+    return new Date((isDate(c.due) ? c.due : todayStr()) + 'T12:00:00').getTime() - (SRS_INTERVALS[c.box] || 1) * 864e5;
+}
+function hlrP(c, now) { const dt = Math.max(0, ((now || Date.now()) - hlrLast(c)) / 864e5); return Math.pow(2, -dt / hlrHalfLife(c)); }
+// 예전 상자 카드를 처음 볼 때: 상자 b = 맞힌 수 b−1로 본다(예정일은 그대로 — 복습이 한꺼번에 쏟아지지 않게)
+function hlrInit(c) { if (c.hr === undefined && c.hw === undefined) { c.hr = Math.max(0, (c.box || 1) - 1); c.hw = 0; } }
+// 기기 안 학습: 공개 코드 experiment.py의 train_update와 같은 식. y = 그때 맞힌 비율(0~1), dt = 지난 날수, x = 관찰 전 특징
+function hlrTrain(y, dt, x) {
+    const p0 = prog(), st = p0.hlr && Array.isArray(p0.hlr.w) ? p0.hlr : (p0.hlr = { w: HLR.prior.slice(), c: [0, 0, 0], n: 0 });
+    if (!(dt > 0)) return;   // 같은 순간 두 번은 배울 것이 없다
+    const w = st.w, pt = Math.min(0.9999, Math.max(0.0001, y));
+    const h = hlrClampH(Math.pow(2, w[0] * x[0] + w[1] * x[1] + w[2] * x[2])), p = Math.pow(2, -dt / h);
+    const ht = hlrClampH(-dt / Math.log2(pt));
+    const dlp = 2 * (p - pt) * LN2 * LN2 * p * (dt / h), dlh = 2 * (h - ht) * LN2 * h;
+    for (let k = 0; k < 3; k++) {
+        const rate = (1 / (1 + pt)) * HLR.lrate / Math.sqrt(1 + st.c[k]);
+        let nw = w[k] - rate * dlp * x[k] - rate * HLR.alpha * dlh * x[k] - rate * HLR.l2 * (w[k] - HLR.prior[k]);
+        if (!Number.isFinite(nw)) nw = w[k];
+        w[k] = Math.max(-20, Math.min(20, nw)); st.c[k]++;
+    }
+    st.n = (st.n || 0) + 1;
+}
+// 한 번의 관찰(복습 채점·퀴즈·게임): y = 1 맞음, 0 틀림, 0.5 어렵게 맞음. 하루에 한 번만 센다(논문의 '세션' 단위 — 같은 날 되풀이로 횟수가 부풀지 않게)
+// 반환: 다음 복습까지 날수(1 이상)
+function hlrObserve(c, y, now) {
+    now = now || Date.now();
+    hlrInit(c);
+    const t = todayStr();
+    if (c.hd !== t) {
+        const dt = (now - hlrLast(c)) / 864e5;
+        hlrTrain(y, dt, hlrX(c));
+        c.hr = Math.round(((c.hr || 0) + y) * 2) / 2; c.hw = Math.round(((c.hw || 0) + (1 - y)) * 2) / 2;
+        c.hd = t;
+    } else if (y < 1 && !(c.hdw === t)) { c.hw = (c.hw || 0) + 0.5; c.hdw = t; }   // 같은 날 다시 틀리면 반 번만 더 센다(한 번만)
+    c.ht = now;
+    return hlrNextDays(c);
+}
+function hlrNextDays(c) { return Math.max(1, Math.round(hlrHalfLife(c) * Math.log2(1 / HLR.target))); }
+// 퀴즈·게임에서 이 글이 복습 카드에 있으면 관찰로 넣는다(예정일도 기억 모델로 다시 잡는다 — 미리 연습한 단어는 뒤로, 틀린 단어는 앞으로)
+function hlrSeen(native, roman, ok) {
+    if (!native) return;
+    const p = prog(), c = p.srs && (p.srs[srsKeyOf(native, roman || '')] || Object.values(p.srs).find(x => x.native === native));
+    if (!c || c.mastered) return;
+    const days = hlrObserve(c, ok ? 1 : 0);
+    c.due = todayStr(days); c.rv = todayStr(); c.rt = Date.now();
+}
+// 복습 채점(복습 탭·피드 공통). 상자(⭐)는 단계 표시로 남기고, 다음 복습일은 기억 모델이 정한다
+function srsGrade(card, res) {
+    const t = todayStr(), y = res === 'ok' ? 1 : res === 'hard' ? 0.5 : 0;
+    const days = hlrObserve(card, y);
+    if (res === 'ok' && card.box >= SRS_MAX) card.mastered = t;
+    else if (res === 'ok') { card.box = Math.min(SRS_MAX, card.box + 1); card.due = todayStr(days); }
+    else if (res === 'hard') card.due = todayStr(1);
+    else { card.box = Math.max(1, card.box - 2); card.due = todayStr(1); }
+    card.rv = t; card.rt = Date.now();
+}
 function dueCards() {
     const t = todayStr();
     // 오래 밀린 카드 → 낮은 상자 순. 세션 상한 때문에 밀린 카드가 영영 안 나오는 일을 막는다.
-    const regular = Object.entries(prog().srs).filter(([, c]) => !c.mastered && c.due <= t).map(([k, c]) => ({ key: k, ...c }))
-        .sort((a, b) => (a.due < b.due ? -1 : a.due > b.due ? 1 : (a.box - b.box)));
+    // 기억 확률(HLR)이 낮은 것부터 — 가장 잊어 가는 단어를 먼저(듀오링고 연습 세션과 같은 기준). 세션 상한에 걸려도 오래 밀린 카드는 확률이 낮아 앞으로 온다
+    const now = Date.now();
+    const regular = Object.entries(prog().srs).filter(([, c]) => !c.mastered && c.due <= t).map(([k, c]) => ({ key: k, ...c, pr: hlrP(c, now) }))
+        .sort((a, b) => a.pr - b.pr || cmpStr(a.due, b.due) || a.box - b.box);
     // 졸업한 카드도 60일(한 번 통과하면 120일…) 뒤에 한 번 '유지 점검'으로 다시 확인
     const keepCheck = Object.entries(prog().srs).filter(([, c]) => c.mastered && isDate(c.mastered) && dayDiff(c.mastered, t) >= 60 * ((c.keep || 0) + 1)).map(([k, c]) => ({ key: k, ...c, keepCheck: true }));
     return regular.concat(keepCheck);
@@ -5653,6 +5746,7 @@ function renderQuiz(body, l) {
         let graduated = false;
         if (ok && q.phase2) q.corrected = (q.corrected || 0) + 1;
         const enter = feverTick(q, ok);   // 콤보·피버(정답이면 q.combo + 1, 오답이면 콤보·피버 0)
+        if (!q.half && !q.usedHint) hlrSeen(nativeText(item), romanText(item), ok);   // 🧠 이 답이 복습 카드의 단어·문장이면 기억 모델에 넣는다(힌트·반 점수는 빼고)
         if (ok) {
             if (!q.phase2) q.score++;
             const dl = dayLog(); dl.maxCombo = Math.max(dl.maxCombo || 0, q.combo);
@@ -6161,15 +6255,15 @@ function renderReview() {
         if (c.relearn) {                       // 다시 잡기 카드는 상자를 바꾸지 않는다
             if (res === 'ok') showToast('✔ 다시 잡았어요!');
         } else if (card && c.keepCheck) {      // 유지 점검
+            hlrObserve(card, res === 'ok' ? 1 : res === 'hard' ? 0.5 : 0);
             if (res === 'ok') { card.mastered = todayStr(); card.keep = (card.keep || 0) + 1; showToast('🎓 아직 잘 기억하고 있어요!'); }
             else { delete card.mastered; card.box = 3; card.due = todayStr(1); }
             const dl = dayLog(); dl.reviews = (dl.reviews || 0) + 1; r.graded++; save(); addXp(XP.review, '', true);
         } else if (card) {
             const tier0 = dexTierK(card);
-            if (res === 'ok' && card.box >= SRS_MAX) { card.mastered = todayStr(); r.grad = (r.grad || 0) + 1; }
-            else if (res === 'ok') { card.box = Math.min(SRS_MAX, card.box + 1); card.due = todayStr(SRS_INTERVALS[card.box]); }
-            else if (res === 'hard') { card.due = todayStr(1); }
-            else { card.box = Math.max(1, card.box - 2); card.due = todayStr(1); }
+            const wasMax = res === 'ok' && card.box >= SRS_MAX;
+            srsGrade(card, res);   // 🧠 기억 모델(HLR)이 다음 복습일을 정한다
+            if (wasMax) r.grad = (r.grad || 0) + 1;
             if (dexTierK(card) > tier0 && dexGot(clipId('a', card.native))) { r.tierUp = r.tierUp || {}; r.tierUp[dexTierK(card)] = (r.tierUp[dexTierK(card)] || 0) + 1; }   // 📒 등급이 오른 스티커(끝 요약에 한 줄)
             // 한 장마다 바로 기록·보상(중간에 그만둬도 퀘스트·달력에 잡힘)
             const dl = dayLog(); dl.reviews = (dl.reviews || 0) + 1; r.graded++;
@@ -8785,11 +8879,7 @@ function feedApply(st, k, g) {
             // 복습일이 된 문장만 일정을 바꾼다 — ♥ 세트·채우기(오래 안 본 문장)로 나온 것은 연습으로만 센다(되풀이로 상자·복습 수가 오르지 않게)
             if (card) {   // 복습함 문장: 복습 탭 grade()와 같은 규칙
                 if (!card.mastered && card.due <= t) {
-                    if (ok && card.box >= SRS_MAX) card.mastered = t;
-                    else if (ok) { card.box = Math.min(SRS_MAX, card.box + 1); card.due = todayStr(SRS_INTERVALS[card.box]); }
-                    else if (g === 'hard') card.due = todayStr(1);
-                    else { card.box = Math.max(1, card.box - 2); card.due = todayStr(1); }
-                    card.rv = t; card.rt = Date.now();
+                    srsGrade(card, ok ? 'ok' : g === 'hard' ? 'hard' : 'fail');
                     const dl = dayLog(); dl.reviews = (dl.reviews || 0) + 1; st.rv++;
                 }
             } else if (ok) {
