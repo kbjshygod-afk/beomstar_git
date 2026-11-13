@@ -10122,10 +10122,10 @@ function renderTutorKey(T) {
 // 🎤 누르고 말하기: 단추를 누르고 있는 동안 듣고, 떼면 들린 말을 바로 AI에게 보낸다(브라우저 음성 인식 — 말하기 채점과 같은 것).
 // 말할 언어는 배우는 언어가 기본이고, 옆 단추로 한국어로 바꿀 수 있다(음성 인식은 한 번에 한 언어만 알아듣는다).
 const TUTOR_MIC = { rec: null, held: false, text: '', part: '', err: '', t0: 0, timer: null, lang: '', runs: 0 };
-function tutorMicJoin(a, b) { a = String(a || '').trim(); b = String(b || '').trim(); return !a ? b : !b ? a : a + (/[぀-ヿ㐀-鿿]$/.test(a) && /^[぀-ヿ㐀-鿿]/.test(b) ? '' : ' ') + b; }   // 한자·가나끼리는 띄우지 않는다
+function tutorMicJoin(a, b) { a = String(a || '').trim(); b = String(b || '').trim(); return !a ? b : !b ? a : a + (/[\u3040-\u30ff\u3400-\u9fff]$/.test(a) && /^[\u3040-\u30ff\u3400-\u9fff]/.test(b) ? '' : ' ') + b; }   // 한자·가나끼리는 띄우지 않는다
 function tutorMicUi(state, text) {   // state: '' 쉬는 중 · 'on' 듣는 중 · 'wait' 알아듣는 중
     const b = document.getElementById('tuMic'), h = document.getElementById('tuHeard');
-    if (b) { b.classList.toggle('on', state === 'on'); b.setAttribute('aria-pressed', String(state === 'on')); }
+    if (b) { b.classList.toggle('on', state === 'on'); b.setAttribute('aria-pressed', String(state === 'on')); b.disabled = state === 'wait' || TUTOR.busy; }   // 알아듣는 동안은 다시 누를 수 없다(눌러도 반응 없는 것처럼 보이지 않게)
     if (h) { h.hidden = !state; h.textContent = !state ? '' : text || (state === 'on' ? '🎤 듣고 있어요… 다 말하면 손을 떼세요' : '알아듣는 중…'); }
 }
 function tutorMicAbort() {   // 화면을 떠나거나 다시 그릴 때: 보내지 않고 끊는다
@@ -10155,7 +10155,7 @@ function tutorMicListen(T) {
         for (let i = 0; i < ev.results.length; i++) {
             const t = String(ev.results[i][0] && ev.results[i][0].transcript || '').trim();
             if (!t) continue;
-            if (ev.results[i].isFinal) fin = fin && t.startsWith(fin) ? t : tutorMicJoin(fin, t);   // 안드로이드 크롬은 앞 결과를 포함한 글을 다시 준다 — 겹치면 긴 쪽만
+            if (ev.results[i].isFinal) fin = fin && t.length > fin.length && t.startsWith(fin) ? t : tutorMicJoin(fin, t);   // 안드로이드 크롬은 앞 결과를 포함해 더 길어진 글을 다시 준다 — 그때만 긴 쪽으로(같은 말을 두 번 한 것은 둘 다 남긴다)
             else interim = tutorMicJoin(interim, t);
         }
         m.text = tutorMicJoin(base, fin); m.part = interim;
@@ -10167,6 +10167,7 @@ function tutorMicListen(T) {
         m.rec = null; m.text = tutorMicJoin(m.text, m.part); m.part = '';   // 끝 결과 없이 끝나면 마지막 중간 결과를 쓴다
         // 아직 누르고 있는데 브라우저가 스스로 끝냈다(조용했을 때) — 이어서 듣는다. 바로바로 끝나는 고장 난 상태면 되풀이하지 않는다.
         if (m.held && !m.err && m.runs < 8 && Date.now() - started > 400) { tutorMicListen(T); return; }
+        if (m.held && m.text) { tutorMicUi('on', m.text); return; }   // 더 들을 수는 없지만 아직 누르고 있다 — 손을 뗄 때까지 보내지 않는다
         tutorMicFinish(T);
     };
     try { r.start(); } catch (e) { m.rec = null; m.err = 'start'; tutorMicFinish(T); }
@@ -10227,7 +10228,7 @@ function renderTutor() {
     h += '</div><div class="tu-heard" id="tuHeard" role="status" aria-live="polite" hidden></div><div class="tu-bar">' +
         (micOk ? '<button class="tu-mic" id="tuMic" aria-label="누르고 있는 동안 말하기(떼면 보내요)" aria-pressed="false"' + (TUTOR.busy ? ' disabled' : '') + '>🎤</button>' +
             '<button class="tu-miclang" id="tuMicLang" aria-label="말할 언어: ' + (T.micKo ? '한국어' : esc(CUR.name || '배우는 언어')) + ' (누르면 바꿔요)">' + (T.micKo ? '한' : ({ zh: '中', en: 'EN', ja: '日', es: 'ES', fr: 'FR' })[CUR.code] || esc(String(CUR.code || '').toUpperCase())) + '</button>' : '') +
-        '<textarea id="tuIn" rows="1" maxlength="' + TUTOR_MAX + '" enterkeyhint="send" placeholder="' + (T.mode === 'correct' ? CUR.flag + ' 고치고 싶은 문장을 써요' : (micOk ? '쓰거나 🎤 누르고 말해요' : '말해 보세요(한국어도 괜찮아요)')) + '" aria-label="메시지">' + esc(T.draft) + '</textarea>' +
+        '<textarea id="tuIn" rows="1" maxlength="' + TUTOR_MAX + '" enterkeyhint="send" placeholder="' + (T.mode === 'correct' ? CUR.flag + (micOk ? ' 고칠 문장을 쓰거나 🎤' : ' 고치고 싶은 문장을 써요') : (micOk ? '쓰거나 🎤 누르고 말해요' : '말해 보세요(한국어도 괜찮아요)')) + '" aria-label="메시지">' + esc(T.draft) + '</textarea>' +
         '<button class="btn tu-send" id="tuSend" aria-label="보내기"' + (TUTOR.busy ? ' disabled' : '') + '>➤</button></div>';
     $main.innerHTML = h;
     document.getElementById('tuBack').addEventListener('click', tutorBack);

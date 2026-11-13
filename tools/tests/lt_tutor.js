@@ -253,6 +253,18 @@ const MOCK = () => {
     await emit(p, [['말이 뭐예요', false]]);
     await p.mouse.up(); await p.waitForFunction(g => !TUTOR.busy && S.tutor.msgs.length >= g, 4, { timeout: 5000 });
     chk(body(gens(p)[gens(p).length - 1]) === '중국어로 고맙다는 말이 뭐예요', '나눠 들린 말을 이어 붙여 보냄(끝 결과가 없으면 마지막 중간 결과)');
+    // 교차 검수 반영: 누르고 있는 동안에는 어떤 경우에도 보내지 않는다 · 같은 말을 두 번 해도 지우지 않는다 · 영어는 띄어서 잇는다
+    await p.click('#tuMicLang'); await p.waitForTimeout(100); await p.evaluate(() => activateLanguage('en')); await until(p, () => CUR && CUR.code === 'en', null, 8000); await p.evaluate(() => tutorOpen('play')); await p.waitForTimeout(200);
+    const g0 = gens(p).length; await hold(p); await emit(p, [['no', true], ['no', true]]); await p.waitForTimeout(450);
+    await sr(p, () => window.__srs[window.__srs.length - 1].onend()); await p.waitForTimeout(60);
+    await emit(p, [['thank you', true]]); await sr(p, () => window.__srs[window.__srs.length - 1].onend());   // 다시 켠 인식이 0.4초 안에 끝남 — 더 이어 듣지 않는다
+    await p.waitForTimeout(400);
+    chk(gens(p).length === g0 && await p.evaluate(() => TUTOR_MIC.held && !TUTOR_MIC.rec) && /no no thank you/.test(await p.innerText('#tuHeard')), '인식이 더 이어지지 않아도 누르고 있는 동안에는 보내지 않음');
+    await p.mouse.up(); await p.waitForFunction(() => !TUTOR.busy && S.tutor.msgs.length >= 2, null, { timeout: 5000 });
+    chk(body(gens(p)[gens(p).length - 1]) === 'no no thank you', '손을 떼면 보냄 · 같은 말 두 번("no no")은 그대로 · 영어는 띄어서 이음');
+    await sr(p, () => { window.__srNoEnd = true; }); await hold(p); await emit(p, [['wait', false]]); await p.waitForTimeout(350); await p.mouse.up(); await p.waitForTimeout(100);
+    chk(await p.$eval('#tuMic', b => b.disabled), '알아듣는 동안에는 마이크 단추 잠김(눌러도 반응 없는 상태를 만들지 않음)');
+    await p.waitForFunction(() => !TUTOR.busy && S.tutor.msgs.length >= 4, null, { timeout: 6000 }); chk(await p.$eval('#tuMic', b => !b.disabled), '끝나면 다시 누를 수 있음');
     await ctx.close();
 
     console.log('=== 🎤 끝 신호가 안 오는 브라우저 · 권한 거절 · 화면을 떠남 · 답을 기다리는 중 · 음성 인식이 없는 브라우저 ===');
