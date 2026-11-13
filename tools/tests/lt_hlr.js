@@ -123,6 +123,41 @@ function refTrain(w, c, prior, y, dt, x) {
     chk(after.hw === 1 && after.hr === 2 && after.due === after.t1, '퀴즈에서 틀림 → 틀린 수 +1, 30일 뒤였던 복습이 내일로 당겨짐');
   }
 
+  console.log('=== 교차 검수 반영: 강한 카드를 퀴즈에서 틀리면 내일 · 같은 날 맞혀도 앞서 잡힌 내일을 덮지 않음 · 예전 카드 첫 복습은 지난 간격으로 학습 · 합치기 순서 무관 ===');
+  const r2 = await p.evaluate(() => {
+    const pr = prog(); pr.srs = {}; delete pr.hlr;
+    const strong = { native: 'perro', pinyin: '', ko: '개', box: 6, due: todayStr(), hr: 20, hw: 0, ht: Date.now() - 10 * 864e5 };
+    pr.srs['perro|'] = strong; hlrSeen('perro', '', true);   // 그날 첫 관찰(맞힘) → 멀리
+    const far = strong.due;
+    hlrSeen('perro', '', false);   // 같은 날 틀림 → 내일
+    const afterMiss = strong.due;
+    hlrSeen('perro', '', true);    // 같은 날 또 맞힘 → 내일 그대로
+    const weak = { native: 'casa', pinyin: '', ko: '집', box: 7, due: todayStr(), hr: 30, hw: 0, ht: Date.now() - 864e5 };
+    pr.srs['casa|'] = weak; hlrSeen('casa', '', false);   // 그날 첫 관찰이 틀림(강한 카드)
+    return { far, afterMiss, kept: strong.due, weakDue: weak.due, t1: todayStr(1) };
+  });
+  chk(r2.far > r2.t1 && r2.afterMiss === r2.t1 && r2.kept === r2.t1, '같은 날: 맞힘(멀리) → 틀림(내일) → 또 맞힘(내일 그대로)');
+  chk(r2.weakDue <= r2.t1, '맞힌 수 30인 강한 카드도 퀴즈에서 틀리면 내일 다시(몇 주 뒤로 밀리지 않음)');
+  const legacy = await p.evaluate(() => {
+    const pr = prog(); pr.srs = {}; delete pr.hlr;
+    pr.srs['luna|'] = { native: 'luna', pinyin: '', ko: '달', box: 4, due: todayStr(), rv: todayStr(-15), rt: Date.now() - 15 * 864e5 };
+    save(); S.review = newReview(dueCards(), 20); S.view = 'review'; renderReview(); return true;
+  });
+  await p.waitForTimeout(150);
+  if (await p.$('#fcFlip')) { await p.click('#fcFlip'); await p.waitForTimeout(100); }
+  await p.click('#fcPass'); await p.waitForTimeout(150);
+  const lg = await p.evaluate(() => { const c = prog().srs['luna|'], h = prog().hlr; return { n: h && h.n, hr: c.hr, moved: h && h.w.some((v, k) => v !== HLR.prior[k]) }; });
+  chk(lg.n === 1 && lg.moved && lg.hr === 4, '복습 탭에서 예전 카드 첫 채점: 지난 15일 간격으로 학습(가중치가 움직임) · 맞힌 수 3→4');
+  const mg = await p.evaluate(() => { const a = { w: [1, 2, 3], c: [1, 1, 1], n: 4 }, b = { w: [3, 2, 1], c: [1, 1, 1], n: 4 }; return JSON.stringify(LANG_EXT.hlr.merge(a, b)) === JSON.stringify(LANG_EXT.hlr.merge(b, a)) && JSON.stringify(LANG_EXT.bb.merge({ th: 1, n: 2 }, { th: 2, n: 2 })) === JSON.stringify(LANG_EXT.bb.merge({ th: 2, n: 2 }, { th: 1, n: 2 })); });
+  chk(mg, '관찰 수가 같아도 어느 쪽에서 합치든 같은 결과');
+  const cm = await p.evaluate(() => {   // 카드의 기억 칸은 기기 합치기에서 최신 판정 쪽이 통째로 남는다
+    const a = { completed: {}, srs: { 'k|': { native: 'k', box: 2, due: todayStr(1), rv: todayStr(-1), rt: 1, hr: 1, hw: 0, ht: 1 } } };
+    const b = { completed: {}, srs: { 'k|': { native: 'k', box: 3, due: todayStr(5), rv: todayStr(), rt: 2, hr: 2, hw: 1, ht: 2, hd: todayStr() } } };
+    const m1 = mergeLang(a, b).srs['k|'], m2 = mergeLang(b, a).srs['k|'];
+    return m1.hr === 2 && m1.hw === 1 && m1.hd && m2.hr === 2 && m2.ht === 2;
+  });
+  chk(cm, '기기 합치기: 카드의 맞힘·틀림·시각은 최신 판정 쪽이 통째로(어느 쪽에서 합쳐도)');
+
   chk(!errors.length, 'pageerror 없음' + (errors.length ? ': ' + errors.slice(0, 3).join(' | ') : ''));
   await browser.close();
   console.log(bad ? 'RESULT: ' + bad + '건 실패' : 'RESULT: ALL PASS'); process.exit(bad ? 1 : 0);
