@@ -61,3 +61,12 @@ Each entry gives the date, the lesson, and where it came from. The newest entrie
 - **2026-11-13: remember a setting only when it was chosen for the right reason.** A retry after
   a truncated answer pinned the slow no-thinking-control setting for the rest of the visit.
   (both reviewers)
+- **2026-11-13: "send on release" must hold in every exit path.** The push-to-talk code sent the
+  collected text when a restarted recognition ended quickly, although the button was still held.
+  Each path that ends listening has to ask "is it still held?" first. (ChatGPT, agreed by Gemini, #81)
+- **2026-11-13: a workaround for one browser must not change what others say.** The fix for
+  Android's cumulative results dropped a word said twice ("no no"). Treat a result as cumulative
+  only when it is longer than the previous one. (ChatGPT)
+- **2026-11-13: write non-ASCII ranges in regular expressions as `\u` escapes.** A literal
+  U+3040 is invisible, and a reviewer read the class as a different range. (Gemini's finding was
+  wrong about behaviour but right that it could not be read.)
