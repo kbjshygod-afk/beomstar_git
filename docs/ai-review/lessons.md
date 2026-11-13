@@ -100,4 +100,10 @@ last.
 - **Say what a filter robustly improves.** The breadth filter's CAGR edge is inside the noise, but
   its profit factor and drawdown were better in 80 of 80 paired paths. Report each metric's
   robustness separately instead of one headline number.
+- **A self-restarting chain needs a brake.** A keeper whose loop fails at once would dispatch the
+  next keeper immediately, forever. The hand-over waits 20 minutes when the loop did not end
+  normally. (2026-11-13, added with the kis-ws slot dispatch.)
+- **Test the workflow's shell as written.** The keeper loop is extracted from the YAML and run
+  under `bash -e -o pipefail` with stub `date`/`sleep`/`gh` and a virtual clock
+  (tests/test_keeper_workflow.py), so a 5 h 45 min run is checked in seconds.
 

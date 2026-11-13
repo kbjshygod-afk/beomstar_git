@@ -7,6 +7,15 @@
 # dispatches the next keeper before the 6-hour job limit. A workflow_dispatch made with
 # GITHUB_TOKEN may start a new run (other GITHUB_TOKEN events may not). The schedule below
 # restarts the chain if it ever breaks, whenever GitHub gets around to firing it.
+#
+# The keeper also starts the two daily kis-ws slots (stop-proximity alerts) on time: on KRX
+# weekdays it dispatches kis-ws.yml with slot=am at 08:50 KST and slot=pm at 12:05 KST. It wakes
+# every 30 seconds, so the start is at most 30 seconds late. A slot is dispatched once: the keeper
+# first looks for a run titled "kis-ws slot <slot>" from the last 45 minutes that is still running
+# or succeeded (another keeper before a hand-over, the Claude session's backup, GitHub's own
+# schedule) and skips if there is one. A keeper that starts more than 30 minutes into a slot leaves
+# it to those backups. Until 2026-11-13 only the Claude session started the slots; this removes
+# that single point of failure.
 name: swing-paper-keeper
 
 on:
@@ -39,16 +48,64 @@ jobs:
     steps:
       - name: Smoke test (push) - one crypto-only dispatch, no loop
         if: github.event_name == 'push'
-        run: gh workflow run swing-paper.yml -f markets=CRYPTO
-      - name: Dispatch swing-paper at 0 h, 2 h and 4 h
+        run: |
+          gh workflow run swing-paper.yml -f markets=CRYPTO
+          # The read-only query the loop uses to see whether a kis-ws slot has started (checks that
+          # this runner's gh accepts the flags; the count itself does not matter here).
+          since=$(date -u -d "@$(( $(date +%s) - 86400 ))" +%FT%TZ)
+          for slot in am pm; do
+            have=$(gh run list --workflow kis-ws.yml --created ">=$since" --limit 30 --json displayTitle,conclusion \
+              --jq "[.[] | select(.displayTitle == \"kis-ws slot $slot\" and (.conclusion == \"\" or .conclusion == null or .conclusion == \"success\"))] | length")
+            echo "kis-ws slot $slot runs in the last 24 h (running or succeeded): $have"
+          done
+      - name: Dispatch swing-paper at 0 h, 2 h and 4 h, and the kis-ws slots on time
+        id: loop
         if: github.event_name != 'push'
         run: |
-          for i in 1 2 3; do
-            gh workflow run swing-paper.yml -f tries=1 \
-              && echo "dispatched swing-paper $i/3 at $(date -u +%FT%TZ)" \
-              || echo "::warning::dispatch $i/3 failed"
-            if [ "$i" -lt 3 ]; then sleep 7200; else sleep 6300; fi
+          start=$(date +%s); n=0; am=""; pm=""
+          while :; do
+            now=$(date +%s); el=$((now - start))
+            if [ "$el" -ge 20700 ]; then break; fi                  # 5 h 45 min: hand over
+            if [ "$n" -lt 3 ] && [ "$el" -ge $((n * 7200)) ]; then
+              n=$((n + 1))
+              gh workflow run swing-paper.yml -f tries=1 \
+                && echo "dispatched swing-paper $n/3 at $(date -u +%FT%TZ)" \
+                || echo "::warning::dispatch $n/3 failed"
+            fi
+            # kis-ws slots: am from 08:50 KST (minute 530), pm from 12:05 KST (minute 725), Mon-Fri
+            read -r dow hh mm day <<< "$(TZ=Asia/Seoul date '+%u %H %M %F')"
+            hm=$((10#$hh * 60 + 10#$mm))
+            if [ "$dow" -le 5 ]; then
+              for slot in am pm; do
+                if [ "$slot" = am ]; then from=530; done_day=$am; else from=725; done_day=$pm; fi
+                if [ "$hm" -ge "$from" ] && [ "$hm" -lt $((from + 30)) ] && [ "$done_day" != "$day" ]; then
+                  since=$(date -u -d "@$((now - 2700))" +%FT%TZ)
+                  have=$(gh run list --workflow kis-ws.yml --created ">=$since" --limit 30 --json displayTitle,conclusion \
+                    --jq "[.[] | select(.displayTitle == \"kis-ws slot $slot\" and (.conclusion == \"\" or .conclusion == null or .conclusion == \"success\"))] | length" \
+                    2>/dev/null || echo 0)
+                  ok=0
+                  if [ "${have:-0}" -gt 0 ] 2>/dev/null; then
+                    echo "kis-ws slot $slot already started ($have run); not dispatching"; ok=1
+                  elif gh workflow run kis-ws.yml -f slot="$slot"; then
+                    echo "dispatched kis-ws slot $slot at $(date -u +%FT%TZ)"; ok=1
+                  else
+                    echo "::warning::kis-ws slot $slot dispatch failed; trying again at the next tick"
+                  fi
+                  if [ "$ok" = 1 ]; then if [ "$slot" = am ]; then am=$day; else pm=$day; fi; fi
+                fi
+              done
+            fi
+            sleep 30
           done
       - name: Hand over to the next keeper
         if: ${{ !cancelled() && github.event_name != 'push' }}
-        run: gh workflow run swing-paper-keeper.yml
+        env:
+          LOOP: ${{ steps.loop.outcome }}
+        run: |
+          # A loop that failed early must not hand over at once, or keepers would restart each
+          # other in a tight circle. Wait, then keep the chain alive.
+          if [ "$LOOP" != "success" ]; then
+            echo "::warning::the keeper loop ended with '$LOOP'; waiting 20 minutes before the hand-over"
+            sleep 1200
+          fi
+          gh workflow run swing-paper-keeper.yml
