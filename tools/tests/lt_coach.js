@@ -133,6 +133,41 @@ const MOCK = () => {
   chk(await p.evaluate(() => S.view) === 'home' && await p.evaluate(gi => (weakestLesson() || {}).gi !== gi, sg.gi), '홈으로 돌아오면 그 레슨은 더 이상 약한 레슨이 아님(다른 레슨은 위에서 일부러 약하게 만듦)');
   await ctx.close();
 
+  console.log('=== 교차 검수 반영: 아포스트로피 · 뜻이 같은 보기 · 다시 틀렸을 때 안내 · 듣기 정답 뒤 글자 · 다섯 언어 360px ===');
+  ({ ctx, p } = await open('fr', 6, 6));
+  const tk = await p.evaluate(() => ({ a: coachTokens("l'eau"), b: coachTokens("C'est bon."), c: coachTokens('こんにちは'), d: coachTokens('我们') }));
+  chk(tk.a.join('|') === "l'eau" && tk.b.join('|') === "C'est|bon" && tk.c.length === 5 && tk.d.length === 2, "아포스트로피는 낱말 안에(l'eau 한 조각, C'est|bon) · 가나·한자는 글자 단위");
+  const amb = await p.evaluate(() => {
+    const pr = prog(); pr.srs['amigoX|'] = { native: 'el amigo', pinyin: '', ko: '(남자) 친구', box: 1, due: todayStr() }; pr.srs['amigaX|'] = { native: 'la amiga', pinyin: '', ko: '(여자) 친구', box: 1, due: todayStr() };
+    const ch = coachChoices({ key: 'amigoX|' }, 'native'); return ch.map(o => o.v);
+  });
+  chk(amb.includes('el amigo') && !amb.includes('la amiga'), '뜻이 같은 카드("친구")는 말 고르기 보기에 함께 나오지 않음: ' + amb.join(', '));
+  await p.evaluate(() => coachOpen('play')); await p.waitForTimeout(200);
+  await p.evaluate(() => { S.coach.q[0].type = 'recog'; renderCoach(); coachAnswer(false, { pick: -1 }); });
+  chk(/끝에 한 번 더/.test(await p.innerText('.co-fb')), '처음 틀림: "끝에 한 번 더" 안내');
+  await p.evaluate(() => { S.coach.ans = null; S.coach.i = S.coach.q.length - 1; renderCoach(); coachAnswer(false, { pick: -1 }); });
+  chk(!/끝에 한 번 더/.test(await p.innerText('.co-fb')), '다시 나온 문제를 또 틀림: 다시 나온다고 하지 않음(실제로 안 나오므로)');
+  await p.evaluate(() => { const it = S.coach.q[0]; S.coach.q.splice(1, 0, Object.assign({}, it, { type: 'listen', again: false, ch: null })); S.coach.ans = null; S.coach.i = 1; renderCoach(); coachAnswer(true, {}); });
+  const lnat = await p.evaluate(() => prog().srs[S.coach.q[1].key].native);
+  chk((await p.innerText('.co-fb')).includes(lnat), '듣기 문제는 맞혀도 원어 글자를 보여 줌(' + lnat + ')');
+  await ctx.close();
+  for (const code of ['en', 'ja', 'fr', 'es', 'zh']) {
+    ({ ctx, p } = await open(code, 8, 6)); await p.setViewportSize({ width: 360, height: 740 });
+    await p.evaluate(() => coachOpen('play')); await p.waitForTimeout(150);
+    const res = await p.evaluate(() => {
+      const out = { types: new Set(), wide: 0, small: 0, fail: 0 };
+      for (let i = 0; i < S.coach.q.length; i++) {
+        S.coach.i = i; S.coach.ans = null; S.coach.sel = []; renderCoach(); const it = S.coach.q[i]; out.types.add(it.type);
+        if (document.documentElement.scrollWidth > 360) out.wide++;
+        out.small += Array.from(document.querySelectorAll('#main button')).filter(b => { const r = b.getBoundingClientRect(); return r.width && (r.height < 44 || r.width < 44); }).length;
+        if (it.type === 'build') { const c = prog().srs[it.key]; const joined = it.need.join(CHAR_LANGS[CUR.code] ? '' : ' '); const norm = x => x.replace(/[.,!?¡¿。、，！？「」“”"]/g, '').replace(/\s+/g, CHAR_LANGS[CUR.code] ? '' : ' ').trim(); if (norm(joined) !== norm(c.native)) out.fail++; }
+      }
+      return { types: Array.from(out.types), wide: out.wide, small: out.small, fail: out.fail };
+    });
+    chk(!res.wide && !res.small && !res.fail, code + ': 모든 문제 360px 넘침·작은 단추 없음 · 만들기 정답이 원문과 같음 (' + res.types.join(',') + ')' + (res.fail ? ' 만들기 불일치 ' + res.fail : ''));
+    await ctx.close();
+  }
+
   chk(!errors.length, 'pageerror 없음' + (errors.length ? ': ' + errors.slice(0, 3).join(' | ') : ''));
   await browser.close();
   console.log(bad ? 'RESULT: ' + bad + '건 실패' : 'RESULT: ALL PASS'); process.exit(bad ? 1 : 0);

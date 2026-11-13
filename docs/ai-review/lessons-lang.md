@@ -70,3 +70,11 @@ Each entry gives the date, the lesson, and where it came from. The newest entrie
 - **2026-11-13: write non-ASCII ranges in regular expressions as `\u` escapes.** A literal
   U+3040 is invisible, and a reviewer read the class as a different range. (Gemini's finding was
   wrong about behaviour but right that it could not be read.)
+- **2026-11-13: tokenizing text for an exercise must not change the text being taught.** Removing
+  apostrophes made `l'eau` a two-tile answer shown as `l eau`. Check that joining the tiles gives
+  back the original form, in every language. (ChatGPT, agreed by Gemini, #82)
+- **2026-11-13: a multiple-choice distractor must not also be a correct answer.** Cards whose short
+  Korean meaning is the same (el amigo / la amiga → 친구) cannot be distractors for each other.
+  (ChatGPT, agreed by Gemini)
+- **2026-11-13: feedback text must match what the code will do next.** "It will come back at the
+  end" was shown even when the item would not come back. (Gemini, agreed by ChatGPT)

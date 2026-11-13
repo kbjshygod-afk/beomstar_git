@@ -7265,7 +7265,7 @@ function sayLaterRun() {
 // 축하 예산: 판 도중 새 토스트는 playToast()로 판당 1개, 나머지는 끝 요약에 모은다(레벨 업·목표 달성 토스트는 그대로)
 var PLAY = { cur: null, last: null, lastLesson: null, open0: null, next: null, nextTimer: 0, pick: null };   // pick: 홈 추천 · open0: 레슨을 열 때 열린 놀이 · openLesson이 먼저 정의돼 있어 var
 const PLAY_END = [];   // 판이 끝날 때 요약에 더할 것(부스트 등 뒤 기능이 등록) — fn(sum, o)
-const PLAY_STATE = ['feed', 'puz', 'rush', 'mission', 'shadow', 'blank', 'radioUi', 'chal'];   // 판 상태(S의 칸)
+const PLAY_STATE = ['feed', 'puz', 'rush', 'mission', 'shadow', 'blank', 'radioUi', 'chal', 'coach'];   // 판 상태(S의 칸)
 const PLAY_VIEWS = ['play', 'trainer', 'feed', 'puzzle', 'rush', 'missions', 'radio', 'dex', 'league', 'sayLater', 'challenge', 'tutor', 'coach'];
 function resetPlayState() {
     const c = PLAY.cur;
@@ -10094,8 +10094,8 @@ function bbUpdate(key, type, P, y) {
     bb.n++;
 }
 function coachTokens(text) {   // 만들기 조각: 띄어 쓰는 말은 낱말, 한자·가나는 글자
-    const t = String(text || '').replace(/[.,!?¡¿。、，！？「」“”"']/g, ' ').trim();
-    const toks = /[぀-ヿ㐀-鿿]/.test(t) ? Array.from(t.replace(/\s+/g, '')) : t.split(/\s+/);
+    const t = String(text || '').replace(/[.,!?¡¿。、，！？「」“”"]/g, ' ').trim();   // 아포스트로피(l'eau·I'm)는 낱말 안에 남긴다
+    const toks = /[\u3040-\u30ff\u3400-\u9fff]/.test(t) ? Array.from(t.replace(/\s+/g, '')) : t.split(/\s+/);
     return toks.filter(Boolean);
 }
 function coachCanType(card, type) {
@@ -10126,8 +10126,9 @@ function coachBuild(keys) {
 }
 // 보기 만들기(다른 카드에서). 같은 세션·같은 문제면 늘 같은 보기
 function coachChoices(item, field) {
-    const p = prog(), c = p.srs[item.key], right = field === 'ko' ? shortKo(c.ko) : c.native;
-    const others = Object.entries(p.srs).filter(([k, o]) => k !== item.key && o && o.native && o.ko).map(([, o]) => field === 'ko' ? shortKo(o.ko) : o.native)
+    const p = prog(), c = p.srs[item.key], right = field === 'ko' ? shortKo(c.ko) : c.native, myKo = shortKo(c.ko);
+    // 뜻(짧게 줄인 한국어)이 같은 카드는 보기에서 뺀다 — '친구'를 묻는데 el amigo·la amiga가 함께 나오면 둘 다 맞는 답이 된다
+    const others = Object.entries(p.srs).filter(([k, o]) => k !== item.key && o && o.native && o.ko && shortKo(o.ko) !== myKo && o.native !== c.native).map(([, o]) => field === 'ko' ? shortKo(o.ko) : o.native)
         .filter((v, i, a) => v && v !== right && a.indexOf(v) === i);
     const wrong = seededShuffle(others, hashStr(item.key + field)).slice(0, 3);
     return seededShuffle([right].concat(wrong), hashStr(item.key + 'o')).map(v => ({ v, ok: v === right }));
@@ -10161,7 +10162,7 @@ function renderCoach() {
     else if (it.type === 'listen') h += '<div class="quiz-audio"><button class="big-listen" id="coPlay" aria-label="듣기">🔊</button></div><div class="quiz-q">들린 말의 뜻은?</div>';
     else h += '<div class="co-prompt">' + esc(shortKo(c.ko)) + '</div><div class="quiz-q">' + (it.type === 'build' ? '조각을 눌러 ' + esc(CUR.name || '') + '로 만들어 보세요' : esc(CUR.name || '') + '로는?') + '</div>';
     if (it.type === 'build') {
-        if (!it.tiles) { const need = coachTokens(c.native), extra = Object.values(prog().srs).filter(o => o && o.native !== c.native).flatMap(o => coachTokens(o.native)).filter(x => !need.includes(x)); it.tiles = seededShuffle(need.concat(seededShuffle(extra, hashStr(it.key)).slice(0, 2)), hashStr(it.key + 't')); it.need = need; }
+        if (!it.tiles) { const need = coachTokens(c.native), extra = Object.values(prog().srs).filter(o => o && o.native !== c.native).flatMap(o => coachTokens(o.native)).filter((x, i, a) => !need.includes(x) && a.indexOf(x) === i); it.tiles = seededShuffle(need.concat(seededShuffle(extra, hashStr(it.key)).slice(0, 2)), hashStr(it.key + 't')); it.need = need; }
         h += '<div class="co-built" id="coBuilt" aria-live="polite">' + (st.sel.length ? st.sel.map(k => '<span>' + esc(it.tiles[k]) + '</span>').join(CHAR_LANGS[CUR.code] ? '' : ' ') : '<span class="muted">여기에 만들어져요</span>') + '</div>' +
             '<div class="co-tiles">' + it.tiles.map((t, k) => '<button class="co-tile" data-tile="' + k + '"' + (st.sel.includes(k) || st.ans ? ' disabled' : '') + '>' + esc(t) + '</button>').join('') + '</div>' +
             (st.ans ? '' : '<div class="co-acts"><button class="btn ghost" id="coUndo"' + (st.sel.length ? '' : ' disabled') + '>⌫ 지우기</button><button class="btn" id="coCheck"' + (st.sel.length ? '' : ' disabled') + '>확인</button></div>');
@@ -10169,7 +10170,8 @@ function renderCoach() {
         const ch = it.ch || (it.ch = coachChoices(it, it.type === 'recall' ? 'native' : 'ko'));
         h += '<div class="co-choices">' + ch.map((o, k) => '<button class="choice-btn' + (st.ans ? (o.ok ? ' correct' : st.ans.pick === k ? ' wrong' : '') : '') + '" data-co="' + k + '"' + (st.ans ? ' disabled' : '') + '><span class="' + (it.type === 'recall' ? 'native' : '') + '">' + esc(o.v) + '</span></button>').join('') + '</div>';
     }
-    if (st.ans) h += '<div class="co-fb ' + (st.ans.ok ? 'ok' : 'ng') + '" role="status">' + (st.ans.ok ? '✅ 맞아요!' : '❌ 정답: <b class="native">' + esc(c.native) + '</b> = ' + esc(shortKo(c.ko)) + '<br><span class="muted">끝에 한 번 더 나와요</span>') + '</div><button class="btn block" id="coNext">계속</button>';
+    const form = '<b class="native">' + esc(c.native) + '</b>' + (c.pinyin ? ' <span class="muted">' + esc(c.pinyin) + '</span>' : '') + ' = ' + esc(shortKo(c.ko));
+    if (st.ans) h += '<div class="co-fb ' + (st.ans.ok ? 'ok' : 'ng') + '" role="status">' + (st.ans.ok ? '✅ 맞아요!' + (it.type === 'listen' || it.type === 'build' ? '<br>' + form : '') : '❌ 정답: ' + form + (st.ans.requeued ? '<br><span class="muted">끝에 한 번 더 나와요</span>' : '')) + '</div><button class="btn block" id="coNext">계속</button>';
     $main.innerHTML = h;
     document.getElementById('coBack').addEventListener('click', coachBack);
     const pl = document.getElementById('coPlay'); if (pl) { pl.addEventListener('click', () => speak(c.native, 0.95)); if (!st.ans && st.autoFor !== st.i) { st.autoFor = st.i; setTimeout(() => { if (S.coach === st && S.view === 'coach') speak(c.native, 0.95); }, 250); } }
@@ -10191,9 +10193,9 @@ function coachAnswer(ok, extra) {
         const dl = dayLog(); dl.coach = (dl.coach || 0) + 1;
     }
     if (ok) { st.xp += softXp('coach', XP.review, '맞춤 연습'); sfx('ok'); }
-    else { sfx('bad'); if (!st.again[it.key]) { st.again[it.key] = 1; st.q.push(Object.assign({}, it, { again: true, ch: null, tiles: null, P: undefined, probe: false })); } }   // 틀린 것은 세션 끝에 한 번 더
+    else { sfx('bad'); if (!st.again[it.key]) { st.again[it.key] = 1; st.ans.requeued = true; st.q.push(Object.assign({}, it, { again: true, ch: null, tiles: null, P: undefined, probe: false })); } }   // 틀린 것은 세션 끝에 한 번 더
     save(); renderCoach();
-    if (!ok || it.type !== 'listen') setTimeout(() => { if (S.coach === st) speak(c.native, 0.95); }, 200);
+    if (!ok || it.type !== 'listen') setTimeout(() => { if (S.coach === st && S.view === 'coach') speak(c.native, 0.95); }, 200);   // 그사이 화면을 떠났으면 읽지 않는다
 }
 function coachEnd(top) {
     const st = S.coach, acc = st.n ? Math.round(st.ok / st.n * 100) : 0;
