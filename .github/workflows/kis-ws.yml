@@ -3,30 +3,43 @@
 # KIS_APP_SECRET repository secrets and are never printed. Ticks, alerts and the summary are kept
 # as a run artifact; stop-proximity alerts go to the issue "한국장 손절 근접 알림".
 #
-# Weekday schedule (2.6): the KRX session (09:00-15:30 KST, 390 min) is longer than one job
-# (max 360 min), so it is covered by two runs: 08:50 KST for 205 min and 12:05 KST for 210 min.
-# The alerts already sent that KST day are carried from the first run to the second through the
-# Actions cache, so each symbol/level is alerted once a day. A day with nothing held, or a KRX
-# holiday (subscribed, no trades), ends green.
+# Daily runs (2.6): the KRX session (09:00-15:30 KST, 390 min) is longer than one job (max 360
+# min), so it is covered by two "slots": am (until 12:00 KST) and pm (until 15:35 KST). A slot run
+# listens from whenever it starts until the slot's end, so a late start only shortens it. The am
+# slot ends before the pm slot starts (12:05), because pm reads the alerts am saved at its end.
+#   * Primary start: the Claude session dispatches this workflow with slot=am at 08:50 KST and
+#     slot=pm at 12:05 KST on weekdays (GitHub's own schedule was 30+ minutes late on the first
+#     day, 2026-11-13, and has been hours late in this repository).
+#   * Backup start: the `schedule` triggers below. Daily runs are serialized; a run that finds
+#     the slot's "done" marker (saved after a successful listen) stops, and one that follows a
+#     failed run listens for what is left of the slot.
+# KIS allows one WebSocket session per app key, so only one listener may run at a time: daily runs
+# share one concurrency group, and a manual test during a daily run is refused by KIS (exit 4).
+# Alerts already posted that KST day are carried between runs through the Actions cache, so each
+# symbol/level is alerted once a day. Nothing held, or a full window without trades (holiday),
+# ends green; a crash or an early end stays red.
 name: kis-ws
 
 on:
   schedule:
-    - cron: '50 23 * * 0-4'   # 08:50 KST Mon-Fri
-    - cron: '5 3 * * 1-5'     # 12:05 KST Mon-Fri
+    - cron: '50 23 * * 0-4'   # 08:50 KST Mon-Fri (backup for slot am)
+    - cron: '5 3 * * 1-5'     # 12:05 KST Mon-Fri (backup for slot pm)
   workflow_dispatch:
     inputs:
+      slot:
+        description: 'Daily run of a half session: am (to 12:00 KST) or pm (to 15:35 KST). Empty = a manual test with the inputs below'
+        default: ''
       minutes:
-        description: 'Minutes to listen (max 340; KRX session 09:00-15:30 KST)'
+        description: 'Manual test: minutes to listen (max 340)'
         default: '60'
       symbols:
-        description: 'Comma-separated 6-digit codes (empty = held Korean symbols in the ledger)'
+        description: 'Manual test: comma-separated 6-digit codes (empty = held Korean symbols in the ledger)'
         default: ''
       venue:
         description: 'J = KRX, NX = NXT, UN = both'
         default: 'J'
       alert:
-        description: 'Stop-proximity alerts as issue comments (true/false)'
+        description: 'Manual test: stop-proximity alerts as issue comments (true/false)'
         default: 'false'
   push:
     branches: ['claude/**']
@@ -37,7 +50,8 @@ permissions:
   issues: write
 
 concurrency:
-  group: kis-ws-${{ github.event_name }}
+  # Daily runs (schedule or slot dispatch) never overlap; tests and smoke runs are independent.
+  group: kis-ws-${{ (github.event_name == 'schedule' || github.event.inputs.slot != '') && 'daily' || github.run_id }}
   cancel-in-progress: false
 
 jobs:
@@ -45,25 +59,76 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 355
     steps:
+      - name: Slot
+        id: slot
+        env:
+          EVENT: ${{ github.event_name }}
+          CRON: ${{ github.event.schedule }}
+          SLOT_IN: ${{ github.event.inputs.slot }}
+        run: |
+          slot=""
+          if [ "$EVENT" = "schedule" ]; then
+            if [ "$CRON" = "50 23 * * 0-4" ]; then slot=am; else slot=pm; fi
+          elif [ "$SLOT_IN" = "am" ] || [ "$SLOT_IN" = "pm" ]; then slot="$SLOT_IN"
+          elif [ -n "$SLOT_IN" ]; then echo "::error::slot must be am, pm or empty"; exit 2; fi
+          now=$(TZ=Asia/Seoul date +%H:%M)
+          nowm=$((10#${now%:*} * 60 + 10#${now#*:}))
+          if [ "$slot" = "am" ]; then end=$((12 * 60)); else end=$((15 * 60 + 35)); fi
+          left=$((end - nowm))
+          [ "$left" -gt 340 ] && left=340
+          {
+            echo "slot=$slot"
+            echo "kst=$(TZ=Asia/Seoul date +%F)"
+            echo "left=$left"
+          } >> "$GITHUB_OUTPUT"
+          echo "slot='$slot' · KST $now · minutes left in the slot: $left"
+      - name: Slot already done today?
+        id: marker
+        if: steps.slot.outputs.slot != ''
+        uses: actions/cache/restore@v4
+        with:
+          path: kis_ws_slot
+          key: kis-ws-slot-${{ steps.slot.outputs.kst }}-${{ steps.slot.outputs.slot }}
+          lookup-only: true
+      - name: Decide
+        id: go
+        env:
+          EVENT: ${{ github.event_name }}
+          SLOT: ${{ steps.slot.outputs.slot }}
+          HIT: ${{ steps.marker.outputs.cache-hit }}
+          LEFT: ${{ steps.slot.outputs.left }}
+        run: |
+          run=true
+          # KIS allows one WebSocket session per app key. A push smoke run during the KRX session
+          # would collide with the daily listener (2026-11-13: "ALREADY IN USE appkey"), so it is
+          # skipped on weekdays between 08:45 and 15:40 KST; the unit tests still run in swing-backtest.
+          hm=$((10#$(TZ=Asia/Seoul date +%H) * 60 + 10#$(TZ=Asia/Seoul date +%M))); dow=$(TZ=Asia/Seoul date +%u)
+          if [ "$EVENT" = "push" ] && [ "$dow" -le 5 ] && [ "$hm" -ge 525 ] && [ "$hm" -le 940 ]; then
+            run=false; echo "::notice::KRX session hours: smoke run skipped so it cannot take the app key from the daily listener"; fi
+          if [ -n "$SLOT" ] && [ "$HIT" = "true" ]; then run=false; echo "::notice::slot $SLOT was already covered today by another run; nothing to do"; fi
+          if [ -n "$SLOT" ] && [ "$run" = "true" ] && [ "$LEFT" -lt 2 ]; then run=false; echo "::notice::slot $SLOT is over (started too late); nothing to do"; fi
+          echo "run=$run" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v4
+        if: steps.go.outputs.run == 'true'
       - run: git fetch --no-tags --depth=1 origin paper-trading
+        if: steps.go.outputs.run == 'true'
       - uses: actions/setup-python@v5
+        if: steps.go.outputs.run == 'true'
         with:
           python-version: '3.12'
           cache: pip
           cache-dependency-path: trading/requirements.txt
       - run: pip install -r trading/requirements.txt websocket-client
-      - name: KST date
-        id: day
-        run: echo "kst=$(TZ=Asia/Seoul date +%F)" >> "$GITHUB_OUTPUT"
+        if: steps.go.outputs.run == 'true'
       - name: Alerts already sent today
-        if: github.event_name == 'schedule'
+        if: steps.go.outputs.run == 'true' && steps.slot.outputs.slot != ''
         uses: actions/cache/restore@v4
         with:
           path: kis_ws_state
-          key: kis-ws-fired-${{ steps.day.outputs.kst }}-${{ github.run_id }}
-          restore-keys: kis-ws-fired-${{ steps.day.outputs.kst }}-
+          key: kis-ws-fired-${{ steps.slot.outputs.kst }}-${{ github.run_id }}
+          restore-keys: kis-ws-fired-${{ steps.slot.outputs.kst }}-
       - name: Listen
+        if: steps.go.outputs.run == 'true'
         working-directory: trading
         env:
           KIS_APP_KEY: ${{ secrets.KIS_APP_KEY }}
@@ -71,41 +136,57 @@ jobs:
           KIS_ENV: ${{ vars.KIS_ENV || 'vps' }}
           GH_TOKEN: ${{ github.token }}
           EVENT: ${{ github.event_name }}
-          CRON: ${{ github.event.schedule }}
+          SLOT: ${{ steps.slot.outputs.slot }}
           MINUTES_IN: ${{ github.event.inputs.minutes }}
           SYMBOLS: ${{ github.event.inputs.symbols || '' }}
           VENUE: ${{ github.event.inputs.venue || 'J' }}
           ALERT_IN: ${{ github.event.inputs.alert || 'false' }}
         run: |
           if [ -z "$KIS_APP_KEY" ] || [ -z "$KIS_APP_SECRET" ]; then echo "::error::KIS_APP_KEY / KIS_APP_SECRET secrets are not set"; exit 2; fi
-          case "$EVENT" in
-            schedule) ALERT=true; if [ "$CRON" = "50 23 * * 0-4" ]; then MINUTES=205; else MINUTES=210; fi ;;
-            push) ALERT=false; MINUTES=2 ;;
-            *) ALERT="$ALERT_IN"; MINUTES="${MINUTES_IN:-60}" ;;
-          esac
+          if [ -n "$SLOT" ]; then
+            # Time left in the slot, measured now (after setup), so the am run ends by 12:00 KST.
+            IFS=: read -r hh mm ss <<< "$(TZ=Asia/Seoul date +%H:%M:%S)"
+            if [ "$SLOT" = "am" ]; then end=$((12 * 3600)); else end=$((15 * 3600 + 35 * 60)); fi
+            MINUTES=$(( (end - (10#$hh * 3600 + 10#$mm * 60 + 10#$ss)) / 60 ))
+            [ "$MINUTES" -gt 340 ] && MINUTES=340
+            if [ "$MINUTES" -lt 2 ]; then echo "slot $SLOT is over; nothing to listen to"; exit 0; fi
+            ALERT=true; SYMBOLS=""
+          elif [ "$EVENT" = "push" ]; then ALERT=false; MINUTES=2
+          else ALERT="$ALERT_IN"; MINUTES="${MINUTES_IN:-60}"; fi
           args=(--minutes "$MINUTES" --venue "$VENUE" --out ../kis_ws_out --env-file /dev/null --repo ..)
           [ -n "$SYMBOLS" ] && args+=(--symbols "$SYMBOLS")
           [ "$ALERT" = "true" ] || args+=(--no-alert)
-          [ "$EVENT" = "schedule" ] && args+=(--state-file ../kis_ws_state/fired.json --none-ok)
+          [ -n "$SLOT" ] && args+=(--state-file ../kis_ws_state/fired.json --none-ok)
           rc=0
           python tools/kis_ws_probe.py "${args[@]}" > probe.txt 2>&1 || rc=$?
           cat probe.txt
-          { echo '```'; grep -E "^RESULT|^KIS WebSocket|SUBSCRIBE|approval|APPROVAL|reconnect|ALERT|already alerted" probe.txt | head -40; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          { echo "slot: ${SLOT:-none} · minutes: $MINUTES"; echo '```'; grep -E "^RESULT|^KIS WebSocket|SUBSCRIBE|approval|APPROVAL|reconnect|ALERT|already alerted|ENDED EARLY|COMPLETED WITHOUT|KEY IN USE" probe.txt | head -40; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
           # Exit 3 = the whole listening window ran and no trade arrived (push smoke runs off-hours, KRX
-          # holidays). Only that, with a confirmed subscription, is forgiven; a crash or an early end
-          # after subscribing (exit 1) stays red.
-          if [ "$rc" -eq 3 ] && [ "$EVENT" != "workflow_dispatch" ] && grep -q "SUBSCRIBE SUCCESS" probe.txt; then
+          # holidays). Only that, with a confirmed subscription, is forgiven for daily and smoke runs; a
+          # crash or an early end after subscribing (exit 1) stays red, and so does any manual test.
+          if [ "$rc" -eq 3 ] && { [ -n "$SLOT" ] || [ "$EVENT" = "push" ]; } && grep -q "SUBSCRIBE SUCCESS" probe.txt; then
             echo "approval and subscription ok, full window without trades (outside the session or a holiday)"; rc=0
           fi
           exit $rc
+      - name: Mark the slot as done
+        # Only after a successful Listen: a run that failed leaves no marker, so the backup start
+        # (or a re-dispatch) can still cover what is left of the slot. Daily runs are serialized
+        # by the concurrency group, so two never listen at once.
+        if: success() && steps.go.outputs.run == 'true' && steps.slot.outputs.slot != ''
+        run: mkdir -p kis_ws_slot && echo "${{ github.run_id }}" > kis_ws_slot/done
+      - uses: actions/cache/save@v4
+        if: success() && steps.go.outputs.run == 'true' && steps.slot.outputs.slot != ''
+        with:
+          path: kis_ws_slot
+          key: kis-ws-slot-${{ steps.slot.outputs.kst }}-${{ steps.slot.outputs.slot }}
       - name: Save alerts sent today
-        if: always() && github.event_name == 'schedule' && hashFiles('kis_ws_state/fired.json') != ''
+        if: always() && steps.slot.outputs.slot != '' && hashFiles('kis_ws_state/fired.json') != ''
         uses: actions/cache/save@v4
         with:
           path: kis_ws_state
-          key: kis-ws-fired-${{ steps.day.outputs.kst }}-${{ github.run_id }}
+          key: kis-ws-fired-${{ steps.slot.outputs.kst }}-${{ github.run_id }}
       - uses: actions/upload-artifact@v4
-        if: always()
+        if: always() && steps.go.outputs.run == 'true'
         with:
           name: kis-ws-${{ github.run_id }}
           path: kis_ws_out/

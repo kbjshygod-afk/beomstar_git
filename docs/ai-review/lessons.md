@@ -58,3 +58,31 @@ last.
 - **A read failure is not an empty result.** "Could not read the ledger" must not look like
   "nothing held".
 - **Validate persisted state.** Valid JSON with the wrong shape must fall back safely.
+
+## Research (2026-11-13)
+- **Check what already exists before proposing new work.** On 11-06 Claude proposed "rebuilding the
+  backtest without survivorship bias" as new work. A point-in-time backtest had existed since
+  2026-09-26 (`tools/robustness.py` part `pit`, `tools/krx_membership.py`); only the delisted
+  members' prices were missing. Search the tools and docs (`grep -rn pit trading/tools docs`)
+  before scoping a study.
+- **Reproduce the published number first.** Before changing data, re-run the old study and match
+  its figures (KOSDAQ pit CAGR 12.03%, warning lines to the decimal); only then is a difference
+  attributable to the change.
+- **Clip added data to the study window.** Built bars that ran past the snapshot's last day
+  changed the test window and the benchmark figure; compare like for like.
+- **A price made up for valuation must not become tradable.** Filling halted days with flat bars
+  let the simulator fill exits during a suspension. Check how the consumer (here
+  `portfolio.simulate`, `HAS`) reads the data before shaping it. (Codex and Gemini agreed;
+  confirmed in the simulator code; results re-run.)
+- **Reference-price adjustment needs complete consecutive history.** A missing source file must
+  be an error, not a silent gap that looks like a corporate action.
+- **GitHub's `schedule` is not a clock.** The first scheduled kis-ws run was 30+ minutes late
+  (this repository already runs its 2-hourly ledger through a keeper chain for the same reason).
+  Time-critical runs are started by a dispatcher; the schedule is only a backup.
+- **A dedup marker must mean "done", not "started".** Saving the slot marker before listening
+  would have locked the backup run out after an early failure. Write it only after success; let
+  the concurrency group prevent overlap. (Both reviewers; round 2 of the 11-13 review.)
+- **Measure a deadline-based duration when the timed step begins**, after setup, and with seconds.
+- **KIS allows one WebSocket session per app key.** A second listener gets "ALREADY IN USE appkey"
+  (2026-11-13, a push smoke run met the live listener). Never test against a key a live job is
+  using; a refused listener stops at once (exit 4) instead of reconnecting.
