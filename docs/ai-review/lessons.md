@@ -86,3 +86,9 @@ last.
 - **KIS allows one WebSocket session per app key.** A second listener gets "ALREADY IN USE appkey"
   (2026-11-13, a push smoke run met the live listener). Never test against a key a live job is
   using; a refused listener stops at once (exit 4) instead of reconnecting.
+- **A conclusion inherits the flaws of the baseline it was measured against.** When the delisted
+  members were added, the baseline changed (KOSDAQ CAGR 12.0% -> 10.0%), and so did the study built
+  on it: the breadth-50 filter no longer passes its pre-registered criteria (first-half excess
+  +16.2pp -> +7.0pp). After correcting a dataset, re-run every study that used it, with the same
+  tool, before the next decision that cites it. Thresholds re-derived after seeing the new results
+  are reference only, never a verdict. (2026-11-13)
