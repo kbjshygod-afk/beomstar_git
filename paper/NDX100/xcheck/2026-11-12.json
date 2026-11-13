@@ -11,39 +11,53 @@
   "missing": [],
   "mismatches": [
    {
-    "symbol": "CMCSA",
-    "field": "open",
-    "yahoo": 25.27000046,
-    "krx": 25.32,
-    "diff_pct": 0.197
+    "symbol": "AMGN",
+    "field": "volume",
+    "yahoo": 2827600.0,
+    "krx": 2225839.0,
+    "diff_pct": 21.282
    },
    {
     "symbol": "CMCSA",
     "field": "volume",
-    "yahoo": 19512243.0,
+    "yahoo": 19513300.0,
     "krx": 19260499.0,
-    "diff_pct": 1.29
+    "diff_pct": 1.296
+   },
+   {
+    "symbol": "MSFT",
+    "field": "volume",
+    "yahoo": 18586800.0,
+    "krx": 17858001.0,
+    "diff_pct": 3.921
+   },
+   {
+    "symbol": "VRTX",
+    "field": "volume",
+    "yahoo": 984000.0,
+    "krx": 959722.0,
+    "diff_pct": 2.467
    },
    {
     "symbol": "COST",
     "field": "volume",
-    "yahoo": 2081002.0,
+    "yahoo": 2203000.0,
     "krx": 2058388.0,
-    "diff_pct": 1.087
+    "diff_pct": 6.564
    },
    {
     "symbol": "BKR",
-    "field": "low",
-    "yahoo": 47.90000153,
-    "krx": 47.8,
-    "diff_pct": 0.209
+    "field": "volume",
+    "yahoo": 10251300.0,
+    "krx": 9884505.0,
+    "diff_pct": 3.578
    },
    {
-    "symbol": "CEG",
-    "field": "open",
-    "yahoo": 270.5499878,
-    "krx": 270.9,
-    "diff_pct": 0.129
+    "symbol": "CRWD",
+    "field": "volume",
+    "yahoo": 6234600.0,
+    "krx": 6152979.0,
+    "diff_pct": 1.309
    }
   ],
   "unlisted": [],
@@ -58,5 +72,5 @@
   ]
  },
  "error": null,
- "calls": 16
+ "calls": 0
 }
