@@ -70,3 +70,12 @@ last.
   attributable to the change.
 - **Clip added data to the study window.** Built bars that ran past the snapshot's last day
   changed the test window and the benchmark figure; compare like for like.
+- **A price made up for valuation must not become tradable.** Filling halted days with flat bars
+  let the simulator fill exits during a suspension. Check how the consumer (here
+  `portfolio.simulate`, `HAS`) reads the data before shaping it. (Codex and Gemini agreed;
+  confirmed in the simulator code; results re-run.)
+- **Reference-price adjustment needs complete consecutive history.** A missing source file must
+  be an error, not a silent gap that looks like a corporate action.
+- **GitHub's `schedule` is not a clock.** The first scheduled kis-ws run was 30+ minutes late
+  (this repository already runs its 2-hourly ledger through a keeper chain for the same reason).
+  Time-critical runs are started by a dispatcher; the schedule is only a backup.

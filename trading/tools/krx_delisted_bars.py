@@ -16,9 +16,13 @@ the ex-date are multiplied by the product of the later factors and volume is div
 gives a continuous series like Yahoo's split-adjusted one (cash dividends are not adjusted in
 either).
 
-Halted days (volume 0, open/high/low 0) become flat bars at the last close, as Yahoo shows them,
-so a position held into a halt is marked at the last price and exits at the first real open
-after it (the liquidation-trading gap of a delisting is then taken in full).
+Halted days (open/high/low 0, no trades) are left out of the built frame. The simulator treats a
+day without a bar as untradable (portfolio.simulate, HAS): a position is marked at its last close
+and a pending exit or a stop waits for the first real open after the halt, so the
+liquidation-trading gap of a delisting is taken in full. (Yahoo shows halted days of surviving
+stocks as flat bars, which the simulator can trade; that older limitation is not changed here.)
+All yearly marcap files of the requested range must be present: a missing year would make the
+price change across the gap look like a corporate action.
 
 Writes OUT_DIR/<MARKET>.pkl.xz (the snapshot plus the built frames, listed under "filled") and
 copies the membership file, so `robustness.py --data OUT_DIR --parts pit` runs unchanged.
@@ -41,7 +45,9 @@ RETURN_TOLERANCE = 0.005      # --check: a day counts as different when the retu
 
 def adjusted_bars(rows: pd.DataFrame) -> pd.DataFrame:
     """Adjusted OHLCV (index date, columns open/high/low/close/volume) from one code's marcap rows
-    (Date, Open, High, Low, Close, Volume, Changes). attrs['actions'] lists (date, factor)."""
+    (Date, Open, High, Low, Close, Volume, Changes). The factors are computed over every row
+    (a halted row still carries the close), then halted days are dropped. attrs['actions'] lists
+    (date, factor); attrs['halted_days'] counts the dropped days."""
     d = rows.sort_values("Date").drop_duplicates("Date", keep="last")
     d = d[pd.to_numeric(d["Close"], errors="coerce") > 0]
     if len(d) == 0:
@@ -58,23 +64,26 @@ def adjusted_bars(rows: pd.DataFrame) -> pd.DataFrame:
     later = np.concatenate([np.cumprod(step[::-1])[::-1][1:], [1.0]])
     o, h, l = (d[c].to_numpy(float) for c in ("Open", "High", "Low"))
     vol = np.nan_to_num(d["Volume"].to_numpy(float))
-    flat = ~(o > 0) | ~(h > 0) | ~(l > 0)                    # halted: no trade that day
-    o, h, l = (np.where(flat, close, x) for x in (o, h, l))
-    out = pd.DataFrame({"open": o * later, "high": h * later, "low": l * later, "close": close * later,
-                        "volume": np.where(later > 0, vol / later, vol)},
-                       index=pd.DatetimeIndex(pd.to_datetime(d["Date"].to_numpy()), name="date"))
-    dates = out.index[1:][ok]
-    out.attrs["actions"] = [(t.strftime("%Y-%m-%d"), round(float(f), 6)) for t, f in zip(dates, r[ok])]
+    traded = (o > 0) & (h > 0) & (l > 0)                     # a halted day has no open/high/low
+    full = pd.DataFrame({"open": o * later, "high": h * later, "low": l * later, "close": close * later,
+                         "volume": np.where(later > 0, vol / later, vol)},
+                        index=pd.DatetimeIndex(pd.to_datetime(d["Date"].to_numpy()), name="date"))
+    out = full[traded]                                       # halted days: no bar, so nothing can fill
+    out.attrs["actions"] = [(t.strftime("%Y-%m-%d"), round(float(f), 6)) for t, f in zip(full.index[1:][ok], r[ok])]
+    out.attrs["halted_days"] = int((~traded).sum())
     return out
 
 
 def load_marcap(marcap_dir: Path, codes: set, start: int, end: int) -> pd.DataFrame:
-    """Rows of the given 6-digit codes from marcap-<year>.parquet files in marcap_dir."""
+    """Rows of the given 6-digit codes from marcap-<year>.parquet files in marcap_dir. Every year
+    of the range must be there: across a missing year the reference price would not match the
+    previous available close and the gap would be read as a corporate action."""
+    absent = [y for y in range(start, end + 1) if not (marcap_dir / f"marcap-{y}.parquet").exists()]
+    if absent:
+        raise FileNotFoundError(f"marcap files missing for {absent} in {marcap_dir}")
     parts = []
     for y in range(start, end + 1):
         p = marcap_dir / f"marcap-{y}.parquet"
-        if not p.exists():
-            continue
         df = pd.read_parquet(p, columns=["Code", "Date", "Open", "High", "Low", "Close", "Volume", "Changes"])
         df["Code"] = df["Code"].astype(str).str.zfill(6).str.upper()
         parts.append(df[df["Code"].isin(codes)])
@@ -85,7 +94,7 @@ def load_marcap(marcap_dir: Path, codes: set, start: int, end: int) -> pd.DataFr
 
 def member_codes(path: Path) -> set:
     m = pd.read_csv(path)
-    return set(c for s in m["codes"] for c in str(s).split(","))
+    return {c.strip().upper() for s in m["codes"].dropna() for c in str(s).split(",") if c.strip()}
 
 
 def compare_with_yahoo(built: pd.DataFrame, yahoo: pd.DataFrame) -> dict:
@@ -114,23 +123,27 @@ def main(argv=None) -> int:
     data, out = Path(a.data), Path(a.out)
     snap = pd.read_pickle(data / f"{a.market}.pkl.xz", compression="xz")
     frames = dict(snap["frames"])
-    have = {s.split(".")[0] for s in frames}
+    have = {s.split(".")[0] for s, f in frames.items() if f is not None and len(f) > 0}
     members = member_codes(data / MEMBERSHIP[a.market])
     missing = sorted(members - have)
     rows = load_marcap(Path(a.marcap_dir), set(missing), a.start, a.end)
     last = pd.DataFrame(snap["bench"]).index.max()          # keep the snapshot's window: no bars after its last day
-    filled, empty, actions = [], [], 0
+    filled, empty, actions, halted = [], [], 0, 0
     for code, g in rows.groupby("Code"):
         bars = adjusted_bars(g[pd.to_datetime(g["Date"]) <= last])
         if len(bars) == 0:
             empty.append(code)
             continue
+        for old in [s for s in frames if s.split(".")[0] == code]:      # an empty Yahoo frame of the same code
+            del frames[old]
         frames[code + SUFFIX[a.market]] = bars
         filled.append(code)
         actions += len(bars.attrs.get("actions", []))
+        halted += bars.attrs.get("halted_days", 0)
     empty += [c for c in missing if c not in set(filled) | set(empty)]
     print(f"{a.market}: members ever {len(members)} · without Yahoo data {len(missing)} · built {len(filled)} "
-          f"· still missing {len(empty)} {empty[:10]} · corporate actions adjusted {actions}")
+          f"· still missing {len(empty)} {empty[:10]} · corporate actions adjusted {actions} "
+          f"· halted days left out {halted}")
     if a.check:
         pick = sorted(c for c in members & have)[:: max(1, len(members & have) // a.check)][: a.check]
         ref = load_marcap(Path(a.marcap_dir), set(pick), a.start, a.end)
@@ -141,12 +154,17 @@ def main(argv=None) -> int:
             if c.get("days", 0) >= 50:
                 res.append((code, c))
         days = sum(c["days"] for _, c in res)
-        differ = sum(c["differ"] for _, c in res)
-        worst = sorted(res, key=lambda x: -x[1]["differ_pct"])[:5]
-        print(f"check on {len(res)} surviving members: {days:,} common days · returns differ on {differ:,} "
-              f"({differ / days * 100:.2f}%) · median correlation {np.median([c['corr'] for _, c in res]):.4f}")
-        print("  worst:", [(code, c["differ_pct"], c["corr"]) for code, c in worst])
+        if days == 0:
+            print("check: no surviving member with at least 50 common days; the construction was not validated")
+        else:
+            differ = sum(c["differ"] for _, c in res)
+            worst = sorted(res, key=lambda x: -x[1]["differ_pct"])[:5]
+            print(f"check on {len(res)} surviving members: {days:,} common days · returns differ on {differ:,} "
+                  f"({differ / days * 100:.2f}%) · median correlation {np.median([c['corr'] for _, c in res]):.4f}")
+            print("  worst:", [(code, c["differ_pct"], c["corr"]) for code, c in worst])
     out.mkdir(parents=True, exist_ok=True)
+    # "universe" stays the current constituents (robustness.py's baseline); the built names are
+    # extra frames that only the membership file brings into the point-in-time run.
     snap = dict(snap, frames=frames, filled=[c + SUFFIX[a.market] for c in filled])
     pd.to_pickle(snap, out / f"{a.market}.pkl.xz", compression="xz")
     shutil.copy(data / MEMBERSHIP[a.market], out / MEMBERSHIP[a.market])
