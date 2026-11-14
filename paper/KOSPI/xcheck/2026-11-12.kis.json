@@ -16,13 +16,5 @@
   "mismatches": []
  },
  "error": null,
- "calls": 1,
- "guard": {
-  "close_mismatched": 168,
-  "compared": 200,
-  "share_pct": 84.0,
-  "blocked": false,
-  "late": false,
-  "enforced": false
- }
+ "calls": 1
 }
