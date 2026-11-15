@@ -7,18 +7,23 @@
 # min), so it is covered by two "slots": am (until 12:00 KST) and pm (until 15:35 KST). A slot run
 # listens from whenever it starts until the slot's end, so a late start only shortens it. The am
 # slot ends before the pm slot starts (12:05), because pm reads the alerts am saved at its end.
-#   * Primary start: the Claude session dispatches this workflow with slot=am at 08:50 KST and
+#   * Primary start: swing-paper-keeper dispatches this workflow with slot=am at 08:50 KST and
 #     slot=pm at 12:05 KST on weekdays (GitHub's own schedule was 30+ minutes late on the first
-#     day, 2026-11-13, and has been hours late in this repository).
-#   * Backup start: the `schedule` triggers below. Daily runs are serialized; a run that finds
-#     the slot's "done" marker (saved after a successful listen) stops, and one that follows a
-#     failed run listens for what is left of the slot.
+#     day, 2026-11-13, and has been hours late in this repository). The keeper recognises a slot
+#     that has already started by the run name below.
+#   * Backup starts: the Claude session (a few minutes later, only if no slot run exists) and
+#     the `schedule` triggers below. Daily runs are serialized; a run that finds the slot's
+#     "done" marker (saved after a successful listen) stops, and one that follows a failed run
+#     listens for what is left of the slot.
 # KIS allows one WebSocket session per app key, so only one listener may run at a time: daily runs
 # share one concurrency group, and a manual test during a daily run is refused by KIS (exit 4).
 # Alerts already posted that KST day are carried between runs through the Actions cache, so each
 # symbol/level is alerted once a day. Nothing held, or a full window without trades (holiday),
 # ends green; a crash or an early end stays red.
 name: kis-ws
+# Slot runs are titled "kis-ws slot am" / "kis-ws slot pm" whoever starts them (dispatch or the
+# backup schedule), so a starter can see that a slot is already running.
+run-name: ${{ github.event.inputs.slot && format('kis-ws slot {0}', github.event.inputs.slot) || github.event.schedule == '50 23 * * 0-4' && 'kis-ws slot am' || github.event.schedule && 'kis-ws slot pm' || 'kis-ws' }}
 
 on:
   schedule:
@@ -50,8 +55,10 @@ permissions:
   issues: write
 
 concurrency:
-  # Daily runs (schedule or slot dispatch) never overlap; tests and smoke runs are independent.
-  group: kis-ws-${{ (github.event_name == 'schedule' || github.event.inputs.slot != '') && 'daily' || github.run_id }}
+  # Daily runs (schedule or slot dispatch) never overlap. Push smoke runs share one group too:
+  # on 2026-11-13 the smoke runs of a merge and of a branch reset started together and the second
+  # was refused by KIS (one session per app key). Manual tests stay independent.
+  group: kis-ws-${{ (github.event_name == 'schedule' || github.event.inputs.slot != '') && 'daily' || github.event_name == 'push' && 'smoke' || github.run_id }}
   cancel-in-progress: false
 
 jobs:

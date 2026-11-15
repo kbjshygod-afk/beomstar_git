@@ -92,3 +92,24 @@ last.
   +16.2pp -> +7.0pp). After correcting a dataset, re-run every study that used it, with the same
   tool, before the next decision that cites it. Thresholds re-derived after seeing the new results
   are reference only, never a verdict. (2026-11-13)
+- **Measure the noise before quoting it.** "Path noise is 1-2pp of CAGR" was said for weeks from
+  two anecdotes. Measured (tools/path_noise.py, 2 x 40 paired paths): the same rules give a 10-year
+  CAGR between about 7% and 14% (sd about 1.9pp). Differences under about 3pp between two backtests
+  were being read as findings. Any comparison of two backtests needs a paired noise run, and the
+  reading rule is committed before the run. (2026-11-13)
+- **Say what a filter robustly improves.** The breadth filter's CAGR edge is inside the noise, but
+  its profit factor and drawdown were better in 80 of 80 paired paths. Report each metric's
+  robustness separately instead of one headline number.
+- **A self-restarting chain needs a brake.** A keeper whose loop fails at once would dispatch the
+  next keeper immediately, forever. The hand-over waits 20 minutes when the loop did not end
+  normally. (2026-11-13, added with the kis-ws slot dispatch.)
+- **Test the workflow's shell as written.** The keeper loop is extracted from the YAML and run
+  under `bash -e -o pipefail` with stub `date`/`sleep`/`gh` and a virtual clock
+  (tests/test_keeper_workflow.py), so a 5 h 45 min run is checked in seconds.
+- **Run every research tool end to end on a tiny snapshot.** Unit tests of the pure parts passed
+  while both new tools crashed on a window with no second half (`summary["h2"]` is None) and the
+  console table raised on a missing profit factor after the JSON was written. The reviewers named
+  the missing integration test; writing it found the crash. (Codex and Gemini, 2026-11-13.)
+- **Test a query against records, not against a stubbed count.** The keeper's jq filter is taken
+  from the call it really makes and applied to queued, successful, failed and cancelled runs.
+
