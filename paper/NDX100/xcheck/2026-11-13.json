@@ -11,32 +11,25 @@
   "missing": [],
   "mismatches": [
    {
-    "symbol": "IDXX",
-    "field": "open",
-    "yahoo": 706.4000244,
-    "krx": 710.24,
-    "diff_pct": 0.541
+    "symbol": "AMGN",
+    "field": "volume",
+    "yahoo": 2122100.0,
+    "krx": 1477111.0,
+    "diff_pct": 30.394
    },
    {
-    "symbol": "KDP",
-    "field": "open",
-    "yahoo": 35.79000092,
-    "krx": 35.725,
-    "diff_pct": 0.182
-   },
-   {
-    "symbol": "FTNT",
-    "field": "open",
-    "yahoo": 131.7120056,
-    "krx": 131.4,
-    "diff_pct": 0.237
+    "symbol": "HON",
+    "field": "volume",
+    "yahoo": 2575800.0,
+    "krx": 2364694.0,
+    "diff_pct": 8.196
    },
    {
     "symbol": "FER",
     "field": "volume",
-    "yahoo": 2548433.0,
+    "yahoo": 2548400.0,
     "krx": 2494053.0,
-    "diff_pct": 2.134
+    "diff_pct": 2.133
    }
   ],
   "unlisted": [],
