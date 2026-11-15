@@ -5,15 +5,16 @@
 - 시작일 2026-09-25 · 기준일(마지막 확정 봉) 2026-11-13 · RS 방식 percentile · 손절 -10% · 1회 리스크 0.75% · 비용 편도 0.2%
 - 레짐 (MA200): **ON** — ^GSPC 종가 7,561.67 · 200일선 7,340.32
 - 데이터: 유니버스 503종목 중 502종목 로드 (실패 1)
-- 데이터 대조 (Tiingo, 2026-11-13 봉): 종목 24개 비교 (표본 24: 보유·대기 14 + 순환), 불일치 8개 · 지수 비교 안 함
-  - LNT volume: Yahoo 2,001,795 vs Tiingo 1,890,132 (+5.58%)
-  - CRL volume: Yahoo 823,140 vs Tiingo 807,008 (+1.96%)
-  - ELV volume: Yahoo 778,221 vs Tiingo 768,014 (+1.31%)
-  - HUM volume: Yahoo 1,499,014 vs Tiingo 1,450,778 (+3.22%)
-  - KDP open: Yahoo 36 vs Tiingo 36 (+0.18%)
-  - LRCX open: Yahoo 230 vs Tiingo 230 (+0.18%)
-  - LUV volume: Yahoo 3,099,037 vs Tiingo 3,056,989 (+1.36%)
-  - TRV low: Yahoo 402 vs Tiingo 397 (+1.24%)
+- 데이터 대조 (Tiingo, 2026-11-13 봉): 종목 24개 비교 (표본 24: 보유·대기 14 + 순환), 불일치 9개 · 지수 비교 안 함
+  - LNT volume: Yahoo 2,036,300 vs Tiingo 1,890,132 (+7.18%)
+  - AMGN volume: Yahoo 2,122,100 vs Tiingo 1,477,111 (+30.39%)
+  - CRL volume: Yahoo 838,300 vs Tiingo 807,008 (+3.73%)
+  - ELV volume: Yahoo 779,100 vs Tiingo 768,014 (+1.42%)
+  - HUM volume: Yahoo 1,499,100 vs Tiingo 1,450,778 (+3.22%)
+  - LLY volume: Yahoo 2,081,600 vs Tiingo 1,859,962 (+10.65%)
+  - LUV volume: Yahoo 3,213,400 vs Tiingo 3,056,989 (+4.87%)
+  - VEEV volume: Yahoo 750,200 vs Tiingo 737,200 (+1.73%)
+  - … 외 1건 (xcheck/2026-11-13.json)
 
 ## 다음 시가 진입 (오늘 신호)
 
