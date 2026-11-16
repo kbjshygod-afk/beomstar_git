@@ -1,0 +1,88 @@
+{
+ "market": "NDX100",
+ "as_of": "2026-11-16",
+ "source": "Tiingo",
+ "status": "mismatch",
+ "checked": "2026-11-16",
+ "index": null,
+ "symbols": {
+  "date": "2026-11-16",
+  "compared": 14,
+  "missing": [],
+  "mismatches": [
+   {
+    "symbol": "PAYX",
+    "field": "open",
+    "yahoo": 117.0699997,
+    "krx": 117.605,
+    "diff_pct": 0.455
+   },
+   {
+    "symbol": "NVDA",
+    "field": "high",
+    "yahoo": 163.0,
+    "krx": 163.2,
+    "diff_pct": 0.123
+   },
+   {
+    "symbol": "CSX",
+    "field": "volume",
+    "yahoo": 9943268.0,
+    "krx": 9831264.0,
+    "diff_pct": 1.126
+   },
+   {
+    "symbol": "PEP",
+    "field": "open",
+    "yahoo": 146.8999939,
+    "krx": 146.725,
+    "diff_pct": 0.119
+   },
+   {
+    "symbol": "NXPI",
+    "field": "open",
+    "yahoo": 260.4599915,
+    "krx": 261.47,
+    "diff_pct": 0.386
+   },
+   {
+    "symbol": "NXPI",
+    "field": "high",
+    "yahoo": 262.1149902,
+    "krx": 262.5,
+    "diff_pct": 0.147
+   },
+   {
+    "symbol": "NXPI",
+    "field": "volume",
+    "yahoo": 4707255.0,
+    "krx": 4641129.0,
+    "diff_pct": 1.405
+   },
+   {
+    "symbol": "PANW",
+    "field": "open",
+    "yahoo": 319.1350098,
+    "krx": 319.94,
+    "diff_pct": 0.252
+   },
+   {
+    "symbol": "PANW",
+    "field": "high",
+    "yahoo": 319.1350098,
+    "krx": 319.94,
+    "diff_pct": 0.252
+   }
+  ],
+  "unlisted": [],
+  "sampled": 14,
+  "focus": [
+   "AMGN",
+   "CSX",
+   "KDP",
+   "VRTX"
+  ]
+ },
+ "error": null,
+ "calls": 14
+}
