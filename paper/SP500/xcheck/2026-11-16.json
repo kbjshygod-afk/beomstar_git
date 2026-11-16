@@ -1,0 +1,85 @@
+{
+ "market": "SP500",
+ "as_of": "2026-11-16",
+ "source": "Tiingo",
+ "status": "mismatch",
+ "checked": "2026-11-16",
+ "index": null,
+ "symbols": {
+  "date": "2026-11-16",
+  "compared": 25,
+  "missing": [],
+  "mismatches": [
+   {
+    "symbol": "CPAY",
+    "field": "high",
+    "yahoo": 465.4200134,
+    "krx": 466.01,
+    "diff_pct": 0.127
+   },
+   {
+    "symbol": "HUM",
+    "field": "low",
+    "yahoo": 449.8800964,
+    "krx": 449.08,
+    "diff_pct": 0.178
+   },
+   {
+    "symbol": "HUM",
+    "field": "volume",
+    "yahoo": 1304490.0,
+    "krx": 1287831.0,
+    "diff_pct": 1.277
+   },
+   {
+    "symbol": "QCOM",
+    "field": "volume",
+    "yahoo": 11804113.0,
+    "krx": 11604605.0,
+    "diff_pct": 1.69
+   },
+   {
+    "symbol": "Q",
+    "field": "low",
+    "yahoo": 111.5400009,
+    "krx": 111.08,
+    "diff_pct": 0.412
+   },
+   {
+    "symbol": "Q",
+    "field": "volume",
+    "yahoo": 1917652.0,
+    "krx": 1868232.0,
+    "diff_pct": 2.577
+   },
+   {
+    "symbol": "RDDT",
+    "field": "volume",
+    "yahoo": 4843166.0,
+    "krx": 4681448.0,
+    "diff_pct": 3.339
+   }
+  ],
+  "unlisted": [],
+  "sampled": 25,
+  "focus": [
+   "AMGN",
+   "BDX",
+   "BIIB",
+   "CHD",
+   "CPAY",
+   "CRL",
+   "EBAY",
+   "ELV",
+   "GWW",
+   "HUM",
+   "KDP",
+   "LLY",
+   "TRV",
+   "VEEV",
+   "WSM"
+  ]
+ },
+ "error": null,
+ "calls": 25
+}
