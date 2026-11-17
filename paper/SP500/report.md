@@ -5,14 +5,16 @@
 - 시작일 2026-09-25 · 기준일(마지막 확정 봉) 2026-11-16 · RS 방식 percentile · 손절 -10% · 1회 리스크 0.75% · 비용 편도 0.2%
 - 레짐 (MA200): **ON** — ^GSPC 종가 7,416.59 · 200일선 7,342.71
 - 데이터: 유니버스 503종목 중 502종목 로드 (실패 1)
-- 데이터 대조 (Tiingo, 2026-11-16 봉): 종목 25개 비교 (표본 25: 보유·대기 15 + 순환), 불일치 5개 · 지수 비교 안 함
-  - CPAY high: Yahoo 465 vs Tiingo 466 (+0.13%)
-  - HUM low: Yahoo 450 vs Tiingo 449 (+0.18%)
-  - HUM volume: Yahoo 1,304,490 vs Tiingo 1,287,831 (+1.28%)
-  - QCOM volume: Yahoo 11,804,113 vs Tiingo 11,604,605 (+1.69%)
-  - Q low: Yahoo 112 vs Tiingo 111 (+0.41%)
-  - Q volume: Yahoo 1,917,652 vs Tiingo 1,868,232 (+2.58%)
-  - RDDT volume: Yahoo 4,843,166 vs Tiingo 4,681,448 (+3.34%)
+- 데이터 대조 (Tiingo, 2026-11-16 봉): 종목 25개 비교 (표본 25: 보유·대기 15 + 순환), 불일치 13개 · 지수 비교 안 함
+  - AMGN volume: Yahoo 1,924,400 vs Tiingo 1,847,027 (+4.02%)
+  - CHD volume: Yahoo 3,949,200 vs Tiingo 3,396,574 (+13.99%)
+  - CPAY volume: Yahoo 304,000 vs Tiingo 286,685 (+5.70%)
+  - EBAY volume: Yahoo 3,989,200 vs Tiingo 3,775,807 (+5.35%)
+  - HUM volume: Yahoo 1,304,500 vs Tiingo 1,287,831 (+1.28%)
+  - LLY volume: Yahoo 3,207,400 vs Tiingo 3,066,374 (+4.40%)
+  - PYPL volume: Yahoo 9,270,700 vs Tiingo 8,721,550 (+5.92%)
+  - PTC volume: Yahoo 1,118,800 vs Tiingo 1,100,557 (+1.63%)
+  - … 외 5건 (xcheck/2026-11-16.json)
 
 ## 다음 시가 진입 (오늘 신호)
 
