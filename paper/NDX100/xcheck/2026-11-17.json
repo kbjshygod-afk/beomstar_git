@@ -1,0 +1,88 @@
+{
+ "market": "NDX100",
+ "as_of": "2026-11-17",
+ "source": "Tiingo",
+ "status": "mismatch",
+ "checked": "2026-11-17",
+ "index": null,
+ "symbols": {
+  "date": "2026-11-17",
+  "compared": 14,
+  "missing": [],
+  "mismatches": [
+   {
+    "symbol": "AMGN",
+    "field": "open",
+    "yahoo": 453.0320129,
+    "krx": 455.515,
+    "diff_pct": 0.545
+   },
+   {
+    "symbol": "ROST",
+    "field": "open",
+    "yahoo": 223.8399963,
+    "krx": 224.085,
+    "diff_pct": 0.109
+   },
+   {
+    "symbol": "QCOM",
+    "field": "high",
+    "yahoo": 170.6499939,
+    "krx": 171.0,
+    "diff_pct": 0.205
+   },
+   {
+    "symbol": "CSX",
+    "field": "open",
+    "yahoo": 52.15999985,
+    "krx": 51.75,
+    "diff_pct": 0.786
+   },
+   {
+    "symbol": "ROP",
+    "field": "open",
+    "yahoo": 478.2200012,
+    "krx": 479.13,
+    "diff_pct": 0.19
+   },
+   {
+    "symbol": "KDP",
+    "field": "open",
+    "yahoo": 35.49000168,
+    "krx": 35.32,
+    "diff_pct": 0.479
+   },
+   {
+    "symbol": "PYPL",
+    "field": "open",
+    "yahoo": 58.53099823,
+    "krx": 58.61,
+    "diff_pct": 0.135
+   },
+   {
+    "symbol": "SNDK",
+    "field": "volume",
+    "yahoo": 14885361.0,
+    "krx": 14615833.0,
+    "diff_pct": 1.811
+   },
+   {
+    "symbol": "RKLB",
+    "field": "open",
+    "yahoo": 57.54999924,
+    "krx": 57.435,
+    "diff_pct": 0.2
+   }
+  ],
+  "unlisted": [],
+  "sampled": 14,
+  "focus": [
+   "AMGN",
+   "CSX",
+   "KDP",
+   "VRTX"
+  ]
+ },
+ "error": null,
+ "calls": 14
+}
