@@ -5,15 +5,15 @@
 - 시작일 2026-09-25 · 기준일(마지막 확정 봉) 2026-11-16 · RS 방식 percentile · 손절 -7% · 1회 리스크 0.75% · 비용 편도 0.2%
 - 레짐 (MA200): **OFF** — ^NDX 종가 27,197.15 · 200일선 28,047.57
 - 데이터: 유니버스 101종목 중 100종목 로드 (실패 1)
-- 데이터 대조 (Tiingo, 2026-11-16 봉): 종목 14개 비교 (표본 14: 보유·대기 4 + 순환), 불일치 6개 · 지수 비교 안 함
-  - PAYX open: Yahoo 117 vs Tiingo 118 (+0.46%)
-  - NVDA high: Yahoo 163 vs Tiingo 163 (+0.12%)
-  - CSX volume: Yahoo 9,943,268 vs Tiingo 9,831,264 (+1.13%)
-  - PEP open: Yahoo 147 vs Tiingo 147 (+0.12%)
-  - NXPI open: Yahoo 260 vs Tiingo 261 (+0.39%)
-  - NXPI high: Yahoo 262 vs Tiingo 262 (+0.15%)
-  - NXPI volume: Yahoo 4,707,255 vs Tiingo 4,641,129 (+1.41%)
-  - PANW open: Yahoo 319 vs Tiingo 320 (+0.25%)
+- 데이터 대조 (Tiingo, 2026-11-16 봉): 종목 14개 비교 (표본 14: 보유·대기 4 + 순환), 불일치 9개 · 지수 비교 안 함
+  - AMGN volume: Yahoo 1,924,400 vs Tiingo 1,847,027 (+4.02%)
+  - PCAR volume: Yahoo 3,450,700 vs Tiingo 3,173,802 (+8.02%)
+  - VRTX volume: Yahoo 1,212,800 vs Tiingo 1,199,157 (+1.12%)
+  - ODFL volume: Yahoo 2,300,700 vs Tiingo 2,127,362 (+7.53%)
+  - ORLY volume: Yahoo 5,823,500 vs Tiingo 5,693,773 (+2.23%)
+  - NVDA volume: Yahoo 331,405,000 vs Tiingo 327,523,564 (+1.17%)
+  - CSX volume: Yahoo 9,945,300 vs Tiingo 9,831,264 (+1.15%)
+  - NXPI volume: Yahoo 4,715,000 vs Tiingo 4,641,129 (+1.57%)
   - … 외 1건 (xcheck/2026-11-16.json)
 
 ## 다음 시가 진입 (오늘 신호)

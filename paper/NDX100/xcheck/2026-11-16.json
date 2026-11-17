@@ -11,67 +11,67 @@
   "missing": [],
   "mismatches": [
    {
-    "symbol": "PAYX",
-    "field": "open",
-    "yahoo": 117.0699997,
-    "krx": 117.605,
-    "diff_pct": 0.455
+    "symbol": "AMGN",
+    "field": "volume",
+    "yahoo": 1924400.0,
+    "krx": 1847027.0,
+    "diff_pct": 4.021
+   },
+   {
+    "symbol": "PCAR",
+    "field": "volume",
+    "yahoo": 3450700.0,
+    "krx": 3173802.0,
+    "diff_pct": 8.024
+   },
+   {
+    "symbol": "VRTX",
+    "field": "volume",
+    "yahoo": 1212800.0,
+    "krx": 1199157.0,
+    "diff_pct": 1.125
+   },
+   {
+    "symbol": "ODFL",
+    "field": "volume",
+    "yahoo": 2300700.0,
+    "krx": 2127362.0,
+    "diff_pct": 7.534
+   },
+   {
+    "symbol": "ORLY",
+    "field": "volume",
+    "yahoo": 5823500.0,
+    "krx": 5693773.0,
+    "diff_pct": 2.228
    },
    {
     "symbol": "NVDA",
-    "field": "high",
-    "yahoo": 163.0,
-    "krx": 163.2,
-    "diff_pct": 0.123
+    "field": "volume",
+    "yahoo": 331405000.0,
+    "krx": 327523564.0,
+    "diff_pct": 1.171
    },
    {
     "symbol": "CSX",
     "field": "volume",
-    "yahoo": 9943268.0,
+    "yahoo": 9945300.0,
     "krx": 9831264.0,
-    "diff_pct": 1.126
-   },
-   {
-    "symbol": "PEP",
-    "field": "open",
-    "yahoo": 146.8999939,
-    "krx": 146.725,
-    "diff_pct": 0.119
-   },
-   {
-    "symbol": "NXPI",
-    "field": "open",
-    "yahoo": 260.4599915,
-    "krx": 261.47,
-    "diff_pct": 0.386
-   },
-   {
-    "symbol": "NXPI",
-    "field": "high",
-    "yahoo": 262.1149902,
-    "krx": 262.5,
-    "diff_pct": 0.147
+    "diff_pct": 1.147
    },
    {
     "symbol": "NXPI",
     "field": "volume",
-    "yahoo": 4707255.0,
+    "yahoo": 4715000.0,
     "krx": 4641129.0,
-    "diff_pct": 1.405
+    "diff_pct": 1.567
    },
    {
-    "symbol": "PANW",
-    "field": "open",
-    "yahoo": 319.1350098,
-    "krx": 319.94,
-    "diff_pct": 0.252
-   },
-   {
-    "symbol": "PANW",
-    "field": "high",
-    "yahoo": 319.1350098,
-    "krx": 319.94,
-    "diff_pct": 0.252
+    "symbol": "PDD",
+    "field": "volume",
+    "yahoo": 5074400.0,
+    "krx": 4810708.0,
+    "diff_pct": 5.197
    }
   ],
   "unlisted": [],
@@ -84,5 +84,5 @@
   ]
  },
  "error": null,
- "calls": 14
+ "calls": 0
 }
