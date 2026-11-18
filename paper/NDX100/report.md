@@ -8,8 +8,8 @@
 - 데이터 대조 (Tiingo, 2026-11-17 봉): 종목 14개 비교 (표본 14: 보유·대기 4 + 순환), 불일치 4개 · 지수 비교 안 함
   - CSX volume: Yahoo 9,715,700 vs Tiingo 9,459,189 (+2.64%)
   - PYPL volume: Yahoo 10,872,200 vs Tiingo 10,474,955 (+3.65%)
-  - SNDK volume: Yahoo 15,321,900 vs Tiingo 14,615,833 (+4.61%)
   - RKLB volume: Yahoo 13,922,900 vs Tiingo 13,641,407 (+2.02%)
+  - SNDK volume: Yahoo 15,321,900 vs Tiingo 14,615,833 (+4.61%)
 
 ## 다음 시가 진입 (오늘 신호)
 
