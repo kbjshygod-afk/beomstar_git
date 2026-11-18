@@ -11,46 +11,88 @@
   "missing": [],
   "mismatches": [
    {
-    "symbol": "AMGN",
-    "field": "open",
-    "yahoo": 453.0320129,
-    "krx": 455.515,
-    "diff_pct": 0.545
-   },
-   {
     "symbol": "BDX",
     "field": "volume",
-    "yahoo": 2307402.0,
+    "yahoo": 2307400.0,
     "krx": 2249013.0,
-    "diff_pct": 2.531
+    "diff_pct": 2.53
+   },
+   {
+    "symbol": "CPAY",
+    "field": "volume",
+    "yahoo": 249200.0,
+    "krx": 243862.0,
+    "diff_pct": 2.142
+   },
+   {
+    "symbol": "EBAY",
+    "field": "volume",
+    "yahoo": 5322800.0,
+    "krx": 4983529.0,
+    "diff_pct": 6.374
    },
    {
     "symbol": "HUM",
     "field": "volume",
-    "yahoo": 1888450.0,
+    "yahoo": 1888500.0,
     "krx": 1863878.0,
-    "diff_pct": 1.301
+    "diff_pct": 1.304
    },
    {
-    "symbol": "KDP",
-    "field": "open",
-    "yahoo": 35.49000168,
-    "krx": 35.32,
-    "diff_pct": 0.479
+    "symbol": "LLY",
+    "field": "volume",
+    "yahoo": 2641400.0,
+    "krx": 2462777.0,
+    "diff_pct": 6.762
+   },
+   {
+    "symbol": "NDAQ",
+    "field": "volume",
+    "yahoo": 2682500.0,
+    "krx": 2607715.0,
+    "diff_pct": 2.788
+   },
+   {
+    "symbol": "NEM",
+    "field": "volume",
+    "yahoo": 7131800.0,
+    "krx": 6917052.0,
+    "diff_pct": 3.011
    },
    {
     "symbol": "NKE",
     "field": "volume",
-    "yahoo": 66228090.0,
+    "yahoo": 66369800.0,
     "krx": 64830115.0,
-    "diff_pct": 2.111
+    "diff_pct": 2.32
+   },
+   {
+    "symbol": "NI",
+    "field": "volume",
+    "yahoo": 5133700.0,
+    "krx": 5032365.0,
+    "diff_pct": 1.974
+   },
+   {
+    "symbol": "NDSN",
+    "field": "volume",
+    "yahoo": 368600.0,
+    "krx": 317978.0,
+    "diff_pct": 13.734
+   },
+   {
+    "symbol": "TRV",
+    "field": "volume",
+    "yahoo": 1685200.0,
+    "krx": 1624033.0,
+    "diff_pct": 3.63
    },
    {
     "symbol": "GWW",
     "field": "volume",
-    "yahoo": 268719.0,
+    "yahoo": 268700.0,
     "krx": 262234.0,
-    "diff_pct": 2.413
+    "diff_pct": 2.406
    }
   ],
   "unlisted": [],
