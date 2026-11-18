@@ -60,18 +60,18 @@
     "diff_pct": 0.135
    },
    {
-    "symbol": "SNDK",
-    "field": "volume",
-    "yahoo": 14885361.0,
-    "krx": 14615833.0,
-    "diff_pct": 1.811
-   },
-   {
     "symbol": "RKLB",
     "field": "open",
     "yahoo": 57.54999924,
     "krx": 57.435,
     "diff_pct": 0.2
+   },
+   {
+    "symbol": "SNDK",
+    "field": "volume",
+    "yahoo": 14885361.0,
+    "krx": 14615833.0,
+    "diff_pct": 1.811
    }
   ],
   "unlisted": [],

@@ -13,7 +13,7 @@
   - ROP open: Yahoo 478 vs Tiingo 479 (+0.19%)
   - KDP open: Yahoo 35 vs Tiingo 35 (+0.48%)
   - PYPL open: Yahoo 59 vs Tiingo 59 (+0.14%)
-  - SNDK volume: Yahoo 14,885,361 vs Tiingo 14,615,833 (+1.81%)
+  - RKLB open: Yahoo 58 vs Tiingo 57 (+0.20%)
   - … 외 1건 (xcheck/2026-11-17.json)
 
 ## 다음 시가 진입 (오늘 신호)
