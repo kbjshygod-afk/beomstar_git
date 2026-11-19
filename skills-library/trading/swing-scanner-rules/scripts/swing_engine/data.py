@@ -290,6 +290,15 @@ def _first_open_date(sess, at: datetime, grace_minutes: int = GRACE_MINUTES) -> 
     return d
 
 
+def _last_final_date(sess, pending: date) -> date:
+    """The bar date just before `pending` (weekends skipped for stocks)."""
+    d = pending - timedelta(days=1)
+    if sess is not None:
+        while d.weekday() >= 5:
+            d -= timedelta(days=1)
+    return d
+
+
 def _aware(now: datetime | None) -> datetime:
     now = now or _now()
     return now if now.tzinfo is not None else now.replace(tzinfo=timezone.utc)
@@ -362,6 +371,14 @@ def _read_cache(cache_dir, ticker, start: date, end: date, now: datetime, max_ag
     if fetched.tzinfo is None:
         fetched = fetched.replace(tzinfo=timezone.utc)
     pending = _first_open_date(sess, fetched, grace_minutes)   # first bar still forming at fetch time
+    # The newest bar that was already final at fetch time. A download that stopped short of it
+    # (Yahoo leaving out the latest bar, 2026-11-04: ^KQ11 without the 11-04 bar at 17:11 KST)
+    # is fetched again instead of being served until the next close. On a holiday this costs a
+    # download per run and nothing else.
+    expected = _last_final_date(sess, pending)
+    last = meta.get("last_date")
+    if last and expected <= end and date.fromisoformat(last) < expected:
+        return None
     complete = pending > end
     unchanged = (now < _confirmed_at(pending, sess, grace_minutes)
                  and (now - fetched).total_seconds() < max_age_hours * 3600)

@@ -1,0 +1,41 @@
+# KRX Open API probe (docs: checklist 1.4). Manual only. Calls the four services for one past
+# trading day with the KRX_API_KEY repository secret and prints what came back; nothing is
+# committed anywhere. The key rides in a request header and is never echoed.
+name: krx-probe
+
+on:
+  workflow_dispatch:
+    inputs:
+      date:
+        description: 'KRX trading day to fetch, YYYYMMDD (T-1 or earlier)'
+        required: true
+      symbol:
+        description: '6-digit code to compare with the Yahoo cache'
+        default: '096530'
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/cache/restore@v4
+        with:
+          path: trading/.cache
+          key: swing-paper-data-none
+          restore-keys: swing-paper-data-
+      - name: Probe
+        working-directory: trading
+        env:
+          KRX_API_KEY: ${{ secrets.KRX_API_KEY }}
+        run: |
+          if [ -z "$KRX_API_KEY" ]; then echo "::error::KRX_API_KEY secret is not set"; exit 2; fi
+          python tools/krx_probe.py --date "${{ github.event.inputs.date }}" \
+            --symbol "${{ github.event.inputs.symbol }}" --cache-dir .cache | tee probe.txt
+          { echo '```'; cat probe.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"

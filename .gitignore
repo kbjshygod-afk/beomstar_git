@@ -1,2 +1,8 @@
 # 작업 도구가 만드는 임시 작업 폴더
 .claude/worktrees/
+
+# Firebase 에뮬레이터·함수 개발 부산물
+*-debug.log
+functions/node_modules/
+.ai-review/
+trading/reports/

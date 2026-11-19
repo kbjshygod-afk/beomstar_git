@@ -1,0 +1,169 @@
+"""KIS WebSocket protocol helpers (checklist 2.5)."""
+import json
+
+from swing_engine import kis_ws
+
+TICK = ("0|H0STCNT0|002|" + "^".join(["096530", "093001", "33600", "2", "500", "1.51", "33450.5", "33200", "33700",
+                                      "33100", "33650", "33600", "120", "302497", "10123456789"] + ["x"] * 31)
+        + "^" + "^".join(["425420", "093002", "12000", "5", "-100", "-0.83", "12050", "12100", "12200", "11950",
+                          "12010", "12000", "30", "88000", "1000000"] + ["y"] * 31))
+
+
+def test_subscribe_message_shape():
+    m = json.loads(kis_ws.subscribe_message("K", "425420.KQ", "J"))
+    assert m["header"] == {"approval_key": "K", "custtype": "P", "tr_type": "1", "content-type": "utf-8"}
+    assert m["body"]["input"] == {"tr_id": "H0STCNT0", "tr_key": "425420"}
+    assert json.loads(kis_ws.subscribe_message("K", "005930", "NX", on=False))["header"]["tr_type"] == "2"
+    assert json.loads(kis_ws.subscribe_message("K", "005930", "UN"))["body"]["input"]["tr_id"] == "H0UNCNT0"
+
+
+def test_parse_ticks_control_and_other():
+    kind, ticks = kis_ws.parse_message(TICK)
+    assert kind == "ticks" and [t["code"] for t in ticks] == ["096530", "425420"]
+    assert ticks[0]["price"] == 33600.0 and ticks[0]["vol"] == 120.0 and ticks[0]["time"] == "093001" and ticks[0]["tr_id"] == "H0STCNT0"
+    assert ticks[1]["acml_vol"] == 88000.0
+    ping = json.dumps({"header": {"tr_id": "PINGPONG", "datetime": "20261102090000"}})
+    kind, ctrl = kis_ws.parse_message(ping)
+    assert kind == "control" and kis_ws.is_pingpong(ctrl) and kis_ws.ack_status(ctrl) == (None, None, None)
+    ack = json.dumps({"header": {"tr_id": "H0STCNT0", "tr_key": "096530", "encrypt": "N"},
+                      "body": {"rt_cd": "0", "msg_cd": "OPSP0000", "msg1": "SUBSCRIBE SUCCESS"}})
+    assert kis_ws.ack_status(kis_ws.parse_message(ack)[1]) == ("096530", "0", "SUBSCRIBE SUCCESS")
+    assert kis_ws.parse_message("garbage")[0] == "other"
+
+
+def test_recorder_tracks_symbols_and_stop_distance():
+    rec = kis_ws.Recorder(stops={"096530": 30000.0})
+    rec.on_frame(json.dumps({"header": {"tr_id": "PINGPONG"}}))
+    rec.on_frame(TICK)
+    rec.on_frame(TICK.replace("33600^2^500", "32000^5^-1100", 1))
+    sm = rec.summary()
+    assert sm["frames"] == 3 and sm["control"] == 1 and sm["pings"] == 1
+    s = sm["symbols"]["096530"]
+    assert s["ticks"] == 2 and s["high"] == 33600.0 and s["low"] == 32000.0 and s["last_price"] == 32000.0
+    assert s["volume"] == 240.0 and s["stop_distance_pct"] == 6.67 and sm["symbols"]["425420"]["stop"] is None
+    txt = rec.summary_text()
+    assert "096530: 2 ticks 093001→093001" in txt and "손절가 30,000까지 +6.67%" in txt
+    json.dumps(sm)
+
+
+def test_env_file_credentials(tmp_path, monkeypatch):
+    for k in ("KIS_APP_KEY", "KIS_APP_SECRET", "KIS_ENV"):
+        monkeypatch.delenv(k, raising=False)
+    p = tmp_path / "kis.env"
+    p.write_text("# paper server\nKIS_APP_KEY=abc\nKIS_APP_SECRET='s3cret'\nKIS_ENV=vps\n")
+    cred = kis_ws.env_file_credentials(str(p))
+    assert cred == {"key": "abc", "secret": "s3cret", "env": "vps"}
+    assert kis_ws.WS_URL[cred["env"]].endswith(":31000")
+
+
+def test_stop_watcher_fires_near_then_hit_once_each():
+    w = kis_ws.StopWatcher({"096530": 30000.0, "425420": None}, near_pct=2.0)
+    assert w.check("096530", 31000.0) == []                                # +3.3%: nothing
+    near = w.check("096530", 30500.0)
+    assert [e["level"] for e in near] == ["near"] and near[0]["distance_pct"] == 1.67
+    assert w.check("096530", 30400.0) == []                                # near already fired
+    hit = w.check("096530", 29900.0)
+    assert [e["level"] for e in hit] == ["hit"] and hit[0]["distance_pct"] == -0.33
+    assert w.check("096530", 29000.0) == [] and w.check("425420", 1.0) == [] and w.check("000000", 1.0) == []
+    # a drop straight through both lines fires both at once
+    w2 = kis_ws.StopWatcher({"A": 100.0})
+    assert [e["level"] for e in w2.check("A", 95.0)] == ["near", "hit"]
+    assert "손절가 30,000까지 +1.67%" in kis_ws.alert_text(near[0]) and "지금 주문하지 않습니다" in kis_ws.alert_text(hit[0])
+
+
+def test_fired_state_carries_alerts_within_one_kst_day(tmp_path):
+    """The morning and afternoon Actions runs share the alerts sent that day (checklist 2.6)."""
+    f = tmp_path / "state" / "fired.json"
+    assert kis_ws.load_fired(f, "2026-11-13") == set()                    # missing file
+    kis_ws.save_fired(f, "2026-11-13", {("093320", "near")})
+    assert kis_ws.load_fired(f, "2026-11-13") == {("093320", "near")}
+    assert kis_ws.load_fired(f, "2026-11-14") == set()                    # a new day starts clean
+    f.write_text("not json")
+    assert kis_ws.load_fired(f, "2026-11-13") == set()
+    w = kis_ws.StopWatcher({"093320": 158400.0})
+    w.fired = {("093320", "near")}
+    assert [e["level"] for e in w.check("093320", 158000.0)] == ["hit"]   # 'near' already sent
+
+
+def test_probe_none_ok_exits_zero_when_nothing_is_held(monkeypatch, capsys):
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
+    import types
+    import kis_ws_probe as P
+    monkeypatch.setitem(sys.modules, "websocket", types.ModuleType("websocket"))   # not installed in CI
+    monkeypatch.setattr(P.kis_ws, "env_file_credentials", lambda path: {"key": "k" * 36, "secret": "s", "env": "prod"})
+    monkeypatch.setattr(P, "held_from_ledger", lambda repo: {})
+    assert P.main(["--none-ok", "--env-file", "/dev/null"]) == 0
+    assert "nothing to watch" in capsys.readouterr().out
+    assert P.main(["--env-file", "/dev/null"]) == 2
+
+
+def test_load_fired_ignores_malformed_entries(tmp_path):
+    f = tmp_path / "fired.json"
+    f.write_text(json.dumps({"date": "2026-11-13", "fired": [None, ["093320"], ["093320", "near"], ["1", "bad"], 5]}))
+    assert kis_ws.load_fired(f, "2026-11-13") == {("093320", "near")}
+    f.write_text(json.dumps({"date": "2026-11-13", "fired": {"x": 1}}))
+    assert kis_ws.load_fired(f, "2026-11-13") == set()
+
+
+def test_probe_ledger_read_failure_is_not_nothing_held(monkeypatch):
+    """--none-ok forgives only a ledger read that found no Korean positions (PR #72 review)."""
+    import sys
+    import types
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
+    import kis_ws_probe as P
+    monkeypatch.setitem(sys.modules, "websocket", types.ModuleType("websocket"))
+    monkeypatch.setattr(P.kis_ws, "env_file_credentials", lambda path: {"key": "k" * 36, "secret": "s", "env": "prod"})
+    monkeypatch.setattr(P, "held_from_ledger", lambda repo: None)
+    assert P.main(["--none-ok", "--env-file", "/dev/null"]) == 2
+
+
+def test_deliver_alert_reports_whether_the_comment_was_posted(monkeypatch):
+    import sys
+    import types
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
+    import kis_ws_probe as P
+    fake = types.ModuleType("signal_alert")
+    def boom(*a, **k):
+        raise RuntimeError("gh: 502")
+    fake.post_github_issue = boom
+    monkeypatch.setitem(sys.modules, "signal_alert", fake)
+    assert P.deliver_alert("x", "한국장 손절 근접 알림") is False      # not persisted -> afternoon run retries
+    fake.post_github_issue = lambda *a, **k: 7
+    assert P.deliver_alert("x", "한국장 손절 근접 알림") is True
+    assert P.deliver_alert("x", "") is True
+
+
+def test_probe_stops_at_once_when_the_app_key_is_in_use(monkeypatch, tmp_path, capsys):
+    """KIS allows one session per key; the second listener must not keep reconnecting (2026-11-13)."""
+    import sys
+    import types
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
+    import kis_ws_probe as P
+    opened = []
+
+    class FakeWS:
+        def send(self, text):
+            pass
+
+        def recv(self):
+            return json.dumps({"header": {"tr_id": "H0STCNT0", "tr_key": ""},
+                               "body": {"rt_cd": "9", "msg_cd": "OPSP8996", "msg1": "ALREADY IN USE appkey"}})
+
+        def close(self):
+            pass
+
+    fake = types.ModuleType("websocket")
+    fake.WebSocketTimeoutException = type("WebSocketTimeoutException", (Exception,), {})
+    fake.WebSocketException = type("WebSocketException", (Exception,), {})
+    fake.create_connection = lambda url, timeout=30: opened.append(url) or FakeWS()
+    monkeypatch.setitem(sys.modules, "websocket", fake)
+    monkeypatch.setattr(P.kis_ws, "env_file_credentials", lambda path: {"key": "k" * 36, "secret": "s", "env": "prod"})
+    monkeypatch.setattr(P.kis_ws, "approval_key", lambda cred: "a" * 36)
+    rc = P.main(["--symbols", "093320", "--minutes", "1", "--out", str(tmp_path), "--env-file", "/dev/null", "--no-alert"])
+    assert rc == P.KEY_IN_USE and len(opened) == 1                 # one attempt, no reconnect loop
+    assert "KEY IN USE" in capsys.readouterr().out

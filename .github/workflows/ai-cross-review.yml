@@ -1,0 +1,127 @@
+# Cross-review of code PRs by two coding-agent CLIs, read-only (docs/ai-review/README.md):
+# ChatGPT through the Codex CLI (`codex exec --sandbox read-only`) and Gemini through the
+# Antigravity CLI (`agy -p`, prompt inline, told not to use tools, never run with permission
+# skipping). Two rounds: independent reviews, then each reads the other's. The review job holds
+# only a read token and the two keys; a separate job with no keys and no PR code posts the
+# report as one PR comment, updated on each push. Keys come only from the OPENAI_API_KEY /
+# GEMINI_API_KEY secrets (a missing one skips that reviewer; with neither nothing runs). Model
+# ids: repository variables OPENAI_REVIEW_MODEL / GEMINI_REVIEW_MODEL (empty = CLI default).
+name: ai-cross-review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches: ['claude/dazzling-ride-a0nb4k']
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: 'PR number to review'
+        required: true
+
+concurrency:
+  group: ai-cross-review-${{ github.event.pull_request.number || github.event.inputs.pr }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    # Same-repository PRs only: a fork's PR never gets the keys.
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      ran: ${{ steps.keys.outputs.any }}
+      number: ${{ steps.pr.outputs.number }}
+    steps:
+      - name: Resolve PR
+        id: pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number || github.event.inputs.pr }}
+        run: |
+          gh api "repos/${{ github.repository }}/pulls/$PR" > pr.json
+          # Every trigger, manual dispatch included: only same-repository PRs ever get the keys.
+          if [ "$(jq -r .head.repo.full_name pr.json)" != "${{ github.repository }}" ]; then
+            echo "::error::PR #$PR comes from another repository; refusing to run with the keys"; exit 1; fi
+          jq -r '"base=\(.base.sha)\nhead=\(.head.sha)"' pr.json >> "$GITHUB_OUTPUT"
+          echo "number=$PR" >> "$GITHUB_OUTPUT"
+      - name: Keys present?
+        id: keys
+        env:
+          HAS_OPENAI: ${{ secrets.OPENAI_API_KEY != '' }}
+          HAS_GEMINI: ${{ secrets.GEMINI_API_KEY != '' }}
+        run: |
+          echo "openai=$HAS_OPENAI" >> "$GITHUB_OUTPUT"; echo "gemini=$HAS_GEMINI" >> "$GITHUB_OUTPUT"
+          if [ "$HAS_OPENAI" = "true" ] || [ "$HAS_GEMINI" = "true" ]; then echo "any=true" >> "$GITHUB_OUTPUT"
+          else echo "any=false" >> "$GITHUB_OUTPUT"; echo "::notice::OPENAI_API_KEY / GEMINI_API_KEY not set; cross-review skipped"; fi
+      - uses: actions/checkout@v4
+        if: steps.keys.outputs.any == 'true'
+        with:
+          ref: ${{ steps.pr.outputs.head }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        if: steps.keys.outputs.any == 'true'
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        if: steps.keys.outputs.openai == 'true'
+        with:
+          node-version: '22'
+      - name: Install Codex CLI
+        if: steps.keys.outputs.openai == 'true'
+        continue-on-error: true
+        run: npm install -g @openai/codex && codex --version
+      - name: Install Antigravity CLI
+        if: steps.keys.outputs.gemini == 'true'
+        continue-on-error: true
+        run: |
+          curl -fsSL https://antigravity.google/cli/install.sh | bash
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          mkdir -p "$HOME/.gemini/antigravity-cli"
+          echo '{"modelProvider": "gemini"}' > "$HOME/.gemini/antigravity-cli/settings.json"
+          "$HOME/.local/bin/agy" --version || agy --version
+      - name: Cross-review
+        if: steps.keys.outputs.any == 'true'
+        working-directory: trading
+        env:
+          CODEX_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          OPENAI_REVIEW_MODEL: ${{ vars.OPENAI_REVIEW_MODEL }}
+          GEMINI_REVIEW_MODEL: ${{ vars.GEMINI_REVIEW_MODEL }}
+        run: |
+          python tools/ai_review.py --repo .. --base "${{ steps.pr.outputs.base }}" --head "${{ steps.pr.outputs.head }}" \
+            --pr "${{ steps.pr.outputs.number }}" --out reports/ai_review > /dev/null
+          cat reports/ai_review.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always() && steps.keys.outputs.any == 'true'
+        with:
+          name: ai-cross-review
+          path: trading/reports/
+          retention-days: 30
+
+  comment:
+    needs: review
+    if: always() && needs.review.outputs.ran == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pull-requests: write
+      issues: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: ai-cross-review
+      - name: Post or update the PR comment
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ needs.review.outputs.number }}
+        run: |
+          test -s ai_review.md || { echo "::error::no report"; exit 1; }
+          id=$(gh api "repos/${{ github.repository }}/issues/$PR/comments" --paginate \
+                 --jq '.[] | select(.body | contains("<!-- ai-cross-review -->")) | .id' | tail -1)
+          if [ -n "$id" ]; then gh api -X PATCH "repos/${{ github.repository }}/issues/comments/$id" -F body=@ai_review.md > /dev/null
+          else gh api "repos/${{ github.repository }}/issues/$PR/comments" -F body=@ai_review.md > /dev/null; fi
+          echo "comment posted on PR #$PR"

@@ -1,0 +1,20 @@
+{
+  "_comment": "A new team's roster (same fields as staff/roster.json). Copy this folder to teams/<id>/, rename the role, write its prompt, then add the team to teams.json. Tool names get WORK_AGENT_MCP_PREFIX prepended. Start every role read-only with proposal_kinds [\"info\"] (shadow week).",
+  "roles": [
+    {
+      "role": "example",
+      "title": "예시 담당",
+      "emoji": "🧑‍💼",
+      "order": 1,
+      "enabled": false,
+      "schedule": {"daily_at": "1030"},
+      "prompt": "teams/_template/staff/example.md",
+      "model": "sonnet",
+      "max_turns": 15,
+      "tools": [],
+      "proposal_kinds": ["info"],
+      "max_proposals_per_run": 3,
+      "desk": "runner"
+    }
+  ]
+}

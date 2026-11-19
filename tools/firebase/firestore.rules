@@ -18,6 +18,11 @@ service cloud.firestore {
         && (!('app' in request.resource.data) || (request.resource.data.app is string && request.resource.data.app.size() <= 20));
     }
 
+    // AI 튜터 하루 한도 칸: 앱은 읽지도 쓰지도 못한다(중계 함수만 서버 권한으로 쓴다).
+    match /tutorUsage/{id} {
+      allow read, write: if false;
+    }
+
     // 의견 보내기: 누구나 보낼 수만 있고(로그인 불필요), 읽기·고치기·지우기는 콘솔에서 주인만.
     match /feedback/{id} {
       allow create: if request.resource.data.keys().hasOnly(['text', 'rating', 'lang', 'app', 'at', 'ua', 'from', 'contact', 'uid'])

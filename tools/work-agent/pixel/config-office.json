@@ -1,0 +1,26 @@
+{
+  "_comment": "Pixel Agents standalone settings for the office. Merged into ~/.pixel-agents/config.json by pixel_office.sh. Keys: watchAllSessions (see desks under other project dirs), alwaysShowLabels (name tags), ghostHeadlessAgents off (staff look like normal workers), showAreas (paint the zones), areaMappings (desk folder name -> zone labels).",
+  "standalone": {
+    "watchAllSessions": true,
+    "alwaysShowLabels": true,
+    "ghostHeadlessAgents": false,
+    "showAreas": true,
+    "areaMappings": {
+      "secretary": [
+        "요청비서"
+      ],
+      "gate": [
+        "게이트담당"
+      ],
+      "notice": [
+        "공지문서"
+      ],
+      "cost": [
+        "원가담당"
+      ],
+      "runner": [
+        "사무보조"
+      ]
+    }
+  }
+}

@@ -12,7 +12,10 @@ window.CLOUD_CONFIG = {
   messagingSenderId: '994570010930',
   appId: '1:994570010930:web:8f1fa6324c4cc2fead172b',
   measurementId: 'G-6D5SSPTV6X',
-  since: '2026-09-26'   // 구글 로그인·클라우드 저장·사용 통계·의견 보내기를 켠 날
+  since: '2026-09-26',  // 구글 로그인·클라우드 저장·사용 통계·의견 보내기를 켠 날
+  // 🤖 AI 튜터 중계 함수 주소(https만, 선택). 비워 두면(null) AI 튜터는 '내 키 방식'(쓰는 사람이 무료 Gemini 키를 자기 기기에 넣음)으로 움직여요.
+  // 주소를 적으면 중계 방식(구글 로그인·하루 한도·Gemini/ChatGPT)으로 바뀌어요 — docs/tutor-setup.md ②. 예: 'https://asia-northeast3-lang-starter.cloudfunctions.net/tutor'
+  tutorUrl: null
 };
 
 // 문의·오류 제보 링크(https만). 넣으면 허브·설정·도움말·개인정보 안내에 한꺼번에 나타나요.

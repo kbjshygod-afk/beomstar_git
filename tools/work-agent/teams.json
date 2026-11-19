@@ -1,0 +1,6 @@
+{
+  "_comment": "Teams the office runs (office.py teams, called by poll.sh). id: a-z0-9_ (board path teams/<id>). default: true = the team that keeps the single-team board paths (queue/, staff/, log/) and the global heartbeat; only one. roster: path from tools/work-agent. Local settings of a team (file ids, folders, caps) go in teams/<id>/config.env, which git ignores. Add a team: see teams/README.md.",
+  "teams": [
+    {"id": "rnd", "title": "R&D팀", "emoji": "🧪", "order": 1, "enabled": true, "default": true, "roster": "staff/roster.json"}
+  ]
+}
