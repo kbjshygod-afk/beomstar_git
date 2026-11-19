@@ -1,0 +1,39 @@
+{
+ "market": "KOSDAQ",
+ "as_of": "2026-11-19",
+ "regime": {
+  "benchmark": "^KQ11",
+  "mode": "NONE",
+  "close": 684.81,
+  "ma200": 953.5344,
+  "ma20": 700.96,
+  "on": true
+ },
+ "entries_next_open": [
+  {
+   "symbol": "086450.KQ",
+   "signal_close": 26600.0,
+   "rs": 92.41,
+   "desired_qty": 262.0,
+   "est_stop_from_close": 23940.0
+  },
+  {
+   "symbol": "356860.KQ",
+   "signal_close": 45500.0,
+   "rs": 88.97,
+   "desired_qty": 153.0,
+   "est_stop_from_close": 40950.0
+  }
+ ],
+ "exits_next_open": [],
+ "positions": [
+  "093320.KQ"
+ ],
+ "watchlist": [],
+ "coverage": {
+  "requested": 150,
+  "loaded": 150,
+  "failed": []
+ },
+ "generated_at": "2026-11-19T09:24:06Z"
+}
