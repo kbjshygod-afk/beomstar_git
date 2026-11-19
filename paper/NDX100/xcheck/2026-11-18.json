@@ -11,32 +11,53 @@
   "missing": [],
   "mismatches": [
    {
-    "symbol": "AMGN",
-    "field": "open",
-    "yahoo": 451.7799988,
-    "krx": 453.525,
-    "diff_pct": 0.385
+    "symbol": "CSX",
+    "field": "volume",
+    "yahoo": 7088700.0,
+    "krx": 7015202.0,
+    "diff_pct": 1.037
+   },
+   {
+    "symbol": "TER",
+    "field": "volume",
+    "yahoo": 1936100.0,
+    "krx": 1911129.0,
+    "diff_pct": 1.29
+   },
+   {
+    "symbol": "TXN",
+    "field": "volume",
+    "yahoo": 5052200.0,
+    "krx": 4865861.0,
+    "diff_pct": 3.688
    },
    {
     "symbol": "WDC",
-    "field": "open",
-    "yahoo": 291.678009,
-    "krx": 290.9,
-    "diff_pct": 0.267
-   },
-   {
-    "symbol": "STX",
-    "field": "open",
-    "yahoo": 520.7800293,
-    "krx": 522.57,
-    "diff_pct": 0.343
+    "field": "volume",
+    "yahoo": 4173600.0,
+    "krx": 4131289.0,
+    "diff_pct": 1.014
    },
    {
     "symbol": "STX",
     "field": "volume",
-    "yahoo": 4147380.0,
+    "yahoo": 4159900.0,
     "krx": 4091105.0,
-    "diff_pct": 1.357
+    "diff_pct": 1.654
+   },
+   {
+    "symbol": "TMUS",
+    "field": "volume",
+    "yahoo": 5673900.0,
+    "krx": 5098245.0,
+    "diff_pct": 10.146
+   },
+   {
+    "symbol": "TRI",
+    "field": "volume",
+    "yahoo": 1575800.0,
+    "krx": 1529977.0,
+    "diff_pct": 2.908
    }
   ],
   "unlisted": [],
