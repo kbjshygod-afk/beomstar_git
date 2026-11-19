@@ -1,0 +1,59 @@
+{
+ "market": "SP500",
+ "as_of": "2026-11-19",
+ "source": "Tiingo",
+ "status": "mismatch",
+ "checked": "2026-11-19",
+ "index": null,
+ "symbols": {
+  "date": "2026-11-19",
+  "compared": 20,
+  "missing": [],
+  "mismatches": [
+   {
+    "symbol": "GM",
+    "field": "open",
+    "yahoo": 83.30000305,
+    "krx": 82.78,
+    "diff_pct": 0.624
+   },
+   {
+    "symbol": "GPN",
+    "field": "volume",
+    "yahoo": 2567476.0,
+    "krx": 2389942.0,
+    "diff_pct": 6.915
+   },
+   {
+    "symbol": "GS",
+    "field": "volume",
+    "yahoo": 2812535.0,
+    "krx": 2603685.0,
+    "diff_pct": 7.426
+   },
+   {
+    "symbol": "KDP",
+    "field": "open",
+    "yahoo": 34.59999847,
+    "krx": 34.67,
+    "diff_pct": 0.202
+   }
+  ],
+  "unlisted": [],
+  "sampled": 20,
+  "focus": [
+   "AMGN",
+   "BDX",
+   "BIIB",
+   "CPAY",
+   "CRL",
+   "EBAY",
+   "GWW",
+   "KDP",
+   "LLY",
+   "TRV"
+  ]
+ },
+ "error": null,
+ "calls": 20
+}
