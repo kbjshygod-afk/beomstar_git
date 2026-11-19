@@ -11,32 +11,46 @@
   "missing": [],
   "mismatches": [
    {
-    "symbol": "AMGN",
-    "field": "open",
-    "yahoo": 451.7799988,
-    "krx": 453.525,
-    "diff_pct": 0.385
+    "symbol": "LLY",
+    "field": "volume",
+    "yahoo": 2879100.0,
+    "krx": 2575045.0,
+    "diff_pct": 10.561
+   },
+   {
+    "symbol": "RF",
+    "field": "volume",
+    "yahoo": 9937700.0,
+    "krx": 9788774.0,
+    "diff_pct": 1.499
    },
    {
     "symbol": "RMD",
     "field": "volume",
-    "yahoo": 1218306.0,
+    "yahoo": 1218300.0,
     "krx": 1180135.0,
     "diff_pct": 3.133
    },
    {
     "symbol": "ROK",
     "field": "volume",
-    "yahoo": 912970.0,
+    "yahoo": 953500.0,
     "krx": 903063.0,
-    "diff_pct": 1.085
+    "diff_pct": 5.29
+   },
+   {
+    "symbol": "TRV",
+    "field": "volume",
+    "yahoo": 1713700.0,
+    "krx": 1647038.0,
+    "diff_pct": 3.89
    },
    {
     "symbol": "GWW",
     "field": "volume",
-    "yahoo": 335519.0,
+    "yahoo": 335500.0,
     "krx": 293365.0,
-    "diff_pct": 12.564
+    "diff_pct": 12.559
    }
   ],
   "unlisted": [],
