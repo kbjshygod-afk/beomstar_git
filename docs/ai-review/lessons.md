@@ -112,4 +112,8 @@ last.
   the missing integration test; writing it found the crash. (Codex and Gemini, 2026-11-13.)
 - **Test a query against records, not against a stubbed count.** The keeper's jq filter is taken
   from the call it really makes and applied to queued, successful, failed and cancelled runs.
+- **Two neighbouring values are not a sensitivity check.** "The breadth filter still helps" was
+  written on 2026-11-13 from thresholds 40 and 50 alone. The pre-registered run of 45 and 55
+  (2026-11-15) showed 40-50 alike and 55 worse than no filter at all: the ledger's 50 sits at the
+  edge. Check both sides of a parameter before calling a direction robust.
 
