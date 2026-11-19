@@ -1,0 +1,28 @@
+{
+ "market": "NDX100",
+ "as_of": "2026-11-19",
+ "regime": {
+  "benchmark": "^NDX",
+  "mode": "MA200",
+  "close": 26517.0508,
+  "ma200": 28070.899,
+  "ma20": 28089.889,
+  "on": false
+ },
+ "entries_next_open": [],
+ "exits_next_open": [],
+ "positions": [
+  "AMGN",
+  "CSX",
+  "KDP"
+ ],
+ "watchlist": [],
+ "coverage": {
+  "requested": 101,
+  "loaded": 100,
+  "failed": [
+   "WBD"
+  ]
+ },
+ "generated_at": "2026-11-19T22:52:51Z"
+}
