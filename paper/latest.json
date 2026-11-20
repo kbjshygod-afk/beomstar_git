@@ -295,14 +295,14 @@
    "xcheck_kis": null
   },
   "CRYPTO": {
-   "as_of": "2026-11-18",
+   "as_of": "2026-11-19",
    "start_date": "2026-09-25",
    "regime": {
     "benchmark": "BTC-USD",
     "mode": "MA200",
-    "close": 62987.2656,
-    "ma200": 72719.8994,
-    "ma20": 72700.0236,
+    "close": 61901.8203,
+    "ma200": 72636.7174,
+    "ma20": 71935.2041,
     "on": false
    },
    "entries_next_open": [],
@@ -313,7 +313,7 @@
    "performance": {
     "equity": 98754168.0,
     "return_pct": -1.25,
-    "bench_return_pct": -25.05,
+    "bench_return_pct": -26.34,
     "mdd_pct": -1.86,
     "closed_trades": 2,
     "win_rate_pct": 0.0,
@@ -323,8 +323,8 @@
    },
    "status_csv": "CRYPTO/status.csv",
    "audit": {
-    "days": 55,
-    "signal_files": 55,
+    "days": 56,
+    "signal_files": 56,
     "missing_days": [],
     "late": [],
     "uncommitted": [],
@@ -335,7 +335,7 @@
    "xcheck": {
     "source": "Coinbase/Kraken",
     "status": "mismatch",
-    "checked": "2026-11-18",
+    "checked": "2026-11-19",
     "error": null,
     "mismatched_symbols": [
      "SHIB-USD"
@@ -594,7 +594,7 @@
    }
   }
  },
- "updated_at": "2026-11-20T08:27:47Z",
+ "updated_at": "2026-11-20T08:29:36Z",
  "disclaimer": "기계적 룰 출력이며 투자 자문이 아닙니다. 매수·매도 결정은 소유자 본인이 합니다.",
  "unconfirmed": "미확인 추정값(스캐너 원본 코드 미확인): 피벗=직전 20봉 최고가(당일 제외) · 거래량 평균=직전 50일(당일 제외) · RS=지수 대비 가중 1년 수익률 ≥ 0%p(스캐너는 유니버스 백분위 ≥ 70) · 52주 고저=종가 기준 · 200일선 상승=22봉 전 대비 · 수축비=10/40일 평균 TR · 비용=편도 0.2%"
 }
