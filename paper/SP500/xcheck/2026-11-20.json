@@ -1,0 +1,108 @@
+{
+ "market": "SP500",
+ "as_of": "2026-11-20",
+ "source": "Tiingo",
+ "status": "mismatch",
+ "checked": "2026-11-20",
+ "index": null,
+ "symbols": {
+  "date": "2026-11-20",
+  "compared": 20,
+  "missing": [],
+  "mismatches": [
+   {
+    "symbol": "BDX",
+    "field": "volume",
+    "yahoo": 1960696.0,
+    "krx": 1938751.0,
+    "diff_pct": 1.119
+   },
+   {
+    "symbol": "BIIB",
+    "field": "open",
+    "yahoo": 249.0500031,
+    "krx": 248.74,
+    "diff_pct": 0.124
+   },
+   {
+    "symbol": "CPAY",
+    "field": "volume",
+    "yahoo": 736215.0,
+    "krx": 719082.0,
+    "diff_pct": 2.327
+   },
+   {
+    "symbol": "HIG",
+    "field": "volume",
+    "yahoo": 2319159.0,
+    "krx": 2217819.0,
+    "diff_pct": 4.37
+   },
+   {
+    "symbol": "HPE",
+    "field": "volume",
+    "yahoo": 21489230.0,
+    "krx": 21227741.0,
+    "diff_pct": 1.217
+   },
+   {
+    "symbol": "HLT",
+    "field": "volume",
+    "yahoo": 2787732.0,
+    "krx": 2422704.0,
+    "diff_pct": 13.094
+   },
+   {
+    "symbol": "HON",
+    "field": "open",
+    "yahoo": 217.3500061,
+    "krx": 217.095,
+    "diff_pct": 0.117
+   },
+   {
+    "symbol": "HON",
+    "field": "volume",
+    "yahoo": 3341069.0,
+    "krx": 3063054.0,
+    "diff_pct": 8.321
+   },
+   {
+    "symbol": "HBAN",
+    "field": "open",
+    "yahoo": 14.69499969,
+    "krx": 14.86,
+    "diff_pct": 1.11
+   },
+   {
+    "symbol": "LLY",
+    "field": "volume",
+    "yahoo": 3540083.0,
+    "krx": 3498230.0,
+    "diff_pct": 1.182
+   },
+   {
+    "symbol": "GWW",
+    "field": "volume",
+    "yahoo": 478269.0,
+    "krx": 444675.0,
+    "diff_pct": 7.024
+   }
+  ],
+  "unlisted": [],
+  "sampled": 20,
+  "focus": [
+   "AMGN",
+   "BDX",
+   "BIIB",
+   "CPAY",
+   "CRL",
+   "EBAY",
+   "GWW",
+   "KDP",
+   "LLY",
+   "TRV"
+  ]
+ },
+ "error": null,
+ "calls": 20
+}

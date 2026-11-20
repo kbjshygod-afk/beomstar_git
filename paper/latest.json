@@ -1,18 +1,20 @@
 {
  "markets": {
   "SP500": {
-   "as_of": "2026-11-19",
+   "as_of": "2026-11-20",
    "start_date": "2026-09-25",
    "regime": {
     "benchmark": "^GSPC",
     "mode": "MA200",
-    "close": 7175.8301,
-    "ma200": 7348.0204,
-    "ma20": 7534.896,
+    "close": 6910.3901,
+    "ma200": 7348.5803,
+    "ma20": 7499.2315,
     "on": false
    },
    "entries_next_open": [],
-   "exits_next_open": [],
+   "exits_next_open": [
+    "CRL"
+   ],
    "positions": [
     {
      "symbol": "GWW",
@@ -22,10 +24,10 @@
      "entry_price": 1339.939941,
      "qty": 5493.013899604515,
      "stop_price": 1205.9459469,
-     "last_close": 1423.880005,
-     "exit_ma": 1343.0758056599998,
-     "unrealized_pnl": 430720.5355269285,
-     "price_pnl_pct": 6.264464654837831,
+     "last_close": 1357.349976,
+     "exit_ma": 1344.6228051800001,
+     "unrealized_pnl": 66001.06223691255,
+     "price_pnl_pct": 1.299314578756916,
      "exit_pending": false
     },
     {
@@ -36,10 +38,10 @@
      "entry_price": 437.8900146,
      "qty": 16811.52663459441,
      "stop_price": 394.10101313999996,
-     "last_close": 438.8200073,
-     "exit_ma": 429.2816021720001,
-     "unrealized_pnl": -13843.070721946657,
-     "price_pnl_pct": 0.21238043092841608,
+     "last_close": 435.6400146,
+     "exit_ma": 430.44740234200003,
+     "unrealized_pnl": -67196.68163186405,
+     "price_pnl_pct": -0.5138276564847666,
      "exit_pending": false
     },
     {
@@ -50,10 +52,10 @@
      "entry_price": 1256.0,
      "qty": 5829.856722531004,
      "stop_price": 1130.4,
-     "last_close": 1351.119995,
-     "exit_ma": 1262.29059812,
-     "unrealized_pnl": 524137.67023927346,
-     "price_pnl_pct": 7.5732480095541455,
+     "last_close": 1347.109985,
+     "exit_ma": 1266.9187987999999,
+     "unrealized_pnl": 500806.64205086976,
+     "price_pnl_pct": 7.253979697452229,
      "exit_pending": false
     },
     {
@@ -64,10 +66,10 @@
      "entry_price": 370.0,
      "qty": 19007.284918942456,
      "stop_price": 333.0,
-     "last_close": 390.6099854,
-     "exit_ma": 383.22140258800005,
-     "unrealized_pnl": 362825.60326366406,
-     "price_pnl_pct": 5.5702663243243355,
+     "last_close": 393.2399902,
+     "exit_ma": 383.582202148,
+     "unrealized_pnl": 412714.8753343066,
+     "price_pnl_pct": 6.281078432432441,
      "exit_pending": false
     },
     {
@@ -78,10 +80,10 @@
      "entry_price": 123.9400024,
      "qty": 59366.25714249474,
      "stop_price": 111.54600216,
-     "last_close": 117.2200012,
-     "exit_ma": 115.41520019400001,
-     "unrealized_pnl": -427574.8528094776,
-     "price_pnl_pct": -5.421979239851938,
+     "last_close": 115.5899963,
+     "exit_ma": 115.57200012000001,
+     "unrealized_pnl": -524148.60826633126,
+     "price_pnl_pct": -6.737135661052729,
      "exit_pending": false
     },
     {
@@ -92,10 +94,10 @@
      "entry_price": 34.40999985,
      "qty": 213478.84197954184,
      "stop_price": 30.968999865,
-     "last_close": 34.40999985,
-     "exit_ma": 33.5544000248,
-     "unrealized_pnl": -29383.227681977674,
-     "price_pnl_pct": 0.0,
+     "last_close": 34.84000015,
+     "exit_ma": 33.62340004,
+     "unrealized_pnl": 62229.146480688825,
+     "price_pnl_pct": 1.2496376107947071,
      "exit_pending": false
     },
     {
@@ -106,25 +108,25 @@
      "entry_price": 242.0200043,
      "qty": 30083.193491035752,
      "stop_price": 217.81800387,
-     "last_close": 247.1300049,
-     "exit_ma": 236.17739929000004,
-     "unrealized_pnl": 124294.74804329686,
-     "price_pnl_pct": 2.1113959628171086,
+     "last_close": 249.5899963,
+     "exit_ma": 236.826199338,
+     "unrealized_pnl": 198151.13652123697,
+     "price_pnl_pct": 3.1278373132398007,
      "exit_pending": false
     },
     {
      "symbol": "CRL",
      "signal_date": "2026-10-21",
-     "exit_signal_date": null,
+     "exit_signal_date": "2026-11-20",
      "entry_date": "2026-10-22",
      "entry_price": 341.4299927,
      "qty": 3519.2543534161273,
      "stop_price": 307.28699343,
-     "last_close": 327.9299927,
-     "exit_ma": 315.22939758399997,
-     "unrealized_pnl": -52221.229856360704,
-     "price_pnl_pct": -3.953958436176952,
-     "exit_pending": false
+     "last_close": 314.3200073,
+     "exit_ma": 315.950597534,
+     "unrealized_pnl": -100022.43622450298,
+     "price_pnl_pct": -7.9401300353306725,
+     "exit_pending": true
     },
     {
      "symbol": "CPAY",
@@ -134,10 +136,10 @@
      "entry_price": 437.7799988,
      "qty": 16515.049935881743,
      "stop_price": 394.00199892,
-     "last_close": 434.2900085,
-     "exit_ma": 413.13280212599994,
-     "unrealized_pnl": -86441.92351653147,
-     "price_pnl_pct": -0.7972018615666321,
+     "last_close": 429.8399963,
+     "exit_ma": 413.565202028,
+     "unrealized_pnl": -159787.11286741775,
+     "price_pnl_pct": -1.8136969532103642,
      "exit_pending": false
     },
     {
@@ -148,20 +150,20 @@
      "entry_price": 209.2899933,
      "qty": 31722.005849846617,
      "stop_price": 188.36099397,
-     "last_close": 212.6799927,
-     "exit_ma": 193.74500122600003,
-     "unrealized_pnl": 80766.11206907313,
-     "price_pnl_pct": 1.6197618178241058,
+     "last_close": 212.7799988,
+     "exit_ma": 194.44360107999998,
+     "unrealized_pnl": 83932.16137011535,
+     "price_pnl_pct": 1.6675453254935801,
      "exit_pending": false
     }
    ],
    "stale_positions": [],
    "watchlist": [],
    "performance": {
-    "equity": 94265359.0,
-    "return_pct": -5.73,
-    "bench_return_pct": -7.33,
-    "mdd_pct": -6.42,
+    "equity": 93823876.0,
+    "return_pct": -6.18,
+    "bench_return_pct": -10.76,
+    "mdd_pct": -6.86,
     "closed_trades": 11,
     "win_rate_pct": 0.0,
     "avg_win_pct": null,
@@ -170,8 +172,8 @@
    },
    "status_csv": "SP500/status.csv",
    "audit": {
-    "days": 40,
-    "signal_files": 40,
+    "days": 41,
+    "signal_files": 41,
     "missing_days": [],
     "late": [],
     "uncommitted": [],
@@ -185,17 +187,19 @@
    "xcheck": {
     "source": "Tiingo",
     "status": "mismatch",
-    "checked": "2026-11-19",
+    "checked": "2026-11-20",
     "error": null,
     "mismatched_symbols": [
-     "EBAY",
-     "GOOG",
-     "GOOGL",
-     "GPN",
-     "GS",
-     "HAS",
-     "LLY",
-     "TRV"
+     "BDX",
+     "BIIB",
+     "CPAY",
+     "GWW",
+     "HBAN",
+     "HIG",
+     "HLT",
+     "HON",
+     "HPE",
+     "LLY"
     ],
     "index_match": null
    },
@@ -598,7 +602,7 @@
    }
   }
  },
- "updated_at": "2026-11-20T12:55:51Z",
+ "updated_at": "2026-11-20T23:53:20Z",
  "disclaimer": "기계적 룰 출력이며 투자 자문이 아닙니다. 매수·매도 결정은 소유자 본인이 합니다.",
  "unconfirmed": "미확인 추정값(스캐너 원본 코드 미확인): 피벗=직전 20봉 최고가(당일 제외) · 거래량 평균=직전 50일(당일 제외) · RS=지수 대비 가중 1년 수익률 ≥ 0%p(스캐너는 유니버스 백분위 ≥ 70) · 52주 고저=종가 기준 · 200일선 상승=22봉 전 대비 · 수축비=10/40일 평균 TR · 비용=편도 0.2%"
 }
