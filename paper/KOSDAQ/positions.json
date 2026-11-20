@@ -7,10 +7,38 @@
   "entry_price": 176000.0,
   "qty": 40.0,
   "stop_price": 158400.0,
-  "last_close": 174500.0,
-  "exit_ma": 147774.0,
-  "unrealized_pnl": -88040.0,
-  "price_pnl_pct": -0.8522727272727293,
+  "last_close": 173000.0,
+  "exit_ma": 148342.0,
+  "unrealized_pnl": -147920.0,
+  "price_pnl_pct": -1.7045454545454586,
+  "exit_pending": false
+ },
+ {
+  "symbol": "086450.KQ",
+  "signal_date": "2026-11-19",
+  "exit_signal_date": null,
+  "entry_date": "2026-11-20",
+  "entry_price": 26200.0,
+  "qty": 262.0,
+  "stop_price": 23580.0,
+  "last_close": 25250.0,
+  "exit_ma": 23027.8,
+  "unrealized_pnl": -275859.7999999998,
+  "price_pnl_pct": -3.62595419847328,
+  "exit_pending": false
+ },
+ {
+  "symbol": "356860.KQ",
+  "signal_date": "2026-11-19",
+  "exit_signal_date": null,
+  "entry_date": "2026-11-20",
+  "entry_price": 43700.0,
+  "qty": 153.0,
+  "stop_price": 39330.0,
+  "last_close": 42550.0,
+  "exit_ma": 40329.0,
+  "unrealized_pnl": -202342.5,
+  "price_pnl_pct": -2.631578947368418,
   "exit_pending": false
  }
 ]
