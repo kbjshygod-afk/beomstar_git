@@ -1,0 +1,28 @@
+{
+ "market": "KOSPI",
+ "as_of": "2026-11-19",
+ "source": "KIS",
+ "status": "ok",
+ "checked": "2026-11-19",
+ "index": {
+  "yahoo_close": 5137.890137,
+  "krx_close": 5137.89,
+  "match": true
+ },
+ "symbols": {
+  "date": "2026-11-19",
+  "compared": 200,
+  "missing": [],
+  "mismatches": []
+ },
+ "error": null,
+ "calls": 201,
+ "guard": {
+  "close_mismatched": 178,
+  "compared": 200,
+  "share_pct": 89.0,
+  "blocked": false,
+  "late": false,
+  "enforced": false
+ }
+}
