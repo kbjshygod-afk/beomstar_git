@@ -206,18 +206,20 @@
    "xcheck_kis": null
   },
   "NDX100": {
-   "as_of": "2026-11-19",
+   "as_of": "2026-11-20",
    "start_date": "2026-09-25",
    "regime": {
     "benchmark": "^NDX",
     "mode": "MA200",
-    "close": 26517.0508,
-    "ma200": 28070.899,
-    "ma20": 28089.889,
+    "close": 25028.9824,
+    "ma200": 28073.3005,
+    "ma20": 27893.4616,
     "on": false
    },
    "entries_next_open": [],
-   "exits_next_open": [],
+   "exits_next_open": [
+    "CSX"
+   ],
    "positions": [
     {
      "symbol": "AMGN",
@@ -227,10 +229,10 @@
      "entry_price": 437.8900146,
      "qty": 24086.34911346862,
      "stop_price": 407.23771357799995,
-     "last_close": 438.8200073,
-     "exit_ma": 429.2816021720001,
-     "unrealized_pnl": -19833.358472343534,
-     "price_pnl_pct": 0.21238043092841608,
+     "last_close": 435.6400146,
+     "exit_ma": 430.44740234200003,
+     "unrealized_pnl": -96274.58399412595,
+     "price_pnl_pct": -0.5138276564847666,
      "exit_pending": false
     },
     {
@@ -241,34 +243,34 @@
      "entry_price": 35.31999969,
      "qty": 297703.06687467825,
      "stop_price": 32.8475997117,
-     "last_close": 34.40999985,
-     "exit_ma": 33.5544000248,
-     "unrealized_pnl": -312427.4126559235,
-     "price_pnl_pct": -2.5764435107219152,
+     "last_close": 34.84000015,
+     "exit_ma": 33.62340004,
+     "unrealized_pnl": -184671.02940502577,
+     "price_pnl_pct": -1.3590021070580605,
      "exit_pending": false
     },
     {
      "symbol": "CSX",
      "signal_date": "2026-10-22",
-     "exit_signal_date": null,
+     "exit_signal_date": "2026-11-20",
      "entry_date": "2026-10-23",
      "entry_price": 51.56000137,
      "qty": 202751.5170602284,
      "stop_price": 47.9508012741,
-     "last_close": 49.97999954,
-     "exit_ma": 49.158600159399995,
-     "unrealized_pnl": -361522.54644403793,
-     "price_pnl_pct": -3.064394468614806,
-     "exit_pending": false
+     "last_close": 49.09999847,
+     "exit_ma": 49.161600113599995,
+     "unrealized_pnl": -539587.2552972455,
+     "price_pnl_pct": -4.771145916670482,
+     "exit_pending": true
     }
    ],
    "stale_positions": [],
    "watchlist": [],
    "performance": {
-    "equity": 93078323.0,
-    "return_pct": -6.92,
-    "bench_return_pct": -13.37,
-    "mdd_pct": -7.69,
+    "equity": 92951319.0,
+    "return_pct": -7.05,
+    "bench_return_pct": -18.23,
+    "mdd_pct": -7.81,
     "closed_trades": 8,
     "win_rate_pct": 0.0,
     "avg_win_pct": null,
@@ -277,8 +279,8 @@
    },
    "status_csv": "NDX100/status.csv",
    "audit": {
-    "days": 40,
-    "signal_files": 40,
+    "days": 41,
+    "signal_files": 41,
     "missing_days": [],
     "late": [],
     "uncommitted": [],
@@ -289,14 +291,17 @@
    "xcheck": {
     "source": "Tiingo",
     "status": "mismatch",
-    "checked": "2026-11-19",
+    "checked": "2026-11-20",
     "error": null,
     "mismatched_symbols": [
-     "GILD",
-     "GOOG",
-     "GOOGL",
-     "HON",
-     "INTU"
+     "ISRG",
+     "KLAC",
+     "LIN",
+     "LITE",
+     "LRCX",
+     "MCHP",
+     "MELI",
+     "META"
     ],
     "index_match": null
    },
@@ -602,7 +607,7 @@
    }
   }
  },
- "updated_at": "2026-11-20T23:53:20Z",
+ "updated_at": "2026-11-20T23:54:35Z",
  "disclaimer": "기계적 룰 출력이며 투자 자문이 아닙니다. 매수·매도 결정은 소유자 본인이 합니다.",
  "unconfirmed": "미확인 추정값(스캐너 원본 코드 미확인): 피벗=직전 20봉 최고가(당일 제외) · 거래량 평균=직전 50일(당일 제외) · RS=지수 대비 가중 1년 수익률 ≥ 0%p(스캐너는 유니버스 백분위 ≥ 70) · 52주 고저=종가 기준 · 200일선 상승=22봉 전 대비 · 수축비=10/40일 평균 TR · 비용=편도 0.2%"
 }

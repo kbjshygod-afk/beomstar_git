@@ -7,10 +7,10 @@
   "entry_price": 437.8900146,
   "qty": 24086.34911346862,
   "stop_price": 407.23771357799995,
-  "last_close": 438.8200073,
-  "exit_ma": 429.2816021720001,
-  "unrealized_pnl": -19833.358472343534,
-  "price_pnl_pct": 0.21238043092841608,
+  "last_close": 435.6400146,
+  "exit_ma": 430.44740234200003,
+  "unrealized_pnl": -96274.58399412595,
+  "price_pnl_pct": -0.5138276564847666,
   "exit_pending": false
  },
  {
@@ -21,24 +21,24 @@
   "entry_price": 35.31999969,
   "qty": 297703.06687467825,
   "stop_price": 32.8475997117,
-  "last_close": 34.40999985,
-  "exit_ma": 33.5544000248,
-  "unrealized_pnl": -312427.4126559235,
-  "price_pnl_pct": -2.5764435107219152,
+  "last_close": 34.84000015,
+  "exit_ma": 33.62340004,
+  "unrealized_pnl": -184671.02940502577,
+  "price_pnl_pct": -1.3590021070580605,
   "exit_pending": false
  },
  {
   "symbol": "CSX",
   "signal_date": "2026-10-22",
-  "exit_signal_date": null,
+  "exit_signal_date": "2026-11-20",
   "entry_date": "2026-10-23",
   "entry_price": 51.56000137,
   "qty": 202751.5170602284,
   "stop_price": 47.9508012741,
-  "last_close": 49.97999954,
-  "exit_ma": 49.158600159399995,
-  "unrealized_pnl": -361522.54644403793,
-  "price_pnl_pct": -3.064394468614806,
-  "exit_pending": false
+  "last_close": 49.09999847,
+  "exit_ma": 49.161600113599995,
+  "unrealized_pnl": -539587.2552972455,
+  "price_pnl_pct": -4.771145916670482,
+  "exit_pending": true
  }
 ]

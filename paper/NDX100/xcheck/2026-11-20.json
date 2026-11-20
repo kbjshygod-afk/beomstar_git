@@ -1,0 +1,87 @@
+{
+ "market": "NDX100",
+ "as_of": "2026-11-20",
+ "source": "Tiingo",
+ "status": "mismatch",
+ "checked": "2026-11-20",
+ "index": null,
+ "symbols": {
+  "date": "2026-11-20",
+  "compared": 13,
+  "missing": [],
+  "mismatches": [
+   {
+    "symbol": "KLAC",
+    "field": "open",
+    "yahoo": 138.6300049,
+    "krx": 138.98,
+    "diff_pct": 0.252
+   },
+   {
+    "symbol": "LRCX",
+    "field": "open",
+    "yahoo": 199.4900055,
+    "krx": 199.05,
+    "diff_pct": 0.221
+   },
+   {
+    "symbol": "LRCX",
+    "field": "high",
+    "yahoo": 199.4900055,
+    "krx": 199.775,
+    "diff_pct": 0.143
+   },
+   {
+    "symbol": "MCHP",
+    "field": "open",
+    "yahoo": 58.47000122,
+    "krx": 58.395,
+    "diff_pct": 0.128
+   },
+   {
+    "symbol": "ISRG",
+    "field": "open",
+    "yahoo": 406.4400024,
+    "krx": 407.24,
+    "diff_pct": 0.196
+   },
+   {
+    "symbol": "META",
+    "field": "open",
+    "yahoo": 582.9349976,
+    "krx": 583.91,
+    "diff_pct": 0.167
+   },
+   {
+    "symbol": "LITE",
+    "field": "volume",
+    "yahoo": 5759274.0,
+    "krx": 5686145.0,
+    "diff_pct": 1.27
+   },
+   {
+    "symbol": "LIN",
+    "field": "volume",
+    "yahoo": 3511266.0,
+    "krx": 3473364.0,
+    "diff_pct": 1.079
+   },
+   {
+    "symbol": "MELI",
+    "field": "open",
+    "yahoo": 1342.055054,
+    "krx": 1338.3,
+    "diff_pct": 0.28
+   }
+  ],
+  "unlisted": [],
+  "sampled": 13,
+  "focus": [
+   "AMGN",
+   "CSX",
+   "KDP"
+  ]
+ },
+ "error": null,
+ "calls": 13
+}
