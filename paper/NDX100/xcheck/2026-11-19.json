@@ -11,46 +11,39 @@
   "missing": [],
   "mismatches": [
    {
+    "symbol": "GILD",
+    "field": "volume",
+    "yahoo": 5116700.0,
+    "krx": 4962578.0,
+    "diff_pct": 3.012
+   },
+   {
     "symbol": "INTU",
     "field": "volume",
-    "yahoo": 4293767.0,
+    "yahoo": 4401800.0,
     "krx": 4060383.0,
-    "diff_pct": 5.435
-   },
-   {
-    "symbol": "CSX",
-    "field": "open",
-    "yahoo": 51.49000168,
-    "krx": 51.72,
-    "diff_pct": 0.445
-   },
-   {
-    "symbol": "CSX",
-    "field": "high",
-    "yahoo": 51.59000015,
-    "krx": 51.72,
-    "diff_pct": 0.251
+    "diff_pct": 7.756
    },
    {
     "symbol": "HON",
-    "field": "open",
-    "yahoo": 223.0899963,
-    "krx": 223.41,
-    "diff_pct": 0.143
+    "field": "volume",
+    "yahoo": 2354000.0,
+    "krx": 2187501.0,
+    "diff_pct": 7.073
    },
    {
-    "symbol": "KDP",
-    "field": "open",
-    "yahoo": 34.59999847,
-    "krx": 34.67,
-    "diff_pct": 0.202
+    "symbol": "GOOGL",
+    "field": "volume",
+    "yahoo": 49150400.0,
+    "krx": 48188290.0,
+    "diff_pct": 1.957
    },
    {
-    "symbol": "FTNT",
-    "field": "open",
-    "yahoo": 136.4799957,
-    "krx": 135.755,
-    "diff_pct": 0.531
+    "symbol": "GOOG",
+    "field": "volume",
+    "yahoo": 28759100.0,
+    "krx": 28249784.0,
+    "diff_pct": 1.771
    }
   ],
   "unlisted": [],
