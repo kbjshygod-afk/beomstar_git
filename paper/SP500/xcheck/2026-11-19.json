@@ -11,32 +11,60 @@
   "missing": [],
   "mismatches": [
    {
-    "symbol": "GM",
-    "field": "open",
-    "yahoo": 83.30000305,
-    "krx": 82.78,
-    "diff_pct": 0.624
+    "symbol": "GOOGL",
+    "field": "volume",
+    "yahoo": 49150400.0,
+    "krx": 48188290.0,
+    "diff_pct": 1.957
+   },
+   {
+    "symbol": "GOOG",
+    "field": "volume",
+    "yahoo": 28759100.0,
+    "krx": 28249784.0,
+    "diff_pct": 1.771
+   },
+   {
+    "symbol": "EBAY",
+    "field": "volume",
+    "yahoo": 3639200.0,
+    "krx": 3440723.0,
+    "diff_pct": 5.454
    },
    {
     "symbol": "GPN",
     "field": "volume",
-    "yahoo": 2567476.0,
+    "yahoo": 2581100.0,
     "krx": 2389942.0,
-    "diff_pct": 6.915
+    "diff_pct": 7.406
    },
    {
     "symbol": "GS",
     "field": "volume",
-    "yahoo": 2812535.0,
+    "yahoo": 2814600.0,
     "krx": 2603685.0,
-    "diff_pct": 7.426
+    "diff_pct": 7.494
    },
    {
-    "symbol": "KDP",
-    "field": "open",
-    "yahoo": 34.59999847,
-    "krx": 34.67,
-    "diff_pct": 0.202
+    "symbol": "HAS",
+    "field": "volume",
+    "yahoo": 1391900.0,
+    "krx": 1368363.0,
+    "diff_pct": 1.691
+   },
+   {
+    "symbol": "LLY",
+    "field": "volume",
+    "yahoo": 3198300.0,
+    "krx": 3063751.0,
+    "diff_pct": 4.207
+   },
+   {
+    "symbol": "TRV",
+    "field": "volume",
+    "yahoo": 1579100.0,
+    "krx": 1441329.0,
+    "diff_pct": 8.725
    }
   ],
   "unlisted": [],
