@@ -26,8 +26,11 @@ Hypotheses, fixed on 2026-11-21 before the first run (docs/swing-exit-study-prer
 Inside one daily bar the order of the high and the low is unknown. The order is fixed against the
 variant: the stop in force at the start of the bar is checked first, then the target; a stop moved
 to the entry price counts from the next bar. A target is a resting limit order: it fills at the
-target, or at the open when the open is already above it. A position is one trade whatever the
-number of sales, and it is a win when its total net result is above zero (the engine's definition).
+target, or at the open when the open is already above it. A level is reached when the high touches
+it (TOUCH absorbs binary rounding: 100 x 1.1 is 110.00000000000001). A position is one trade
+whatever the number of sales, and it is a win when its total net result is above zero (the engine's
+definition). After a full sale at the target the symbol is flat, so a signal on that same bar arms
+an entry for the next open - the engine's own rule after a stop.
 
 Every hypothesis is run on the unperturbed data and on the paired paths of tools/path_noise.py
 (same seed, so the baseline paths are those of 2026-11-13): each repetition applies one
@@ -49,6 +52,11 @@ Criteria, fixed with the hypotheses (KOSDAQ decides; `verdict` below is the only
   "win rate not raised"           S1 or P1 fails
   and, for reading, "return up as well" when the 5th percentile of the paired CAGR difference is
   above 0 in both perturbations (the rule of 2026-11-13).
+
+A paired check needs every repetition: a path without the number fails the check. The verdicts are
+the registered ones only under the registered protocol (REGISTERED: KOSDAQ decides, KOSPI second,
+40 repetitions, 10% drop, the seed of 2026-11-13, the window 2016-09-26 to 2026-09-28); any other
+run prints them as exploratory.
 
 Writes OUT_DIR/exit_study.json and prints the tables.
 """
@@ -76,8 +84,15 @@ EXIT_LENS = (20, 10)                                            # E9, E10
 WIN_GAIN_PP, WIN_AHEAD_PCT = 5.0, 95.0
 CAGR_SLACK_PP, MDD_SLACK_PP, HALF_SLACK_PP, OTHER_SLACK_PP = 1.0, 3.0, 2.0, 3.0
 EPS = 1e-9
+TOUCH = 1e-9                                                    # relative: a high equal to the level reaches it
+REGISTERED = {"market": "KOSDAQ", "other": "KOSPI", "reps": 40, "drop_pct": 10.0, "seed": P.SEED,
+              "window": ("2016-09-26", "2026-09-28")}
 METRICS = ("win_rate_pct", "cagr_pct", "max_drawdown_pct", "profit_factor", "excess_cagr_pp")
 _W: dict = {}
+
+
+def reached(high: float, level: float) -> bool:
+    return high >= level * (1 - TOUCH)
 
 
 @dataclass(frozen=True)
@@ -166,6 +181,7 @@ def simulate_exits(frames: dict, cfg, rule: ExitRule = ExitRule()):
         proceeds = q * price * (1 - c_rate)
         cash += proceeds
         tr["_proceeds"] += proceeds
+        tr["_gross"] += q * price
         tr["_exit_cost"] += q * price * c_rate
         qty[j] -= q
 
@@ -174,10 +190,11 @@ def simulate_exits(frames: dict, cfg, rule: ExitRule = ExitRule()):
         tr = open_tr.pop(j)
         cost_basis = tr["cost_basis"]
         net = tr.pop("_proceeds") - cost_basis
+        gross = tr.pop("_gross")                                    # all sales: the quantity-weighted exit
         tr.update(exit_date=_d(d), exit_price=float(price), exit_type=kind,
                   exit_cost=tr.pop("_exit_cost"), net_pnl=net,
                   pnl_pct=net / cost_basis * 100 if cost_basis else np.nan,
-                  price_pnl_pct=(price / tr["entry_price"] - 1) * 100,
+                  price_pnl_pct=(gross / (tr["qty"] * tr["entry_price"]) - 1) * 100,
                   bars_held=int(tr.pop("_bars", 0)),
                   days_held=(pd.Timestamp(d) - pd.Timestamp(tr["entry_date"])).days)
         tr.pop("_target", None)
@@ -226,7 +243,7 @@ def simulate_exits(frames: dict, cfg, rule: ExitRule = ExitRule()):
                           "rs_at_signal": pe["rs"], "entry_date": _d(d), "entry_price": float(o),
                           "qty": q, "desired_qty": pe["desired_qty"], "partial": bool(partial),
                           "stop_price": m.stop_price, "entry_cost": q * o * c_rate,
-                          "cost_basis": cost_basis, "_bars": 0, "_proceeds": 0.0, "_exit_cost": 0.0,
+                          "cost_basis": cost_basis, "_bars": 0, "_proceeds": 0.0, "_gross": 0.0, "_exit_cost": 0.0,
                           "_target": rule.target_r is not None, "target_sold": 0.0}
             if partial:
                 alloc_done = True
@@ -240,7 +257,7 @@ def simulate_exits(frames: dict, cfg, rule: ExitRule = ExitRule()):
             # the variant's target, only when the stop in force at the start of the bar holds
             if tr["_target"] and not (L[i, j] <= m.stop_price):
                 tgt = entry * (1 + rule.target_r * stop_pct / 100)
-                if H[i, j] >= tgt:
+                if reached(H[i, j], tgt):
                     fill = max(O[i, j], tgt)                       # a limit order: the open if it gaps above
                     tr["_target"] = False
                     q = qty[j] * frac
@@ -260,7 +277,7 @@ def simulate_exits(frames: dict, cfg, rule: ExitRule = ExitRule()):
                 continue
             if ev is not None and ev.type == "EXIT_SIGNAL":
                 tr["exit_signal_date"] = _d(d)
-            if rule.breakeven_r is not None and H[i, j] >= entry * (1 + rule.breakeven_r * stop_pct / 100):
+            if rule.breakeven_r is not None and reached(H[i, j], entry * (1 + rule.breakeven_r * stop_pct / 100)):
                 m.stop_price = max(m.stop_price, entry)             # in force from the next bar
         last_close[has] = C[i, has]
         pos_value = float(sum(qty[j] * last_close[j] for j in open_tr))
@@ -339,6 +356,8 @@ def row(res, bench, market: str) -> dict:
         x = (s or {}).get(h) or {}
         out[f"{h}_win_rate_pct"] = x.get("win_rate_pct")
         out[f"{h}_excess_pp"] = x.get("excess_cagr_pp")
+    if len(res.equity):
+        out["first_date"], out["last_date"] = (pd.Timestamp(x).strftime("%Y-%m-%d") for x in res.equity.index[[0, -1]])
     if len(t):
         out["scratch_pct"] = float((t["pnl_pct"].abs() <= 1.0).mean() * 100)      # within +-1% of flat
         out["exit_types"] = {k: int(v) for k, v in t["exit_type"].value_counts().items()}
@@ -380,31 +399,47 @@ def _ge(a, b) -> bool:
     return a is not None and b is not None and a == a and b == b and a >= b - EPS
 
 
+def _shift(x, by: float):
+    """x + by; None stays None (a baseline of 0.0 is a number, not a missing one)."""
+    return None if x is None else x + by
+
+
 def verdict(key: str, rows: dict, pairs: dict, other: dict | None) -> dict:
-    """The fixed criteria for one variant. Any missing number fails its check."""
+    """The fixed criteria for one variant. Any missing number fails its check, and a paired check
+    needs the number from every repetition of both perturbations."""
     b, v = rows[BASE], rows[key]
-    modes = [pairs.get(m, {}).get("diff", {}).get(key) for m in P.MODES]
-    complete = all(x is not None for x in modes)
-    def every(f):
-        return complete and all(f(x) for x in modes)
+    modes = [(pairs[m]["reps"], pairs[m]["diff"].get(key)) for m in P.MODES if m in pairs]
+    complete = len(modes) == len(P.MODES) and all(d is not None for _, d in modes)
+
+    def every(metric, f):
+        return complete and all(d[metric].get("n") == reps and f(d[metric]) for reps, d in modes)
+
+    ob, ov = (other or {}).get(BASE) or {}, (other or {}).get(key) or {}
     checks = {
-        "S1_win_rate": _ge(v.get("win_rate_pct"), (b.get("win_rate_pct") or math.nan) + WIN_GAIN_PP),
-        "P1_win_paired": every(lambda x: _ge(x["win_rate_pct"].get("ahead_pct"), WIN_AHEAD_PCT)
-                               and _ge(x["win_rate_pct"].get("p50"), WIN_GAIN_PP)),
-        "P2_cagr": every(lambda x: _ge(x["cagr_pct"].get("p50"), -CAGR_SLACK_PP)),
-        "P3_drawdown": every(lambda x: _ge(x["max_drawdown_pct"].get("p50"), -MDD_SLACK_PP)),
+        "S1_win_rate": _ge(v.get("win_rate_pct"), _shift(b.get("win_rate_pct"), WIN_GAIN_PP)),
+        "P1_win_paired": every("win_rate_pct", lambda x: _ge(x.get("ahead_pct"), WIN_AHEAD_PCT) and _ge(x.get("p50"), WIN_GAIN_PP)),
+        "P2_cagr": every("cagr_pct", lambda x: _ge(x.get("p50"), -CAGR_SLACK_PP)),
+        "P3_drawdown": every("max_drawdown_pct", lambda x: _ge(x.get("p50"), -MDD_SLACK_PP)),
         "P4_halves": all(v.get(f"{h}_win_rate_pct") is not None and b.get(f"{h}_win_rate_pct") is not None
                          and v[f"{h}_win_rate_pct"] > b[f"{h}_win_rate_pct"]
-                         and _ge(v.get(f"{h}_excess_pp"), (b.get(f"{h}_excess_pp") or math.nan) - HALF_SLACK_PP)
+                         and _ge(v.get(f"{h}_excess_pp"), _shift(b.get(f"{h}_excess_pp"), -HALF_SLACK_PP))
                          for h in ("h1", "h2")),
-        "P5_other_market": other is not None and _ge((other.get(key) or {}).get("cagr_pct"),
-                                                     ((other.get(BASE) or {}).get("cagr_pct") or math.nan) - OTHER_SLACK_PP),
+        "P5_other_market": _ge(ov.get("cagr_pct"), _shift(ob.get("cagr_pct"), -OTHER_SLACK_PP)),
     }
     raised = checks["S1_win_rate"] and checks["P1_win_paired"]
     kept = all(checks[k] for k in ("P2_cagr", "P3_drawdown", "P4_halves", "P5_other_market"))
     text = "win rate not raised" if not raised else ("win rate up, return kept" if kept else "win rate up, return damaged")
     return {"verdict": text, "checks": checks,
-            "return_up_as_well": every(lambda x: x["cagr_pct"].get("p05") is not None and x["cagr_pct"]["p05"] > 0)}
+            "return_up_as_well": every("cagr_pct", lambda x: x.get("p05") is not None and x["p05"] > 0)}
+
+
+def protocol(a, rows: dict) -> dict:
+    """Is this run the registered one? Lists every setting that differs."""
+    r = REGISTERED
+    got = {"market": a.market, "other": a.other, "reps": a.reps, "drop_pct": float(a.drop_pct), "seed": a.seed,
+           "window": (rows[BASE].get("first_date"), rows[BASE].get("last_date"))}
+    diff = [f"{k} {got[k]} (registered {r[k]})" for k in r if got[k] != r[k]]
+    return {"registered": not diff, "differs": diff, "settings": got}
 
 
 def _n(v, spec=".1f", unit="") -> str:
@@ -412,13 +447,14 @@ def _n(v, spec=".1f", unit="") -> str:
 
 
 def table(rows: dict) -> str:
-    head = ("| # | 변형 | 거래 | 승률 | CAGR | 지수 초과 | PF | 평균 이익 | 평균 손실 | 최대 낙폭 | 본전권 | 전반 승률 | 후반 승률 |\n"
-            "|---|---|---|---|---|---|---|---|---|---|---|---|---|\n")
+    head = ("| # | 변형 | 거래 | 승률 | CAGR | 지수 초과 | PF | 평균 이익 | 평균 손실 | 최대 낙폭 | 본전권 | 전반 승률 | 후반 승률 | 전반 초과 | 후반 초과 |\n"
+            "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|\n")
     return head + "".join(
         f"| {k.split('_')[0]} | {RULES[k][0]} | {_n(r.get('trades'), ',')} | {_n(r.get('win_rate_pct'), '.1f', '%')} | "
         f"{_n(r.get('cagr_pct'), '.1f', '%')} | {_n(r.get('excess_cagr_pp'), '+.1f', '%p')} | {_n(r.get('profit_factor'), '.2f')} | "
         f"{_n(r.get('avg_win_pct'), '+.1f', '%')} | {_n(r.get('avg_loss_pct'), '.1f', '%')} | {_n(r.get('max_drawdown_pct'), '.1f', '%')} | "
-        f"{_n(r.get('scratch_pct'), '.1f', '%')} | {_n(r.get('h1_win_rate_pct'), '.1f', '%')} | {_n(r.get('h2_win_rate_pct'), '.1f', '%')} |\n"
+        f"{_n(r.get('scratch_pct'), '.1f', '%')} | {_n(r.get('h1_win_rate_pct'), '.1f', '%')} | {_n(r.get('h2_win_rate_pct'), '.1f', '%')} | "
+        f"{_n(r.get('h1_excess_pp'), '+.1f', '%p')} | {_n(r.get('h2_excess_pp'), '+.1f', '%p')} |\n"
         for k, r in rows.items())
 
 
@@ -458,10 +494,10 @@ def main(argv=None) -> int:
     print(f"{a.market}: empty rule vs engine: {'identical' if ok else 'DIFFERENT'} ({why})", flush=True)
     if not ok:
         return 2
-    if a.check_only:
-        return 0
-    rows = run_plain(frames, cfg, bench, a.market)
-    print(table(rows), flush=True)
+    rows = None
+    if not a.check_only:
+        rows = run_plain(frames, cfg, bench, a.market)
+        print(table(rows), flush=True)
 
     other = None
     if a.other:
@@ -470,9 +506,13 @@ def main(argv=None) -> int:
         print(f"{a.other}: empty rule vs engine: {'identical' if ok else 'DIFFERENT'} ({why})", flush=True)
         if not ok:
             return 2
-        other = run_plain(fo, cfg_o, bench_o, a.other)
-        print(table(other), flush=True)
+        if not a.check_only:
+            other = run_plain(fo, cfg_o, bench_o, a.other)
+            print(table(other), flush=True)
         del fo
+    if a.check_only:
+        return 0
+    proto = protocol(a, rows)
 
     _W.update(frames=frames, cfg=cfg, bench=bench, market=a.market, drop_pct=a.drop_pct, seed=a.seed)
     jobs = [(mode, rep) for mode in P.MODES for rep in range(a.reps)]
@@ -488,13 +528,16 @@ def main(argv=None) -> int:
     out.mkdir(parents=True, exist_ok=True)
     (out / "exit_study.json").write_text(json.dumps(
         {"market": a.market, "other_market": a.other or None, "reps": a.reps, "drop_pct": a.drop_pct, "seed": a.seed,
-         "rows": rows, "other_rows": other, "paired": pairs, "verdicts": verdicts, "runs": runs},
+         "protocol": proto, "rows": rows, "other_rows": other, "paired": pairs, "verdicts": verdicts, "runs": runs},
         ensure_ascii=False, indent=1))
     print(paired_table(pairs))
     print()
+    kind = "VERDICT" if proto["registered"] else "EXPLORATORY"
+    if not proto["registered"]:
+        print("Not the registered protocol, so these are not the registered verdicts: " + "; ".join(proto["differs"]))
     for k, v in verdicts.items():
         failed = [c for c, ok in v["checks"].items() if not ok]
-        print(f"VERDICT {k:16s} {v['verdict']}" + (f" · failed {', '.join(failed)}" if failed else "")
+        print(f"{kind} {k:16s} {v['verdict']}" + (f" · failed {', '.join(failed)}" if failed else "")
               + (" · return up as well" if v["return_up_as_well"] else ""))
     return 0
 

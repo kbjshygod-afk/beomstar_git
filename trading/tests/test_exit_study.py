@@ -109,6 +109,54 @@ def test_half_at_the_target_then_the_rest_follows_the_rule():
     assert t.exit_type == "STOP" and t.exit_price == pytest.approx(90.0)
     assert t.target_sold == pytest.approx(t.qty / 2)
     assert t.pnl_pct == pytest.approx(0.5 * 20.0 + 0.5 * -10.0)      # one trade, both sales in its result
+    assert t.price_pnl_pct == pytest.approx(5.0)                     # the quantity-weighted exit, not the last sale
+
+
+def test_half_at_the_target_then_the_exit_line():
+    bars = [(100, 105, 99, 104), (104, 121, 103, 118), (118, 119, 112, 113), (112, 113, 111, 112)]
+    f = _one(bars)
+    f["A.KQ"].loc[f["A.KQ"].index[3]:, "exit_ma"] = 115.0            # the third bar closes under the line
+    t = _trade(f, E.ExitRule(target_r=2.0, target_frac=0.5))
+    assert t.exit_type == "EXIT_MA" and t.exit_price == pytest.approx(112.0) and t.exit_signal_date == "2021-01-07"
+    assert t.pnl_pct == pytest.approx(0.5 * 20.0 + 0.5 * 12.0)
+
+
+def test_a_high_equal_to_the_level_reaches_it():
+    assert 100 * (1 + 1.0 * STOP / 100) > 110.0                      # the rounding the tolerance is for
+    assert E.reached(110.0, 100 * (1 + 1.0 * STOP / 100)) and not E.reached(109.99, 110.0)
+    t = _trade(_one([(100, 110, 99, 105), (105, 106, 89, 90)]), E.ExitRule(target_r=1.0))
+    assert t.exit_type == "TARGET" and t.exit_price == pytest.approx(110.0) and t.bars_held == 1
+    t = _trade(_one([(100, 110, 99, 105), (105, 106, 89, 90)]), E.ExitRule(breakeven_r=1.0))
+    assert t.exit_type == "STOP" and t.exit_price == pytest.approx(100.0)
+
+
+def test_combination_e8_on_separate_bars_and_in_one_bar():
+    e8 = E.RULES["E8_be2R_half3R"][1]
+    # +2R on bar 2, +3R on bar 3 (half sold), then a fall: the rest leaves at the entry price
+    bars = [(100, 105, 99, 104), (104, 121, 103, 119), (119, 131, 118, 128), (128, 129, 95, 96)]
+    t = _trade(_one(bars), e8)
+    assert t.exit_type == "STOP" and t.exit_price == pytest.approx(100.0)
+    assert t.target_sold == pytest.approx(t.qty / 2) and t.pnl_pct == pytest.approx(0.5 * 30.0 + 0.5 * 0.0)
+    # +2R and +3R inside one bar: half is sold there, the stop moves from the next bar
+    bars = [(100, 131, 99, 128), (128, 129, 95, 96)]
+    t = _trade(_one(bars), e8)
+    assert t.exit_price == pytest.approx(100.0) and t.pnl_pct == pytest.approx(15.0)
+    # the moved stop and the +3R target in one later bar: the stop is read first
+    bars = [(100, 121, 99, 119), (119, 131, 99, 125)]
+    t = _trade(_one(bars), e8)
+    assert t.exit_type == "STOP" and t.exit_price == pytest.approx(100.0) and t.target_sold == 0
+
+
+def test_a_signal_on_the_target_bar_arms_the_next_open_like_after_a_stop():
+    bars = [(100, 105, 99, 104), (104, 121, 103, 118), (119, 120, 80, 85)]
+    f = _one(bars)
+    f["A.KQ"].iloc[2, f["A.KQ"].columns.get_loc("full_signal")] = True          # the bar that reaches +2R
+    t = E.simulate_exits(f, _cfg(), E.ExitRule(target_r=2.0)).trades
+    assert list(t.exit_type) == ["TARGET", "STOP"] and list(t.entry_date) == ["2021-01-05", "2021-01-07"]
+    assert t.iloc[1].entry_price == pytest.approx(119.0)
+    f = _one([(100, 105, 99, 104), (104, 105, 89, 95), (96, 97, 95, 96)])
+    f["A.KQ"].iloc[2, f["A.KQ"].columns.get_loc("full_signal")] = True          # the engine after a stop
+    assert len(simulate(f, _cfg()).open_positions) == 1
 
 
 def test_half_of_one_whole_share_sells_nothing():
@@ -182,9 +230,9 @@ def _row(win=26.0, cagr=10.0, h1w=25.0, h2w=27.0, h1x=7.0, h2x=8.0):
             "h1_excess_pp": h1x, "h2_excess_pp": h2x}
 
 
-def _pairs(key, win=(96.0, 6.0), cagr_p50=0.0, mdd_p50=0.0, cagr_p05=-2.0, modes=("priority", "drop")):
-    d = {"win_rate_pct": {"ahead_pct": win[0], "p50": win[1]}, "cagr_pct": {"p50": cagr_p50, "p05": cagr_p05},
-         "max_drawdown_pct": {"p50": mdd_p50}}
+def _pairs(key, win=(96.0, 6.0), cagr_p50=0.0, mdd_p50=0.0, cagr_p05=-2.0, modes=("priority", "drop"), n=40):
+    d = {"win_rate_pct": {"n": n, "ahead_pct": win[0], "p50": win[1]}, "cagr_pct": {"n": n, "p50": cagr_p50, "p05": cagr_p05},
+         "max_drawdown_pct": {"n": n, "p50": mdd_p50}}
     return {m: {"reps": 40, "diff": {key: d}} for m in modes}
 
 
@@ -241,6 +289,40 @@ def test_verdict_needs_both_perturbations_and_the_other_market():
     assert v["verdict"] == "win rate up, return damaged" and not v["checks"]["P5_other_market"]
 
 
+def test_verdict_needs_the_number_from_every_path():
+    v = _v(pairs=_pairs(K, n=39))                                    # one path of forty without the number
+    assert v["verdict"] == "win rate not raised"
+    assert not any(v["checks"][k] for k in ("P1_win_paired", "P2_cagr", "P3_drawdown"))
+    assert _v(pairs=_pairs(K, n=39, cagr_p05=0.1))["return_up_as_well"] is False
+    p = _pairs(K)
+    p["drop"]["diff"][K]["cagr_pct"]["n"] = 1
+    v = _v(pairs=p)
+    assert v["verdict"] == "win rate up, return damaged" and not v["checks"]["P2_cagr"] and v["checks"]["P3_drawdown"]
+
+
+def test_verdict_reads_a_baseline_of_zero_as_a_number():
+    v = _v(base=_row(win=0.0, h1w=0.0, h2w=0.0, h1x=0.0, h2x=0.0), variant=_row(win=5.0, h1w=4.0, h2w=6.0, h1x=-2.0, h2x=0.0),
+           other={E.BASE: {"cagr_pct": 0.0}, K: {"cagr_pct": -3.0}})
+    assert v["verdict"] == "win rate up, return kept", v["checks"]
+    v = _v(base=_row(win=0.0), variant=_row(win=4.9, h1w=31.0, h2w=34.0))
+    assert not v["checks"]["S1_win_rate"]
+
+
+def test_protocol_names_every_setting_that_differs():
+    import argparse
+    r = E.REGISTERED
+    a = argparse.Namespace(market=r["market"], other=r["other"], reps=r["reps"], drop_pct=r["drop_pct"], seed=r["seed"])
+    rows = {E.BASE: {"first_date": "2016-09-26", "last_date": "2026-09-28"}}
+    assert E.protocol(a, rows) == {"registered": True, "differs": [], "settings": E.protocol(a, rows)["settings"]}
+    for field, value in (("reps", 1), ("other", "KOSDAQ"), ("market", "KOSPI"), ("drop_pct", 5.0), ("seed", 1)):
+        b = argparse.Namespace(**{**vars(a), field: value})
+        p = E.protocol(b, rows)
+        assert not p["registered"] and len(p["differs"]) == 1 and p["differs"][0].startswith(field)
+    p = E.protocol(a, {E.BASE: {"first_date": "2016-09-26", "last_date": "2026-09-29"}})    # one bar too many
+    assert not p["registered"] and p["differs"][0].startswith("window")
+    assert not E.protocol(a, {E.BASE: {}})["registered"]
+
+
 def test_verdict_missing_numbers_fail_instead_of_raising():
     v = _v(variant={"win_rate_pct": None, "cagr_pct": None})
     assert v["verdict"] == "win rate not raised"
@@ -253,31 +335,45 @@ def test_paired_differences_and_tables():
         rows = {k: {"win_rate_pct": 26.0, "cagr_pct": 10.0, "max_drawdown_pct": -40.0, "profit_factor": 1.2,
                     "excess_cagr_pp": 8.0} for k in E.RULES}
         rows[K] = dict(rows[K], win_rate_pct=26.0 + win_gain, cagr_pct=9.0, profit_factor=None)
+        if rep == 0:
+            rows[E.BASE] = dict(rows[E.BASE], excess_cagr_pp=None)      # a path without the number
         return {"mode": mode, "rep": rep, "rows": rows}
     runs = [run(m, r, g) for m in ("priority", "drop") for r, g in enumerate((6.0, 7.0, -1.0, 8.0))]
     p = E.paired(runs)
     d = p["drop"]["diff"][K]
     assert p["drop"]["reps"] == 4 and d["win_rate_pct"]["ahead_pct"] == 75.0 and d["win_rate_pct"]["p50"] == pytest.approx(6.5)
     assert d["cagr_pct"]["p50"] == pytest.approx(-1.0) and d["profit_factor"]["n"] == 0
+    assert d["win_rate_pct"]["n"] == 4 and d["excess_cagr_pp"]["n"] == 3 and p["drop"]["baseline"]["excess_cagr_pp"]["n"] == 3
     assert p["drop"]["diff"]["E1_target1R"]["win_rate_pct"]["ahead_pct"] == 0.0
     assert K in E.paired_table(p)
     text = E.table({E.BASE: {"trades": 1122, "win_rate_pct": 26.1}, K: {}})
-    assert "1,122" in text and "26.1%" in text and "n/a" in text
+    assert "1,122" in text and "26.1%" in text and "n/a" in text and "후반 초과" in text
 
 
 def test_main_end_to_end_on_a_small_snapshot(tmp_path, capsys):
-    """Loading, point-in-time preparation, the engine comparison, ten variants, paired paths, output."""
+    """Loading, point-in-time preparation, the engine comparison on both markets, ten variants,
+    paired paths and the output. A small snapshot is never the registered protocol."""
+    import json
     from test_path_noise import _snapshot
     data = tmp_path / "data"
     data.mkdir()
     _snapshot(data)
-    assert E.main(["--data", str(data), "--out", str(tmp_path / "o"), "--other", "", "--reps", "1", "--jobs", "1"]) == 0
+    args = ["--data", str(data), "--out", str(tmp_path / "o"), "--other", "KOSDAQ", "--reps", "1", "--jobs", "1"]
+    assert E.main(args) == 0
     out = capsys.readouterr().out
-    assert "empty rule vs engine: identical" in out and "VERDICT E10_exit10" in out
-    import json
+    assert out.count("empty rule vs engine: identical") == 2
+    assert "Not the registered protocol" in out and "EXPLORATORY E10_exit10" in out and "VERDICT" not in out
     res = json.loads((tmp_path / "o" / "exit_study.json").read_text())
     assert list(res["rows"]) == list(E.RULES) and len(res["runs"]) == 2 and len(res["verdicts"]) == 10
-    assert all(v["checks"]["P5_other_market"] is False for v in res["verdicts"].values())    # no second market given
+    assert res["protocol"]["registered"] is False and len(res["protocol"]["differs"]) == 3      # other, reps, window
     assert res["rows"]["E0_base"]["trades"] > 5 and res["rows"]["E1_target1R"]["exit_types"].get("TARGET", 0) > 0
-    assert E.main(["--data", str(data), "--out", str(tmp_path / "c"), "--check-only"]) == 0
-    assert not (tmp_path / "c").exists()
+    assert res["other_rows"]["E0_base"]["cagr_pct"] == res["rows"]["E0_base"]["cagr_pct"]       # the second market ran
+    base = res["other_rows"]["E0_base"]["cagr_pct"]
+    assert all(v["checks"]["P5_other_market"] is (res["other_rows"][k]["cagr_pct"] >= base - E.OTHER_SLACK_PP - E.EPS)
+               for k, v in res["verdicts"].items())                                             # P5 read from that run
+    assert E.main(["--data", str(data), "--out", str(tmp_path / "n"), "--other", "", "--reps", "1", "--jobs", "1"]) == 0
+    res = json.loads((tmp_path / "n" / "exit_study.json").read_text())
+    assert all(v["checks"]["P5_other_market"] is False for v in res["verdicts"].values())       # no second market given
+    capsys.readouterr()
+    assert E.main(["--data", str(data), "--out", str(tmp_path / "c"), "--other", "KOSDAQ", "--check-only"]) == 0
+    assert capsys.readouterr().out.count("identical") == 2 and not (tmp_path / "c").exists()
