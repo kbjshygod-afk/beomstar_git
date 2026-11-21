@@ -1,6 +1,3 @@
-ERROR yfinance: 
-1 Failed download:
-ERROR yfinance: ['036930.KQ']: OperationalError('database is locked')
 INFO swing_engine.backtest: simulating proxy (150 symbols)
 INFO swing_engine.backtest: simulating percentile (150 symbols)
 [KOSDAQ proxy] CAGR +33.7% vs 지수 +0.6% (초과 +33.1%p), MDD -37.7%, 거래 942
