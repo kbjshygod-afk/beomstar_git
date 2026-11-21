@@ -117,3 +117,23 @@ last.
   (2026-11-15) showed 40-50 alike and 55 worse than no filter at all: the ledger's 50 sits at the
   edge. Check both sides of a parameter before calling a direction robust.
 
+## Research (2026-11-21, exit study, PR #84)
+
+- **A price level computed in floats is not the price.** `100 * (1 + 1.0 * 10 / 100)` is
+  110.00000000000001, so `high >= level` missed a high of exactly 110: neither the +1R target nor
+  the +1R breakeven trigger fired. Compare levels with a relative tolerance and test the exact
+  touch. (Codex; found before any result was read, the run was restarted.)
+- **`x or nan` turns a real zero into a missing value.** A baseline of exactly 0.0 failed three
+  criteria. Check `is None`. (Codex and Gemini.)
+- **A statistic over "the paths that had a number" is not the registered statistic.** A paired
+  check now needs the number from every repetition; one path of forty could have decided it.
+- **A tool that prints a registered verdict must check that the run is the registered one.**
+  Market, repetitions, seed and data window are compared with the registration; anything else is
+  printed as exploratory. Engine parity cannot catch a wrong window: both sides get the same data.
+- **Run the review before the first real run, not beside it.** The review and the run were started
+  together; the run had to be stopped at 48 of 80 paths and its output deleted unread. Next time
+  the pre-registration commit is reviewed first and the run starts after the fixes.
+- **Do not generalize from one case.** "Every change that raised the win rate lowered the return"
+  was said on 2026-11-20 from a single example (the 20-day exit on the old data) while the same
+  answer's table showed three counter-examples. On the restored data even that example did not
+  hold. Count the cases before writing "every".
