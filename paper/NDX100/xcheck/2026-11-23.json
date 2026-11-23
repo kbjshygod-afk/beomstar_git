@@ -1,0 +1,58 @@
+{
+ "market": "NDX100",
+ "as_of": "2026-11-23",
+ "source": "Tiingo",
+ "status": "mismatch",
+ "checked": "2026-11-23",
+ "index": null,
+ "symbols": {
+  "date": "2026-11-23",
+  "compared": 12,
+  "missing": [],
+  "mismatches": [
+   {
+    "symbol": "AMGN",
+    "field": "open",
+    "yahoo": 440.3099976,
+    "krx": 442.975,
+    "diff_pct": 0.602
+   },
+   {
+    "symbol": "AMGN",
+    "field": "volume",
+    "yahoo": 3388198.0,
+    "krx": 3336139.0,
+    "diff_pct": 1.536
+   },
+   {
+    "symbol": "GILD",
+    "field": "volume",
+    "yahoo": 6643438.0,
+    "krx": 6493239.0,
+    "diff_pct": 2.261
+   },
+   {
+    "symbol": "INTU",
+    "field": "open",
+    "yahoo": 274.5,
+    "krx": 274.02,
+    "diff_pct": 0.175
+   },
+   {
+    "symbol": "HONA",
+    "field": "open",
+    "yahoo": 157.5,
+    "krx": 157.07,
+    "diff_pct": 0.273
+   }
+  ],
+  "unlisted": [],
+  "sampled": 12,
+  "focus": [
+   "AMGN",
+   "KDP"
+  ]
+ },
+ "error": null,
+ "calls": 12
+}
