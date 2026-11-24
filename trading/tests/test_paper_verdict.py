@@ -17,6 +17,17 @@ def test_a_excludes_only_the_explained_days():
     assert not V.check_a({"late": ["2026-11-04"]}, "SP500", {"2026-11-04"})["pass"]
 
 
+
+def test_late_2026_11_23_is_excused_only_for_the_korean_ledgers_and_only_when_empty():
+    for m in ("KOSPI", "KOSDAQ", "KOSDAQ_V2"):
+        ok = V.check_a({"late": ["2026-11-23"]}, m, {"2026-11-23"})
+        assert ok["pass"] and "2026-11-23(늦은 커밋, 신호 0건)" in ok["explained"]
+        assert not V.check_a({"late": ["2026-11-23"]}, m, set())["pass"]        # a file with a trade is not excused
+    assert not V.check_a({"late": ["2026-11-04"]}, "KOSPI", {"2026-11-04"})["pass"]
+    for m in ("SP500", "NDX100", "CRYPTO"):
+        assert not V.check_a({"late": ["2026-11-23"]}, m, {"2026-11-23"})["pass"]
+
+
 def test_b_and_c():
     b = V.check_b({"missing_days": ["d1"]}, [{"requested": 30, "failed": ["x"] * 5}, {"requested": 30, "failed": []}])
     assert not b["pass"] and b["worst_fail_share"] == round(5 / 30, 4)

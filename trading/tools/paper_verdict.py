@@ -56,8 +56,11 @@ ALLOWED_EXITS = {"STOP", "EXIT_MA"}
 EXPLAINED_MISMATCH = {"KOSDAQ": {"2026-10-06"}, "KOSDAQ_V2": {"2026-10-06"}}
 # Late commits excused by the owner (plan, A item, decision 2026-11-06): the provider had no bar
 # before the next open, the late file holds no entries and no exits (checked here against the
-# ledger, not assumed), and the cause was fixed (#60).
-EXPLAINED_LATE = {"KOSDAQ": {"2026-11-04"}, "KOSDAQ_V2": {"2026-11-04"}}
+# ledger, not assumed), and the cause was fixed (#60). 2026-11-23 (owner, 2026-11-24): Yahoo gave no
+# Korean bar for that day until 11-24 11:4x KST; the late files hold no entries and no exits; the
+# cause was the provider alone, so condition 3 (a fix on our side) does not apply.
+EXPLAINED_LATE = {"KOSPI": {"2026-11-23"}, "KOSDAQ": {"2026-11-04", "2026-11-23"},
+                  "KOSDAQ_V2": {"2026-11-04", "2026-11-23"}}
 MAX_MISSING_DAYS = 2
 MAX_FAIL_SHARE = 0.05
 REGIME_BANDS = [(-999, -15, "< -15%"), (-15, -5, "-15 ~ -5%"), (-5, 0, "-5 ~ 0%"), (0, 5, "0 ~ 5%"), (5, 999, "> 5%")]
