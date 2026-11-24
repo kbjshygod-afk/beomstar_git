@@ -1,0 +1,72 @@
+{
+ "market": "SP500",
+ "as_of": "2026-11-24",
+ "source": "Tiingo",
+ "status": "mismatch",
+ "checked": "2026-11-24",
+ "index": null,
+ "symbols": {
+  "date": "2026-11-24",
+  "compared": 19,
+  "missing": [],
+  "mismatches": [
+   {
+    "symbol": "ADBE",
+    "field": "volume",
+    "yahoo": 3758573.0,
+    "krx": 3704926.0,
+    "diff_pct": 1.427
+   },
+   {
+    "symbol": "AMGN",
+    "field": "volume",
+    "yahoo": 3134133.0,
+    "krx": 3081900.0,
+    "diff_pct": 1.667
+   },
+   {
+    "symbol": "ADP",
+    "field": "low",
+    "yahoo": 301.9549866,
+    "krx": 301.645,
+    "diff_pct": 0.103
+   },
+   {
+    "symbol": "BIIB",
+    "field": "open",
+    "yahoo": 259.8299866,
+    "krx": 260.19,
+    "diff_pct": 0.138
+   },
+   {
+    "symbol": "LLY",
+    "field": "volume",
+    "yahoo": 3041459.0,
+    "krx": 2951618.0,
+    "diff_pct": 2.954
+   },
+   {
+    "symbol": "GWW",
+    "field": "volume",
+    "yahoo": 388386.0,
+    "krx": 334406.0,
+    "diff_pct": 13.899
+   }
+  ],
+  "unlisted": [],
+  "sampled": 19,
+  "focus": [
+   "AMGN",
+   "BDX",
+   "BIIB",
+   "CPAY",
+   "EBAY",
+   "GWW",
+   "KDP",
+   "LLY",
+   "TRV"
+  ]
+ },
+ "error": null,
+ "calls": 19
+}
