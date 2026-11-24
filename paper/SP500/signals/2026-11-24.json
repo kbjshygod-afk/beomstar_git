@@ -1,0 +1,36 @@
+{
+ "market": "SP500",
+ "as_of": "2026-11-24",
+ "regime": {
+  "benchmark": "^GSPC",
+  "mode": "MA200",
+  "close": 7201.0898,
+  "ma200": 7351.286,
+  "ma20": 7451.176,
+  "on": false
+ },
+ "entries_next_open": [],
+ "exits_next_open": [
+  "EBAY"
+ ],
+ "positions": [
+  "AMGN",
+  "BDX",
+  "BIIB",
+  "CPAY",
+  "EBAY",
+  "GWW",
+  "KDP",
+  "LLY",
+  "TRV"
+ ],
+ "watchlist": [],
+ "coverage": {
+  "requested": 503,
+  "loaded": 502,
+  "failed": [
+   "WBD"
+  ]
+ },
+ "generated_at": "2026-11-24T23:44:00Z"
+}
