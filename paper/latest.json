@@ -188,14 +188,14 @@
    "xcheck_kis": null
   },
   "NDX100": {
-   "as_of": "2026-11-23",
+   "as_of": "2026-11-24",
    "start_date": "2026-09-25",
    "regime": {
     "benchmark": "^NDX",
     "mode": "MA200",
-    "close": 26746.0996,
-    "ma200": 28081.6521,
-    "ma20": 27767.0965,
+    "close": 26214.168,
+    "ma200": 28086.3822,
+    "ma20": 27595.2329,
     "on": false
    },
    "entries_next_open": [],
@@ -209,10 +209,10 @@
      "entry_price": 437.8900146,
      "qty": 24086.34911346862,
      "stop_price": 407.23771357799995,
-     "last_close": 449.0400085,
-     "exit_ma": 431.79820251200005,
-     "unrealized_pnl": 225836.83333723806,
-     "price_pnl_pct": 2.5463001046473366,
+     "last_close": 473.9349976,
+     "exit_ma": 433.76390258600003,
+     "unrealized_pnl": 824266.9731785562,
+     "price_pnl_pct": 8.23151517463263,
      "exit_pending": false
     },
     {
@@ -223,19 +223,19 @@
      "entry_price": 35.31999969,
      "qty": 297703.06687467825,
      "stop_price": 32.8475997117,
-     "last_close": 35.43000031,
-     "exit_ma": 33.7004000478,
-     "unrealized_pnl": -9377.462030651048,
-     "price_pnl_pct": 0.3114400367085546,
+     "last_close": 35.79999924,
+     "exit_ma": 33.7866000372,
+     "unrealized_pnl": 100552.05453829467,
+     "price_pnl_pct": 1.3590021353706128,
      "exit_pending": false
     }
    ],
    "stale_positions": [],
    "watchlist": [],
    "performance": {
-    "equity": 93526938.0,
-    "return_pct": -6.47,
-    "bench_return_pct": -12.62,
+    "equity": 94236717.0,
+    "return_pct": -5.76,
+    "bench_return_pct": -14.36,
     "mdd_pct": -7.81,
     "closed_trades": 9,
     "win_rate_pct": 0.0,
@@ -245,8 +245,8 @@
    },
    "status_csv": "NDX100/status.csv",
    "audit": {
-    "days": 42,
-    "signal_files": 42,
+    "days": 43,
+    "signal_files": 43,
     "missing_days": [],
     "late": [],
     "uncommitted": [],
@@ -257,13 +257,15 @@
    "xcheck": {
     "source": "Tiingo",
     "status": "mismatch",
-    "checked": "2026-11-23",
+    "checked": "2026-11-24",
     "error": null,
     "mismatched_symbols": [
      "AMGN",
-     "GILD",
-     "GOOGL",
-     "HON"
+     "KLAC",
+     "LIN",
+     "LITE",
+     "MDLZ",
+     "MELI"
     ],
     "index_match": null
    },
@@ -573,7 +575,7 @@
    }
   }
  },
- "updated_at": "2026-11-24T23:44:00Z",
+ "updated_at": "2026-11-24T23:45:03Z",
  "disclaimer": "기계적 룰 출력이며 투자 자문이 아닙니다. 매수·매도 결정은 소유자 본인이 합니다.",
  "unconfirmed": "미확인 추정값(스캐너 원본 코드 미확인): 피벗=직전 20봉 최고가(당일 제외) · 거래량 평균=직전 50일(당일 제외) · RS=지수 대비 가중 1년 수익률 ≥ 0%p(스캐너는 유니버스 백분위 ≥ 70) · 52주 고저=종가 기준 · 200일선 상승=22봉 전 대비 · 수축비=10/40일 평균 TR · 비용=편도 0.2%"
 }

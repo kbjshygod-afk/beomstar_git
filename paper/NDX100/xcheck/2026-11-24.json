@@ -1,0 +1,72 @@
+{
+ "market": "NDX100",
+ "as_of": "2026-11-24",
+ "source": "Tiingo",
+ "status": "mismatch",
+ "checked": "2026-11-24",
+ "index": null,
+ "symbols": {
+  "date": "2026-11-24",
+  "compared": 12,
+  "missing": [],
+  "mismatches": [
+   {
+    "symbol": "AMGN",
+    "field": "volume",
+    "yahoo": 3134133.0,
+    "krx": 3081900.0,
+    "diff_pct": 1.667
+   },
+   {
+    "symbol": "KLAC",
+    "field": "open",
+    "yahoo": 139.4199982,
+    "krx": 138.435,
+    "diff_pct": 0.706
+   },
+   {
+    "symbol": "MDLZ",
+    "field": "open",
+    "yahoo": 66.66999817,
+    "krx": 66.41,
+    "diff_pct": 0.39
+   },
+   {
+    "symbol": "MDLZ",
+    "field": "volume",
+    "yahoo": 8213909.0,
+    "krx": 7931706.0,
+    "diff_pct": 3.436
+   },
+   {
+    "symbol": "LITE",
+    "field": "open",
+    "yahoo": 526.3200073,
+    "krx": 527.38,
+    "diff_pct": 0.201
+   },
+   {
+    "symbol": "LIN",
+    "field": "volume",
+    "yahoo": 2450017.0,
+    "krx": 2423347.0,
+    "diff_pct": 1.089
+   },
+   {
+    "symbol": "MELI",
+    "field": "open",
+    "yahoo": 1412.51001,
+    "krx": 1415.485,
+    "diff_pct": 0.21
+   }
+  ],
+  "unlisted": [],
+  "sampled": 12,
+  "focus": [
+   "AMGN",
+   "KDP"
+  ]
+ },
+ "error": null,
+ "calls": 12
+}
