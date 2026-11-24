@@ -11,39 +11,81 @@
   "missing": [],
   "mismatches": [
    {
+    "symbol": "ABBV",
+    "field": "volume",
+    "yahoo": 6740600.0,
+    "krx": 6658402.0,
+    "diff_pct": 1.219
+   },
+   {
     "symbol": "A",
     "field": "volume",
-    "yahoo": 2658085.0,
+    "yahoo": 2685800.0,
     "krx": 2615539.0,
-    "diff_pct": 1.601
-   },
-   {
-    "symbol": "AMGN",
-    "field": "open",
-    "yahoo": 440.3099976,
-    "krx": 442.975,
-    "diff_pct": 0.602
+    "diff_pct": 2.616
    },
    {
     "symbol": "AMGN",
     "field": "volume",
-    "yahoo": 3388198.0,
+    "yahoo": 3430000.0,
     "krx": 3336139.0,
-    "diff_pct": 1.536
+    "diff_pct": 2.736
+   },
+   {
+    "symbol": "AAPL",
+    "field": "volume",
+    "yahoo": 58538400.0,
+    "krx": 56934410.0,
+    "diff_pct": 2.74
    },
    {
     "symbol": "XYZ",
     "field": "volume",
-    "yahoo": 8967293.0,
+    "yahoo": 8987500.0,
     "krx": 8636704.0,
-    "diff_pct": 3.687
+    "diff_pct": 3.903
+   },
+   {
+    "symbol": "CPAY",
+    "field": "volume",
+    "yahoo": 615100.0,
+    "krx": 602507.0,
+    "diff_pct": 2.047
+   },
+   {
+    "symbol": "EBAY",
+    "field": "volume",
+    "yahoo": 4239100.0,
+    "krx": 4117403.0,
+    "diff_pct": 2.871
+   },
+   {
+    "symbol": "TRV",
+    "field": "volume",
+    "yahoo": 1468100.0,
+    "krx": 1448118.0,
+    "diff_pct": 1.361
    },
    {
     "symbol": "GWW",
     "field": "volume",
-    "yahoo": 376420.0,
+    "yahoo": 376400.0,
     "krx": 372533.0,
-    "diff_pct": 1.033
+    "diff_pct": 1.027
+   },
+   {
+    "symbol": "ZBRA",
+    "field": "volume",
+    "yahoo": 486200.0,
+    "krx": 478398.0,
+    "diff_pct": 1.605
+   },
+   {
+    "symbol": "ZTS",
+    "field": "volume",
+    "yahoo": 3029400.0,
+    "krx": 2982222.0,
+    "diff_pct": 1.557
    }
   ],
   "unlisted": [],
