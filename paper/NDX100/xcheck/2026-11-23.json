@@ -12,38 +12,31 @@
   "mismatches": [
    {
     "symbol": "AMGN",
-    "field": "open",
-    "yahoo": 440.3099976,
-    "krx": 442.975,
-    "diff_pct": 0.602
-   },
-   {
-    "symbol": "AMGN",
     "field": "volume",
-    "yahoo": 3388198.0,
+    "yahoo": 3430000.0,
     "krx": 3336139.0,
-    "diff_pct": 1.536
+    "diff_pct": 2.736
    },
    {
     "symbol": "GILD",
     "field": "volume",
-    "yahoo": 6643438.0,
+    "yahoo": 6643900.0,
     "krx": 6493239.0,
-    "diff_pct": 2.261
+    "diff_pct": 2.268
    },
    {
-    "symbol": "INTU",
-    "field": "open",
-    "yahoo": 274.5,
-    "krx": 274.02,
-    "diff_pct": 0.175
+    "symbol": "HON",
+    "field": "volume",
+    "yahoo": 2938000.0,
+    "krx": 2763980.0,
+    "diff_pct": 5.923
    },
    {
-    "symbol": "HONA",
-    "field": "open",
-    "yahoo": 157.5,
-    "krx": 157.07,
-    "diff_pct": 0.273
+    "symbol": "GOOGL",
+    "field": "volume",
+    "yahoo": 44255200.0,
+    "krx": 43702374.0,
+    "diff_pct": 1.249
    }
   ],
   "unlisted": [],

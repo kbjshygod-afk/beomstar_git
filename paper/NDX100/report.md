@@ -6,11 +6,10 @@
 - 레짐 (MA200): **OFF** — ^NDX 종가 26,746.10 · 200일선 28,081.65
 - 데이터: 유니버스 101종목 중 100종목 로드 (실패 1)
 - 데이터 대조 (Tiingo, 2026-11-23 봉): 종목 12개 비교 (표본 12: 보유·대기 2 + 순환), 불일치 4개 · 지수 비교 안 함
-  - AMGN open: Yahoo 440 vs Tiingo 443 (+0.60%)
-  - AMGN volume: Yahoo 3,388,198 vs Tiingo 3,336,139 (+1.54%)
-  - GILD volume: Yahoo 6,643,438 vs Tiingo 6,493,239 (+2.26%)
-  - INTU open: Yahoo 274 vs Tiingo 274 (+0.17%)
-  - HONA open: Yahoo 158 vs Tiingo 157 (+0.27%)
+  - AMGN volume: Yahoo 3,430,000 vs Tiingo 3,336,139 (+2.74%)
+  - GILD volume: Yahoo 6,643,900 vs Tiingo 6,493,239 (+2.27%)
+  - HON volume: Yahoo 2,938,000 vs Tiingo 2,763,980 (+5.92%)
+  - GOOGL volume: Yahoo 44,255,200 vs Tiingo 43,702,374 (+1.25%)
 
 ## 다음 시가 진입 (오늘 신호)
 
