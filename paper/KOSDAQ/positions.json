@@ -7,10 +7,10 @@
   "entry_price": 176000.0,
   "qty": 40.0,
   "stop_price": 158400.0,
-  "last_close": 170900.0,
-  "exit_ma": 148980.0,
-  "unrealized_pnl": -231752.0,
-  "price_pnl_pct": -2.8977272727272685,
+  "last_close": 173000.0,
+  "exit_ma": 149606.0,
+  "unrealized_pnl": -147920.0,
+  "price_pnl_pct": -1.7045454545454586,
   "exit_pending": false
  },
  {
@@ -21,10 +21,10 @@
   "entry_price": 26200.0,
   "qty": 262.0,
   "stop_price": 23580.0,
-  "last_close": 24850.0,
-  "exit_ma": 23126.2,
-  "unrealized_pnl": -380450.2000000002,
-  "price_pnl_pct": -5.152671755725191,
+  "last_close": 25400.0,
+  "exit_ma": 23239.4,
+  "unrealized_pnl": -236638.39999999944,
+  "price_pnl_pct": -3.053435114503822,
   "exit_pending": false
  },
  {
@@ -35,10 +35,10 @@
   "entry_price": 43700.0,
   "qty": 153.0,
   "stop_price": 39330.0,
-  "last_close": 42000.0,
-  "exit_ma": 40426.0,
-  "unrealized_pnl": -286324.2000000002,
-  "price_pnl_pct": -3.89016018306636,
+  "last_close": 41050.0,
+  "exit_ma": 40487.0,
+  "unrealized_pnl": -431383.5,
+  "price_pnl_pct": -6.06407322654462,
   "exit_pending": false
  }
 ]
