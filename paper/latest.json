@@ -496,16 +496,16 @@
    }
   },
   "KOSDAQ_V2": {
-   "as_of": "2026-11-20",
+   "as_of": "2026-11-23",
    "start_date": "2026-10-02",
    "regime": {
     "benchmark": "^KQ11",
     "mode": "BREADTH50",
-    "close": 645.68,
-    "ma200": 951.4407,
-    "ma20": 695.6595,
+    "close": 635.45,
+    "ma200": 949.205,
+    "ma20": 691.0715,
     "on": false,
-    "breadth_pct": 12.8
+    "breadth_pct": 13.4
    },
    "entries_next_open": [],
    "exits_next_open": [],
@@ -515,7 +515,7 @@
    "performance": {
     "equity": 98209054.0,
     "return_pct": -1.79,
-    "bench_return_pct": -27.72,
+    "bench_return_pct": -28.86,
     "mdd_pct": -1.79,
     "closed_trades": 2,
     "win_rate_pct": 0.0,
@@ -525,11 +525,12 @@
    },
    "status_csv": "KOSDAQ_V2/status.csv",
    "audit": {
-    "days": 34,
-    "signal_files": 34,
+    "days": 35,
+    "signal_files": 35,
     "missing_days": [],
     "late": [
-     "2026-11-04"
+     "2026-11-04",
+     "2026-11-23"
     ],
     "uncommitted": [],
     "mismatched": [
@@ -545,7 +546,7 @@
    "xcheck": {
     "source": "KRX Open API",
     "status": "ok",
-    "checked": "2026-11-20",
+    "checked": "2026-11-23",
     "error": null,
     "mismatched_symbols": [],
     "index_match": true
@@ -553,7 +554,7 @@
    "xcheck_kis": {
     "source": "KIS",
     "status": "ok",
-    "checked": "2026-11-19",
+    "checked": "2026-11-20",
     "error": null,
     "mismatched_symbols": [],
     "index_match": true,
@@ -568,7 +569,7 @@
    }
   }
  },
- "updated_at": "2026-11-24T02:48:27Z",
+ "updated_at": "2026-11-24T02:52:25Z",
  "disclaimer": "기계적 룰 출력이며 투자 자문이 아닙니다. 매수·매도 결정은 소유자 본인이 합니다.",
  "unconfirmed": "미확인 추정값(스캐너 원본 코드 미확인): 피벗=직전 20봉 최고가(당일 제외) · 거래량 평균=직전 50일(당일 제외) · RS=지수 대비 가중 1년 수익률 ≥ 0%p(스캐너는 유니버스 백분위 ≥ 70) · 52주 고저=종가 기준 · 200일선 상승=22봉 전 대비 · 수축비=10/40일 평균 TR · 비용=편도 0.2%"
 }
