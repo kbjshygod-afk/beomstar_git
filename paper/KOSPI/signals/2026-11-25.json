@@ -1,0 +1,22 @@
+{
+ "market": "KOSPI",
+ "as_of": "2026-11-25",
+ "regime": {
+  "benchmark": "^KS11",
+  "mode": "MA200_AND_MA20",
+  "close": 4697.5098,
+  "ma200": 6519.5852,
+  "ma20": 5256.3255,
+  "on": false
+ },
+ "entries_next_open": [],
+ "exits_next_open": [],
+ "positions": [],
+ "watchlist": [],
+ "coverage": {
+  "requested": 200,
+  "loaded": 200,
+  "failed": []
+ },
+ "generated_at": "2026-11-25T09:14:49Z"
+}
