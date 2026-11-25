@@ -1,0 +1,19 @@
+{
+ "market": "KOSPI",
+ "as_of": "2026-11-24",
+ "source": "KRX Open API",
+ "status": "ok",
+ "checked": "2026-11-24",
+ "index": {
+  "yahoo_close": 5006.029785,
+  "krx_close": 5006.03,
+  "match": true
+ },
+ "symbols": {
+  "date": "2026-11-24",
+  "compared": 200,
+  "missing": [],
+  "mismatches": []
+ },
+ "error": null
+}
