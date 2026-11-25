@@ -1,0 +1,86 @@
+{
+ "market": "NDX100",
+ "as_of": "2026-11-25",
+ "source": "Tiingo",
+ "status": "mismatch",
+ "checked": "2026-11-25",
+ "index": null,
+ "symbols": {
+  "date": "2026-11-25",
+  "compared": 12,
+  "missing": [],
+  "mismatches": [
+   {
+    "symbol": "AMGN",
+    "field": "open",
+    "yahoo": 475.8099976,
+    "krx": 472.75,
+    "diff_pct": 0.643
+   },
+   {
+    "symbol": "AMGN",
+    "field": "volume",
+    "yahoo": 3365576.0,
+    "krx": 3275295.0,
+    "diff_pct": 2.682
+   },
+   {
+    "symbol": "MRVL",
+    "field": "open",
+    "yahoo": 122.6299973,
+    "krx": 122.84,
+    "diff_pct": 0.171
+   },
+   {
+    "symbol": "MRVL",
+    "field": "high",
+    "yahoo": 131.0,
+    "krx": 131.14,
+    "diff_pct": 0.107
+   },
+   {
+    "symbol": "NFLX",
+    "field": "volume",
+    "yahoo": 45614479.0,
+    "krx": 43512122.0,
+    "diff_pct": 4.609
+   },
+   {
+    "symbol": "MPWR",
+    "field": "open",
+    "yahoo": 1107.0,
+    "krx": 1116.0,
+    "diff_pct": 0.806
+   },
+   {
+    "symbol": "MPWR",
+    "field": "volume",
+    "yahoo": 922576.0,
+    "krx": 910020.0,
+    "diff_pct": 1.361
+   },
+   {
+    "symbol": "KDP",
+    "field": "open",
+    "yahoo": 35.77000046,
+    "krx": 35.86,
+    "diff_pct": 0.251
+   },
+   {
+    "symbol": "NXPI",
+    "field": "volume",
+    "yahoo": 5412535.0,
+    "krx": 5235379.0,
+    "diff_pct": 3.273
+   }
+  ],
+  "unlisted": [],
+  "sampled": 12,
+  "focus": [
+   "AMGN",
+   "KDP"
+  ]
+ },
+ "error": null,
+ "calls": 12
+}
