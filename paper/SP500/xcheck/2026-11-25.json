@@ -1,0 +1,85 @@
+{
+ "market": "SP500",
+ "as_of": "2026-11-25",
+ "source": "Tiingo",
+ "status": "mismatch",
+ "checked": "2026-11-25",
+ "index": null,
+ "symbols": {
+  "date": "2026-11-25",
+  "compared": 18,
+  "missing": [],
+  "mismatches": [
+   {
+    "symbol": "AMGN",
+    "field": "open",
+    "yahoo": 475.8099976,
+    "krx": 472.75,
+    "diff_pct": 0.643
+   },
+   {
+    "symbol": "AMGN",
+    "field": "volume",
+    "yahoo": 3365576.0,
+    "krx": 3275295.0,
+    "diff_pct": 2.682
+   },
+   {
+    "symbol": "BIIB",
+    "field": "open",
+    "yahoo": 268.3200073,
+    "krx": 267.93,
+    "diff_pct": 0.145
+   },
+   {
+    "symbol": "KDP",
+    "field": "open",
+    "yahoo": 35.77000046,
+    "krx": 35.86,
+    "diff_pct": 0.251
+   },
+   {
+    "symbol": "LLY",
+    "field": "volume",
+    "yahoo": 2860983.0,
+    "krx": 2812778.0,
+    "diff_pct": 1.685
+   },
+   {
+    "symbol": "NFLX",
+    "field": "volume",
+    "yahoo": 45614479.0,
+    "krx": 43512122.0,
+    "diff_pct": 4.609
+   },
+   {
+    "symbol": "NKE",
+    "field": "volume",
+    "yahoo": 27913624.0,
+    "krx": 26471953.0,
+    "diff_pct": 5.165
+   },
+   {
+    "symbol": "GWW",
+    "field": "low",
+    "yahoo": 1371.625,
+    "krx": 1365.42,
+    "diff_pct": 0.452
+   }
+  ],
+  "unlisted": [],
+  "sampled": 18,
+  "focus": [
+   "AMGN",
+   "BDX",
+   "BIIB",
+   "CPAY",
+   "GWW",
+   "KDP",
+   "LLY",
+   "TRV"
+  ]
+ },
+ "error": null,
+ "calls": 18
+}

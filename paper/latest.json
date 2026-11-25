@@ -1,20 +1,18 @@
 {
  "markets": {
   "SP500": {
-   "as_of": "2026-11-24",
+   "as_of": "2026-11-25",
    "start_date": "2026-09-25",
    "regime": {
     "benchmark": "^GSPC",
     "mode": "MA200",
-    "close": 7201.0898,
-    "ma200": 7351.286,
-    "ma20": 7451.176,
+    "close": 7182.7798,
+    "ma200": 7352.4909,
+    "ma20": 7423.1159,
     "on": false
    },
    "entries_next_open": [],
-   "exits_next_open": [
-    "EBAY"
-   ],
+   "exits_next_open": [],
    "positions": [
     {
      "symbol": "GWW",
@@ -24,10 +22,10 @@
      "entry_price": 1339.939941,
      "qty": 5493.013899604515,
      "stop_price": 1205.9459469,
-     "last_close": 1398.02002,
-     "exit_ma": 1349.4448047,
-     "unrealized_pnl": 288955.37699246034,
-     "price_pnl_pct": 4.33452852794689,
+     "last_close": 1415.900024,
+     "exit_ma": 1352.5976049800001,
+     "unrealized_pnl": 386974.05726845097,
+     "price_pnl_pct": 5.668916992153461,
      "exit_pending": false
     },
     {
@@ -38,10 +36,10 @@
      "entry_price": 437.8900146,
      "qty": 16811.52663459441,
      "stop_price": 394.10101313999996,
-     "last_close": 473.9400024,
-     "exit_ma": 433.764002682,
-     "unrealized_pnl": 575396.8208424682,
-     "price_pnl_pct": 8.23265811003493,
+     "last_close": 469.2399902,
+     "exit_ma": 435.62180236399996,
+     "unrealized_pnl": 496540.46931981575,
+     "price_pnl_pct": 7.159326441512337,
      "exit_pending": false
     },
     {
@@ -52,10 +50,10 @@
      "entry_price": 1256.0,
      "qty": 5829.856722531004,
      "stop_price": 1130.4,
-     "last_close": 1407.589966,
-     "exit_ma": 1276.87479736,
-     "unrealized_pnl": 852691.0866146432,
-     "price_pnl_pct": 12.06926480891719,
+     "last_close": 1392.219971,
+     "exit_ma": 1281.96279786,
+     "unrealized_pnl": 763265.4276759773,
+     "price_pnl_pct": 10.845539092356681,
      "exit_pending": false
     },
     {
@@ -66,25 +64,11 @@
      "entry_price": 370.0,
      "qty": 19007.284918942456,
      "stop_price": 333.0,
-     "last_close": 400.8699951,
-     "exit_ma": 384.3734021,
-     "unrealized_pnl": 557450.501047398,
-     "price_pnl_pct": 8.34324191891891,
+     "last_close": 406.8599854,
+     "exit_ma": 384.93220154000005,
+     "unrealized_pnl": 671076.2464366136,
+     "price_pnl_pct": 9.96215821621622,
      "exit_pending": false
-    },
-    {
-     "symbol": "EBAY",
-     "signal_date": "2026-10-15",
-     "exit_signal_date": "2026-11-24",
-     "entry_date": "2026-10-16",
-     "entry_price": 123.9400024,
-     "qty": 59366.25714249474,
-     "stop_price": 111.54600216,
-     "last_close": 113.7699966,
-     "exit_ma": 115.85980010600001,
-     "unrealized_pnl": -631979.0853154147,
-     "price_pnl_pct": -8.205587867569708,
-     "exit_pending": true
     },
     {
      "symbol": "KDP",
@@ -94,10 +78,10 @@
      "entry_price": 34.40999985,
      "qty": 213478.84197954184,
      "stop_price": 30.968999865,
-     "last_close": 35.79999924,
-     "exit_ma": 33.7866000372,
-     "unrealized_pnl": 266758.76152723376,
-     "price_pnl_pct": 4.039521639230692,
+     "last_close": 35.63000107,
+     "exit_ma": 33.8632000738,
+     "unrealized_pnl": 230540.33108193334,
+     "price_pnl_pct": 3.5454845257722356,
      "exit_pending": false
     },
     {
@@ -108,10 +92,10 @@
      "entry_price": 242.0200043,
      "qty": 30083.193491035752,
      "stop_price": 217.81800387,
-     "last_close": 269.1099854,
-     "exit_ma": 238.6719989,
-     "unrealized_pnl": 784200.2983413693,
-     "price_pnl_pct": 11.19328180261503,
+     "last_close": 261.4400024,
+     "exit_ma": 239.58059905800002,
+     "unrealized_pnl": 553924.1908447389,
+     "price_pnl_pct": 8.02412930954568,
      "exit_pending": false
     },
     {
@@ -122,10 +106,10 @@
      "entry_price": 437.7799988,
      "qty": 16515.049935881743,
      "stop_price": 394.00199892,
-     "last_close": 447.9100037,
-     "exit_ma": 414.9094018579999,
-     "unrealized_pnl": 138043.10753622837,
-     "price_pnl_pct": 2.3139487705622575,
+     "last_close": 454.3299866,
+     "exit_ma": 415.95060181,
+     "unrealized_pnl": 243857.3930408731,
+     "price_pnl_pct": 3.780434886327666,
      "exit_pending": false
     },
     {
@@ -136,30 +120,30 @@
      "entry_price": 209.2899933,
      "qty": 31722.005849846617,
      "stop_price": 188.36099397,
-     "last_close": 220.0,
-     "exit_ma": 195.77580109,
-     "unrealized_pnl": 312507.0158318104,
-     "price_pnl_pct": 5.117304717310622,
+     "last_close": 221.2400055,
+     "exit_ma": 196.563601078,
+     "unrealized_pnl": 351763.80663320236,
+     "price_pnl_pct": 5.709786699104447,
      "exit_pending": false
     }
    ],
    "stale_positions": [],
    "watchlist": [],
    "performance": {
-    "equity": 96463044.0,
-    "return_pct": -3.54,
-    "bench_return_pct": -7.0,
+    "equity": 96365393.0,
+    "return_pct": -3.63,
+    "bench_return_pct": -7.24,
     "mdd_pct": -6.86,
-    "closed_trades": 12,
+    "closed_trades": 13,
     "win_rate_pct": 0.0,
     "avg_win_pct": null,
-    "avg_loss_pct": -7.84,
-    "open_positions": 9
+    "avg_loss_pct": -7.9,
+    "open_positions": 8
    },
    "status_csv": "SP500/status.csv",
    "audit": {
-    "days": 43,
-    "signal_files": 43,
+    "days": 44,
+    "signal_files": 44,
     "missing_days": [],
     "late": [],
     "uncommitted": [],
@@ -173,17 +157,16 @@
    "xcheck": {
     "source": "Tiingo",
     "status": "mismatch",
-    "checked": "2026-11-24",
+    "checked": "2026-11-25",
     "error": null,
     "mismatched_symbols": [
-     "ABNB",
-     "ABT",
-     "ADBE",
-     "ADI",
      "AMGN",
+     "BIIB",
      "GWW",
+     "KDP",
      "LLY",
-     "TRV"
+     "NFLX",
+     "NKE"
     ],
     "index_match": null
    },
@@ -579,7 +562,7 @@
    }
   }
  },
- "updated_at": "2026-11-25T20:49:35Z",
+ "updated_at": "2026-11-25T22:45:28Z",
  "disclaimer": "기계적 룰 출력이며 투자 자문이 아닙니다. 매수·매도 결정은 소유자 본인이 합니다.",
  "unconfirmed": "미확인 추정값(스캐너 원본 코드 미확인): 피벗=직전 20봉 최고가(당일 제외) · 거래량 평균=직전 50일(당일 제외) · RS=지수 대비 가중 1년 수익률 ≥ 0%p(스캐너는 유니버스 백분위 ≥ 70) · 52주 고저=종가 기준 · 200일선 상승=22봉 전 대비 · 수축비=10/40일 평균 TR · 비용=편도 0.2%"
 }
