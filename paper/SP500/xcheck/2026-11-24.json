@@ -11,46 +11,60 @@
   "missing": [],
   "mismatches": [
    {
+    "symbol": "ABT",
+    "field": "volume",
+    "yahoo": 8183600.0,
+    "krx": 7502628.0,
+    "diff_pct": 8.321
+   },
+   {
     "symbol": "ADBE",
     "field": "volume",
-    "yahoo": 3758573.0,
+    "yahoo": 3759400.0,
     "krx": 3704926.0,
-    "diff_pct": 1.427
+    "diff_pct": 1.449
+   },
+   {
+    "symbol": "ABNB",
+    "field": "volume",
+    "yahoo": 2957400.0,
+    "krx": 2919811.0,
+    "diff_pct": 1.271
    },
    {
     "symbol": "AMGN",
     "field": "volume",
-    "yahoo": 3134133.0,
+    "yahoo": 3318800.0,
     "krx": 3081900.0,
-    "diff_pct": 1.667
+    "diff_pct": 7.138
    },
    {
-    "symbol": "ADP",
-    "field": "low",
-    "yahoo": 301.9549866,
-    "krx": 301.645,
-    "diff_pct": 0.103
-   },
-   {
-    "symbol": "BIIB",
-    "field": "open",
-    "yahoo": 259.8299866,
-    "krx": 260.19,
-    "diff_pct": 0.138
+    "symbol": "ADI",
+    "field": "volume",
+    "yahoo": 13097500.0,
+    "krx": 12796906.0,
+    "diff_pct": 2.295
    },
    {
     "symbol": "LLY",
     "field": "volume",
-    "yahoo": 3041459.0,
+    "yahoo": 3081000.0,
     "krx": 2951618.0,
-    "diff_pct": 2.954
+    "diff_pct": 4.199
+   },
+   {
+    "symbol": "TRV",
+    "field": "volume",
+    "yahoo": 1042700.0,
+    "krx": 1027430.0,
+    "diff_pct": 1.464
    },
    {
     "symbol": "GWW",
     "field": "volume",
-    "yahoo": 388386.0,
+    "yahoo": 388400.0,
     "krx": 334406.0,
-    "diff_pct": 13.899
+    "diff_pct": 13.902
    }
   ],
   "unlisted": [],
@@ -68,5 +82,5 @@
   ]
  },
  "error": null,
- "calls": 19
+ "calls": 0
 }
