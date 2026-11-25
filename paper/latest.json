@@ -211,10 +211,10 @@
      "entry_price": 437.8900146,
      "qty": 24086.34911346862,
      "stop_price": 407.23771357799995,
-     "last_close": 473.9349976,
-     "exit_ma": 433.76390258600003,
-     "unrealized_pnl": 824266.9731785562,
-     "price_pnl_pct": 8.23151517463263,
+     "last_close": 473.9400024,
+     "exit_ma": 433.764002682,
+     "unrealized_pnl": 824387.2794438805,
+     "price_pnl_pct": 8.23265811003493,
      "exit_pending": false
     },
     {
@@ -235,7 +235,7 @@
    "stale_positions": [],
    "watchlist": [],
    "performance": {
-    "equity": 94236717.0,
+    "equity": 94236838.0,
     "return_pct": -5.76,
     "bench_return_pct": -14.36,
     "mdd_pct": -7.81,
@@ -263,11 +263,10 @@
     "error": null,
     "mismatched_symbols": [
      "AMGN",
-     "KLAC",
      "LIN",
-     "LITE",
+     "MAR",
      "MDLZ",
-     "MELI"
+     "META"
     ],
     "index_match": null
    },
@@ -577,7 +576,7 @@
    }
   }
  },
- "updated_at": "2026-11-25T02:30:21Z",
+ "updated_at": "2026-11-25T02:31:03Z",
  "disclaimer": "기계적 룰 출력이며 투자 자문이 아닙니다. 매수·매도 결정은 소유자 본인이 합니다.",
  "unconfirmed": "미확인 추정값(스캐너 원본 코드 미확인): 피벗=직전 20봉 최고가(당일 제외) · 거래량 평균=직전 50일(당일 제외) · RS=지수 대비 가중 1년 수익률 ≥ 0%p(스캐너는 유니버스 백분위 ≥ 70) · 52주 고저=종가 기준 · 200일선 상승=22봉 전 대비 · 수축비=10/40일 평균 TR · 비용=편도 0.2%"
 }
