@@ -20,30 +20,44 @@
    {
     "symbol": "MSFT",
     "field": "volume",
-    "yahoo": 26733600.0,
+    "yahoo": 26759500.0,
     "krx": 25980559.0,
-    "diff_pct": 2.817
+    "diff_pct": 2.911
+   },
+   {
+    "symbol": "MSTR",
+    "field": "volume",
+    "yahoo": 30231600.0,
+    "krx": 29655878.0,
+    "diff_pct": 1.904
    },
    {
     "symbol": "NVDA",
     "field": "volume",
-    "yahoo": 363377300.0,
+    "yahoo": 366571900.0,
     "krx": 357590235.0,
-    "diff_pct": 1.593
+    "diff_pct": 2.45
    },
    {
     "symbol": "MRVL",
     "field": "volume",
-    "yahoo": 28539800.0,
+    "yahoo": 28713100.0,
     "krx": 28235190.0,
-    "diff_pct": 1.067
+    "diff_pct": 1.664
+   },
+   {
+    "symbol": "MU",
+    "field": "volume",
+    "yahoo": 52988400.0,
+    "krx": 52153536.0,
+    "diff_pct": 1.576
    },
    {
     "symbol": "NFLX",
     "field": "volume",
-    "yahoo": 45693600.0,
+    "yahoo": 45756500.0,
     "krx": 43512122.0,
-    "diff_pct": 4.774
+    "diff_pct": 4.905
    },
    {
     "symbol": "MPWR",
@@ -51,6 +65,13 @@
     "yahoo": 922700.0,
     "krx": 910020.0,
     "diff_pct": 1.374
+   },
+   {
+    "symbol": "NBIS",
+    "field": "volume",
+    "yahoo": 40766800.0,
+    "krx": 39962896.0,
+    "diff_pct": 1.972
    },
    {
     "symbol": "NXPI",
