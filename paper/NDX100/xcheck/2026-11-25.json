@@ -12,66 +12,52 @@
   "mismatches": [
    {
     "symbol": "AMGN",
-    "field": "open",
-    "yahoo": 475.8099976,
-    "krx": 472.75,
-    "diff_pct": 0.643
-   },
-   {
-    "symbol": "AMGN",
     "field": "volume",
-    "yahoo": 3365576.0,
+    "yahoo": 3391900.0,
     "krx": 3275295.0,
-    "diff_pct": 2.682
+    "diff_pct": 3.438
+   },
+   {
+    "symbol": "MSFT",
+    "field": "volume",
+    "yahoo": 26733600.0,
+    "krx": 25980559.0,
+    "diff_pct": 2.817
+   },
+   {
+    "symbol": "NVDA",
+    "field": "volume",
+    "yahoo": 363377300.0,
+    "krx": 357590235.0,
+    "diff_pct": 1.593
    },
    {
     "symbol": "MRVL",
-    "field": "open",
-    "yahoo": 122.6299973,
-    "krx": 122.84,
-    "diff_pct": 0.171
-   },
-   {
-    "symbol": "MRVL",
-    "field": "high",
-    "yahoo": 131.0,
-    "krx": 131.14,
-    "diff_pct": 0.107
+    "field": "volume",
+    "yahoo": 28539800.0,
+    "krx": 28235190.0,
+    "diff_pct": 1.067
    },
    {
     "symbol": "NFLX",
     "field": "volume",
-    "yahoo": 45614479.0,
+    "yahoo": 45693600.0,
     "krx": 43512122.0,
-    "diff_pct": 4.609
-   },
-   {
-    "symbol": "MPWR",
-    "field": "open",
-    "yahoo": 1107.0,
-    "krx": 1116.0,
-    "diff_pct": 0.806
+    "diff_pct": 4.774
    },
    {
     "symbol": "MPWR",
     "field": "volume",
-    "yahoo": 922576.0,
+    "yahoo": 922700.0,
     "krx": 910020.0,
-    "diff_pct": 1.361
-   },
-   {
-    "symbol": "KDP",
-    "field": "open",
-    "yahoo": 35.77000046,
-    "krx": 35.86,
-    "diff_pct": 0.251
+    "diff_pct": 1.374
    },
    {
     "symbol": "NXPI",
     "field": "volume",
-    "yahoo": 5412535.0,
+    "yahoo": 5434700.0,
     "krx": 5235379.0,
-    "diff_pct": 3.273
+    "diff_pct": 3.668
    }
   ],
   "unlisted": [],
