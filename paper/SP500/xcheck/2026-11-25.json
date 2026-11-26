@@ -12,59 +12,45 @@
   "mismatches": [
    {
     "symbol": "AMGN",
-    "field": "open",
-    "yahoo": 475.8099976,
-    "krx": 472.75,
-    "diff_pct": 0.643
-   },
-   {
-    "symbol": "AMGN",
     "field": "volume",
-    "yahoo": 3365576.0,
+    "yahoo": 3391900.0,
     "krx": 3275295.0,
-    "diff_pct": 2.682
-   },
-   {
-    "symbol": "BIIB",
-    "field": "open",
-    "yahoo": 268.3200073,
-    "krx": 267.93,
-    "diff_pct": 0.145
-   },
-   {
-    "symbol": "KDP",
-    "field": "open",
-    "yahoo": 35.77000046,
-    "krx": 35.86,
-    "diff_pct": 0.251
+    "diff_pct": 3.438
    },
    {
     "symbol": "LLY",
     "field": "volume",
-    "yahoo": 2860983.0,
+    "yahoo": 2927400.0,
     "krx": 2812778.0,
-    "diff_pct": 1.685
+    "diff_pct": 3.915
    },
    {
     "symbol": "NFLX",
     "field": "volume",
-    "yahoo": 45614479.0,
+    "yahoo": 45693600.0,
     "krx": 43512122.0,
-    "diff_pct": 4.609
+    "diff_pct": 4.774
+   },
+   {
+    "symbol": "NEM",
+    "field": "volume",
+    "yahoo": 7971200.0,
+    "krx": 7598439.0,
+    "diff_pct": 4.676
    },
    {
     "symbol": "NKE",
     "field": "volume",
-    "yahoo": 27913624.0,
+    "yahoo": 27945300.0,
     "krx": 26471953.0,
-    "diff_pct": 5.165
+    "diff_pct": 5.272
    },
    {
     "symbol": "GWW",
-    "field": "low",
-    "yahoo": 1371.625,
-    "krx": 1365.42,
-    "diff_pct": 0.452
+    "field": "volume",
+    "yahoo": 242300.0,
+    "krx": 237423.0,
+    "diff_pct": 2.013
    }
   ],
   "unlisted": [],
