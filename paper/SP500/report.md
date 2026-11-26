@@ -8,9 +8,9 @@
 - 데이터 대조 (Tiingo, 2026-11-25 봉): 종목 18개 비교 (표본 18: 보유·대기 8 + 순환), 불일치 6개 · 지수 비교 안 함
   - AMGN volume: Yahoo 3,391,900 vs Tiingo 3,275,295 (+3.44%)
   - LLY volume: Yahoo 2,927,400 vs Tiingo 2,812,778 (+3.92%)
-  - NFLX volume: Yahoo 45,693,600 vs Tiingo 43,512,122 (+4.77%)
-  - NEM volume: Yahoo 7,971,200 vs Tiingo 7,598,439 (+4.68%)
-  - NKE volume: Yahoo 27,945,300 vs Tiingo 26,471,953 (+5.27%)
+  - NFLX volume: Yahoo 45,756,500 vs Tiingo 43,512,122 (+4.91%)
+  - NEM volume: Yahoo 7,992,000 vs Tiingo 7,598,439 (+4.92%)
+  - NKE volume: Yahoo 27,974,100 vs Tiingo 26,471,953 (+5.37%)
   - GWW volume: Yahoo 242,300 vs Tiingo 237,423 (+2.01%)
 
 ## 다음 시가 진입 (오늘 신호)

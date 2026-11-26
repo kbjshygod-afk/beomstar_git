@@ -27,23 +27,23 @@
    {
     "symbol": "NFLX",
     "field": "volume",
-    "yahoo": 45693600.0,
+    "yahoo": 45756500.0,
     "krx": 43512122.0,
-    "diff_pct": 4.774
+    "diff_pct": 4.905
    },
    {
     "symbol": "NEM",
     "field": "volume",
-    "yahoo": 7971200.0,
+    "yahoo": 7992000.0,
     "krx": 7598439.0,
-    "diff_pct": 4.676
+    "diff_pct": 4.924
    },
    {
     "symbol": "NKE",
     "field": "volume",
-    "yahoo": 27945300.0,
+    "yahoo": 27974100.0,
     "krx": 26471953.0,
-    "diff_pct": 5.272
+    "diff_pct": 5.37
    },
    {
     "symbol": "GWW",
